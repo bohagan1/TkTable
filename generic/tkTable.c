@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.19 2002/03/20 02:08:59 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.20 2002/03/21 02:18:27 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -697,22 +697,22 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 	    if (objc != 2 && objc != 3) {
 		Tcl_WrongNumArgs(interp, 2, objv, "?cursorPos?");
 		result = TCL_ERROR;
-		goto done;
+		break;
 	    }
-	    i = tablePtr->icursor;
 	    if (!(tablePtr->flags & HAS_ACTIVE) ||
 		    (tablePtr->flags & ACTIVE_DISABLED) ||
 		    tablePtr->state == STATE_DISABLED) {
-		i = -1;
+		Tcl_SetIntObj(Tcl_GetObjResult(interp), -1);
+		break;
 	    } else if (objc == 3) {
-		if (TableGetIcursorObj(tablePtr, objv[2], &i) != TCL_OK) {
+		if (TableGetIcursorObj(tablePtr, objv[2], NULL) != TCL_OK) {
 		    result = TCL_ERROR;
-		    goto done;
+		    break;
 		}
 		TableRefresh(tablePtr, tablePtr->activeRow,
 			tablePtr->activeCol, CELL);
 	    }
-	    Tcl_SetIntObj(Tcl_GetObjResult(interp), i);
+	    Tcl_SetIntObj(Tcl_GetObjResult(interp), tablePtr->icursor);
 	    break;
 
 	case CMD_INDEX: {
@@ -870,7 +870,6 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 	    break;
     }
 
-    done:
     Tcl_Release((ClientData) tablePtr);
     return result;
 }

@@ -6,7 +6,7 @@
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tkTable.test,v 1.6 2002/03/13 20:42:21 hobbs Exp $
+# RCS: @(#) $Id: tkTable.test,v 1.7 2002/03/20 03:03:03 hobbs Exp $
 
 # deletes:
 # test 2 -5
@@ -338,9 +338,33 @@ test table-14.1 {TableWidgetCmd procedure, "height" option} {
 #    list [catch {.t hidden fooey} msg] $msg
 #} {1 {bad table index "fooey": must be active, anchor, end, origin, topleft, bottomright, @x,y, or <row>,<col>}}
 
+destroy .t
+table .t
+.t configure -cache 1
+.t set 1,1 abcde
+
 test table-16.1 {TableWidgetCmd procedure, "icursor" option} {
     list [catch {.t icursor a b} msg] $msg
 } {1 {wrong # args: should be ".t icursor ?cursorPos?"}}
+test table-16.2 {TableWidgetCmd procedure, "icursor" option} {
+    # no active cell
+    .t icursor
+} -1
+
+.t activate 1,1
+
+test table-16.3 {TableWidgetCmd procedure, "icursor" option} {
+    # activate sets cursor to end
+    .t icursor
+} 5
+test table-16.4 {TableWidgetCmd procedure, "icursor" option} {
+    # change cursor
+    .t icursor 2
+} 2
+test table-16.5 {TableWidgetCmd procedure, "icursor" option} {
+    # retain changed cursor position
+    .t icursor
+} 2
 
 test table-17.1 {TableWidgetCmd procedure, "index" option} {
     list [catch {.t index} msg] $msg
