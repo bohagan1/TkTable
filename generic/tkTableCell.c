@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableCell.c,v 1.6 2001/06/23 05:26:31 hobbs Exp $
+ * RCS: @(#) $Id: tkTableCell.c,v 1.7 2001/06/23 08:50:14 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -485,12 +485,13 @@ TableGetCellValue(Table *tablePtr, int r, int c)
 	    Tcl_BackgroundError(interp);
 	    TableInvalidateAll(tablePtr, 0);
 	} else {
-	    result = Tcl_GetStringResult(interp);
+	    result = (char *) Tcl_GetStringResult(interp);
 	}
 	Tcl_FreeResult(interp);
 	Tcl_DStringFree(&script);
     } else if (tablePtr->arrayVar) {
-	result = Tcl_GetVar2(interp, tablePtr->arrayVar, buf, TCL_GLOBAL_ONLY);
+	result = (char *) Tcl_GetVar2(interp, tablePtr->arrayVar, buf,
+		TCL_GLOBAL_ONLY);
     }
     if (result == NULL)
 	result = "";

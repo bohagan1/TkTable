@@ -3,12 +3,12 @@
  *
  *	This module contains utility functions for table widgets.
  *
- * Copyright (c) 2000 Jeffrey Hobbs
+ * Copyright (c) 2000-2002 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id:  Exp $
+ * RCS: @(#) $Id: tkTableUtil.c,v 1.1 2000/08/31 02:06:25 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -50,8 +50,7 @@ TableOptionBdSet(clientData, interp, tkwin, value, widgRec, offset)
     int type	= (int) clientData;
     int result	= TCL_OK;
     int argc;
-    char **argv;
-
+    CONST84 char **argv;
 
     if ((type == BD_TABLE) && (value[0] == '\0')) {
 	/*
@@ -183,7 +182,7 @@ TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr,
 	char *oldValue, int nullOK)
 {
     int i, argc, result = TCL_OK;
-    char **argv;
+    CONST84 char **argv;
 
     /*
      * First check to see if the value really changed.

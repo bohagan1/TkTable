@@ -18,7 +18,7 @@
  * Copyright (c) 1998-1999 by Scriptics Corporation.
 
  *
- * Copyright (c) 1998-1999 Jeffrey Hobbs
+ * Copyright (c) 1998-2002 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -98,7 +98,7 @@ char *
 TableCellSort(Table *tablePtr, char *str)
 {
     int listArgc;
-    char **listArgv;
+    CONST84 char **listArgv;
     char *result;
 
     if (Tcl_SplitList(tablePtr->interp, str, &listArgc, &listArgv) != TCL_OK) {

@@ -4,12 +4,12 @@
  *	This is the header file for the module that implements
  *	table widgets for the Tk toolkit.
  *
- * Copyright (c) 1997-2000 Jeffrey Hobbs
+ * Copyright (c) 1997-2002 Jeffrey Hobbs
  *
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.9 2001/06/23 08:57:43 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.10 2001/07/01 01:33:17 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -28,6 +28,14 @@
 #define Tcl_GetString(objPtr)	Tcl_GetStringFromObj(objPtr, (int *)NULL)
 #endif
 
+/*
+ * Tcl/Tk 8.4 introduced better CONST-ness in the APIs, but we use CONST84 in
+ * some cases for compatibility with earlier Tcl headers to prevent warnings.
+ */
+#ifndef CONST84
+#  define CONST84
+#endif
+
 /* This EXTERN declaration is needed for Tcl < 8.0.3 */
 #ifndef EXTERN
 # ifdef __cplusplus
@@ -40,7 +48,7 @@
 #ifdef TCL_STORAGE_CLASS
 # undef TCL_STORAGE_CLASS
 #endif
-#ifdef BUILD_tkTable
+#ifdef BUILD_Tktable
 # define TCL_STORAGE_CLASS DLLEXPORT
 #else
 # define TCL_STORAGE_CLASS DLLIMPORT

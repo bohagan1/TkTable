@@ -4,12 +4,12 @@
  *	This module implements embedded windows for table widgets.
  *	Much of this code is adapted from tkGrid.c and tkTextWind.c.
  *
- * Copyright (c) 1998-2000 Jeffrey Hobbs
+ * Copyright (c) 1998-2002 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableWin.c,v 1.2 2000/08/18 03:34:11 hobbs Exp $
+ * RCS: @(#) $Id: tkTableWin.c,v 1.3 2000/08/31 02:09:18 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -43,7 +43,7 @@ static Tk_GeomMgr tableGeomType = {
 };
 
 /* windows subcommands */
-static char *winCmdNames[] = {
+static CONST84 char *winCmdNames[] = {
     "cget", "configure", "delete", "move", "names", (char *) NULL
 };
 enum winCommand {

@@ -3,12 +3,12 @@
  *
  *	This module implements tags for table widgets.
  *
- * Copyright (c) 1998-2001 Jeffrey Hobbs
+ * Copyright (c) 1998-2002 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableTag.c,v 1.9 2001/06/26 00:46:07 hobbs Exp $
+ * RCS: @(#) $Id: tkTableTag.c,v 1.10 2001/07/01 01:33:17 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -20,7 +20,7 @@ static unsigned int	TableTagGetPriority _ANSI_ARGS_((Table *tablePtr,
 static void	TableImageProc _ANSI_ARGS_((ClientData clientData, int x,
 	int y, int width, int height, int imageWidth, int imageHeight));
 
-static char *tagCmdNames[] = {
+static CONST84 char *tagCmdNames[] = {
     "celltag", "cget", "coltag", "configure", "delete", "exists",
     "includes", "lower", "names", "raise", "rowtag", (char *) NULL
 };
@@ -568,7 +568,7 @@ FindRowColTag(Table *tablePtr, int cell, int mode)
 	    sprintf(buf, " %d", cell);
 	    Tcl_Preserve((ClientData) interp);
 	    if (Tcl_VarEval(interp, cmd, buf, (char *)NULL) == TCL_OK) {
-		char *name = Tcl_GetStringResult(interp);
+		CONST char *name = Tcl_GetStringResult(interp);
 		if (name && *name) {
 		    /*
 		     * If a result was returned, check to see if it is
