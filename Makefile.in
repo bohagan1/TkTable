@@ -11,7 +11,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: Makefile.in,v 1.5 2002/04/02 02:21:27 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.6 2002/04/04 07:59:05 hobbs Exp $
 
 #========================================================================
 # Edit the following few lines when writing a new extension
@@ -166,7 +166,7 @@ WISH		= $(TCLSH_ENV) $(WISH_PROG)
 
 # The local includes must come first, because the TK_XINCLUDES can be
 # just a comment
-INCLUDES	= -I. -I"$(srcdir)/generic" \
+INCLUDES	= -I. -I"`@CYGPATH@ $(srcdir)/generic`" \
 		  @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@
 
 ## NO_EMBEDDED_RUNTIME means that the tkTable.tcl file will not be embedded
@@ -195,7 +195,7 @@ INCLUDES	= -I. -I"$(srcdir)/generic" \
 
 EXTRA_CFLAGS	= $(MEM_DEBUG_FLAGS) $(TBL_CFLAGS) @EXTRA_CFLAGS@
 
-DEFS		= @DEFS@ $(TCL_DEFS) $(EXTRA_CFLAGS) \
+DEFS		= $(TCL_DEFS) @DEFS@ $(EXTRA_CFLAGS) \
 		  -DTBL_COMMAND=\"table\" \
 		  -DTBL_RUNTIME=\"tkTable.tcl\" \
 		  -DTBL_RUNTIME_DIR=\"$(pkglibdir)\"
@@ -301,8 +301,7 @@ $($(PACKAGE)_LIB_FILE): $($(PACKAGE)_OBJECTS)
 #========================================================================
 # We need to enumerate the list of .c to .o lines here.
 # Unfortunately, there does not seem to be any other way to do this
-# in a Makefile-independent way.  We can't use VPATH because it picks up
-# object files that may be located in the source directory.
+# in a Makefile-independent way.
 #
 # In the following lines, $(srcdir) refers to the toplevel directory
 # containing your extension.  If your sources are in a subdirectory,
@@ -316,7 +315,7 @@ $($(PACKAGE)_LIB_FILE): $($(PACKAGE)_OBJECTS)
 # dependencies.
 #========================================================================
 
-VPATH = $(srcdir):$(srcdir)/generic:$(srcdir)/unix:$(srcdir)/win
+VPATH = $(srcdir)/generic:$(srcdir)/unix:$(srcdir)/win
 
 tkTable.tcl.h: $(srcdir)/library/tkTable.tcl
 	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' < `@CYGPATH@ $<` > '$@' || { rm -f $@; exit 1; }
@@ -356,10 +355,6 @@ distclean: clean
 # Install binary object libraries.  On Windows this includes both .dll and
 # .lib files.  Because the .lib files are not explicitly listed anywhere,
 # we need to deduce their existence from the .dll file of the same name.
-# Additionally, the .dll files go into the bin directory, but the .lib
-# files go into the lib directory.  On Unix platforms, all library files
-# go into the lib directory.  In addition, this will generate the pkgIndex.tcl
-# file in the install location (assuming it can find a usable tclsh8.2 shell)
 #
 # You should not have to modify this target.
 #========================================================================
@@ -404,7 +399,7 @@ install-bin-binaries:
 	  fi; \
 	done
 
-Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
+Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 

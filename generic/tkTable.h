@@ -9,7 +9,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.11 2002/03/13 20:15:20 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.12 2002/03/21 02:18:27 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -64,7 +64,7 @@
 #   endif
 #endif
 
-#if defined(WIN32) || defined(MAC_TCL)
+#if defined(WIN32) || defined(MAC_TCL) || defined(MAC_OSX_TK)
 /* XSync call defined in the internals for some reason */
 #   ifndef XSync
 #	define XSync(display, bool) {display->request++;}
@@ -80,7 +80,7 @@
 #	define DISABLED		"SystemDisabledText"
 #	define HIGHLIGHT	"SystemWindowFrame"
 #	define DEF_TABLE_FONT	"{MS Sans Serif} 8"
-#   elif defined(MAC_TCL)
+#   elif defined(MAC_TCL) || defined(MAC_OSX_TK)
 #	define NORMAL_BG	"systemWindowBody"
 #	define ACTIVE_BG	"#ececec"
 #	define SELECT_BG	"systemHighlight"
@@ -278,6 +278,9 @@ typedef struct {
     Tk_3DBorder insertBg;	/* the cursor color */
     Tk_Cursor cursor;		/* the regular mouse pointer */
     Tk_Cursor bdcursor;		/* the mouse pointer when over borders */
+#ifdef TITLE_CURSOR
+    Tk_Cursor titleCursor;	/* the mouse pointer when over titles */
+#endif
     int exportSelection;	/* Non-zero means tie internal table
 				 * to X selection. */
     TableState state;		/* Normal or disabled.	Table is read-only
@@ -322,6 +325,9 @@ typedef struct {
     /*
      * Cached Information
      */
+#ifdef TITLE_CURSOR
+    Tk_Cursor *lastCursorPtr;	/* pointer to last cursor defined. */
+#endif
     int titleRows, titleCols;	/* the number of rows|cols to use as a title */
     /* these are kept in real coords */
     int topRow, leftCol;	/* The topleft cell to display excluding the

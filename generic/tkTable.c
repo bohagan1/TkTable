@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.20 2002/03/21 02:18:27 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.21 2002/03/21 20:15:03 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -298,6 +298,10 @@ Tk_ConfigSpec tableSpecs[] = {
      Tk_Offset(Table, takeFocus), TK_CONFIG_NULL_OK },
     {TK_CONFIG_INT, "-titlecols", "titleCols", "TitleCols", "0",
      Tk_Offset(Table, titleCols), TK_CONFIG_NULL_OK },
+#ifdef TITLE_CURSOR
+    {TK_CONFIG_CURSOR, "-titlecursor", "titleCursor", "Cursor", "arrow",
+     Tk_Offset(Table, titleCursor), TK_CONFIG_NULL_OK },
+#endif
     {TK_CONFIG_INT, "-titlerows", "titleRows", "TitleRows", "0",
      Tk_Offset(Table, titleRows), TK_CONFIG_NULL_OK },
     {TK_CONFIG_BOOLEAN, "-usecommand", "useCommand", "UseCommand", "1",
@@ -896,7 +900,6 @@ TableDestroy(ClientData clientdata)
     register Table *tablePtr = (Table *) clientdata;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
-    char *value;
 
     /* These may be repetitive from DestroyNotify, but it doesn't hurt */
     /* cancel any pending update or timer */
@@ -1288,6 +1291,43 @@ TableEventProc(clientData, eventPtr)
 		} else {
 		    Tk_UndefineCursor(tablePtr->tkwin);
 		}
+#ifdef TITLE_CURSOR
+	    } else if (tablePtr->flags & (OVER_BORDER|OVER_TITLE)) {
+		Tk_Cursor cursor = tablePtr->cursor;
+
+		//tablePtr->flags &= ~(OVER_BORDER|OVER_TITLE);
+
+		if (tablePtr->titleCursor != None) {
+		    TableWhatCell(tablePtr, eventPtr->xmotion.x,
+			    eventPtr->xmotion.y, &row, &col);
+		    if ((row < tablePtr->titleRows) ||
+			    (col < tablePtr->titleCols)) {
+			if (tablePtr->flags & OVER_TITLE) {
+			    break;
+			}
+			tablePtr->flags |= OVER_TITLE;
+			cursor = tablePtr->titleCursor;
+		    }
+		}
+		if (cursor != None) {
+		    Tk_DefineCursor(tablePtr->tkwin, cursor);
+		} else {
+		    Tk_UndefineCursor(tablePtr->tkwin);
+		}
+	    } else if (tablePtr->titleCursor != None) {
+		Tk_Cursor cursor = tablePtr->cursor;
+
+		TableWhatCell(tablePtr, eventPtr->xmotion.x,
+			eventPtr->xmotion.y, &row, &col);
+		if ((row < tablePtr->titleRows) ||
+			(col < tablePtr->titleCols)) {
+		    if (tablePtr->flags & OVER_TITLE) {
+			break;
+		    }
+		    tablePtr->flags |= OVER_TITLE;
+		    cursor = tablePtr->titleCursor;
+		}
+#endif
 	    }
 	    break;
 
@@ -1572,7 +1612,7 @@ TableUndisplay(register Table *tablePtr)
     seen[3] = col;
 }
 
-#if defined(MAC_TCL) || (defined(WIN32) && defined(TCL_THREADS))
+#if defined(MAC_TCL) || (defined(WIN32) && defined(TCL_THREADS)) || defined(MAC_OSX_TK)
 #define NO_XSETCLIP
 #endif
 /*
