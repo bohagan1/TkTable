@@ -11,7 +11,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: Makefile.in,v 1.4 2002/03/28 02:03:23 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.5 2002/04/02 02:21:27 hobbs Exp $
 
 #========================================================================
 # Edit the following few lines when writing a new extension
@@ -52,11 +52,11 @@ Tktable_OBJECTS		= $(Tktable_SOURCES:.c=.@OBJEXT@)
 Tktable_LIB_FILE	= @Tktable_LIB_FILE@
 
 #========================================================================
-# Enumerate the names of the source files included in this package.
-# This will be used when a dist target is added to the Makefile.
+# RUNTIME_SOURCES identifies Tcl runtime files that are associated with
+# this package that need to be installed, if any.
 #========================================================================
 
-PKG_TCL_SOURCES	= tkTable.tcl
+RUNTIME_SOURCES	= tkTable.tcl
 
 PKG_MAN_PAGES	= tkTable.n
 
@@ -144,26 +144,29 @@ TK_BIN_DIR	= @TK_BIN_DIR@
 TCL_LIBS	= @TCL_LIBS@
 TK_LIBS		= @TK_LIBS@
 
+#========================================================================
+# TCLLIBPATH seeds the auto_path in Tcl's init.tcl so we can test our
+# package without installing.  The other environment variables allow us
+# to test against an uninstalled Tcl.  Add special env vars that you
+# require for testing here (like TCLX_LIBRARY).
+#========================================================================
+
 EXTRA_PATH	= $(top_builddir):$(TCL_BIN_DIR):$(TK_BIN_DIR)
-TCLSH_PROG	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` \
-		  LD_LIBRARY_PATH="$(EXTRA_PATH):$(LD_LIBRARY_PATH)" \
-		  LIBPATH="$(EXTRA_PATH):${LIBPATH}" \
-		  SHLIB_PATH="$(EXTRA_PATH):${SHLIB_PATH}" \
-		  TCLLIBPATH="$(top_builddir)" \
-		  PATH="$(EXTRA_PATH):$(PATH)" \
-		  @TCLSH_PROG@
-WISH_PROG	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` \
+TCLSH_ENV	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` \
 		  TK_LIBRARY=`@CYGPATH@ $(TK_SRC_DIR)/library` \
 		  LD_LIBRARY_PATH="$(EXTRA_PATH):$(LD_LIBRARY_PATH)" \
 		  LIBPATH="$(EXTRA_PATH):${LIBPATH}" \
 		  SHLIB_PATH="$(EXTRA_PATH):${SHLIB_PATH}" \
-		  TCLLIBPATH="$(top_builddir)" \
 		  PATH="$(EXTRA_PATH):$(PATH)" \
-		  @WISH_PROG@
+		  TCLLIBPATH="$(top_builddir)"
+TCLSH_PROG	= @TCLSH_PROG@
+WISH_PROG	= @WISH_PROG@
+TCLSH		= $(TCLSH_ENV) $(TCLSH_PROG)
+WISH		= $(TCLSH_ENV) $(WISH_PROG)
 
 # The local includes must come first, because the TK_XINCLUDES can be
 # just a comment
-INCLUDES	= -I. -I$(srcdir)/generic \
+INCLUDES	= -I. -I"$(srcdir)/generic" \
 		  @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@
 
 ## NO_EMBEDDED_RUNTIME means that the tkTable.tcl file will not be embedded
@@ -190,9 +193,9 @@ INCLUDES	= -I. -I$(srcdir)/generic \
 ## Jeff's magic extra debug flag
 #TBL_CFLAGS	+= -DDEBUG
 
-EXTRA_CFLAGS	= $(TCL_DEFS) $(PROTO_FLAGS) $(SECURITY_FLAGS) $(MEM_DEBUG_FLAGS) $(KEYSYM_FLAGS) $(NO_DEPRECATED_FLAGS) $(TCL_EXTRA_CFLAGS) $(TBL_CFLAGS)
+EXTRA_CFLAGS	= $(MEM_DEBUG_FLAGS) $(TBL_CFLAGS) @EXTRA_CFLAGS@
 
-DEFS		= @DEFS@ $(EXTRA_CFLAGS) \
+DEFS		= @DEFS@ $(TCL_DEFS) $(EXTRA_CFLAGS) \
 		  -DTBL_COMMAND=\"table\" \
 		  -DTBL_RUNTIME=\"tkTable.tcl\" \
 		  -DTBL_RUNTIME_DIR=\"$(pkglibdir)\"
@@ -235,9 +238,10 @@ doc:
 install: all install-binaries install-libraries install-doc
 
 install-binaries: binaries install-lib-binaries install-bin-binaries
-	$(INSTALL_DATA) pkgIndex.tcl $(pkglibdir)
-	$(INSTALL_DATA) $(srcdir)/license.txt $(pkglibdir)
-	$(INSTALL_DATA) $(srcdir)/README.txt $(pkglibdir)
+	@mkdir -p $(DESTDIR)$(pkglibdir)
+	$(INSTALL_DATA) pkgIndex.tcl $(DESTDIR)$(pkglibdir)
+	$(INSTALL_DATA) $(srcdir)/license.txt $(DESTDIR)$(pkglibdir)
+	$(INSTALL_DATA) $(srcdir)/README.txt $(DESTDIR)$(pkglibdir)
 
 #========================================================================
 # This rule installs platform-independent files, such as header files.
@@ -251,10 +255,10 @@ install-libraries: libraries
 #========================================================================
 
 install-doc: doc
-	mkdir -p $(DESTDIR)$(pkglibdir)/html
+	@mkdir -p $(DESTDIR)$(pkglibdir)/html
 	@list='$(PKG_MAN_PAGES)'; for p in $$list; do \
 		html=`basename $$p|sed -e 's/.[^.]*$$//'`.html; \
-	  	$(INSTALL_DATA) $(srcdir)/doc/$$html $(pkglibdir)/html/; \
+	  	$(INSTALL_DATA) $(srcdir)/doc/$$html $(DESTDIR)$(pkglibdir)/html/; \
 	done
 
 html:
@@ -269,8 +273,13 @@ html:
 # Piping to cat is necessary on Windows to see the output, and
 # harmless on Unix
 test: binaries libraries
-	$(WISH_PROG) `@CYGPATH@ $(srcdir)/tests/all.tcl` \
-		-exedir `@CYGPATH@ $(bindir)` $(TESTFLAGS) | cat
+	$(WISH) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) | cat
+
+shell: binaries libraries
+	@$(WISH) $(SCRIPT)
+
+gdb:
+	$(TCLSH_ENV) gdb $(WISH_PROG) $(SCRIPT)
 
 depend:
 
@@ -335,8 +344,7 @@ pkgIndex.tcl:
 
 clean:  
 	-test -z "$(BINARIES)" || rm -f $(BINARIES)
-	-rm -f *.o core *.core
-	-rm -f *.$(OBJEXT)
+	-rm -f *.$(OBJEXT) core *.core
 	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean: clean
@@ -356,7 +364,8 @@ distclean: clean
 # You should not have to modify this target.
 #========================================================================
 
-install-lib-binaries: installdirs
+install-lib-binaries:
+	@mkdir -p $(DESTDIR)$(pkglibdir)
 	@list='$(lib_BINARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
 	    echo " $(INSTALL_PROGRAM) $$p $(DESTDIR)$(pkglibdir)/$$p"; \
@@ -373,8 +382,11 @@ install-lib-binaries: installdirs
 	    fi; \
 	  fi; \
 	done
-	@list='$(PKG_TCL_SOURCES)'; for p in $$list; do \
-	  $(INSTALL_DATA) $(srcdir)/library/$$p $(pkglibdir)/$$p; \
+	@list='$(RUNTIME_SOURCES)'; for p in $$list; do \
+	  if test -f $(srcdir)/library/$$p; then \
+	    echo " Install $$p $(DESTDIR)$(pkglibdir)/$$p"; \
+	    $(INSTALL_DATA) $(srcdir)/library/$$p $(DESTDIR)$(pkglibdir)/$$p; \
+	  fi; \
 	done
 
 #========================================================================
@@ -383,7 +395,8 @@ install-lib-binaries: installdirs
 # You should not have to modify this target.
 #========================================================================
 
-install-bin-binaries: installdirs
+install-bin-binaries:
+	@mkdir -p $(DESTDIR)$(bindir)
 	@list='$(bin_BINARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
 	    echo " $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/$$p"; \
@@ -399,9 +412,6 @@ uninstall-binaries:
 	list='$(BINARIES)'; for p in $$list; do \
 	  rm -f $(DESTDIR)$(libdir)/$$p; \
 	done
-
-installdirs:
-	mkdir -p $(DESTDIR)$(pkglibdir)
 
 #========================================================================
 # Distribution creation
@@ -456,8 +466,7 @@ dist: dist-clean
 
 	(cd $(DIST_ROOT); $(COMPRESS);)
 
-.PHONY: all binaries clean depend distclean doc install installdirs \
-libraries test
+.PHONY: all binaries clean depend distclean doc install libraries test
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
