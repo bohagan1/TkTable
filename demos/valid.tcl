@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using wish \
-	exec wish "$0" ${1+"$@"}
+exec wish "$0" ${1+"$@"}
 
 ## valid.tcl
 ##
@@ -9,20 +9,12 @@
 ##
 ## jeff.hobbs@acm.org
 
+source [file join [file dirname [info script]] loadtable.tcl]
+
 array set table {
-    library	Tktable
     rows	10
     cols	10
     table	.table
-}
-append table(library) [info sharedlibext]
-
-if {[string match {} [info commands table]] && \
-	[catch {package require Tktable} err]} {
-    if {[catch {load [file join [pwd] .. $table(library)]} err] && \
-	    [catch {load [file join [pwd] $table(library)]} err]} {
-	error $err
-    }
 }
 
 proc colorize num {
@@ -80,7 +72,6 @@ table $t \
 	-selectmode extended \
 	-colstretch unset \
 	-rowstretch unset \
-	-batchmode 1 \
 	-validate yes \
 	-vcmd {if {![%W tag includes title %C]} { validate %c %S } }
 
@@ -91,9 +82,12 @@ $t width 0 3
 
 scrollbar .tsy -command [list $t yview]
 scrollbar .tsx -command [list $t xview] -orient horizontal
+button .exit -text "Exit" -command {exit}
+
 grid .example -     -sticky ew
 grid $t       .tsy   -sticky news
 grid .tsx            -sticky ew
+grid .exit - -sticky ew
 grid columnconfig . 0 -weight 1
 grid rowconfig . 1 -weight 1
 

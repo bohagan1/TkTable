@@ -8,7 +8,171 @@
 ## changes by Hobbs COPYRIGHT 1998 Jeffrey Hobbs
 ## jeff.hobbs@acm.org
 ##
+# * tkTable v0.55-1.x includes additions contributed by:
+# *        tmoore@spatial.ca (Tom Moore)
+# *        sebastian.wangnick@eurocontrol.de (Sebastian Wangnick)
+# *        paulf@lamont.ldgo.columbia.edu
+# *        peter@bj-ig.de (Peter Brueckner)
+# *        jeff.hobbs@acm.org (Jeffrey Hobbs)
+# *        ellson@lucent.com (John Ellson)
+# *
 ##########################################################################
+
+**** v2.2 10 July 1998 ****
+
+Undid caching of activeLayout in favor of activeTagPtr because I was
+abusing the nature of the token returned by Tk_ComputeTextLayout,
+causing amazingly odd cores.
+
+Changed TableGetLastCell definition to fix scrollbar bug. (Brutti)
+
+Changed "#if (TK_MINOR_VERSION > 0)" to "#ifdef TCL_UTF_MAX" to
+remove the ambiguity of purpose (for UTF code).
+
+Fixed bug in TableInsertChars that mangled the purpose of -autoclear,
+as well as confusing icursor index when using it.
+
+**** v2.1 2 July 1998 ****
+
+Updated man pages, generated new HTML file.
+
+Reworked directory structure, updated makefiles.
+
+Removed -batchmode.  It was pretty useless, and potentially confusing.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Fixed bug for Tk8.1a2 Unicode display in TableDisplay where the length
+of the display string was not calculated correctly.
+
+Fixed background area redraw bug in Windows.  Reworked to take out the
+#ifdef WIN32 code without too much compromise.
+
+Added TableRefresh command that subsumes many CellVCoords/Invalidate
+call combos.
+
+Adjusted TableWhatCell to what it was in v1.82, and made fix in
+TableDisplay for bounds to prevent <=0 invalidWidth|Height.
+
+Added clear command, subsumes flush command, plus adds features.
+
+Made some cleanup from DestroyNotify repetitive in TableDestroy.
+
+Added MapNotify event handler to ensure that changes to the table
+made when iconified will still cause an update.
+
+Changed "single" and "fast" drawmodes to not set -bd 1 as a side
+effect, but instead to force 0..1 to allow for fast drawing without
+any borders.  Skipped border drawing case statement when -bd is 0.
+
+Changed "tag cell ..." to only invalidate for redraw when the affected
+cell is visible.
+
+Added check for NULL tablePtr->tkwin in TableCellVCoords.  Could
+cause problems where it was used to replace TableCellCoords.
+
+Fixed bug in TableFetchSelection that truncated the string returned
+by -selectioncommand to the length of the original string.  Also
+fixed mem leak (didn't free all DStrings in an error), and changed
+it so that a background error is triggered if there is a problem
+with the -selectioncommand.
+
+Fixed bug in TableDisplay where last row, if one pixel hi, wouldn't
+get redrawn properly.
+
+Changed default fonts to those used for entry widgets.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Added UTF char (Unicode) support, based on 8.1a2 tkEntry.c.  Had
+to be conditionalized because it doesn't exist in 8.0.
+
+Added -multiline option for tags to allow old one-line text only,
+Reworked tag options so that tag values that aren't ever set won't
+affect other tags.
+
+Fixed seg fault bug in CMD_ACTIVATE when Tk_PointToChar could be called
+on double-click, but TableDisplay hadn't yet been called (because it is
+waiting for idle) which is required to set tablePtr->activeLayout
+properly.  Also fixed mem leak with old activeLayout not being freed when
+it changed.
+
+Speed improvement - changed from using Tk_GetGC/Tk_FreeGC to XCreateGc/
+XChangeGC/XFreeGC.  Since it was highly unlikely that the caching
+provided in the Tk routines would ever benefit us, moving to direct
+X calls and manipulating just one GC should be faster.
+
+**** v2.00 24 April 1998 ****
+
+Update man pages, generated new HTML version.
+
+Added "single" drawing mode, and made "single" and "fast" both set
+-borderwidth to 1 as a side effect.
+
+Fixed seg fault on Windows involving large numbers of rows.  Unsure
+exactly what fixed it, but the problem disappeared amidst all the
+changes since v1.82...
+
+Updated tkAppInit.c to Tk8.1 version.
+
+Added ifdef for Win32 default colors.
+
+Since we can now have multi-line cells, changed -rowheight and height
+to work the same as -colwidth and width did (+ nums for size in line,
+- for sizes in pixels).
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Added new "make static" option for making a static library.
+
+Reworked scrollbar calcs again based on pixels.  Fixes all funny off by
+half a cell problems.  Also prevents scrolling when only title areas are
+visible (those are, by design, not scrollable).
+
+Changed stretching to stretch the last row/col for any stretchmode but
+"none", to prevent empty space from appearing.
+
+Fixed interpretation of CellVCoords to return 1 on slightly visible
+cells (now only a 1 pixel square size is required to be considered
+visible - used to be 1/4 the desired cell size).
+
+Added support to allow the second click into the active cell to select
+the nearest character.
+
+Changed <Return> binding to work with multi-line cells.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+*** Undid 60.06.98 - bad fix
+Fixed bug in TableWhatCell that caused the returned cell to be one more
+than expected when the edge was passed in.
+***
+
+Made TableVarProc not cause an Invalidate call if it was
+triggered by SetActiveIndex.
+
+Changed around some function names for sense of modularity (preparing
+better C API).
+
+Commented all procedures in tkTable.c.
+
+Broke up tkTable.c into constituent files.
+
+Added support for embedded windows via "window" submethod.
+
+Fixed quirk in xscrollbar that would make it appear as it all was
+in view when the last column was only partially visible. (Brutti)
+
+Changed several CellCoord calls to CellVCoord calls to only invalidate
+if necessary.
+
+Reworked merging of tags and determination of active cell.  State
+disabled cells no longer receive the "active" look, although they
+are still indexed as active.
+
+New -selecttitles option, removed prohibition of selecting title areas.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Removed all KANJI, IMP and TK4 #ifdef code.  tkTable development now
+focused 100% on Tk8+.  Also removed Itcl stuff since itcl for Tcl8
+should be different.
+	**** INCOMPATIBILITY FOR TK4/KANJI/ITCL USERS ****
 
 **** v1.82 3 April 1998 ****
 
@@ -22,7 +186,7 @@ Simplified caching of col tags for display.
 Changed code that referenced interp->result to use accessor functions.
 
 Fixed problem where flat reliefs would be eliminated because they
-were assumed to be undefined (TK_RELIEF_FLAT == 0 now).
+were assumed to be undefined (TK_RELIEF_FLAT changed in Tk8.1).
 
 Added -bordercursor and -resizeborders option, added PointerMotionMask
 to event handler, moving the tkTableCheckBorder event into C.  Should

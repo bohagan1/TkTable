@@ -8,22 +8,13 @@
 ##
 ## jeff.hobbs@acm.org
 
+source [file join [file dirname [info script]] loadtable.tcl]
+
 array set table {
-    library	Tktable
     rows	10
     cols	10
     table	.table
     array	DATA
-}
-append table(library) [info sharedlibext]
-
-## Ensure that the table library extension is loaded
-if {[string match {} [info commands table]] && \
-	[catch {package require Tktable} err]} {
-    if {[catch {load [file join [pwd] .. $table(library)]} err] && \
-	    [catch {load [file join [pwd] $table(library)]} err]} {
-	error $err
-    }
 }
 
 proc fill { array x y } {
@@ -57,6 +48,8 @@ label .label -text "TkTable -command Example"
 label .current -textvar CURRENT -width 5
 entry .active -textvar ACTIVE
 
+bind .active <Return> "$table(table) curvalue \[%W get\]"
+
 fill $table(array) $table(rows) $table(cols)
 set t $table(table)
 table $table(table) -rows $table(rows) -cols $table(cols) \
@@ -71,6 +64,9 @@ table $table(table) -rows $table(rows) -cols $table(cols) \
 	-flashmode on -browsecommand {
     set CURRENT %S
     set ACTIVE [%W get %S]
+} -validate 1 -validatecommand {
+    set ACTIVE %S
+    return 1
 }
 
 scrollbar .sy -command [list $table(table) yview] -orient v
@@ -80,7 +76,7 @@ grid .current .active - -sticky ew
 grid $table(table) - .sy -sticky nsew
 grid .sx - -sticky ew
 grid columnconfig . 1 -weight 1
-grid rowconfig . 1 -weight 1
+grid rowconfig . 2 -weight 1
 
 $table(table) tag config OddRow -bg orange -fg purple
 $table(table) tag config OddCol -bg brown -fg pink

@@ -9,8 +9,9 @@
 ##
 ## jeff.hobbs@acm.org
 
+source [file join [file dirname [info script]] loadtable.tcl]
+
 array set table {
-    library	Tktable
     rows	10
     cols	10
     page	AA
@@ -19,15 +20,6 @@ array set table {
     AA		orange
     BB		blue
     CC		green
-}
-append table(library) [info sharedlibextension]
-
-if {[string match {} [info commands table]] && \
-	[catch {package require Tktable} err]} {
-    if {[catch {load [file join [pwd] .. $table(library)]} err] && \
-	    [catch {load [file join [pwd] $table(library)]} err]} {
-	error $err
-    }
 }
 
 proc colorize num { if {$num>0 && $num%2} { return colored } }
@@ -91,7 +83,6 @@ table $t \
 	-selectmode extended \
 	-colstretch unset \
 	-rowstretch unset \
-	-batchmode 1 \
 	-width 5 -height 5 \
 	-browsecommand {set table(current) %S}
 
@@ -107,11 +98,13 @@ $t width 0 3 2 7
 
 scrollbar .sy -command [list $t yview]
 scrollbar .sx -command [list $t xview] -orient horizontal
+button .exit -text "Exit" -command exit
 
 grid .example -       -      -     -   -sticky ew
 grid .current .active .lpage .page -   -sticky ew
 grid $t       -       -      -     .sy -sticky ns
 grid .sx      -       -      -         -sticky ew
+grid .exit - - - - -sticky ew
 grid columnconfig . 1 -weight 1
 grid rowconfig . 2 -weight 1
 grid config $t -sticky news

@@ -63,18 +63,6 @@ A boolean value which specifies whether the first
 keypress in a cell will delete whatever text was previously
 there. Defaults to 0.
 <P>
-Command-Line Name:-<B>batchmode</B><BR>
-
-Database Name: <B>batchMode</B><BR>
-
-Database Class: <B>BatchMode</B>
-<P>
-If true, updates are not forced out at any point, the
-widget waits for Tk to be idle before it repaints the
-screen. If false, flashes, variable updates and the
-cursor changes are forced immediately to the screen.
-Defaults to false.
-<P>
 Command-Line Name:-<B>bordercursor</B><BR>
 
 Database Name: <B>borderCursor</B><BR>
@@ -167,7 +155,7 @@ width.
 <B>last</B> The last column will be stretched to fill the window
 space allocated to the table.
 <P>
-<B>fill</B> (only valid for rowstretch currently)
+<B>fill</B> (only valid for <B>-rowstretch</B> currently)
 The table will get more or less columns according
 to the window space allocated to the table. This
 mode has numerous quirks and may disappear in the
@@ -197,9 +185,9 @@ Database Name: <B>colWidth</B><BR>
 
 Database Class: <B>ColWidth</B>
 <P>
-Default column width in characters in the default font.
-Defaults to 10. If the number is negative, it is
-interpreted as an exact pixel value instead.
+Default column width, interpreted as characters in the
+default font when the number is positive, or pixels if
+it is negative. Defaults to 10.
 <P>
 Command-Line Name:-<B>command</B><BR>
 
@@ -223,11 +211,10 @@ Database Class: <B>DrawMode</B>
 <P>
 Sets the table drawing mode to one of the following
 options:
-<P>
 <B>slow</B> The table is drawn to an offscreen pixmap using
-the Tk bordering functions. This means there will
-be no flashing, but this mode is slow for all but
-small tables.
+the Tk bordering functions (double-buffering).
+This means there will be no flashing, but this
+mode is slow for larger tables.
 <P>
 <B>compatible</B><BR>
 
@@ -237,10 +224,17 @@ screen may flash on update. This is the default.
 <P>
 <B>fast</B> The table is drawn directly to the screen and the
 borders are done with fast X calls, so they are
-always one pixel wide only. This mode provides
-best performance for large tables, but can flash
-on redraw and is not 100% Tk compatible on the
-border mode.
+always one pixel wide only. As a side effect, it
+restricts <B>-borderwidth</B> to a range of 0 or 1. This
+mode provides best performance for large tables,
+but can flash on redraw and is not 100% Tk compatible
+on the border mode.
+<P>
+<B>single</B><BR>
+
+The table is drawn to the screen as in fast mode,
+but only single pixel lines are drawn (not square
+borders).
 <P>
 Command-Line Name:-<B>flashmode</B><BR>
 
@@ -272,13 +266,12 @@ Database Class: <B>Height</B>
 Specifies the desired height for the window, in rows.
 If zero or less, then the desired height for the window
 is made just large enough to hold all the rows in the
-table.    The height can be further limited by
-<B>-maxheight</B>.
+table. The height can be further limited by <B>-maxheight</B>.
 <P>
 Command-Line Name:-<B>invertselected</B><BR>
 
-Database Name: <B>invertSelected</B><BR>
-
+Database Name: <B>invertSelected</B>
+<P>
 Database Class: <B>InvertSelected</B>
 <P>
 Specifies whether the foreground and background of an
@@ -304,6 +297,15 @@ Database Class: <B>MaxWidth</B>
 The max width in pixels that the window will request.
 Defaults to 800.
 <P>
+Command-Line Name:-<B>multiline</B><BR>
+
+Database Name: <B>multiline</B><BR>
+
+Database Class: <B>Multiline</B>
+<P>
+Specifies the default setting for the multiline tag
+option. Defaults to 1.
+<P>
 Command-Line Name:-<B>resizeborders</B><BR>
 
 Database Name: <B>resizeBorders</B><BR>
@@ -319,8 +321,9 @@ Database Name: <B>rowHeight</B><BR>
 
 Database Class: <B>RowHeight</B>
 <P>
-Height of default row in pixels (0, the default, means
-set to font height).
+Default row height, interpreted as lines in the default
+font when the number is positive, or pixels if it is
+negative. Defaults to 1.
 <P>
 Command-Line Name:-<B>roworigin</B><BR>
 
@@ -382,10 +385,12 @@ Database Class: <B>SelectionCommand</B>
 <P>
 Specifies a command to evaluate when the selection is
 retrieved from a table via the selection mechanism (ie:
-evaluating &laquo;selection get"). The return value from
+evaluating &laquo;<B>selection</B> <B>get</B>"). The return value from
 this command will become the string passed on by the
 selection mechanism. It uses the %-substition model
-described in COMMAND SUBSTITUTION below.
+described in COMMAND SUBSTITUTION below. If an error
+occurs, a Tcl background error is generated and nothing
+is returned.
 <P>
 Command-Line Name:-<B>selectmode</B><BR>
 
@@ -399,6 +404,15 @@ but the default bindings expect it to be either <B>single</B>,
 <B>browse</B>, <B>multiple</B>, or <B>extended</B>; the default value is
 <B>browse</B>. These styles are like those for the Tk listbox,
 except expanded for 2 dimensions.
+<P>
+Command-Line Name:-<B>selecttitle</B><BR>
+
+Database Name: <B>selectTitles</B><BR>
+
+Database Class: <B>SelectTitles</B>
+<P>
+Specifies whether title cells should be allowed in the
+selection. Defaults to 0 (disallowed).
 <P>
 Command-Line Name:-<B>selecttype</B><BR>
 
@@ -463,8 +477,8 @@ A boolean specifying whether validation should occur
 for the active buffer. Defaults to 0.
 <P>
 Command-Line Name:-<B>validatecommand</B> <B>or</B> -<B>vcmd</B>
-Database Name: <B>validateCommand</B>
-<P>
+Database Name: <B>validateCommand</B><BR>
+
 Database Class: <B>ValidateCommand</B>
 <P>
 Specifies a command to execute when the active cell is
@@ -502,34 +516,44 @@ Specifies the desired width for the window, in columns.
 If zero or less, then the desired width for the window
 is made just large enough to hold all the columns in
 the table. The width can be further limited by
-<B>-maxwidth</B>.<BR>
+<B>-maxwidth</B>.
+<P>
+Command-Line Name:-<B>wrap</B><BR>
+
+Database Name: <B>wrap</B><BR>
+
+Database Class: <B>Wrap</B>
+<P>
+Specifies the default wrap value for tags. Defaults to
+0.<BR>
 
 _________________________________________________________________
 
 <H2><A NAME="sect4" HREF="#toc4"><B>Description</B></A></H2>
 
 <P>
-The <B>table</B> command creates a 2-dimensional grid of cells
-which can used to display or update the contents of a Tcl
-array variable. The widget has an active cell, the contents
-of which can be edited (when the state is normal). The
-widget supports a default style for the cells and also multiple
-<I>tags</I>, which can be used to change the <B>foreground</B>,
-<B>background</B>, <B>font</B>, <B>relief</B> and <B>anchor</B> for a row, column or
-cell. A cell <I>flash</I> can be set up so that newly changing
-cells will change color for a specified amount of time.
+The <B>table</B> command creates a 2-dimensional grid of cells.
+The table can use a Tcl array variable or Tcl command for
+data storage and retrieval. The widget has an active cell,
+the contents of which can be edited (when the state is normal).
+The widget supports a default style for the cells and
+also multiple <I>tags</I>, which can be used to change the style of
+a row, column or cell (see TAGS for details). A cell <I>flash</I>
+can be set up so that changed cells will change color for a
+specified amount of time ("blink"). Cells can have embedded
+images or windows, as described in TAGS and &laquo;EMBEDDED WINDOWS"
+respectively.
 <P>
 One or more cells may be selected as described below. If a
-table is exporting its selection (see <B>exportSelection</B>
+table is exporting its selection (see <B>-exportselection</B>
 option), then it will observe the standard X11 protocols for
-handling the selection. See THE SELECTION below for
-details.
+handling the selection. See THE SELECTION for details.
 <P>
 It is not necessary for all the cells to be displayed in the
 table window at once; commands described below may be used
 to change the view in the window. Tables allow scrolling in
-both directions using the standard <B>xScrollCommand</B> and
-<B>yScrollCommand</B> options. They also support scanning, as
+both directions using the standard <B>-xscrollcommand</B> and
+<B>-yscrollcommand</B> options. They also support scanning, as
 described below.
 <P>
 In order to obtain good performance, the table widget supports
@@ -559,10 +583,11 @@ It is specified with the <B>activate</B> widget command.
 
 <DT><B>anchor</B> </DT></DT>
 <DD>     Indicates the anchor point for the selection,
-which is set with the <B>selection</B> <B>anchor</B> widget
-command.
 </DD>
 </DL>
+<P>
+which is set with the <B>selection</B> <B>anchor</B> widget
+command.
 <P>
 <B>bottomright</B> Indicates the bottom-rightmost cell visible in
 the table.
@@ -636,48 +661,72 @@ default, cells are displayed as determined by the <B>background</B>,
 <B>font</B>, and <B>foreground</B> options for the table widget.
 However, display options may be associated with individual
 tags using the ``<I>pathName</I> <B>tag</B> <B>configure</B>'' widget command.
+<P>
 If a cell has been tagged, then the display options associated
 with the tag override the default display style. The
 following options are currently supported for tags:
 
 <DL>
 
-<DT><B>-anchor</B></DT></DT>
+<DT><B>-anchor</B> <I>anchor</I></DT></DT>
 <DD>
-anchoring in the cell space
+Anchor for item in the cell space.
 </DD>
 
-<DT><B>-background</B> or <B>-bg</B></DT></DT>
+<DT><B>-background</B> or <B>-bg</B> <I>color</I></DT></DT>
 <DD>
-background color of the cell
+Background color of the cell
 </DD>
 
-<DT><B>-font</B></DT></DT>
+<DT><B>-font</B> <I>fontName</I></DT></DT>
 <DD>
-font for the cell
+Font for text in the cell.
 </DD>
 
-<DT><B>-foreground</B> or <B>-fg</B></DT></DT>
+<DT><B>-foreground</B> or <B>-fg</B> <I>color</I></DT></DT>
 <DD>
-foreground color of the cell
+Foreground color of the cell.
 </DD>
 
-<DT><B>-image</B></DT></DT>
+<DT><B>-justify</B> <I>justify</I></DT></DT>
 <DD>
-an image to display in the cell instead of text
+How to justify multi-line text in a cell. It must
+be one of <B>left</B>, <B>right</B>, or <B>center</B>.
 </DD>
 
-<DT><B>-relief</B></DT></DT>
+<DT><B>-image</B> <I>imageName</I></DT></DT>
 <DD>
-the relief for the cell
+An image to display in the cell instead of text.
 </DD>
 
-<DT><B>-state</B></DT></DT>
+<DT><B>-multiline</B> <I>boolean</I></DT></DT>
 <DD>
-the state of the cell, to allow for certain cells
+Whether to display text with newlines on multiple
+lines.
+</DD>
+
+<DT><B>-relief</B> <I>relief</I></DT></DT>
+<DD>
+The relief for the cell.
+</DD>
+
+<DT><B>-showtext</B> <I>boolean</I></DT></DT>
+<DD>
+Whether to show the text over an image.
+</DD>
+
+<DT><B>-state</B> <I>state</I></DT></DT>
+<DD>
+The state of the cell, to allow for certain cells
 to be disabled. This prevents the cell from being
-edited by the <I>insert</I> or <I>delete</I> <I>methods</I>, <I>but</I> <I>a</I>
-<I>direct</I> <I>set</I> will not be prevented.
+edited by the <I>insert</I> or <I>delete</I> methods, but a
+direct <I>set</I> will not be prevented.
+</DD>
+
+<DT><B>-wrap</B> <I>boolean</I></DT></DT>
+<DD>
+Whether characters should wrap in a cell that is
+not wide enough.
 </DD>
 </DL>
 <P>
@@ -697,37 +746,116 @@ used; the next-highest-priority tag's option will used
 instead. If no tag specifies a particular display option,
 then the default style for the widget will be used.
 <P>
-Images are used for display purposes only. If an image is
-specified in a tag, then that image will be displayed
-instead of the text for the cell. However, editing in that
+Images are used for display purposes only. Editing in that
 cell will still be enabled and any querying of the cell will
-show the text value of the cell.
+show the text value of the cell, regardless of the value of
+<B>-showtext</B>.
 
-<H2><A NAME="sect7" HREF="#toc7"><B>the</B> <B>Selection</B></A></H2>
+<H2><A NAME="sect7" HREF="#toc7"><B>Embedded</B> <B>Windows</B></A></H2>
 
 <P>
-Table selections are available as type STRING (or
-COMPOUND_TEXT with the Kanji patch). By default, the value
-of the selection will be the values of the selected cells in
-nested Tcl list form where each row is a list and each
-column is an element of a row list. You can change the way
-this value is interpreted by setting the <B>-rowseparator</B> and
-<B>-colseparator</B> options. For example, default Excel format
-would be to set <B>-rowseparator</B> to &laquo;\n&raquo; and <B>-colseparator</B> to
-&laquo;\t". Changes these values affects both how the table sends
-out the selection and reads in pasted data, ensuring that
-the table should always be able to cut and paste to itself.
-It is possible to change how pastes are handled by editing
-the table library procedure <B>tk_tablePasteHandler</B>. This
-might be necessary if <B>-selectioncommand</B> is set.
+There may be any number of embedded windows in a table
+widget (one per cell), and any widget may be used as an
+embedded window (subject to the usual rules for geometry
+management, which require the table window to be the parent
+of the embedded window or a descendant of its parent). The
+embedded window's position on the screen will be updated as
+the table is modified or scrolled, and it will be mapped and
+unmapped as it moves into and out of the visible area of the
+table widget. Each embedded window occupies one cell's
+worth of space in the table widget, and it is referred to by
+the index of the cell in the table. Windows associated with
+the table widget are destroyed when the table widget is destroyed.
+<P>
+Windows are used for display purposes only. A value still
+exists for that cell, but will not be shown unless the window
+is deleted in some way.
+<P>
+When an embedded window is added to a table widget with the
+window configure widget command, several configuration
+options may be associated with it. These options may be
+modified with later calls to the window configure widget
+command. The following options are currently supported:
 
-<H2><A NAME="sect8" HREF="#toc8"><B>Command</B> <B>Substitution</B></A></H2>
+<DL>
+
+<DT><B>-create</B> <I>script</I></DT></DT>
+<DD>
+NOT CURRENTLY SUPPORTED. Specifies a Tcl script
+that may be evaluated to create the window for the
+annotation. If no -window option has been specified
+for this cell then this script will be
+evaluated when the cell is about to be displayed
+on the screen. Script must create a window for
+the cell and return the name of that window as its
+result. If the cell's window should ever be
+deleted, the script will be evaluated again the
+next time the cell is displayed.
+</DD>
+
+<DT><B>-background</B> or <B>-bg</B> <I>color</I></DT></DT>
+<DD>
+Background color of the cell. If not specified,
+it uses the table's default background.
+</DD>
+
+<DT><B>-padx</B> <I>pixels</I></DT></DT>
+<DD>
+As defined in the Tk options man page.
+</DD>
+
+<DT><B>-pady</B> <I>pixels</I></DT></DT>
+<DD>
+As defined in the Tk options man page.
+</DD>
+
+<DT><B>-relief</B> <I>relief</I></DT></DT>
+<DD>
+The relief to use for the cell in which the window
+lies. If not specified, it uses the table's
+default relief.
+</DD>
+
+<DT><B>-sticky</B> <I>sticky</I></DT></DT>
+<DD>
+Stickiness of the window inside the cell, as
+defined by the <B>grid</B> command.
+</DD>
+
+<DT><B>-window</B> <I>pathName</I></DT></DT>
+<DD>
+Specifies the name of a window to display in the
+annotation. It must exist before being specified
+here.
+</DD>
+</DL>
+
+<H2><A NAME="sect8" HREF="#toc8"><B>the</B> <B>Selection</B></A></H2>
+
+<P>
+Table selections are available as type STRING. By default,
+the value of the selection will be the values of the
+selected cells in nested Tcl list form where each row is a
+list and each column is an element of a row list. You can
+change the way this value is interpreted by setting the
+<B>-rowseparator</B> and <B>-colseparator</B> options. For example,
+default Excel format would be to set <B>-rowseparator</B> to &laquo;\n"
+and <B>-colseparator</B> to &laquo;\t". Changing these values affects
+both how the table sends out the selection and reads in
+pasted data, ensuring that the table should always be able
+to cut and paste to itself. It is possible to change how
+pastes are handled by editing the table library procedure
+<B>tk_tablePasteHandler</B>. This might be necessary if <B>-selectioncommand</B>
+is set.
+
+<H2><A NAME="sect9" HREF="#toc9"><B>Command</B> <B>Substitution</B></A></H2>
 
 <P>
 The various option based commands that the table supports
 all support the familiar Tk %-substitution model (see <B>bind</B>
 for more details). The following %-sequences are recognized
 and substituted by the table widget:
+<P>
 <B>%c</B> For <B>SelectionCommand</B>, it is the maximum number of
 columns in any row in the selection. Otherwise it is
 the column of the triggered cell.
@@ -762,7 +890,7 @@ index of the new active cell.
 <B>%W</B> The pathname to the window for which the command was
 generated.
 
-<H2><A NAME="sect9" HREF="#toc9"><B>Widget</B> <B>Command</B></A></H2>
+<H2><A NAME="sect10" HREF="#toc10"><B>Widget</B> <B>Command</B></A></H2>
 
 <P>
 The <B>table</B> command creates a new Tcl command whose name is
@@ -788,7 +916,9 @@ otherwise an empty string is returned.
 <I>pathName</I> <B>border</B> <I>option</I> <I>args</I><BR>
 
 This command is a voodoo hack to implement border sizing
-for tables. Its options may change in the future.
+for tables. This is normally called through bindings,
+with the following as valid options:
+<P>
 <I>pathName</I> <B>border</B> <B>mark</B> <I>x</I> <I>y</I> ?<I>row</I>|<I>col</I>?<BR>
 
 Records <I>x</I> and <I>y</I> and the row and/or column border
@@ -800,7 +930,7 @@ specified, it returns a tuple of both border
 indices (an empty item means no border). Otherwise,
 just the specified item is returned.
 <P>
-<I>pathName</I> <B>border</B> <B>dragto</B> <I>x</I> <I>y</I>.<BR>
+<I>pathName</I> <B>border</B> <B>dragto</B> <I>x</I> <I>y</I><BR>
 
 This command computes the difference between its <I>x</I>
 and <I>y</I> arguments and the <I>x</I> and <I>y</I> arguments to the
@@ -816,6 +946,36 @@ Returns the current value of the configuration option
 given by <I>option</I>. <I>Option</I> may have any of the values
 accepted by the <B>table</B> command.
 <P>
+<I>pathName</I> <B>clear</B> <I>option</I> ?<I>first</I>? ?<I>last</I>?<BR>
+
+This command is a convenience routine to clear certain
+state information managed by the table. <I>first</I> and <I>last</I>
+represent valid table indices. If neither are specified,
+then the command operates on the whole table.
+The following options are recognized:
+<P>
+<I>pathName</I> <B>clear</B> <B>cache</B> ?<I>first</I>? ?<I>last</I>?<BR>
+
+Clears the specified section of the cache, if the
+table has been keeping one.
+<P>
+<I>pathName</I> <B>clear</B> <B>sizes</B> ?<I>first</I>? ?<I>last</I>?<BR>
+
+Clears the specified row and column areas of
+specific height/width dimensions. When just one
+index is specified, for example <B>2,0</B>, that is
+interpreted as row 2 <B>and</B> column 0.
+<P>
+<I>pathName</I> <B>clear</B> <B>tags</B> ?<I>first</I>? ?<I>last</I>?<BR>
+
+Clears the specified area of tags (all row, column
+and cell tags).
+<P>
+<I>pathName</I> <B>clear</B> <B>all</B> ?<I>first</I>? ?<I>last</I>?<BR>
+
+Performs all of the above clear functions on the
+specified area.
+<P>
 <I>pathName</I> <B>configure</B> ?<I>option</I>? ?<I>value</I> <I>option</I> <I>value</I> ...?
 Query or modify the configuration options of the
 widget. If no <I>option</I> is specified, returns a list
@@ -823,13 +983,19 @@ describing all of the available options for <I>pathName</I>
 (see <B>Tk_ConfigureInfo</B> for information on the format of
 this list). If <I>option</I> is specified with no <I>value</I>, then
 the command returns a list describing the one named
-option (this list will be identical to the corresponding
-sublist of the value returned if no <I>option</I> is
-specified). If one or more <I>option</I>-<I>value</I> pairs are
-specified, then the command modifies the given widget
-option(s) to have the given value(s); in this case the
-command returns an empty string. <I>Option</I> may have any
-of the values accepted by the <B>table</B> command.
+option (this list will be identical to the
+corresponding sublist of the value returned if no
+<I>option</I> is specified). If one or more <I>option</I>-<I>value</I>
+pairs are specified, then the command modifies the
+
+<DL>
+
+<DT>given widget option(s) to have the given value(s); </DT></DT>
+<DD>in
+this case the command returns an empty string. <I>Option</I>
+may have any of the values accepted by the <B>table</B> command.
+</DD>
+</DL>
 <P>
 <I>pathName</I> <B>curselection</B> ?<I>set</I> <I>value</I>?<BR>
 
@@ -845,8 +1011,8 @@ If no value is given, the value of the cell being
 edited (indexed by <B>active</B>) is returned, else it is set
 to the given value.
 <P>
-<I>pathName</I> <B>delete</B> <I>option</I> <I>arg</I> ?<I>arg</I>?
-<P>
+<I>pathName</I> <B>delete</B> <I>option</I> <I>arg</I> ?<I>arg</I>?<BR>
+
 This command is used to delete various things in a
 table. It has several forms, depending on the <I>option</I>:
 <P>
@@ -885,12 +1051,16 @@ the dimensions are adjusted by <B>count</B>.
 
 <DT><B>-holdtags</B></DT></DT>
 <DD>
+</DD>
+</DL>
+<P>
 Causes the tags specified by the <I>tag</I> method
 to not collapse along with the data. Also
 prevents specific widths set by the <I>width</I>
 method from being adjusted. By default,
 these tags are properly adjusted.
-</DD>
+
+<DL>
 
 <DT><B>-keeptitles</B></DT></DT>
 <DD>
@@ -904,9 +1074,9 @@ regular cells and will move as specified.
 Sets an artificial maximum row boundary to
 use when collapsing the rest of the rows. By
 default it uses the value of the <B>-rows</B> widget
-option. This can cause interesting sideeffects
-when used in conjunction with the
-other options.
+option.     This    can cause interesting
+side-effects when used in conjunction with
+the other options.
 </DD>
 
 <DT><B>--</B> </DT></DT>
@@ -936,10 +1106,12 @@ indices <I>first</I> and (optionally) <I>last</I> in a list.
 If no <I>row</I> is specified, returns a list describing all
 rows for which a height has been set. If <B>row</B> is specified
 with no value, it prints out the height of that
-row in pixels. If one or more <I>row</I>-<I>value</I> pairs are
-specified, then it sets each row to be that height in
-pixels. If <I>value</I> is <I>default</I>, then the row uses the
-default height.
+row in characters (positive number) or pixels (negative
+number). If one or more <I>row</I>-<I>value</I> pairs are specified,
+then it sets each row to be that height in lines (positive
+number) or pixels (negative number). If <I>value</I> is
+<I>default</I>, then the row uses the default height, specified
+by <B>-rowheight</B>.
 <P>
 <I>pathName</I> <B>icursor</B> ?<I>arg</I>?<BR>
 
@@ -1063,7 +1235,6 @@ behavior of the command depends on the <I>option</I> argument
 that follows the <B>tag</B> argument. Only <I>cget</I> complains
 about unknown tag names. The following forms of the
 command are currently supported:
-<P>
 <I>pathName</I> <B>tag</B> <B>cell</B> <I>tagName</I> ?<I>index</I> ... ?
 With no arguments, prints out the list of cells
 that use the <I>tag</I>. Otherwise it sets the specified
@@ -1088,24 +1259,23 @@ evaluation do not register here.
 <I>value</I> ...?<BR>
 
 <I>pathName</I> <B>tag</B> <B>configure</B> <I>tagName</I> ?<I>option</I>? ?<I>value</I>? ?<I>option</I>
-<P>
 This command is similar to the <B>configure</B> widget
 command except that it modifies options associated
 with the tag given by <I>tagName</I> instead of modifying
-options for the overall text widget. If no <I>option</I>
-is specified, the command returns a list describing
-all of the available options for <I>tagName</I> (see
-<B>Tk_ConfigureInfo</B> for information on the format of
-this list). If <I>option</I> is specified with no <I>value</I>,
-then the command returns a list describing the one
-named option (this list will be identical to the
-corresponding sublist of the value returned if no
-<I>option</I> is specified). If one or more <I>option</I>-<I>value</I>
-pairs are specified, then the command modifies the
-given option(s) to have the given value(s) in <I>tag</I><B>_N</B><I>ame</I>;
-in this case the command returns an empty
-string. See TAGS above for details on the options
-available for tags.
+options for the overall table widget. If no
+<I>option</I> is specified, the command returns a list
+describing all of the available options for <I>tag</I><B>_N</B><I>ame</I>
+(see <B>Tk_ConfigureInfo</B> for information on the
+format of this list). If <I>option</I> is specified with
+no <I>value</I>, then the command returns a list describing
+the one named option (this list will be identical
+to the corresponding sublist of the value
+returned if no <I>option</I> is specified). If one or
+more <I>option</I>-<I>value</I> pairs are specified, then the
+command modifies the given option(s) to have the
+given value(s) in <I>tagName</I>; in this case the command
+returns an empty string. See TAGS above for
+details on the options available for tags.
 <P>
 <I>pathName</I> <B>tag</B> <B>delete</B> <I>tagName</I><BR>
 
@@ -1121,8 +1291,8 @@ Returns 1 if the named tag exists, 0 otherwise.
 Returns 1 if the specified index has the named
 tag, 0 otherwise.
 <P>
-<I>pathName</I> <B>tag</B> <B>names</B> ?<I>pattern</I>?<BR>
-
+<I>pathName</I> <B>tag</B> <B>names</B> ?<I>pattern</I>?
+<P>
 If no pattern is specified, shows the names of all
 defined tags. Otherwise the <I>pattern</I> is used as a
 glob pattern to show only tags matching that pattern.
@@ -1149,7 +1319,60 @@ in characters (positive number) or pixels (negative
 number). If one or more <I>col</I>-<I>value</I> pairs are specified,
 then it sets each col to be that width in characters
 (positive number) or pixels (negative number). If
-<I>value</I> is <I>default</I>, then the col uses the default width.
+<I>value</I> is <I>default</I>, then the col uses the default width,
+specified by <B>-colwidth</B>.
+<P>
+<I>pathName</I> <B>window</B> option ?<I>arg</I> <I>arg</I> ...?<BR>
+
+This command is used to manipulate embedded windows.
+The exact behavior of the command depends on the <I>option</I>
+argument that follows the <B>window</B> argument. The following
+forms of the command are currently supported:
+<P>
+<I>pathName</I> <B>window</B> <B>cget</B> <I>index</I> <I>option</I><BR>
+
+This command returns the current value of the
+option named <I>option</I> associated with the window
+given by <I>index</I>. <I>Option</I> may have any of the values
+accepted by the <B>window</B> <B>configure</B> widget command.
+<P>
+<I>value</I> ...?<BR>
+
+<I>pathName</I> <B>window</B> <B>configure</B> <I>index</I> ?<I>option</I>? ?<I>value</I>? ?<I>option</I>
+This command is similar to the <B>configure</B> widget
+command except that it modifies options associated
+with the embedded window given by <I>index</I> instead of
+modifying options for the overall table widget.
+If no <I>option</I> is specified, the command returns a
+list describing all of the available options for
+<I>index</I> (see <B>Tk_ConfigureInfo</B> for information on the
+format of this list). If <I>option</I> is specified with
+no <I>value</I>, then the command returns a list describing
+the one named option (this list will be
+identical to the corresponding sublist of the
+value returned if no <I>option</I> is specified). If one
+or more <I>option</I>-<I>value</I> pairs are specified, then the
+command modifies the given option(s) to have the
+given value(s) in <I>index</I>; in this case the command
+returns an empty string. See EMBEDDED WINDOWS
+above for details on the options available for
+windows.
+<P>
+<I>pathName</I> <B>window</B> <B>delete</B> <I>index</I> ?<I>index</I> ...?
+Deletes an embedded window from the table. The
+associated window will also be deleted.
+<P>
+<I>pathName</I> <B>window</B> <B>move</B> <I>indexFrom</I> <I>indexTo</I>
+Moves an embedded window from one cell to another.
+If a window already exists in the target cell, it
+will be deleted.
+<P>
+<I>pathName</I> <B>window</B> <B>names</B> ?<I>pattern</I>?<BR>
+
+If no pattern is specified, shows the cells of all
+embedded windows. Otherwise the <I>pattern</I> is used
+as a glob pattern to show only cells matching that
+pattern.
 <P>
 <I>pathName</I> <B>xview</B> <I>args</I><BR>
 
@@ -1203,8 +1426,8 @@ This command is used to query and change the vertical
 position of the text in the widget's window. It can
 take any of the following forms:
 <P>
-<I>pathName</I> <B>yview</B>
-<P>
+<I>pathName</I> <B>yview</B><BR>
+
 Returns a list containing two elements, both of
 which are real fractions between 0 and 1. The
 first element gives the position of the table element
@@ -1241,24 +1464,26 @@ by <I>number</I> screenfuls. If <I>number</I> is negative then
 earlier elements become visible; if it is positive
 then later elements become visible.
 
-<H2><A NAME="sect10" HREF="#toc10"><B>Default</B> <B>Bindings</B></A></H2>
+<H2><A NAME="sect11" HREF="#toc11"><B>Default</B> <B>Bindings</B></A></H2>
 
 <P>
 The initialization creates class bindings that give the following
 default behaviour:
 <P>
-[1] Clicking the mouse button in a cell activates that
-cell.
+[1] Clicking Button-1 in a cell activates that cell.
+Clicking into an already active cell moves the insertion
+cursor to the character nearest the mouse.
 <P>
-[2] Moving the mouse while button 1 is pressed will stroke
-out a selection area. Exiting while button 1 is
+[2] Moving the mouse while Button-1 is pressed will stroke
+out a selection area. Exiting while Button-1 is
 pressed causing scanning to occur on the table along
 with selection.
 <P>
-[3] Moving the mouse while button 2 is pressed causes scanning
+[3] Moving the mouse while Button-2 is pressed causes scanning
 to occur without any selection.
 <P>
 [4] Home moves the table to have the origin in view.
+<P>
 [5] End moves the table to have the <B>end</B> cell in view.
 <P>
 [6] Control-Home moves the table to the origin and
@@ -1290,28 +1515,25 @@ cursor in the active cell.
 in the active cell.
 <P>
 [17] Escape rereads the value of the active cell from the
-array variable, discarding any edits that have may been
-performed on the cell.
+specified data source, discarding any edits that have
+may been performed on the cell.
 <P>
-[18] Return sets the array value of the active cell to the
-edited value and moves to the next cell down.
-<P>
-[19] Control-a moves the insertion cursor to the beginning
+[18] Control-a moves the insertion cursor to the beginning
 of the active cell.
 <P>
-[20] Control-e moves the insertion cursor to the end of the
+[19] Control-e moves the insertion cursor to the end of the
 active cell.
 <P>
-[21] Control-minus and Control-equals decrease and increase
+[20] Control-minus and Control-equals decrease and increase
 the width of the column with the active cell in it.
 <P>
-[22] Moving the mouse while button 3 (the right button on
+[21] Moving the mouse while Button-3 (the right button on
 Windows) is pressed while you are over a border will
 cause interactive resizing of that row and/or column to
-occur.
+occur, based on the value of <B>-resizeborders</B>.
 <P>
 Some bindings may have slightly different behavior dependent
-on the -selectionmode of the widget.
+on the <B>-selectionmode</B> of the widget.
 <P>
 If the widget is disabled using the <B>-state</B> option, then its
 view can still be adjusted and cells can still be selected,
@@ -1324,7 +1546,7 @@ The default bindings are either compiled in or read
 from a file expected to correspond to: &laquo;[lindex $tcl_pkgPath
 0]/Tktable/tkTable.tcl".
 
-<H2><A NAME="sect11" HREF="#toc11"><B>Keywords</B></A></H2>
+<H2><A NAME="sect12" HREF="#toc12"><B>Keywords</B></A></H2>
 
 <P>
 table, widget, extension
@@ -1340,10 +1562,11 @@ table, widget, extension
 <LI><A NAME="toc4" HREF="#sect4">Description</A></LI>
 <LI><A NAME="toc5" HREF="#sect5">Indices</A></LI>
 <LI><A NAME="toc6" HREF="#sect6">Tags</A></LI>
-<LI><A NAME="toc7" HREF="#sect7">the Selection</A></LI>
-<LI><A NAME="toc8" HREF="#sect8">Command Substitution</A></LI>
-<LI><A NAME="toc9" HREF="#sect9">Widget Command</A></LI>
-<LI><A NAME="toc10" HREF="#sect10">Default Bindings</A></LI>
-<LI><A NAME="toc11" HREF="#sect11">Keywords</A></LI>
+<LI><A NAME="toc7" HREF="#sect7">Embedded Windows</A></LI>
+<LI><A NAME="toc8" HREF="#sect8">the Selection</A></LI>
+<LI><A NAME="toc9" HREF="#sect9">Command Substitution</A></LI>
+<LI><A NAME="toc10" HREF="#sect10">Widget Command</A></LI>
+<LI><A NAME="toc11" HREF="#sect11">Default Bindings</A></LI>
+<LI><A NAME="toc12" HREF="#sect12">Keywords</A></LI>
 </UL>
 </BODY></HTML>

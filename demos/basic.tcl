@@ -8,28 +8,19 @@ exec wish "$0" ${1+"$@"}
 ##
 ## jeff.hobbs@acm.org
 
+source [file join [file dirname [info script]] loadtable.tcl]
+
 array set table {
-    library	Tktable
-    rows	20
-    cols	20
+    rows	8
+    cols	8
     table	.t
     array	t
-}
-append table(library) [info sharedlibext]
-
-## Ensure that the table library extension is loaded
-if {[string match {} [info commands table]] && \
-	[catch {package require Tktable} err]} {
-    if {[catch {load [file join [pwd] .. $table(library)]} err] && \
-	    [catch {load [file join [pwd] $table(library)]} err]} {
-	error $err
-    }
 }
 
 proc fill { array x y } {
     upvar $array f
     for {set i -$x} {$i<$x} {incr i} {
-	for {set j -$y} {$j<$y} {incr j} { set f($i,$j) "r:$i,c:$j" }
+	for {set j -$y} {$j<$y} {incr j} { set f($i,$j) "r$i,c$j" }
     }
 }
 
@@ -47,13 +38,13 @@ table $table(table) -rows $table(rows) -cols $table(cols) \
 	-yscrollcommand {.sy set} -xscrollcommand {.sx set} \
 	-roworigin -1 -colorigin -2 \
 	-rowtagcommand rowProc -coltagcommand colProc \
-	-selectmode extended \
-	-rowstretch unset -colstretch last \
-	-flashmode on
+	-colstretchmode last -rowstretchmode last \
+	-selectmode extended
 
 scrollbar .sy -command [list $table(table) yview]
 scrollbar .sx -command [list $table(table) xview] -orient horizontal
 button .exit -text "Exit" -command {exit}
+
 grid .label - -sticky ew
 grid $table(table) .sy -sticky news
 grid .sx -sticky ew
@@ -64,21 +55,7 @@ grid rowconfig . 1 -weight 1
 $table(table) tag config OddRow -bg orange -fg purple
 $table(table) tag config OddCol -bg brown -fg pink
 
-$table(table) width -2 8 -1 9 0 12 4 14
-
-## Version 1.3 image features
-image create photo logo \
-	-file [file join [file dirname [info script]] tcllogo.gif]
-$table(table) tag config logo -image logo
-$table(table) tag cell logo 1,2 2,3 4,1
-
-## Version 1.4 -command feature
-proc showrc {r c} { return $r,$c }
-
-update
-
-## This will show the use of the flash mode
-after 1000 [list array set $table(array) { 1,0 "Flash Me" 4,2 "And Me" }]
+$table(table) width -2 7 -1 7 1 5 2 8 4 14
 
 puts [list Table is $table(table) with array [$table(table) cget -var]]
 

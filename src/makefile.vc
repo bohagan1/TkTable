@@ -7,8 +7,9 @@
 # because of a few internal items that are in Tk
 #
 
+!include "version.in"
 PROJECT	= Tktable
-TBL_VERSION = 1.82
+TBL_COMMAND = table
 
 #
 # Project directories -- these may need to be customized for your site
@@ -29,7 +30,7 @@ DESTDIRU	= C:/Programme/Tcl
 # Set your version of Tcl
 # Set SRC_DIR to point to a directory that has Tcl/Tk SOURCES
 
-SRC_DIR		= ..
+SRC_DIR		= ..\..
 TCL_VERSION	= 8.1
 TK_VERSION	= 8.1
 TCL_LIB_V	= 81
@@ -37,15 +38,21 @@ TK_LIB_V	= 81
 
 TCL_DIR		= $(SRC_DIR)\tcl8.1a2
 TK_DIR		= $(SRC_DIR)\tk8.1a2
-INST_RUNTIME	= $(DESTDIR)\$(TCL_LIB_V)\lib\tkTable$(TBL_VERSION)
-INST_RUNTIMEU	= $(DESTDIRU)/$(TCL_LIB_V)/lib/tkTable$(TBL_VERSION)
+INST_RUNTIME	= $(DESTDIR)\lib\tkTable$(TBL_VERSION)
+INST_RUNTIMEU	= $(DESTDIRU)/lib/tkTable$(TBL_VERSION)
 
 TCLSH		= $(DESTDIR)\bin\tclsh$(TCL_LIB_V)
 WISH		= $(DESTDIR)\bin\wish$(TK_LIB_V)
 
 # comment the following line to compile with symbols
-NODEBUG=1
+#NODEBUG=1
 
+# Necessary for some partially-installed VC++ setups:
+#INCLUDE="$(TOOLS32)\include"
+#LIB="$(TOOLS32)\lib"
+
+#
+LIBDIR	= $(ROOT)\..\lib
 #
 # Visual C++ tools
 #
@@ -58,83 +65,66 @@ RM      = del
 
 INCLUDES = -I"$(TOOLS32)\include" -I"$(TCL_DIR)\generic" \
 	-I"$(TK_DIR)\generic" -I"$(TK_DIR)\win" -I"$(TK_DIR)\xlib"
-DEFINES = -nologo $(DEBUGDEFINES) -DTBL_VERSION=\"$(TBL_VERSION)\"\
-	  -DITCL_RUNTIME="\"$(INST_RUNTIMEU)/tkTable.itcl\""\
+DEFINES = -nologo $(DEBUGDEFINES)\
+	  -DTBL_VERSION=\"$(TBL_VERSION)\"\
+	  -DTBL_COMMAND=\"$(TBL_COMMAND)\"\
 	  -DTCL_RUNTIME="\"$(INST_RUNTIMEU)/tkTable.tcl\""
 LIBS	= $(DESTDIR)\lib\tcl$(TCL_LIB_V)vc.lib $(DESTDIR)\lib\tk$(TK_LIB_V)vc.lib
 
 !include <ntwin32.mak>
 
-# 
+#
 # Global makefile settings
 #
 
-DLLOBJS = $(TMPDIR)\$(PROJECT).obj
+DLLOBJS = $(TMPDIR)\tkTable.obj $(TMPDIR)\tkTableWin.obj $(TMPDIR)\tkTableTag.obj $(TMPDIR)\tkTableCell.obj $(TMPDIR)\cmd.obj
 DLL=$(PROJECT).dll
 
 # Targets
 
 all: pkgIndex.tcl
 
-#	set TCL_LIBRARY=$(TCL_DIR)\library
-#	set TK_LIBRARY=$(TK_DIR)\library
-#	set PATH=$(TCL_DIR)\win;$(TK_DIR)\win;%PATH%
 test: pkgIndex.tcl
 	@"$(WISH)" <<
 	    lappend auto_path $(ROOT)
-	    set ok [catch {
+	    set code [catch {
 		    package require $(PROJECT)
-		    pack [table .t]
+		    pack [$(TBL_COMMAND) .t]
 		} msg]
-	    if {$ok != 0} {
-		tk_messageBox\
-		    -message "$(PROJECT) failed to load and run: $msg"\
-		    -type ok
+	    if {$$code != 0} {
+		tk_messageBox -type ok -message\
+		    "$(PROJECT) failed to load and run: $$msg"
+	    } else {
+		tk_messageBox -type ok -message\
+		    "everything seems OK for 'package require $(PROJECT)'"
 	    }
-	    exit $ok
+	    exit $$code
 <<
 
-#	set TCL_LIBRARY=$(TCL_DIR)\library
-#	set TK_LIBRARY=$(TK_DIR)\library
-#	set PATH=$(TCL_DIR)\win;$(TK_DIR)\win;%PATH%
 pkgIndex.tcl: $(DLL)
-	"$(WISH)" << pkgIndex.tcl
+	"$(TCLSH)" << pkgIndex.tcl
 	set out [open [lindex $$argv 0] w]
 	puts $$out {if {[catch {package require Tcl $(TCL_VERSION)}]} return}
 	puts -nonewline $$out {package ifneeded $(PROJECT) $(TBL_VERSION) }
 	puts -nonewline $$out {"package require Tk $(TK_VERSION); }
 	puts $$out {[list load [file join $$dir $(DLL)] $(PROJECT)]"}
 	close $$out
-	destroy .
 <<
 
-$(DLLOBJS): tkTabletcl.h tkTableitcl.h
+$(DLLOBJS): tkTabletcl.h
 
 $(DLL): $(DLLOBJS)
 	$(link) $(linkdebug) $(dlllflags) $(LIBS) \
 		$(guilibsdll) -out:$(DLL) $(DLLOBJS)
 
-#	set TCL_LIBRARY=$(TCL_DIR)\library
-tkTabletcl.h: tkTable.tcl
-	"$(TCLSH)" << tkTable.tcl >tkTabletcl.h
+tkTabletcl.h: $(LIBDIR)\tkTable.tcl
+	"$(TCLSH)" << $(LIBDIR)\tkTable.tcl >$(TMPDIR)\tkTabletcl.h
 	set in [open [lindex $$argv 0] r]
 	while {[gets $$in line] != -1} {
 	    switch -regexp -- $$line "^$$" - {^#} continue
 	    regsub -all {\\} $$line {\\\\} line
 	    regsub -all {"} $$line {\"} line
-	    puts "\"$$line\\n\""	
-	}
-<<
-
-#	set TCL_LIBRARY=$(TCL_DIR)\library
-tkTableitcl.h: tkTable.itcl
-	"$(TCLSH)" << tkTable.itcl >tkTableitcl.h
-	set in [open [lindex $$argv 0] r]
-	while {[gets $$in line] != -1} {
-	    switch -regexp -- $$line "^$$" - {^#} continue
-	    regsub -all {\\} $$line {\\\\} line
-	    regsub -all {"} $$line {\"} line
-	    puts "\"$$line\\n\""	
+	    puts "\"$$line\\n\""
 	}
 <<
 
@@ -145,12 +135,15 @@ tkTableitcl.h: tkTable.itcl
 		$(DEFINES) -Fo$(TMPDIR)\ $<
 
 install:
-	@if not exist "$(INST_RUNTIME)\nul" mkdir "$(INST_RUNTIME)"
-	copy "$(ROOT)\tkTable.tcl" "$(INST_RUNTIME)"
-	copy "$(ROOT)\tkTable.itcl" "$(INST_RUNTIME)"
+	if not exist "$(INST_RUNTIME)\" mkdir "$(INST_RUNTIME)"
+	copy "$(ROOT)\$(LIBDIR)\tkTable.tcl" "$(INST_RUNTIME)"
 	copy "$(DLL)" "$(INST_RUNTIME)"
 	copy pkgIndex.tcl "$(INST_RUNTIME)"
 
+uninstall:
+	-$(RM) "$(INST_RUNTIME)\tkTable.tcl"
+	-$(RM) "$(INST_RUNTIME)\$(DLL)"
+	-$(RM) "$(INST_RUNTIME)\pkgIndex.tcl"
 
 clean:
 	-$(RM) $(TMPDIR)\*.obj 2>nul
@@ -158,5 +151,4 @@ clean:
 	-$(RM) $(PROJECT).lib 2>nul
 	-$(RM) $(PROJECT).exp 2>nul
 	-$(RM) pkgIndex.tcl 2>nul
-	-$(RM) tkTabletcl.h 2>nul
-	-$(RM) tkTableitcl.h 2>nul
+	-$(RM) $(TMPDIR)\tkTabletcl.h 2>nul

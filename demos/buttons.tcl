@@ -1,6 +1,6 @@
 #!/bin/sh
 # next line is a comment in tcl \
-	exec wish "$0" ${1+"$@"}
+exec wish "$0" ${1+"$@"}
 
 ## buttons.tcl
 ##
@@ -9,40 +9,27 @@
 ## ellson@lucent.com
 ## modifications made by jeff.hobbs@acm.org
 
+source [file join [file dirname [info script]] loadtable.tcl]
+
 array set table {
-    library	Tktable
     rows	20
     cols	20
     table	.table
 }
-append table(library) [info shared]
-if {[string match {} [info commands table]] && \
-	[catch {package require Tktable} err]} {
-    if {[catch {load [file join [pwd] .. $table(library)]} err] && \
-	    [catch {load [file join [pwd] $table(library)]} err]} {
-	error $err
-    }
-}
 
 # create the table
-set t .table
-table $t \
-	-rows [expr $table(rows) +1] \
-	-cols [expr $table(cols) +1] \
-	-titlerows 1 \
-	-titlecols 1 \
-	-roworigin -1 \
-	-colorigin -1 \
+set t $table(table)
+table $t -rows [expr {$table(rows)+1}] -cols [expr {$table(cols)+1}] \
+	-titlerows  1 -titlecols  1 \
+	-roworigin -1 -colorigin -1 \
 	-colwidth 4 \
-	-width 8 \
-	-height 8 \
+	-width 8 -height 8 \
 	-variable tab \
 	-flashmode off \
 	-cursor top_left_arrow \
 	-borderwidth 2 \
 	-state disabled \
-	-xscrollcommand ".sx set" \
-	-yscrollcommand ".sy set"
+	-xscrollcommand ".sx set" -yscrollcommand ".sy set"
 
 scrollbar .sx -orient h -command "$t xview"
 scrollbar .sy -orient v -command "$t yview"

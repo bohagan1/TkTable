@@ -232,7 +232,7 @@ Database Class:	\\fB\\$3\\fR
 .de UL
 \\$1\l'|0\(ul'\\$2
 ..
-.TH table n 1.82 Tk "Tk Table Extension"
+.TH table n 2.1 Tk "Tk Table Extension"
 .HS table tk
 .BS
 .SH NAME
@@ -253,11 +253,6 @@ table \- Create and manipulate tables
 .OP \-autoclear autoClear AutoClear
 A boolean value which specifies whether the first keypress in a cell will
 delete whatever text was previously there.  Defaults to 0.
-.OP \-batchmode batchMode BatchMode
-If true, updates are not forced out at any point, the widget waits for Tk to
-be idle before it repaints the screen.  If false, flashes, variable updates
-and the cursor changes are forced immediately to the screen.
-Defaults to false.
 .OP \-bordercursor borderCursor Cursor
 Specifies the name of the cursor to show when over borders, a visual
 indication that interactive resizing is allowed (it is thus affect by
@@ -303,7 +298,7 @@ interactive border resizing which tries to force column width.
 The last column will be stretched 
 to fill the window space allocated to the table.
 .TP
-\fBfill\fR (only valid for rowstretch currently)
+\fBfill\fR (only valid for \fB\-rowstretch\fR currently)
 The table will get more or less columns according to the window
 space allocated to the table.  This mode has numerous quirks and
 may disappear in the future.
@@ -318,8 +313,8 @@ procedure is expected to return the name of a tag to use, or a null string.
 Errors occuring during the evaluation of the procedure, or the return of an
 invalid tag name are silently ignored.
 .OP \-colwidth colWidth ColWidth
-Default column width in characters in the default font.  Defaults to 10.
-If the number is negative, it is interpreted as an exact pixel value instead.
+Default column width, interpreted as characters in the default font when
+the number is positive, or pixels if it is negative.  Defaults to 10.
 .OP \-command command Command
 Specified a command to use as a procedural interface to cell values.
 If \fB\-usecommand\fR is true, this command will be used instead of any
@@ -331,19 +326,24 @@ Sets the table drawing mode to one of the following options:
 .RS
 .TP
 \fBslow\fR
-The table is drawn to an offscreen pixmap using the Tk bordering functions.
-This means there will be no flashing, but this mode is slow for all but
-small tables.
+The table is drawn to an offscreen pixmap using the Tk bordering functions
+(double-buffering).  This means there will be no flashing, but this mode is
+slow for larger tables.
 .TP
 \fBcompatible\fR
 The table is drawn directly to the screen using the Tk border functions.
 It is faster, but the screen may flash on update.  This is the default.
 .TP
 \fBfast\fR
-The table is drawn directly to the screen and the borders are done with fast
-X calls, so they are always one pixel wide only.  This mode provides best
-performance for large tables, but can flash on redraw and is not 100% Tk
-compatible on the border mode.
+The table is drawn directly to the screen and the borders are done with
+fast X calls, so they are always one pixel wide only.  As a side effect, it
+restricts \fB\-borderwidth\fR to a range of 0 or 1.  This mode provides
+best performance for large tables, but can flash on redraw and is not 100%
+Tk compatible on the border mode.
+.TP
+\fBsingle\fR
+The table is drawn to the screen as in fast mode, but only single pixel
+lines are drawn (not square borders).
 .RE
 .OP \-flashmode flashMode FlashMode
 A boolean value which specifies whether cells should flash when their value
@@ -351,7 +351,7 @@ changes.  The table tag \fBflash\fR will be applied to these cells for the
 duration specified by \fB\-flashtime\fR.  Defaults to 0.
 .OP \-flashtime flashTime FlashTime
 The amount of time, in 1/4 second increments, for which a cell should flash
-when it is edited.  \fB\-flashmode\fR must be on.  Defaults to 2.
+when its value has changed.  \fB\-flashmode\fR must be on.  Defaults to 2.
 .OP \-height height Height
 Specifies the desired height for the window, in rows.
 If zero or less, then the desired height for the window is made just
@@ -365,11 +365,14 @@ when the cell is selected.  Defaults to 0 (merge).
 The max height in pixels that the window will request.  Defaults to 600.
 .OP \-maxwidth maxWidth MaxWidth
 The max width in pixels that the window will request.  Defaults to 800.
+.OP \-multiline multiline Multiline
+Specifies the default setting for the multiline tag option.  Defaults to 1.
 .OP \-resizeborders resizeBorders ResizeBorders
 Specifies what kind of interactive border resizing to allow, must be one of
 row, col, both (default) or none.
 .OP \-rowheight rowHeight RowHeight
-Height of default row in pixels (0, the default, means set to font height).
+Default row height, interpreted as lines in the default font when
+the number is positive, or pixels if it is negative.  Defaults to 1.
 .OP \-roworigin rowOrigin Origin
 Specifies what row index to interpret as the topmost row in the table.
 This value is used for user indices in the table.  Defaults to 0.
@@ -389,17 +392,21 @@ defined by the user to accept a single argument (the row number), and
 return a tag name or null string.  This operates in a similar manner as
 \fB\-coltagcommand\fR, except that it applies to row tags.
 .OP "\-selectioncommand or \-selcmd" selectionCommand SelectionCommand
-Specifies a command to evaluate when the selection is retrieved from a table
-via the selection mechanism (ie: evaluating "selection get").  The return
-value from this command will become the string passed on by the selection
-mechanism.  It uses the %\-substition model described in COMMAND SUBSTITUTION
-below.
+Specifies a command to evaluate when the selection is retrieved from a
+table via the selection mechanism (ie: evaluating "\fBselection get\fR").
+The return value from this command will become the string passed on by the
+selection mechanism.  It uses the %\-substition model described in COMMAND
+SUBSTITUTION below.  If an error occurs, a Tcl background error is
+generated and nothing is returned.
 .OP \-selectmode selectMode SelectMode
 Specifies one of several styles for manipulating the selection.  The value
 of the option may be arbitrary, but the default bindings expect it to be
 either \fBsingle\fR, \fBbrowse\fR, \fBmultiple\fR, or \fBextended\fR; the
 default value is \fBbrowse\fR.  These styles are like those for the Tk
 listbox, except expanded for 2 dimensions.
+.OP \-selecttitle selectTitles SelectTitles
+Specifies whether title cells should be allowed in the selection.
+Defaults to 0 (disallowed).
 .OP \-selecttype selectType SelectType
 Specifies one of several types of selection for the table.  The value of the
 option may be one of \fBrow\fR, \fBcol\fR, \fBcell\fR, or \fBboth\fR
@@ -442,28 +449,31 @@ Specifies the desired width for the window, in columns.
 If zero or less, then the desired width for the window is made just
 large enough to hold all the columns in the table.  The width can be
 further limited by \fB\-maxwidth\fR.
+.OP \-wrap wrap Wrap
+Specifies the default wrap value for tags.  Defaults to 0.
 .BE
 
 .SH DESCRIPTION
 .PP
-The \fBtable\fR command creates a 2\-dimensional grid of cells which can used
-to display or update the contents of a Tcl array variable.  The widget has
-an active cell, the contents of which can be edited (when the state is
-normal).  The widget supports a default style for the cells and also
-multiple \fItags\fR, which can be used to change the \fBforeground\fR,
-\fBbackground\fR, \fBfont\fR, \fBrelief\fR and \fBanchor\fR for a row,
-column or cell.  A cell \fIflash\fR can be set up so that newly changing
-cells will change color for a specified amount of time.
+The \fBtable\fR command creates a 2\-dimensional grid of cells.  The table
+can use a Tcl array variable or Tcl command for data storage and retrieval.
+The widget has an active cell, the contents of which can be edited (when
+the state is normal).  The widget supports a default style for the cells
+and also multiple \fItags\fR, which can be used to change the style of a
+row, column or cell (see TAGS for details).  A cell \fIflash\fR can be set
+up so that changed cells will change color for a specified amount of time
+("blink").  Cells can have embedded images or windows, as described in
+TAGS and "EMBEDDED WINDOWS" respectively.
 .PP
 One or more cells may be selected as described below.  If a table is
-exporting its selection (see \fBexportSelection\fR option), then it will
+exporting its selection (see \fB\-exportselection\fR option), then it will
 observe the standard X11 protocols for handling the selection.  See THE
-SELECTION below for details.
+SELECTION for details.
 .PP
 It is not necessary for all the cells to be displayed in the table window at
 once; commands described below may be used to change the view in the window.
 Tables allow scrolling in both directions using the standard
-\fBxScrollCommand\fR and \fByScrollCommand\fR options.  They also support
+\fB\-xscrollcommand\fR and \fB\-yscrollcommand\fR options.  They also support
 scanning, as described below.
 .PP
 In order to obtain good performance, the table widget supports three drawing
@@ -535,46 +545,57 @@ This tag is given to any selected cells.
 .TP 10
 \fBtitle\fR
 This tag is given to any cells in the title rows and columns.  This
-tag has \fB-state\fR \fIdisabled\fR by default.
+tag has \fB\-state\fR \fIdisabled\fR by default.
 .RE
 .PP
-Tags control the way cells are displayed on the screen.
-By default, cells are displayed as determined by the
-\fBbackground\fR, \fBfont\fR, and \fBforeground\fR options for the
-table widget.
-However, display options may be associated with individual tags
-using the ``\fIpathName \fBtag configure\fR'' widget command.
-If a cell has been tagged, then the display options associated
-with the tag override the default display style.
-The following options are currently supported for tags:
+Tags control the way cells are displayed on the screen.  By default, cells
+are displayed as determined by the \fBbackground\fR, \fBfont\fR, and
+\fBforeground\fR options for the table widget.  However, display options
+may be associated with individual tags using the ``\fIpathName \fBtag
+configure\fR'' widget command.  If a cell has been tagged, then the display
+options associated with the tag override the default display style.  The
+following options are currently supported for tags:
 .RS
 .TP
-\fB\-anchor\fR
-anchoring in the cell space
+\fB\-anchor \fIanchor\fR
+Anchor for item in the cell space.
 .TP
-\fB\-background\fR or \fB-bg\fR
-background color of the cell
+\fB\-background\fR or \fB\-bg\fR \fIcolor\fR
+Background color of the cell
 .TP
-\fB\-font\fR
-font for the cell
+\fB\-font \fIfontName\fR
+Font for text in the cell.
 .TP
-\fB\-foreground\fR or \fB-fg\fR
-foreground color of the cell
+\fB\-foreground\fR or \fB\-fg\fR \fIcolor\fR
+Foreground color of the cell.
 .TP
-\fB\-image\fR
-an image to display in the cell instead of text
+\fB\-justify \fIjustify\fR
+How to justify multi\-line text in a cell.
+It must be one of \fBleft\fR, \fBright\fR, or \fBcenter\fR.
 .TP
-\fB\-relief\fR
-the relief for the cell
+\fB\-image \fIimageName\fR
+An image to display in the cell instead of text.
 .TP
-\fB\-state\fR
-the state of the cell, to allow for certain cells to be disabled.
-This prevents the cell from being edited by the \fIinsert\fR or \fIdelete\fr
+\fB\-multiline \fIboolean\fR
+Whether to display text with newlines on multiple lines.
+.TP
+\fB\-relief \fIrelief\fR
+The relief for the cell.
+.TP
+\fB\-showtext \fIboolean\fR
+Whether to show the text over an image.
+.TP
+\fB\-state \fIstate\fR
+The state of the cell, to allow for certain cells to be disabled.
+This prevents the cell from being edited by the \fIinsert\fR or \fIdelete\fR
 methods, but a direct \fIset\fR will not be prevented.
+.TP
+\fB\-wrap \fIboolean\fR
+Whether characters should wrap in a cell that is not wide enough.
 .RE
 .PP
 A priority order is defined among tags, and this order is used in
-implementing some of the tag-related functions described below.  When a cell
+implementing some of the tag\-related functions described below.  When a cell
 is displayed, its properties are determined by the tags which are assigned
 to it.  Including the special tags, this order is \fBflash\fR, \fBactive\fR,
 \fBsel\fR, \fBtitle\fR, \fBcelltag\fR, \fBrowtag\fR, \fBcoltag\fR, default.
@@ -583,36 +604,89 @@ If a cell has several tags associated with it, and if their display options
 conflict, then the options of the highest priority tag are used.  If a
 particular display option hasn't been specified for a particular tag, or if
 it is specified as an empty string, then that option will never be used; the
-next-highest-priority tag's option will used instead.  If no tag specifies a
+next\-highest\-priority tag's option will used instead.  If no tag specifies a
 particular display option, then the default style for the widget will be
 used.
 .PP
-Images are used for display purposes only.  If an image is specified in a
-tag, then that image will be displayed instead of the text for the cell.
-However, editing in that cell will still be enabled and any querying of the
-cell will show the text value of the cell.
+Images are used for display purposes only.  Editing in that cell will still
+be enabled and any querying of the cell will show the text value of the cell,
+regardless of the value of \fB\-showtext\fR.
+
+.SH "EMBEDDED WINDOWS"
+.PP
+There may be any number of embedded windows in a table widget (one per
+cell), and any widget may be used as an embedded window (subject to the
+usual rules for geometry management, which require the table window to be
+the parent of the embedded window or a descendant of its parent).  The
+embedded window's position on the screen will be updated as the table is
+modified or scrolled, and it will be mapped and unmapped as it moves into
+and out of the visible area of the table widget.  Each embedded window
+occupies one cell's worth of space in the table widget, and it is referred
+to by the index of the cell in the table.  Windows associated with the
+table widget are destroyed when the table widget is destroyed.
+.PP
+Windows are used for display purposes only.  A value still exists for that
+cell, but will not be shown unless the window is deleted in some way.
+.PP
+When an embedded window is added to a table widget with the window
+configure widget command, several configuration options may be associated
+with it.  These options may be modified with later calls to the window
+configure widget command.  The following options are currently supported:
+.RS
+.TP
+\fB\-create \fIscript\fR
+NOT CURRENTLY SUPPORTED.  Specifies a Tcl script that may be evaluated to
+create the window for the annotation.  If no \-window option has been
+specified for this cell then this script will be evaluated when the
+cell is about to be displayed on the screen.  Script must create a
+window for the cell and return the name of that window as its result.
+If the cell's window should ever be deleted, the script will be evaluated
+again the next time the cell is displayed.
+.TP
+\fB\-background\fR or \fB\-bg\fR \fIcolor\fR
+Background color of the cell.  If not
+specified, it uses the table's default background.
+.TP
+\fB\-padx \fIpixels\fR
+As defined in the Tk options man page.
+.TP
+\fB\-pady \fIpixels\fR
+As defined in the Tk options man page.
+.TP
+\fB\-relief \fIrelief\fR
+The relief to use for the cell in which the window lies.  If not
+specified, it uses the table's default relief.
+.TP
+\fB\-sticky \fIsticky\fR
+Stickiness of the window inside the cell, as defined by the \fBgrid\fR command.
+.TP
+\fB\-window \fIpathName\fR
+Specifies the name of a window to display in the  annotation.  It must
+exist before being specified here.
+.RE
+
 
 .SH "THE SELECTION"
 .PP
-Table selections are available as type STRING (or COMPOUND_TEXT with the
-Kanji patch).  By default, the value of the selection will be the values of
-the selected cells in nested Tcl list form where each row is a list and each
-column is an element of a row list.  You can change the way this value is
-interpreted by setting the \fB\-rowseparator\fR and \fB\-colseparator\fR
-options.  For example, default Excel format would be to set
-\fB\-rowseparator\fR to "\\n" and \fB\-colseparator\fR to "\\t".  Changes
-these values affects both how the table sends out the selection and reads in
-pasted data, ensuring that the table should always be able to cut and paste
-to itself.  It is possible to change how pastes are handled by editing the
-table library procedure \fBtk_tablePasteHandler\fR.  This might be necessary
-if \fB\-selectioncommand\fR is set.
+Table selections are available as type STRING.  By default, the value of
+the selection will be the values of the selected cells in nested Tcl list
+form where each row is a list and each column is an element of a row list.
+You can change the way this value is interpreted by setting the
+\fB\-rowseparator\fR and \fB\-colseparator\fR options.  For example,
+default Excel format would be to set \fB\-rowseparator\fR to "\\n" and
+\fB\-colseparator\fR to "\\t".  Changing these values affects both how the
+table sends out the selection and reads in pasted data, ensuring that the
+table should always be able to cut and paste to itself.  It is possible to
+change how pastes are handled by editing the table library procedure
+\fBtk_tablePasteHandler\fR.  This might be necessary if
+\fB\-selectioncommand\fR is set.
 
 .SH "COMMAND SUBSTITUTION"
 .PP
 
 The various option based commands that the table supports all support the
-familiar Tk %-substitution model (see \fBbind\fR for more details).  The
-following %-sequences are recognized and substituted by the table widget:
+familiar Tk %\-substitution model (see \fBbind\fR for more details).  The
+following %\-sequences are recognized and substituted by the table widget:
 .TP 5
 \fB%c\fR
 For \fBSelectionCommand\fR, it is the maximum number of columns in any
@@ -663,13 +737,14 @@ The following commands are possible for \fBtable\fR widgets:
 Sets the active cell to the one indicated by \fIindex\fR.
 .TP
 \fIpathName \fBbbox\fR \fIfirst\fR ?\fIlast\fR?
-It returns the bounding box for the specified cell (range) as a 4-tuple of
+It returns the bounding box for the specified cell (range) as a 4\-tuple of
 x, y, width and height in pixels.  It clips the box to the visible portion,
 if any, otherwise an empty string is returned.
 .TP
 \fIpathName \fBborder\fR \fIoption args\fR
-This command is a voodoo hack to implement border sizing for tables.  Its
-options may change in the future.
+This command is a voodoo hack to implement border sizing for tables.
+This is normally called through bindings, with the following as valid
+options:
 .RS
 .TP
 \fIpathName \fBborder mark\fR \fIx y\fR ?\fIrow|col\fR?
@@ -680,7 +755,7 @@ button press in the widget.  If \fIrow\fR or \fIcol\fR is not specified, it
 returns a tuple of both border indices (an empty item means no border).
 Otherwise, just the specified item is returned.
 .TP
-\fIpathName \fBborder dragto\fR \fIx y\fR.
+\fIpathName \fBborder dragto\fR \fIx y\fR
 This command computes the difference between its \fIx\fR and \fIy\fR
 arguments and the \fIx\fR and \fIy\fR arguments to the last \fBborder
 mark\fR command for the widget.  It then adjusts the previously marked
@@ -693,6 +768,29 @@ resizing.
 Returns the current value of the configuration option given
 by \fIoption\fR.  \fIOption\fR may have any of the values accepted
 by the \fBtable\fR command.
+.TP
+\fIpathName \fBclear\fR \fIoption\fR ?\fIfirst\fR? ?\fIlast\fR?
+This command is a convenience routine to clear certain state information
+managed by the table.  \fIfirst\fR and \fIlast\fR represent valid table
+indices.  If neither are specified, then the command operates on the
+whole table.  The following options are recognized:
+.RS
+.TP
+\fIpathName \fBclear cache\fR ?\fIfirst\fR? ?\fIlast\fR?
+Clears the specified section of the cache, if the table has been
+keeping one.
+.TP
+\fIpathName \fBclear sizes\fR ?\fIfirst\fR? ?\fIlast\fR?
+Clears the specified row and column areas of specific height/width
+dimensions.  When just one index is specified, for example \fB2,0\fR,
+that is interpreted as row 2 \fBand\fR column 0.
+.TP
+\fIpathName \fBclear tags\fR ?\fIfirst\fR? ?\fIlast\fR?
+Clears the specified area of tags (all row, column and cell tags).
+.TP
+\fIpathName \fBclear all\fR ?\fIfirst\fR? ?\fIlast\fR?
+Performs all of the above clear functions on the specified area.
+.RE
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 Query or modify the configuration options of the widget.
@@ -738,7 +836,7 @@ are:
 \fB\-cols\fR
 Sets an artificial maximum column boundary to use when collapsing the rest
 of the columns.  By default it uses the value of the \fB\-cols\fR widget
-option.  This can cause interesting side-effects when used in conjunction
+option.  This can cause interesting side\-effects when used in conjunction
 with the other options.
 .TP
 \fB\-holddimensions\fR
@@ -757,10 +855,10 @@ treated just like regular cells and will move as specified.
 \fB\-rows\fR
 Sets an artificial maximum row boundary to use when collapsing the rest of
 the rows.  By default it uses the value of the \fB\-rows\fR widget option.
-This can cause interesting side-effects when used in conjunction with the
+This can cause interesting side\-effects when used in conjunction with the
 other options.
 .TP
-\fB\--\fR
+\fB\-\-\fR
 Signifies the end of the switches.
 .RE
 .TP
@@ -780,11 +878,13 @@ Returns the value of the cells specified by the table indices \fIfirst\fR
 and (optionally) \fIlast\fR in a list.
 .TP
 \fIpathName \fBheight\fR ?\fIrow\fR? ?\fIvalue row value ...\fR?
-If no \fIrow\fR is specified, returns a list describing all rows for which a
-height has been set.  If \fBrow\fR is specified with no value, it prints out
-the height of that row in pixels.  If one or more \fIrow\-value\fR pairs are
-specified, then it sets each row to be that height in pixels.  If
-\fIvalue\fR is \fIdefault\fR, then the row uses the default height.
+If no \fIrow\fR is specified, returns a list describing all rows for which
+a height has been set.  If \fBrow\fR is specified with no value, it prints
+out the height of that row in characters (positive number) or pixels
+(negative number).  If one or more \fIrow\-value\fR pairs are specified,
+then it sets each row to be that height in lines (positive number) or
+pixels (negative number).  If \fIvalue\fR is \fIdefault\fR, then the row
+uses the default height, specified by \fB\-rowheight\fR.
 .TP
 \fIpathName \fBicursor\fR ?\fIarg\fR?
 With no arguments, prints out the location of the insertion cursor in the
@@ -907,19 +1007,18 @@ Otherwise it sets the specified cols to use the \fItag\fR.  If \fItag\fR is
 \-coltagcommand evaluation do not register here.
 .TP
 \fIpathName \fBtag configure \fItagName\fR ?\fIoption\fR? ?\fIvalue\fR? ?\fIoption value ...\fR?
-This command is similar to the \fBconfigure\fR widget command except
-that it modifies options associated with the tag given by \fItagName\fR
-instead of modifying options for the overall text widget.
-If no \fIoption\fR is specified, the command returns a list describing
-all of the available options for \fItagName\fR (see \fBTk_ConfigureInfo\fR
-for information on the format of this list).
-If \fIoption\fR is specified with no \fIvalue\fR, then the command returns
-a list describing the one named option (this list will be identical to
-the corresponding sublist of the value returned if no \fIoption\fR
-is specified).
-If one or more \fIoption\-value\fR pairs are specified, then the command
-modifies the given option(s) to have the given value(s) in \fItagName\fR;
-in this case the command returns an empty string.
+This command is similar to the \fBconfigure\fR widget command except that
+it modifies options associated with the tag given by \fItagName\fR instead
+of modifying options for the overall table widget.  If no \fIoption\fR is
+specified, the command returns a list describing all of the available
+options for \fItagName\fR (see \fBTk_ConfigureInfo\fR for information on
+the format of this list).  If \fIoption\fR is specified with no
+\fIvalue\fR, then the command returns a list describing the one named
+option (this list will be identical to the corresponding sublist of the
+value returned if no \fIoption\fR is specified).  If one or more
+\fIoption\-value\fR pairs are specified, then the command modifies the
+given option(s) to have the given value(s) in \fItagName\fR; in this case
+the command returns an empty string.
 See TAGS above for details on the options available for tags.
 .TP
 \fIpathName \fBtag delete\fR \fItagName\fR
@@ -945,7 +1044,7 @@ evaluation do not register here.
 .TP
 \fIpathName \fBvalidate\fR \fIindex\fR
 Explicitly validates the specified index based on the current
-\fB-validatecommand\fR and returns 0 or 1 based on whether the cell was
+\fB\-validatecommand\fR and returns 0 or 1 based on whether the cell was
 validated.
 .TP
 \fIpathName \fBwidth\fR ?\fIcol\fR? ?\fIvalue col value ...\fR?
@@ -955,7 +1054,48 @@ out the width of that col in characters (positive number) or pixels
 (negative number).  If one or more \fIcol\-value\fR pairs are specified,
 then it sets each col to be that width in characters (positive number) or
 pixels (negative number).  If \fIvalue\fR is \fIdefault\fR, then the col
-uses the default width.
+uses the default width, specified by \fB\-colwidth\fR.
+.TP
+\fIpathName \fBwindow\fR option ?\fIarg arg ...\fR?
+This command is used to manipulate embedded windows.  The exact behavior of
+the command depends on the \fIoption\fR argument that follows the
+\fBwindow\fR argument.  The following forms of the command are currently
+supported:
+.RS
+.TP
+\fIpathName \fBwindow cget\fR \fIindex option\fR
+This command returns the current value of the option named \fIoption\fR
+associated with the window given by \fIindex\fR.  \fIOption\fR may have any
+of the values accepted by the \fBwindow configure\fR widget command.
+.TP
+\fIpathName \fBwindow configure \fIindex\fR ?\fIoption\fR? ?\fIvalue\fR? ?\fIoption value ...\fR?
+This command is similar to the \fBconfigure\fR widget command except that
+it modifies options associated with the embedded window given by
+\fIindex\fR instead of modifying options for the overall table widget.  If
+no \fIoption\fR is specified, the command returns a list describing all of
+the available options for \fIindex\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified with
+no \fIvalue\fR, then the command returns a list describing the one named
+option (this list will be identical to the corresponding sublist of the
+value returned if no \fIoption\fR is specified).  If one or more
+\fIoption\-value\fR pairs are specified, then the command modifies the
+given option(s) to have the given value(s) in \fIindex\fR; in this case
+the command returns an empty string.
+See EMBEDDED WINDOWS above for details on the options available for windows.
+.TP
+\fIpathName \fBwindow delete\fR \fIindex\fR ?\fIindex ...\fR?
+Deletes an embedded window from the table.  The associated window will
+also be deleted.
+.TP
+\fIpathName \fBwindow move\fR \fIindexFrom indexTo\fR
+Moves an embedded window from one cell to another.  If a window already
+exists in the target cell, it will be deleted.
+.TP
+\fIpathName \fBwindow names\fR ?\fIpattern\fR?
+If no pattern is specified, shows the cells of all embedded windows.
+Otherwise the \fIpattern\fR is used as a glob pattern to show only
+cells matching that pattern.
+.RE
 .TP
 \fIpathName \fBxview \fIargs\fR
 This command is used to query and change the horizontal position of the
@@ -968,8 +1108,8 @@ Returns a list containing two elements.
 Each element is a real fraction between 0 and 1;  together they describe
 the horizontal span that is visible in the window.
 For example, if the first element is .2 and the second element is .6,
-20% of the table's text is off-screen to the left, the middle 40% is visible
-in the window, and 40% of the text is off-screen to the right.
+20% of the table's text is off\-screen to the left, the middle 40% is visible
+in the window, and 40% of the text is off\-screen to the right.
 These are the same values passed to scrollbars via the \fB\-xscrollcommand\fR
 option.
 .TP
@@ -979,7 +1119,7 @@ Adjusts the view in the window so that the column given by
 .TP
 \fIpathName \fBxview moveto\fI fraction\fR
 Adjusts the view in the window so that \fIfraction\fR of the
-total width of the table text is off-screen to the left.
+total width of the table text is off\-screen to the left.
 \fIfraction\fR must be a fraction between 0 and 1.
 .TP
 \fIpathName \fBxview scroll \fInumber what\fR
@@ -1019,7 +1159,7 @@ Adjusts the view in the window so that the row given by
 Adjusts the view in the window so that the element given by \fIfraction\fR
 appears at the top of the window.
 \fIFraction\fR is a fraction between 0 and 1;  0 indicates the first
-element in the table, 0.33 indicates the element one-third the
+element in the table, 0.33 indicates the element one\-third the
 way through the table, and so on.
 .TP
 \fIpathName \fByview scroll \fInumber what\fR
@@ -1037,37 +1177,39 @@ become visible.
 The initialization creates class bindings that give the
 following default behaviour:
 .IP [1]
-Clicking the mouse button in a cell activates that cell.
+Clicking Button\-1 in a cell activates that cell.  Clicking
+into an already active cell moves the insertion cursor to the
+character nearest the mouse.
 .IP [2]
-Moving the mouse while button 1 is pressed will stroke out a selection area.
-Exiting while button 1 is pressed causing scanning to occur on the table
+Moving the mouse while Button\-1 is pressed will stroke out a selection area.
+Exiting while Button\-1 is pressed causing scanning to occur on the table
 along with selection.
 .IP [3]
-Moving the mouse while button 2 is pressed causes scanning to
+Moving the mouse while Button\-2 is pressed causes scanning to
 occur without any selection.
 .IP [4]
 Home moves the table to have the origin in view.
 .IP [5]
 End moves the table to have the \fBend\fR cell in view.
 .IP [6]
-Control-Home moves the table to the origin and activates that cell.
+Control\-Home moves the table to the origin and activates that cell.
 .IP [7]
-Control-End moves the table to the end and activates that cell.
+Control\-End moves the table to the end and activates that cell.
 .IP [8]
-Shift-Control-Home extends the selection to the origin.
+Shift\-Control\-Home extends the selection to the origin.
 .IP [9]
-Shift-Control-End extends the selection to the end.
+Shift\-Control\-End extends the selection to the end.
 .IP [10]
 The left, right, up and down arrows move the active cell.
 .IP [11]
-Shift-<arrow> extends the selection in that direction.
+Shift\-<arrow> extends the selection in that direction.
 .IP [12]
-Control-leftarrow and Control-rightarrow move the insertion
+Control\-leftarrow and Control\-rightarrow move the insertion
 cursor within the cell.
 .IP [13]
-Control-slash selects all the cells.
+Control\-slash selects all the cells.
 .IP [14]
-Control-backslash clears selection from all the cells.
+Control\-backslash clears selection from all the cells.
 .IP [15]
 Backspace deletes the character before the insertion cursor
 in the active cell.
@@ -1075,25 +1217,22 @@ in the active cell.
 Delete deletes the character after the insertion cursor
 in the active cell.
 .IP [17]
-Escape rereads the value of the active cell from the array variable,
+Escape rereads the value of the active cell from the specified data source,
 discarding any edits that have may been performed on the cell.
 .IP [18]
-Return sets the array value of the active cell to the edited value
-and moves to the next cell down.
+Control\-a moves the insertion cursor to the beginning of the active cell.
 .IP [19]
-Control-a moves the insertion cursor to the beginning of the active cell.
+Control\-e moves the insertion cursor to the end of the active cell.
 .IP [20]
-Control-e moves the insertion cursor to the end of the active cell.
-.IP [21]
-Control-minus and Control-equals decrease and increase the
+Control\-minus and Control\-equals decrease and increase the
 width of the column with the active cell in it.
-.IP [22]
-Moving the mouse while button 3 (the right button on Windows) is pressed
+.IP [21]
+Moving the mouse while Button\-3 (the right button on Windows) is pressed
 while you are over a border will cause interactive resizing of that row
-and/or column to occur.
+and/or column to occur, based on the value of \fB\-resizeborders\fR.
 .PP
 Some bindings may have slightly different behavior dependent on the
-\-selectionmode of the widget.
+\fB\-selectionmode\fR of the widget.
 .PP
 If the widget is disabled using the \fB\-state\fR option, then its
 view can still be adjusted and cells can still be selected,

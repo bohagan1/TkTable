@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using wish \
-	exec wish "$0" ${1+"$@"}
+exec wish "$0" ${1+"$@"}
 
 ## dynarows.tcl
 ##
@@ -10,15 +10,7 @@
 ##
 ## jeff.hobbs@acm.org
 
-set lib Tktable[info sharedlibext]
-
-if {[string match {} [info commands table]] && \
-	[catch {package require Tktable} err]} {
-    if {[catch {load [file join [pwd] .. $lib]} err] && \
-	    [catch {load [file join [pwd] $lib]} err]} {
-	error $err
-    }
-}
+source [file join [file dirname [info script]] loadtable.tcl]
 
 proc table_validate {w idx} {
     if {[scan $idx %d,%d row col] != 2} return

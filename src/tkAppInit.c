@@ -5,15 +5,16 @@
  *	use in wish and similar Tk-based applications.
  *
  * Copyright (c) 1993 The Regents of the University of California.
- * Copyright (c) 1994 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkAppInit.c 1.21 96/03/26 16:47:07
+ * SCCS: @(#) tkAppInit.c 1.24 98/01/13 17:21:40
  */
 
 #include "tk.h"
+#include "locale.h"
 
 /*
  * The following variable is a special hack that is needed in order for
@@ -25,6 +26,7 @@ int *tclDummyMathPtr = (int *) matherr;
 
 EXTERN int		Tktable_Init _ANSI_ARGS_((Tcl_Interp *interp));
 #ifdef TK_TEST
+EXTERN int		Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int		Tktest_Init _ANSI_ARGS_((Tcl_Interp *interp));
 #endif /* TK_TEST */
 
@@ -85,6 +87,11 @@ Tcl_AppInit(interp)
     }
     Tcl_StaticPackage(interp, "Tk", Tk_Init, (Tcl_PackageInitProc *) NULL);
 #ifdef TK_TEST
+    if (Tcltest_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "Tcltest", Tcltest_Init,
+            (Tcl_PackageInitProc *) NULL);
     if (Tktest_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
@@ -106,6 +113,8 @@ Tcl_AppInit(interp)
     if (Tktable_Init(interp) == TCL_ERROR) {
         return TCL_ERROR;
     }
+    Tcl_StaticPackage(interp, "Tktable", Tktable_Init,
+		      (Tcl_PackageInitProc *) NULL);
 
     /*
      * Call Tcl_CreateCommand for application-specific commands, if
