@@ -1,3 +1,7 @@
+2001-08-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* README.txt: corrected outdated notes. [Bug #455116] (kriehbel)
+
 2001-08-23  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* unix/Makefile.in (tkTable.tcl.h): corrected target to sed \'s

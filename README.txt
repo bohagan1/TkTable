@@ -46,7 +46,7 @@ BUILDING AND INSTALLING THE WIDGET
 1. Uncompress and unpack the distribution
 
    ON UNIX:
-	gzip -cd tkTable<version>.tar.gz | tar xf -
+	gzip -cd Tktable<version>.tar.gz | tar xf -
 
    ON WINDOWS:
 	use something like WinZip to unpack the archive.
@@ -59,14 +59,18 @@ BUILDING AND INSTALLING THE WIDGET
 2. Configure
 
    ON UNIX:
-        cd tkTable<version>
-	cd src/
+        cd Tktable<version>
+	cd unix/
 	./configure
 
    tkTable uses information left in tkConfig.sh when you built tk.  This
    file will be found in $exec_prefix/lib/.  You might set the --prefix and
    --exec-prefix options of configure if you don't want the default
-   (/usr/local).
+   (/usr/local).  If building on multiple unix platforms, the following is
+   recommended to isolate build conflicts:
+	mkdir unix/<platform>
+	cd !$
+	../configure
 
    ON WINDOWS:
 
@@ -76,9 +80,9 @@ BUILDING AND INSTALLING THE WIDGET
 
    ON MACINTOSH:
    
-   Hack the CodeWarrior project mac_tkTable.mcp until it works and compile.
-   The access path to the Tcl/Tk source tree will probably need adjusting.
-   A DLL should be available where you found this archive.
+   Hack the CodeWarrior XML project mac_tkTable.mcp.xml until it works and
+   compile.  The access path to the Tcl/Tk source tree will probably need
+   adjusting.  A DLL should be available where you found this archive.
 
 3. Make and Install
 
@@ -93,8 +97,7 @@ BUILDING AND INSTALLING THE WIDGET
 	nmake -f makefile.vc install
 
    ON MACINTOSH:
-	Make the tkTable Fat target
-	Place tkTable.shlb in the Tool Command Language folder
+	Place Tktable.shlb in the Tool Command Language folder
 
    tkTable is built to comply to the latest tcl package conventions.
    There is also a specific "make static" for those who need it.
