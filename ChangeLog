@@ -1,3 +1,23 @@
+2002-03-27  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in (WISH_PROG): moved and updated env var definitions
+	to have wish work from build dir.  Removed TCL_EXTRA_CFLAGS,
+	TCL_LD_FLAGS, TCL_SHLIB_LD_LIBS, TCL_DBGX, TCL_STUB_LIB_FILE,
+	TCL_STUB_LIB_SPEC as they aren't needed (configure acquires all
+	that info for us).  TCL_LIBS is also not needed, but left in as a
+	reference to the libs Tcl used.
+	* configure: regen based on updated tclconfig/tcl.m4
+	* configure.in: moved the SHLIB_LD_LIBS magic into
+	tclconfig/tcl.m4 and noted where users can modify (SHLIB_LD_)LIBS.
+	* tclconfig/tcl.m4: updated from sample to be more independent of
+	*Config.sh.
+
+	* unix/Makefile.in (removed):
+	* unix/configure.in (removed):
+	* unix/configure (removed):
+	* unix/install-sh (removed): removed old makefile files to force
+	use of new toplevel TEA 2002 configure/make.
+
 2002-03-21  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tests/tkTable.test: more icursor tests

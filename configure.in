@@ -1,6 +1,6 @@
 #! /bin/bash -norc
 #
-# RCS: @(#) $Id: configure.in,v 1.1 2002/03/13 20:51:02 hobbs Exp $
+# RCS: @(#) $Id: configure.in,v 1.2 2002/03/20 02:09:17 hobbs Exp $
 #
 #--------------------------------------------------------------------
 # Sample configure.in for Tcl Extensions.  The only places you should
@@ -233,37 +233,13 @@ AC_DEFINE(USE_TK_STUBS)
 SC_MAKE_LIB
 
 #--------------------------------------------------------------------
-# Shared libraries and static libraries have different names.
-# Use the double eval to make sure the ${DBGX} in the suffix is substituted.
+# __CHANGE__
+# Add platform libs to LIBS or SHLIB_LD_LIBS as necessary.
 #--------------------------------------------------------------------
 
 if test "${TEA_PLATFORM}" = "windows" ; then
-    if test "${SHARED_BUILD}" = "1" ; then
-	# We force the unresolved linking of symbols that are really in
-	# the private libraries of Tcl and Tk.
-	SHLIB_LD_LIBS="\"`${CYGPATH} ${TCL_BIN_DIR}/${TCL_STUB_LIB_FILE}`\" ${TCL_SHLIB_LD_LIBS} \"`${CYGPATH} ${TK_BIN_DIR}/${TK_STUB_LIB_FILE}`\" ${TK_SHLIB_LD_LIBS} gdi32.lib -force:unresolved"
-	eval eval "${PACKAGE}_LIB_FILE=${PACKAGE}${SHARED_LIB_SUFFIX}"
-	RANLIB=:
-    else
-	eval eval "${PACKAGE}_LIB_FILE=${PACKAGE}${UNSHARED_LIB_SUFFIX}"
-    fi
-else
-    if test "${SHARED_BUILD}" = "1" ; then
-	SHLIB_LD_LIBS="${TCL_STUB_LIB_SPEC} ${TK_STUB_LIB_SPEC}"
-	eval eval "${PACKAGE}_LIB_FILE=lib${PACKAGE}${SHARED_LIB_SUFFIX}"
-	RANLIB=:
-    else
-	eval eval "${PACKAGE}_LIB_FILE=lib${PACKAGE}${UNSHARED_LIB_SUFFIX}"
-    fi
+    SHLIB_LD_LIBS="${SHLIB_LD_LIBS} gdi32.lib -force:unresolved"
 fi
-
-#--------------------------------------------------------------------
-# __CHANGE__
-# Change the name from exampeA_LIB_FILE to match your package name.
-#--------------------------------------------------------------------
-
-AC_SUBST(Tktable_LIB_FILE)
-AC_SUBST(SHLIB_LD_LIBS)
 
 #--------------------------------------------------------------------
 # Find tclsh so that we can run pkg_mkIndex to generate the pkgIndex.tcl
