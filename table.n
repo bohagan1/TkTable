@@ -1,0 +1,384 @@
+.TH Table
+.HS table tk
+.BS
+.SH NAME
+\fBtable\fI \fIpathName \fR?\fIoptions\fR?
+.SH DESCRIPTION
+.PP
+The \fBtable\fR command creates a 2-dimensional grid of cells which can
+used to display, or update the contents of a Tcl array variable. The table
+can index into the array on either a row-first or column-first basis.
+The widget has an optional \fIselected\fR cell, the contents of which
+can optionally be edited. The widget supports a default style for the cells
+and also multiple \fITags\fR, which can be used to change the \fBforeground\fR, 
+\fBbackground\fR, \fBfont\fR, \fBrelief\fR and \fBanchor\fR for a row,
+column or cell. A cell \fIflash\fR can be set up so that newly changing cells
+will change colour for a few seconds.
+.PP
+In order to obtain good performance, the Table widget supports three drawing modes,
+two of which are fully Tk compatible. 
+
+.SH WIDGET COMMANDS
+.TP
+\fIpathname\fR configure ?\fIarg arg ...\fR?
+Configures the widget. These are the same options that can be specified on the
+original creation line for the widget. With no arguments it prints a list of 
+configuration options and their values, with one argument it prints the
+value for that option.
+.RS
+.TP
+\fB-background\fR	
+background colour
+.TP
+\fB-bg\fR		
+synonym for background
+.TP
+\fB-foreground\fR	
+foreground colour
+.TP
+\fB-fg\fR		
+synonym for colour
+.TP
+\fB-cursorbg\fR	
+The colour for the cursor
+.TP
+\fB-borderwidth\fR	
+borderwidth in pixels or units like mm
+.TP
+\fB-rows\fR
+number of rows
+.TP
+\fB-cols\fR		
+number of cols
+.TP
+\fB-width\fR
+default column width in characters in the default font
+.TP
+\fB-height\fR		
+height of default row in pixels (0 means set to font height)
+.TP
+\fB-colorigin\fR	
+column origin of top left corner of screen into the array variable
+(ie first column maps to array(x, $colorigin)
+.TP
+\fB-roworigin\fR	
+row origin of top left corner of screen into the array variable
+(ie first row maps to array(x, $roworigin)
+.TP
+\fB-maxwidth\fR
+The max width in pixels that the window will request
+.TP
+\fB-maxwidth\fR
+The max height in pixels that the window will request
+.TP
+\fB-rowtitle\fR	
+number of rows to use as the title
+.TP
+\fB-coltitle\fR	
+number of columns to use as a title
+.TP
+\fB-variable\fR	
+variable to attach to the array, will create it if it doesn't exist
+.TP
+\fB-relief\fR		
+the relief for the cells flat, raised etc.
+.TP
+\fB-font\fR		
+default font
+.TP
+\fB-anchor\fR		
+the anchor point for each of the cells
+.TP
+\fB-xscrollcmd\fR
+the command issued to the xscrollbar, usually { <scrollname> set }
+.TP
+\fB-yscrollcmd\fR	
+the command issued to the yscrollbar, usually { <scrollname> set }
+.TP
+\fB-rowfirstmode\fR	
+if true, the index into the array is (row,col) else it is (col,row)
+.RE
+.TP
+\fIpathname\fR width ?\fIarg arg ...\fR?
+sets the width of individual columns to a multiple of the width of 
+a character in the default font.
+.RS
+.TP
+\fIpathname\fR width
+shows the widths of all columns not set to the default width.
+.TP
+\fIpathname\fR width {\fIcol width\fR} | \fBcol\fR ...
+sets or resets the width of the specified column.
+.RE
+.TP
+\fIpathname\fR height ?\fIarg arg ...\fR?
+sets the height of individual rows to a number of pixels.
+.RS
+.TP
+\fIpathname\fR height
+shows the heights of all rows not set to the default height.
+.TP
+\fIpathname\fR height {\fIrow width\fR} | \fBrow\fR
+sets or resets the height of the specified row.
+.RE
+.TP
+\fIpathname\fR height \fIrow\fR
+shows the actual height of the row in pixels
+.TP
+\fIpathname\fR getwidth \fIcol\fR
+shows the actual width of the column in characters
+
+.TP
+\fIpathname\fR tag option ?\fIarg arg ...\fR?
+calls the tag functions to give various styles
+to a row, column or cell
+.RS
+.TP
+\fIpathname\fR tag names
+shows the names of all defined tags
+.TP
+\fIpathname tag delete \fItag\fR
+deletes a tag. No error if the tag does not exist
+.TP
+\fIpathname\fR tag configure \fItag ?arg arg ... ?\fR
+configures a tag. The options can all be set to null in which case the attribute
+from the default tag are used instead. Using \fIconfigure\fR with a new \fItag\fR name
+adds the \fItag\fR, with an existing \fItag\fR it reconfigures it. If there are no 
+arguments, it prints the \fItag\fR configuration, with one argument, it prints the
+tag information for that attribute. The following attributes can be set per tag
+.RS
+.TP
+\fB-background\fR
+background colour
+.TP
+\fB-bg\fR
+synonym for background
+.TP
+\fB-foregroundfR
+foreground colour
+.TP
+\fB-fg\fR	
+synonym for colour
+.TP
+\fB-font\fR	
+font for the tag
+.TP
+\fB-anchor\fR		
+anchor for the tag
+.TP
+\fB-relief\fR		
+the relief for the tag
+.RE
+.TP
+\fIpathname\fR tag rowtag \fItag\fR \fBrow ...\fR
+With no arguments, prints out the list of rows 
+that use the \fItag\fR. Otherwise it sets the specified
+rows to use the tag. If tag is NULL ie {},
+the rows are reset to use the default tag.
+.TP
+\fIpathname\fR tag coltag \fItag\fR \fB?<col> ... ?\fR
+With no arguments, prints out the list of cols
+that use the \fItag\fR. Otherwise it sets the specified
+cols to use the \fItag\fR. If \fItag\fR is NULL ie {},
+the cols are reset to the default =\fItag\fR.
+.TP
+\fIpathname\fR tag celltag \fItag\fR \fB?{<row> <col>} ... ?\fR
+With no arguments, prints out the list of cells 
+that use the \fItag\fR. Otherwise it sets the specified
+cells to use the \fItag\fR. If \fItag\fR is NULL ie {},
+the cells are reset to the default \fItag\fR.
+.RE
+.TP
+\fIpathname\fR toprow \fB?arg?\fR
+Sets the topmost row in the main body of the
+display to the given argument. This is relative to the
+title row ie. if there are three title rows, and toprow is set
+to two, then the title rows will be followed by row five
+of the table. If there is no argument then it prints the
+value of the top row.
+.TP
+\fIpathname\fR leftcol \fB?arg?\fR
+Sets the leftmost column in the main body of the
+display to the given argument. This is relative to the
+title column ie. if there are two title rows, and leftcol is set
+to four, then the title cols will be followed by row six
+of the table. If there is no argument then it prints the
+value of the left column.
+.TP
+\fIpathname\fR whatcell \fBarg arg\fR
+gives the row, column of the cell at cursor position (x,y)
+.TP
+\fIpathname\fR wheris \fBarg arg\fR
+gives the x, y, width and height of the cell at position (row, col)
+in pixels. Useful for positioning menus.
+.TP
+\fIpathname\fR setcell \fB?arg arg?\fR
+With no arguments, prints out the location of the current
+/fIselected cell/fR. With two arguments, sets the /fIselected cell/fR 
+to that (row, column) position
+.TP
+\fIpathname\fR icursor \fB?arg?\fR
+With no arguments, prints out the location of the
+insertion cursor in the current cell.
+With one argument, sets the cursor to that point
+in the string. 0 is before the first character, 
+you can also use 'insert' or 'end' for the 
+current insertion point or the end of the text
+.TP
+\fIpathname\fR insert \fBarg arg\fR
+the second argument is a text string which is inserted
+at the cursor position specified by the first argument.
+The cursor is then positioned after the new text. The position 
+argument can be a number, 'insert' or 'end' 
+.TP
+\fIpathname\fR delete \fBarg ?arg?\fR
+deletes text from the current selected cell. If
+only one argument is given, deletes the character
+after that argument, otherwise it deletes from the
+first argument to the second. The arguments can be 
+a number, 'insert' or 'end'.
+.TP
+\fIpathname\fR reread
+rereads the old contents of the cell back into the 
+editing buffer. Useful for a key binding when <esc> 
+is pressed to abort the edit.
+.TP
+\fIpathname\fR editmode \fBarg\fR
+sets the editing mode to one of three options
+.RS
+.TP
+off
+no editing is allowed
+.TP
+autoclear	
+the first keypress deletes the text in the cell
+.TP
+noclear		
+the cell is not cleared on the first keypress
+.RE
+.TP
+\fIpathname\fR drawmode \fBarg\fR
+sets the drawing mode to one of three options
+.RS
+.TP
+slow		
+the table is drawn to an offscreen
+pixmap, using the tk bordering 
+functions. This means there wil be
+no flashing, but this mode is slow
+for all but small tables.
+.TP
+compatible	
+the table is drawn directly to the
+screen, using the tk border functions
+it is faster, but the screen may
+flash on update
+.TP
+fast
+the table is drawn directly to the
+screen and the borders are done with
+fast X calls, so they are always one
+pixel wide only. This mode provides 
+best performance for large tables, 
+but can flash on redraw and is not 
+100% Tk compatible on the border mode
+.RE
+.TP
+\fIpathname\fR flash \fBoption ?arg?\fR
+sets the parameters for the flashing for updating cells
+.RS
+.TP
+\fIpathname\fR flash mode \fBon|off\fR
+turns flashing on or off. Note that flashing will
+only be turned on by this command if a tag is set
+up for the flashed cells to be painted in.
+.TP
+\fIpathname\fR flash tag \fBtagname\fR
+sets the flashing cells to be painted with this
+tag style. The tag must already exist.
+.TP
+\fIpathname\fR timeout \fBarg\fR
+sets the number of 1/4 second tics before a cell
+reverts to its usual style.
+.RE
+.TP
+\fIpathname\fR batch \fBon|off\fR
+turns batch mode on or off. When it is on, updates 
+are not forced out at any point, the widget waits 
+for Tk to be idle before it repaints the screen. When
+batch mode is off, flashes, variable updates and the
+cursor changes are forced immediately to the screen.
+.TP
+\fIpathname\fR rowstretch \fBoption ?arg?\fR
+sets the parameters for stretching rows to fill the
+assigned window space. Note that if you do not
+\fIpack\fR the table with \fI-fill both -expand on\fR
+the packing manager will not allocate extra space for
+the window and it will not stretch.
+.RS
+.TP
+\fIpathname\fR rowstretch none
+Rows will not stretch to fill the assigned window
+space. If the rows are too narrow, there will be a 
+blank space at the bottom of the table.
+.TP
+\fIpathname\fR rowstretch unset
+Only rows that do not have a specific height set
+will be stretched.
+.TP
+\fIpathname\fR rowstretch all
+All rows will be stretched by the same number of pixels
+to fill the window space allocated to the table.
+.RE
+.TP
+\fIpathname\fR colstretch \fBoption\fR
+sets the parameters for stretching columns to fill the
+assigned window space. Note that if you do not
+\fIpack\fR the table with \fI-fill both -expand on\fR
+the packing manager will not allocate extra space for
+the window and it will not stretch.
+.RS
+.TP
+\fIpathname\fR colstretch none
+Columns will not stretch to fill the assigned window
+space. If the columns are too narrow, there will be a 
+blank space at the right of the table.
+.TP
+\fIpathname\fR colstretch unset
+Only columns that do not have a specific width set
+will be stretched.
+.TP
+\fIpathname\fR colstretch all
+All columns will be stretched by the same number of pixels
+to fill the window space allocated to the table.
+.RE
+.TP
+
+.SH DEFAULT BINDINGS
+.PP
+The initialization creates class bindings that give the
+following default behaviour:
+.IP [1]
+Clicking the mouse button in a cell moves the selection to
+that cell.
+.IP [2]
+The left, right, up and down arrows move the selected cell.
+.IP [3]
+Control-leftarrow and Control-rightarrow move the insertion
+cursor within the cell.
+.IP [4]
+Backspace deletes the character before the insertion cursor.
+.IP [5]
+Delete deletes the character after the insertion cursor.
+.IP [6]
+Escape rereads the value from the array variable, discarding
+the edits that have been performed on the cell.
+.IP [7]
+Control-minus and Control-equals decrease and increase the 
+width of the column with the selected cell in it.
+
+					
+
+	
+
+
