@@ -148,23 +148,13 @@ bind Table <Up>			{::tk::table::MoveCell %W -1  0}
 bind Table <Down>		{::tk::table::MoveCell %W  1  0}
 bind Table <Left>		{::tk::table::MoveCell %W  0 -1}
 bind Table <Right>		{::tk::table::MoveCell %W  0  1}
-bind Table <KeyPress> {
-    ::tk::table::Insert %W %A
-}
-bind Table <BackSpace> {
-    set ::tk::table::Priv(junk) [%W icursor]
-    if {[string compare {} $::tk::table::Priv(junk)] && \
-	    $::tk::table::Priv(junk)} {
-	%W delete active [expr {$::tk::table::Priv(junk)-1}]
-    }
-}
+bind Table <KeyPress>		{::tk::table::Insert %W %A}
+bind Table <BackSpace>		{::tk::table::BackSpace %W}
 bind Table <Delete>		{%W delete active insert}
 bind Table <Escape>		{%W reread}
 
 #bind Table <Return>		{::tk::table::MoveCell %W 1 0}
-bind Table <Return> {
-    ::tk::table::Insert %W "\n"
-}
+bind Table <Return>		{::tk::table::Insert %W "\n"}
 
 bind Table <Control-Left>	{%W icursor [expr {[%W icursor]-1}]}
 bind Table <Control-Right>	{%W icursor [expr {[%W icursor]+1}]}
@@ -184,7 +174,7 @@ bind Table <Meta-KeyPress>	{# nothing}
 bind Table <Control-KeyPress>	{# nothing}
 bind Table <Any-Tab>		{# nothing}
 if {[string match "macintosh" $tcl_platform(platform)]} {
-	bind Table <Command-KeyPress> {# nothing}
+    bind Table <Command-KeyPress> {# nothing}
 }
 
 # ::tk::table::CancelRepeat --
@@ -216,6 +206,22 @@ proc ::tk::table::CancelRepeat {} {
 proc ::tk::table::Insert {w s} {
     if {[string compare $s {}]} {
 	$w insert active insert $s
+    }
+}
+
+# ::tk::table::BackSpace --
+#
+#   BackSpace in the current cell
+#
+# Arguments:
+#   w	- the table widget
+# Results:
+#   Returns nothing
+#
+proc ::tk::table::BackSpace {w} {
+    set cur [$w icursor]
+    if {[string compare {} $cur] && $cur} {
+	$w delete active [expr {$cur-1}]
     }
 }
 
