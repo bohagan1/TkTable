@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id:  $
+ * RCS: @(#) $Id: tkTableCell.c,v 1.3 2000/08/18 03:34:11 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -518,7 +518,6 @@ VALUE:
     return (result?result:"");
 }
 
-extern void	TableAddFlash _ANSI_ARGS_((Table *tablePtr, int row, int col));
 /*
  *----------------------------------------------------------------------
  *
