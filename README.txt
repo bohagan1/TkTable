@@ -1,7 +1,7 @@
 /*
  * Conceptually based on Tk3 table widget by Roland King (rols@lehman.com)
  *
- * see CHANGES file for details
+ * see ChangeLog file for details
  *
  * current maintainer: jeff.hobbs@acm.org
  */
@@ -47,8 +47,7 @@ BUILDING AND INSTALLING THE WIDGET
 1. Uncompress and unpack the distribution
 
    ON UNIX:
-	gzip -d tkTable<version>.tar.gz
-	tar -xf tkTable<version>.tar
+	gzip -cd tkTable<version>.tar.gz | tar xf -
 
    ON WINDOWS:
 	use something like WinZip to unpack the archive.
