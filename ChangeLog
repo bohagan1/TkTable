@@ -1,3 +1,8 @@
+2002-01-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c (TableWidgetObjCmd): corrected dangerous
+	caching of resultPtr that could lead to segfault.
+
 2001-08-24  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* README.txt: corrected outdated notes. [Bug #455116] (kriehbel)

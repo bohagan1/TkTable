@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.15 2001/07/01 01:33:17 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.16 2001/07/18 16:52:20 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -615,7 +615,6 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 {
     register Table *tablePtr = (Table *) clientData;
     int row, col, i, cmdIndex, result = TCL_OK;
-    Tcl_Obj *resultPtr;
 
     if (objc < 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");
@@ -628,13 +627,8 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
     if (result != TCL_OK) {
 	return result;
     }
-    /*
-     * It's important to ensure that between here and setting the resultPtr,
-     * we don't cause the result to change, as that might free resultPtr.
-     */
-    resultPtr = Tcl_GetObjResult(interp);
-    Tcl_Preserve((ClientData) tablePtr);
 
+    Tcl_Preserve((ClientData) tablePtr);
     switch ((enum command) cmdIndex) {
 	case CMD_ACTIVATE:
 	    result = Table_ActivateCmd(clientData, interp, objc, objv);
@@ -705,21 +699,20 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 		result = TCL_ERROR;
 		goto done;
 	    }
+	    i = tablePtr->icursor;
 	    if (!(tablePtr->flags & HAS_ACTIVE) ||
 		    (tablePtr->flags & ACTIVE_DISABLED) ||
 		    tablePtr->state == STATE_DISABLED) {
-		Tcl_SetIntObj(resultPtr, -1);
-		goto done;
-	    }
-	    if (objc == 3) {
-		if (TableGetIcursorObj(tablePtr, objv[2], NULL) != TCL_OK) {
+		i = -1;
+	    } else if (objc == 3) {
+		if (TableGetIcursorObj(tablePtr, objv[2], &i) != TCL_OK) {
 		    result = TCL_ERROR;
 		    goto done;
 		}
 		TableRefresh(tablePtr, tablePtr->activeRow,
 			tablePtr->activeCol, CELL);
 	    }
-	    Tcl_SetIntObj(resultPtr, tablePtr->icursor);
+	    Tcl_SetIntObj(Tcl_GetObjResult(interp), i);
 	    break;
 
 	case CMD_INDEX: {
@@ -740,9 +733,10 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 		char buf[INDEX_BUFSIZE];
 		/* recreate the index, just in case it got bounded */
 		TableMakeArrayIndex(row, col, buf);
-		Tcl_SetStringObj(resultPtr, buf, -1);
+		Tcl_SetStringObj(Tcl_GetObjResult(interp), buf, -1);
 	    } else {	/* INDEX row|col */
-		Tcl_SetIntObj(resultPtr, (*which == 'r') ? row : col);
+		Tcl_SetIntObj(Tcl_GetObjResult(interp),
+			(*which == 'r') ? row : col);
 	    }
 	    break;
 	}
@@ -815,7 +809,7 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 		case CMD_SEL_PRESENT: {
 		    Tcl_HashSearch search;
 
-		    Tcl_SetBooleanObj(resultPtr,
+		    Tcl_SetBooleanObj(Tcl_GetObjResult(interp),
 			    (Tcl_FirstHashEntry(tablePtr->selCells, &search)
 				    != NULL));
 		    break;
@@ -851,7 +845,8 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 		result = TableValidateChange(tablePtr, row, col, (char *) NULL,
 			(char *) NULL, -1);
 		tablePtr->validate = i;
-		Tcl_SetBooleanObj(resultPtr, (result == TCL_OK));
+		Tcl_SetBooleanObj(Tcl_GetObjResult(interp),
+			(result == TCL_OK));
 		result = TCL_OK;
 	    }
 	    break;
@@ -861,7 +856,7 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 		Tcl_WrongNumArgs(interp, 2, objv, NULL);
 		result = TCL_ERROR;
 	    } else {
-		Tcl_SetStringObj(resultPtr, TBL_VERSION, -1);
+		Tcl_SetStringObj(Tcl_GetObjResult(interp), TBL_VERSION, -1);
 	    }
 	    break;
 
