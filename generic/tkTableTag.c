@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableTag.c,v 1.5 2001/06/23 08:57:43 hobbs Exp $
+ * RCS: @(#) $Id: tkTableTag.c,v 1.6 2001/06/23 09:54:38 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -591,7 +591,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	    int objc, Tcl_Obj *CONST objv[])
 {
     register Table *tablePtr = (Table *)clientData;
-    int result = TCL_OK, cmdIndex, i, newEntry, value, len;
+    int result = TCL_OK, cmdIndex, i, newEntry, value, len, refresh = 0;
     int row, col;
     TableTag *tagPtr;
     Tcl_HashEntry *entryPtr, *scanPtr;
@@ -611,6 +611,10 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
     if (result != TCL_OK) {
 	return result;
     }
+    /*
+     * Before using this object, make sure there aren't any calls that
+     * could have changed the interp result, thus freeing the object.
+     */
     resultPtr = Tcl_GetObjResult(interp);
 
     switch ((enum tagCmd) cmdIndex) {
@@ -639,6 +643,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		 * Handle specially tags named: active, flash, sel, title
 		 */
 
+		hashTblPtr = NULL;
 		if ((tablePtr->flags & HAS_ACTIVE) &&
 			strcmp(tagname, "active") == 0) {
 		    TableMakeArrayIndex(
@@ -647,25 +652,9 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		    Tcl_SetStringObj(resultPtr, buf, -1);
 		} else if (tablePtr->flashMode
 			&& strcmp(tagname, "flash") == 0) {
-		    for (scanPtr = Tcl_FirstHashEntry(tablePtr->flashCells,
-			    &search);
-			 scanPtr != NULL;
-			 scanPtr = Tcl_NextHashEntry(&search)) {
-			keybuf = (char *) Tcl_GetHashKey(tablePtr->flashCells,
-				scanPtr);
-			Tcl_ListObjAppendElement(NULL, resultPtr,
-				Tcl_NewStringObj(keybuf, -1));
-		    }
+		    hashTblPtr = tablePtr->flashCells;
 		} else if (strcmp(tagname, "sel") == 0) {
-		    for (scanPtr = Tcl_FirstHashEntry(tablePtr->selCells,
-			    &search);
-			 scanPtr != NULL;
-			 scanPtr = Tcl_NextHashEntry(&search)) {
-			keybuf = (char *) Tcl_GetHashKey(tablePtr->selCells,
-				scanPtr);
-			Tcl_ListObjAppendElement(NULL, resultPtr,
-				Tcl_NewStringObj(keybuf, -1));
-		    }
+		    hashTblPtr = tablePtr->selCells;
 		} else if (strcmp(tagname, "title") == 0 &&
 			(tablePtr->titleRows || tablePtr->titleCols)) {
 		    for (row = tablePtr->rowOffset;
@@ -689,19 +678,28 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 			}
 		    }
 		} else {
+		    /*
+		     * Check if this is the tag pointer for this cell
+		     */
 		    for (scanPtr = Tcl_FirstHashEntry(tablePtr->cellStyles,
 			    &search);
 			 scanPtr != NULL;
 			 scanPtr = Tcl_NextHashEntry(&search)) {
-			/*
-			 * Check if this is the tag pointer for this cell
-			 */
 			if ((TableTag *) Tcl_GetHashValue(scanPtr) == tagPtr) {
 			    keybuf = (char *) Tcl_GetHashKey(
 				tablePtr->cellStyles, scanPtr);
 			    Tcl_ListObjAppendElement(NULL, resultPtr,
 				    Tcl_NewStringObj(keybuf, -1));
 			}
+		    }
+		}
+		if (hashTblPtr != NULL) {
+		    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
+			 scanPtr != NULL;
+			 scanPtr = Tcl_NextHashEntry(&search)) {
+			keybuf = (char *) Tcl_GetHashKey(hashTblPtr, scanPtr);
+			Tcl_ListObjAppendElement(NULL, resultPtr,
+				Tcl_NewStringObj(keybuf, -1));
 		    }
 		}
 		return TCL_OK;
@@ -730,6 +728,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		    entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf);
 		    if (entryPtr != NULL) {
 			Tcl_DeleteHashEntry(entryPtr);
+			refresh = 1;
 		    }
 		} else {
 		    /*
@@ -741,13 +740,16 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		    if (newEntry || (tagPtr !=
 			    (TableTag *) Tcl_GetHashValue(entryPtr))) {
 			Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
+			refresh = 1;
 		    }
 		}
 		/*
 		 * Now invalidate this cell for redraw
 		 */
-		TableRefresh(tablePtr, row-tablePtr->rowOffset,
-			col-tablePtr->colOffset, CELL);
+		if (refresh) {
+		    TableRefresh(tablePtr, row-tablePtr->rowOffset,
+			    col-tablePtr->colOffset, CELL);
+		}
 	    }
 	    return TCL_OK;
 
@@ -867,6 +869,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		    entryPtr = Tcl_FindHashEntry(hashTblPtr, (char *)value);
 		    if (entryPtr != NULL) {
 			Tcl_DeleteHashEntry(entryPtr);
+			refresh = 1;
 		    }
 		} else {
 		    /*
@@ -878,13 +881,18 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		    if (newEntry || (tagPtr !=
 			    (TableTag *) Tcl_GetHashValue(entryPtr))) {
 			Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
+			refresh = 1;
 		    }
 		}
 		/* and invalidate the row or column affected */
-		if (cmdIndex == TAG_ROWTAG) {
-		    TableRefresh(tablePtr, value-tablePtr->rowOffset, 0, ROW);
-		} else {
-		    TableRefresh(tablePtr, 0, value-tablePtr->colOffset, COL);
+		if (refresh) {
+		    if (cmdIndex == TAG_ROWTAG) {
+			TableRefresh(tablePtr, value-tablePtr->rowOffset, 0,
+				ROW);
+		    } else {
+			TableRefresh(tablePtr, 0, value-tablePtr->colOffset,
+				COL);
+		    }
 		}
 	    }
 	    return TCL_OK;	/* COLTAG && ROWTAG */

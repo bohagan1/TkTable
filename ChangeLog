@@ -1,3 +1,8 @@
+2001-06-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableTag.c (Table_TagCmd): corrected patch for Patch
+	#423332 that does prevent excess refresh in the simple case.
+
 2001-06-23  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* generic/tkTable.c (TableConfigure): corrected possible crash
