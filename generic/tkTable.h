@@ -9,7 +9,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.12 2002/03/21 02:18:27 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.13 2002/09/26 01:47:20 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -521,20 +521,19 @@ extern int	Table_TagCmd _ANSI_ARGS_((ClientData clientData,
 extern void	Table_ClearHashTable _ANSI_ARGS_((Tcl_HashTable *hashTblPtr));
 extern int	TableOptionBdSet _ANSI_ARGS_((ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
-			char *value, char *widgRec, int offset));
+			CONST84 char *value, char *widgRec, int offset));
 extern char *	TableOptionBdGet _ANSI_ARGS_((ClientData clientData,
 			Tk_Window tkwin, char *widgRec, int offset,
 			Tcl_FreeProc **freeProcPtr));
 extern int	TableTagConfigureBd _ANSI_ARGS_((Table *tablePtr,
 			TableTag *tagPtr, char *oldValue, int nullOK));
 extern int	Cmd_OptionSet _ANSI_ARGS_((ClientData clientData,
-					   Tcl_Interp *interp,
-					   Tk_Window unused, char *value,
-					   char *widgRec, int offset));
+			Tcl_Interp *interp,
+			Tk_Window unused, CONST84 char *value,
+			char *widgRec, int offset));
 extern char *	Cmd_OptionGet _ANSI_ARGS_((ClientData clientData,
-					   Tk_Window unused, char *widgRec,
-					   int offset,
-					   Tcl_FreeProc **freeProcPtr));
+			Tk_Window unused, char *widgRec,
+			int offset, Tcl_FreeProc **freeProcPtr));
 
 /*
  * HEADERS IN tkTableCell.c
