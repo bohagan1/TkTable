@@ -6,7 +6,7 @@
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tkTable.test,v 1.7 2002/03/20 03:03:03 hobbs Exp $
+# RCS: @(#) $Id: tkTable.test,v 1.8 2002/03/21 20:15:03 hobbs Exp $
 
 # deletes:
 # test 2 -5
@@ -488,6 +488,17 @@ test table-28.1 {TableWidgetCmd procedure, "window" option} {
 test table-29.1 {TableWidgetCmd procedure, "width" option} {
     list [catch {.t width a} msg] $msg
 } {1 {expected integer but got "a"}}
+
+
+test table-30.1 {Table_EditCmd insert with var trace Bug #487747} {
+    destroy .t
+    table .t -cols 7 -rows 0 -variable ::TableData
+    .t insert rows end 1
+    .t set row 1,1 {1 2 3 4 5}
+    .t insert rows -- 0 9000
+    .t insert rows -- 0 9000
+    destroy .t
+} {}
 
 
 return

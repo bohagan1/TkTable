@@ -1,5 +1,6 @@
-2002-04-23  Jeff Hobbs  <jeffh@ActiveState.com>
+2002-06-21  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* tests/tkTable.test (table-30.1):
 	* generic/tkTableEdit.c (Table_EditCmd): fixed problem where row
 	insertion could segfault. [Bug #487747]
 
