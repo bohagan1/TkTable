@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.26 2003/02/25 07:16:46 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.27 2003/04/10 02:18:16 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -28,36 +28,35 @@
 #include "dprint.h"
 #endif
 
-static char **	StringifyObjects _ANSI_ARGS_((int objc,
-			Tcl_Obj *CONST objv[]));
+static char **	StringifyObjects(int objc, Tcl_Obj *CONST objv[]);
 
-static int	Tk_TableObjCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int	Tk_TableObjCmd(ClientData clientData, Tcl_Interp *interp,
+			int objc, Tcl_Obj *CONST objv[]);
 
-static int	TableWidgetObjCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-static int	TableConfigure _ANSI_ARGS_((Tcl_Interp *interp,
-			Table *tablePtr, int objc, Tcl_Obj *CONST objv[],
-			int flags, int forceUpdate));
-static void	TableDestroy _ANSI_ARGS_((ClientData clientdata));
-static void	TableEventProc _ANSI_ARGS_((ClientData clientData,
-			XEvent *eventPtr));
-static void	TableCmdDeletedProc _ANSI_ARGS_((ClientData clientData));
+static int	TableWidgetObjCmd(ClientData clientData, Tcl_Interp *interp,
+			int objc, Tcl_Obj *CONST objv[]);
+static int	TableConfigure(Tcl_Interp *interp, Table *tablePtr,
+			int objc, Tcl_Obj *CONST objv[],
+			int flags, int forceUpdate);
+#ifdef HAVE_TCL84
+static void	TableWorldChanged(ClientData instanceData);
+#endif
+static void	TableDestroy(ClientData clientdata);
+static void	TableEventProc(ClientData clientData, XEvent *eventPtr);
+static void	TableCmdDeletedProc(ClientData clientData);
 
-static void	TableRedrawHighlight _ANSI_ARGS_((Table *tablePtr));
-static void	TableGetGc _ANSI_ARGS_((Display *display, Drawable d,
-			TableTag *tagPtr, GC *tagGc));
+static void	TableRedrawHighlight(Table *tablePtr);
+static void	TableGetGc(Display *display, Drawable d,
+			TableTag *tagPtr, GC *tagGc);
 
-static void	TableDisplay _ANSI_ARGS_((ClientData clientdata));
-static void	TableFlashEvent _ANSI_ARGS_((ClientData clientdata));
-static char *	TableVarProc _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, char *name, char *index,
-			int flags));
-static void	TableCursorEvent _ANSI_ARGS_((ClientData clientData));
-static int	TableFetchSelection _ANSI_ARGS_((ClientData clientData,
-			int offset, char *buffer, int maxBytes));
-static Tk_RestrictAction TableRestrictProc _ANSI_ARGS_((ClientData arg,
-			XEvent *eventPtr));
+static void	TableDisplay(ClientData clientdata);
+static void	TableFlashEvent(ClientData clientdata);
+static char *	TableVarProc(ClientData clientData, Tcl_Interp *interp,
+			char *name, char *index, int flags);
+static void	TableCursorEvent(ClientData clientData);
+static int	TableFetchSelection(ClientData clientData,
+			int offset, char *buffer, int maxBytes);
+static Tk_RestrictAction TableRestrictProc(ClientData arg, XEvent *eventPtr);
 
 /*
  * The following tables define the widget commands (and sub-
@@ -352,6 +351,20 @@ static CONST84 char *updateOpts[] = {
     "-usecommand",	"-variable",	"-width",	"-wrap",	
     "-xscrollcommand",	"-yscrollcommand", (char *) NULL
 };
+
+#ifdef HAVE_TCL84
+/*
+ * The structure below defines widget class behavior by means of procedures
+ * that can be invoked from generic window code.
+ */
+
+static Tk_ClassProcs tableClass = {
+    sizeof(Tk_ClassProcs),	/* size */
+    TableWorldChanged,		/* worldChangedProc */
+    NULL,			/* createProc */
+    NULL			/* modalProc */
+};
+#endif
 
 #ifdef WIN32
 /*
@@ -1246,7 +1259,50 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     Tcl_DStringFree(&error);
     return result;
 }
+#ifdef HAVE_TCL84
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TableWorldChanged --
+ *
+ *      This procedure is called when the world has changed in some
+ *      way and the widget needs to recompute all its graphics contexts
+ *	and determine its new geometry.
+ *
+ * Results:
+ *      None.
+ *
+ * Side effects:
+ *      Entry will be relayed out and redisplayed.
+ *
+ *---------------------------------------------------------------------------
+ */
+ 
+static void
+TableWorldChanged(instanceData)
+    ClientData instanceData;	/* Information about widget. */
+{
+    Table *tablePtr = (Table *) instanceData;
+    Tk_FontMetrics fm;
 
+    /*
+     * Set up the default column width and row height
+     */
+    Tk_GetFontMetrics(tablePtr->defaultTag.tkfont, &fm);
+    tablePtr->charWidth  = Tk_TextWidth(tablePtr->defaultTag.tkfont, "0", 1);
+    tablePtr->charHeight = fm.linespace + 2;
+
+    /*
+     * Recompute the window's geometry and arrange for it to be redisplayed.
+     */
+
+    TableAdjustParams(tablePtr);
+    TableGeometryRequest(tablePtr);
+    Tk_SetInternalBorder(tablePtr->tkwin, tablePtr->highlightWidth);
+    /* invalidate the whole table */
+    TableInvalidateAll(tablePtr, INV_HIGHLIGHT);
+}
+#endif
 /*
  *--------------------------------------------------------------
  *
