@@ -1,3 +1,44 @@
+2002-03-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* demos/loadtable.tcl:
+	* tests/tkTable.test: adapted load to new configure style where
+	unix gets the 'lib' suffix for the library.
+
+	* tclconfig/ChangeLog:
+	* tclconfig/README.txt:
+	* tclconfig/install-sh:
+	* tclconfig/tcl.m4:
+	* README.txt:
+	* Makefile.in:
+	* aclocal.m4:
+	* configure:
+	* configure.in: introduction of next-gen TEA based config files.
+	The unix/ configure files should no longer be used.
+
+	* generic/tkTable.c:
+	* generic/tkTableCell.c:
+	* generic/tkTableCellSort.c:
+	* generic/tkTableCmds.c:
+	* generic/tkTableEdit.c:
+	* generic/tkTableTag.c:
+	* generic/tkTableUtil.c:
+	* generic/tkTableWin.c:
+	* generic/tkTable.h: introduced CONST84 define for compatibility
+	with new 8.4 CONST-ed headers and older headers and fixed up
+	sources where necessary.
+
+	* generic/tkTableInitScript.h:
+	* generic/tkTable.c:
+	* generic/version.h:
+	* mac/mac_tkTable.r:
+	* win/makefile.vc: changed TBL_VERSION to VERSION, upped to 2.8.
+	Added Win64 build support to makefile.vc
+
+2002-03-07  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/tkTable.tcl (tk_tablePasteHandler): "string comp" fixed
+	to "string compare" [Bug #500449]
+
 2002-01-16  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* generic/tkTable.c (TableWidgetObjCmd): corrected dangerous

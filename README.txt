@@ -5,7 +5,7 @@
  *
  * current maintainer: jeff.hobbs@acm.org
  *
- * Copyright 1997-2001, Jeffrey Hobbs (jeff.hobbs@acm.org)
+ * Copyright 1997-2002, Jeffrey Hobbs (jeff@hobbs.org)
  */
 
 		*************************************
@@ -60,7 +60,6 @@ BUILDING AND INSTALLING THE WIDGET
 
    ON UNIX:
         cd Tktable<version>
-	cd unix/
 	./configure
 
    tkTable uses information left in tkConfig.sh when you built tk.  This
@@ -68,15 +67,22 @@ BUILDING AND INSTALLING THE WIDGET
    --exec-prefix options of configure if you don't want the default
    (/usr/local).  If building on multiple unix platforms, the following is
    recommended to isolate build conflicts:
-	mkdir unix/<platform>
+	mkdir <builddir>/<platform>
 	cd !$
-	../configure
+	/path/to/Tktable<version>/configure
 
    ON WINDOWS:
 
-   Hack makefile.vc until it works and compile.  It has problems executing
-   wish from a path with a space in it, but the DLL builds just fine.
-   A DLL should be available where you found this archive.
+   Version 2.8 added support for building in the cygwin environment on
+   Windows based on TEA (http://www.tcl.tk/doc/tea/).  You can retrieve
+   cygwin from:
+	http://sources.redhat.com/cygwin/
+
+   Inside the cygwin environment, you build the same as on Unix.
+
+   Otherwise, hack makefile.vc until it works and compile.  It has problems
+   executing wish from a path with a space in it, but the DLL builds just
+   fine.  A DLL should be available where you found this archive.
 
    ON MACINTOSH:
    
@@ -86,12 +92,12 @@ BUILDING AND INSTALLING THE WIDGET
 
 3. Make and Install
 
-   ON UNIX:
+   ON UNIX or WINDOWS (with cygwin):
 	make
 	make test (OPTIONAL)
 	make install
 
-   ON WINDOWS:
+   ON WINDOWS (makefile.vc):
 	nmake -f makefile.vc
 	nmake -f makefile.vc test (OPTIONAL)
 	nmake -f makefile.vc install
