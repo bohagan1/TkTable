@@ -246,6 +246,10 @@ Tk_ConfigSpec tableSpecs[] = {
      Tk_Offset(Table, insertWidth), 0},
     {TK_CONFIG_BOOLEAN, "-invertselected", "invertSelected", "InvertSelected",
      "0", Tk_Offset(Table, invertSelected), 0},
+    {TK_CONFIG_PIXELS, "-ipadx", "ipadX", "Pad", "0",
+     Tk_Offset(Table, ipadX), 0},
+    {TK_CONFIG_PIXELS, "-ipady", "ipadY", "Pad", "0",
+     Tk_Offset(Table, ipadY), 0},
     {TK_CONFIG_PIXELS, "-maxheight", "maxHeight", "MaxHeight", "600",
      Tk_Offset(Table, maxReqHeight), 0},
     {TK_CONFIG_PIXELS, "-maxwidth", "maxWidth", "MaxWidth", "800",
@@ -329,6 +333,7 @@ static char *updateOpts[] = {
     "-hasprocs",	"-height",	"-highlightbackground",
     "-highlightcolor",	"-highlightthickness",		"-insertbackground",
     "-insertborderwidth",		"-insertwidth",	"-invertselected",
+    "-ipadx",		"-ipady",
     "-maxheight",	"-maxwidth",	"-multiline",
     "-padx",		"-pady",	"-relief",	"-roworigin",
     "-rows",		"-rowstretchmode",		"-rowtagcommand",
@@ -1232,7 +1237,6 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     }
 
     /* only do the full reconfigure if absolutely necessary */
-    forceUpdate = 1;
     if (!forceUpdate) {
 	int i, dummy;
 	for (i = 0; i < objc-1; i += 2) {
@@ -1321,11 +1325,9 @@ TableEventProc(clientData, eventPtr)
 	break;
 
     case Expose:
-	if (eventPtr->xexpose.count == 0) {
-	    TableInvalidate(tablePtr, eventPtr->xexpose.x, eventPtr->xexpose.y,
-		    eventPtr->xexpose.width, eventPtr->xexpose.height,
-		    INV_HIGHLIGHT);
-	}
+	TableInvalidate(tablePtr, eventPtr->xexpose.x, eventPtr->xexpose.y,
+		eventPtr->xexpose.width, eventPtr->xexpose.height,
+		INV_HIGHLIGHT);
 	break;
 
     case DestroyNotify:
@@ -2743,24 +2745,29 @@ TableAdjustParams(register Table *tablePtr)
     /*
      * Cache some values for many upcoming calculations
      */
-    px = 2 * tablePtr->padX;
-    py = 2 * tablePtr->padY;
+    px = 2 * tablePtr->ipadX;
+    py = 2 * tablePtr->ipadY;
     bd = 2 * tablePtr->defaultTag.bd;
     hl = tablePtr->highlightWidth;
     w  = Tk_Width(tablePtr->tkwin) - (2 * hl);
     h  = Tk_Height(tablePtr->tkwin) - (2 * hl);
 
-    /* account for whether defColWidth is in chars (>=0) or pixels (<0) */
-    /* bd is added in here for convenience */
+    /*
+     * Account for whether default dimensions are in chars (>0) or
+     * pixels (<=0).  Border space is added in here for convenience.
+     *
+     * When a value in pixels is specified, we take that exact
+     * amount, not adding in internal padding.
+     */
     if (tablePtr->defColWidth > 0) {
 	defColWidth = tablePtr->charWidth * tablePtr->defColWidth + bd + px;
     } else {
-	defColWidth = -(tablePtr->defColWidth) + bd + px;
+	defColWidth = -(tablePtr->defColWidth) + bd;
     }
     if (tablePtr->defRowHeight > 0) {
 	defRowHeight = tablePtr->charHeight * tablePtr->defRowHeight + bd + py;
     } else {
-	defRowHeight = -(tablePtr->defRowHeight) + bd + py;
+	defRowHeight = -(tablePtr->defRowHeight) + bd;
     }
 
     /* Set up the arrays to hold the col pixels and starts */
@@ -2781,53 +2788,63 @@ TableAdjustParams(register Table *tablePtr)
 	    lastUnpreset = i;
 	} else {
 	    value = (int) Tcl_GetHashValue(entryPtr);
-	    if (value <= 0) {
-		tablePtr->colPixels[i] = -value + bd + px;
-	    } else {
+	    if (value > 0) {
 		tablePtr->colPixels[i] = value * tablePtr->charWidth + bd + px;
+	    } else {
+		/*
+		 * When a value in pixels is specified, we take that exact
+		 * amount, not adding in internal padding.
+		 */
+		tablePtr->colPixels[i] = -value + bd;
 	    }
 	    numPixels += tablePtr->colPixels[i];
 	}
     }
 
-    /* work out how much to pad each col depending on the mode */
+    /*
+     * Work out how much to pad each col depending on the mode.
+     */
     diff = w-numPixels-(unpreset*defColWidth);
     total = 0;
-    /* now do the padding and calculate the column starts */
-    /* diff lower than 0 means we can't see the entire set of columns,
-     * thus no special stretching will occur & we optimize the calculation */
+
+    /*
+     * Now do the padding and calculate the column starts.
+     * Diff lower than 0 means we can't see the entire set of columns,
+     * thus no special stretching will occur & we optimize the calculation.
+     */
     if (diff <= 0) {
 	for (i = 0; i < tablePtr->cols; i++) {
-	    if (tablePtr->colPixels[i] == -1)
+	    if (tablePtr->colPixels[i] == -1) {
 		tablePtr->colPixels[i] = defColWidth;
+	    }
 	    tablePtr->colStarts[i] = total;
 	    total += tablePtr->colPixels[i];
 	}
     } else {
 	switch(tablePtr->colStretch) {
 	case STRETCH_MODE_NONE:
-	    pad = 0;
-	    lastPad = 0;
+	    pad		= 0;
+	    lastPad	= 0;
 	    break;
 	case STRETCH_MODE_UNSET:
 	    if (unpreset == 0) {
-		pad = 0;
-		lastPad = 0;
+		pad	= 0;
+		lastPad	= 0;
 	    } else {
-		pad = diff / unpreset;
-		lastPad = diff - pad * (unpreset - 1);
+		pad	= diff / unpreset;
+		lastPad	= diff - pad * (unpreset - 1);
 	    }
 	    break;
 	case STRETCH_MODE_LAST:
-	    pad = 0;
-	    lastPad = diff;
+	    pad		= 0;
+	    lastPad	= diff;
 	    lastUnpreset = tablePtr->cols - 1;
 	    break;
 	default:	/* STRETCH_MODE_ALL, but also FILL for cols */
-	    pad = diff / tablePtr->cols;
+	    pad		= diff / tablePtr->cols;
 	    /* force it to be applied to the last column too */
 	    lastUnpreset = tablePtr->cols - 1;
-	    lastPad = diff - pad * lastUnpreset;
+	    lastPad	= diff - pad * lastUnpreset;
 	}
 
 	for (i = 0; i < tablePtr->cols; i++) {
@@ -2853,9 +2870,9 @@ TableAdjustParams(register Table *tablePtr)
 	tablePtr->rowPixels = (int *) ckalloc(tablePtr->rows * sizeof(int));
 
 	/* get all the preset rows and set their heights */
-	lastUnpreset = 0;
-	numPixels = 0;
-	unpreset = 0;
+	lastUnpreset	= 0;
+	numPixels	= 0;
+	unpreset	= 0;
 	for (i = 0; i < tablePtr->rows; i++) {
 	    if ((entryPtr = Tcl_FindHashEntry(tablePtr->rowHeights,
 					      (char *) i)) == NULL) {
@@ -2864,11 +2881,15 @@ TableAdjustParams(register Table *tablePtr)
 		lastUnpreset = i;
 	    } else {
 		value = (int) Tcl_GetHashValue(entryPtr);
-		if (value <= 0) {
-		    tablePtr->rowPixels[i] = -value + bd + py;
-		} else {
+		if (value > 0) {
 		    tablePtr->rowPixels[i] = value * tablePtr->charHeight
 			+ bd + py;
+		} else {
+		    /*
+		     * When a value in pixels is specified, we take that exact
+		     * amount, not adding in internal padding.
+		     */
+		    tablePtr->rowPixels[i] = -value + bd;
 		}
 		numPixels += tablePtr->rowPixels[i];
 	    }

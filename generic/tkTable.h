@@ -291,6 +291,9 @@ typedef struct {
   int padX, padY;		/* Extra space around text (pixels to leave
 				 * on each side).  Ignored for bitmaps and
 				 * images. */
+  int ipadX, ipadY;		/* Space to leave empty around cell borders.
+				 * This differs from pad* in that it is always
+				 * present for the cell. */
 
   /* Cached Information */
   int titleRows, titleCols;	/* the number of rows|cols to use as a title */
