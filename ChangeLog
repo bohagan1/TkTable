@@ -1,3 +1,15 @@
+2003-04-09  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure: regen
+	* tclconfig/tcl.m4: Updated to newest tcl.m4, (WinCE support)
+
+	* demos/loadtable.tcl: redefine 'puts' on Windows CE
+
+	* generic/tkTable.c (TableDisplay): correctly copy clipwindow area
+	for NO_XSETCLIP case and use that when UNDER_CE as well.  Also add
+	support for drawing ellipsis in NO_XSETCLIP case.
+	Comment out OffsetClipRgn call - it was a noop.
+
 2003-04-04  Andreas Kupries  <andreask@activestate.com>
 
 	* configure.in:
