@@ -2165,7 +2165,7 @@ fi
 
 if test "${TEA_PLATFORM}" = "windows" ; then
     cat >> confdefs.h <<EOF
-#define BUILD_${PACKAGE} 1
+#define BUILD_Tktable 1
 EOF
 
     CLEANFILES="pkgIndex.tcl tkTable.tcl.h *.lib *.dll *.exp *.ilk *.pdb *.pch"
@@ -4076,7 +4076,7 @@ EOF
 #--------------------------------------------------------------------
 
 if test "${TEA_PLATFORM}" = "windows" ; then
-    SHLIB_LD_LIBS="${SHLIB_LD_LIBS} gdi32.lib -force:unresolved"
+    SHLIB_LD_LIBS="${SHLIB_LD_LIBS} gdi32.lib"
 fi
 
 #--------------------------------------------------------------------

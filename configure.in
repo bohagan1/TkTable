@@ -1,6 +1,6 @@
 #! /bin/bash -norc
 #
-# RCS: @(#) $Id: configure.in,v 1.3 2002/03/28 02:03:44 hobbs Exp $
+# RCS: @(#) $Id: configure.in,v 1.4 2002/03/28 02:41:14 hobbs Exp $
 #
 #--------------------------------------------------------------------
 # Sample configure.in for Tcl Extensions.  The only places you should
@@ -169,7 +169,7 @@ SC_PUBLIC_TK_HEADERS
 #--------------------------------------------------------------------
 
 if test "${TEA_PLATFORM}" = "windows" ; then
-    AC_DEFINE_UNQUOTED(BUILD_${PACKAGE})
+    AC_DEFINE_UNQUOTED(BUILD_Tktable)
     CLEANFILES="pkgIndex.tcl tkTable.tcl.h *.lib *.dll *.exp *.ilk *.pdb *.pch"
     EXTRA_SOURCES='$(WIN_SOURCES)'
 else
@@ -239,7 +239,7 @@ SC_MAKE_LIB
 #--------------------------------------------------------------------
 
 if test "${TEA_PLATFORM}" = "windows" ; then
-    SHLIB_LD_LIBS="${SHLIB_LD_LIBS} gdi32.lib -force:unresolved"
+    SHLIB_LD_LIBS="${SHLIB_LD_LIBS} gdi32.lib"
 fi
 
 #--------------------------------------------------------------------

@@ -11,7 +11,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: Makefile.in,v 1.3 2002/03/20 02:09:29 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.4 2002/03/28 02:03:23 hobbs Exp $
 
 #========================================================================
 # Edit the following few lines when writing a new extension
@@ -359,8 +359,8 @@ distclean: clean
 install-lib-binaries: installdirs
 	@list='$(lib_BINARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
-	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(pkglibdir)/$$p"; \
-	    $(INSTALL_DATA) $$p $(DESTDIR)$(pkglibdir)/$$p; \
+	    echo " $(INSTALL_PROGRAM) $$p $(DESTDIR)$(pkglibdir)/$$p"; \
+	    $(INSTALL_PROGRAM) $$p $(DESTDIR)$(pkglibdir)/$$p; \
 	    echo " $(RANLIB) $(DESTDIR)$(pkglibdir)/$$p"; \
 	    $(RANLIB) $(DESTDIR)$(pkglibdir)/$$p; \
 	    ext=`echo $$p|sed -e "s/.*\.//"`; \
@@ -371,7 +371,7 @@ install-lib-binaries: installdirs
 	            $(INSTALL_DATA) $$lib $(DESTDIR)$(pkglibdir)/$$lib; \
 		fi; \
 	    fi; \
-	  else :; fi; \
+	  fi; \
 	done
 	@list='$(PKG_TCL_SOURCES)'; for p in $$list; do \
 	  $(INSTALL_DATA) $(srcdir)/library/$$p $(pkglibdir)/$$p; \
@@ -386,9 +386,9 @@ install-lib-binaries: installdirs
 install-bin-binaries: installdirs
 	@list='$(bin_BINARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
-	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(bindir)/$$p"; \
-	    $(INSTALL_DATA) $$p $(DESTDIR)$(bindir)/$$p; \
-	  else :; fi; \
+	    echo " $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/$$p"; \
+	    $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/$$p; \
+	  fi; \
 	done
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
