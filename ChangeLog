@@ -20,6 +20,10 @@
 ##
 ##########################################################################
 
+Fixed missing comma in tkTableEdit.c:32 (Brutti)
+
+**** v2.5 31 May 1999 ****
+
 Fixed row/col insertion/deletion to move embedded windows, added
 -holdwindows option and Table_Win(Delete|Move).
 

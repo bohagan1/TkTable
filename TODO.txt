@@ -1,6 +1,6 @@
 ## TODO LIST
 ##
-## updated 3 December 1998, jeff.hobbs@acm.org
+## updated 1 June 1999, jeff.hobbs@acm.org
 ##
 
 These are recommendations, not all of the same priority, and not
@@ -9,9 +9,6 @@ feel is important, email me and say so.  Very democratic.
 
 * some sort of textbbox command that will return the size of the
   text in a cell, to allow for perfect cell sizing.
-
-* Tcl8 object model will be supported when it is supported in Tk
-  (or somewhere else that has good examples for widgets)
 
 * anchor title areas in different parts of the screen
 
@@ -41,21 +38,24 @@ pathName  sort	-row	{the list of rows we want to sort | all}
 
 * row/column swap (maybe only in terms of visual remapping)
 
-=	BBB  U  U  GGS  SSS
-==	B  B U  U G    S  
-==-	B B  U  U G GG  SS
-==	B  B U  U G  G    S
-=	BBB   UU   GGG SSS
+=	BBBB  U   U  GGG   SSS
+==	B   B U   U G     S  
+==-	B BB  U   U G GGG  SSS
+==	B   B U   U G   G     S
+=	BBBB   UUU   GGGG  SSS
 
 MAJOR:
 
-Sol2.5.1/gcc 2.8.1/Tk8.1a2 && WinNT/VC++5
+Sol2.5.1/gcc 2.8.1 && WinNT/VC++5
 seg fault when you exit Tk without destroying or withdrawing
 the table first.  Dies trying to reference TableEventProc.
 Problem seems to be that TableEventProc gets unloaded before it can
 be called when not used in the primary interpreter, or used as a
 loadable library.  FIXED with hack that creates ExitHandler for each
 instance of table to make sure it is destroyed before Tcl exits.
+The finalization code is fixed in Tk8.1final and Tk8.0.5+.
+
+A span that cover the last (end) cell doesn't draw correctly.
 
 MINOR:
 

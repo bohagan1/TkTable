@@ -29,7 +29,7 @@ enum modCmd {
 /* insert/delete row/col switches */
 static char *rcCmdNames[] = {
     "-keeptitles",	"-holddimensions",	"-holdtags",
-    "-holdwindows"	"--", (char *) NULL
+    "-holdwindows",	"--", (char *) NULL
 };
 enum rcCmd {
     OPT_TITLES,	OPT_DIMS,	OPT_TAGS,	OPT_WINS,	OPT_LAST
