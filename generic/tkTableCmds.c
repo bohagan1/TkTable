@@ -35,11 +35,21 @@ Table_ActivateCmd(ClientData clientData, register Tcl_Interp *interp,
 {
     register Table *tablePtr = (Table *) clientData;
     int result = TCL_OK;
-    int row, col;
+    int row, col, templen;
 
     if (objc != 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "index");
 	return TCL_ERROR;
+    } else if (Tcl_GetStringFromObj(objv[2], &templen), templen == 0) {
+	/*
+	 * Test implementation to clear active cell (becroft)
+	 */
+	tablePtr->flags &= ~HAS_ACTIVE;
+	tablePtr->flags |= ACTIVE_DISABLED;
+	tablePtr->activeRow = -1;
+	tablePtr->activeCol = -1;
+	TableAdjustActive(tablePtr);
+	TableConfigCursor(tablePtr);
     } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
 	return TCL_ERROR;
     } else {

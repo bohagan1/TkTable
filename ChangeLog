@@ -1,3 +1,9 @@
+2004-02-17  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableCmds.c (Table_ActivateCmd): test implementation
+	of an "unactivate" ($table activate "") command to remove the
+	active cell. (becroft)
+
 2004-02-13  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* library/tkTable.tcl (::tk::table::Button1): account for what
