@@ -705,7 +705,10 @@ Specifies the cell as a numerical index of
 row,col which corresponds to the index of the
 associated Tcl array, where <B>-roworigin,-colorigin</B>
 corresponds to the first cell in the
-table (0,0 by default).
+table (0,0 by default). The values for row
+and column will be constrained to actual values
+in the table, which means a valid cell is
+always found.
 
 <DL>
 
@@ -994,7 +997,7 @@ specified here.
 <H2><A NAME="sect9" HREF="#toc9"><B>the</B> <B>Selection</B></A></H2>
 
 <P>
-Table selections are available as type STRING.    By
+Table selections are available as type STRING. By
 default, the value of the selection will be the values of
 the selected cells in nested Tcl list form where each row
 is a list and each column is an element of a row list.
