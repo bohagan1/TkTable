@@ -1,6 +1,11 @@
-2004-07-20  Jeff Hobbs  <jeffh@ActiveState.com>
+2004-07-22  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	**** 2.9 TAGGED FOR RELEASE ****
+
+	* configure, tclconfig/tcl.m4: update tcl.m4 TEA_PATH_X that adds
+	Aqua build recognition and TEA_WINDOWINGSYSTEM variable.
+
+2004-07-20  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* generic/version.h, unix/tktable.spec:    updated for v2.9
 	* demos/loadtable.tcl, tests/tkTable.test:

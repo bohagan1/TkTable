@@ -6081,6 +6081,15 @@ echo "${ECHO_T}${INCLUDE_DIR_NATIVE}" >&6
 
 
     if test "${TEA_PLATFORM}" = "unix" ; then
+	case ${TK_DEFS} in
+	    *MAC_OSX_TK*)
+		cat >>confdefs.h <<\_ACEOF
+#define MAC_OSX_TK 1
+_ACEOF
+
+		TEA_WINDOWINGSYSTEM="aqua"
+		;;
+	    *)
 
     echo "$as_me:$LINENO: checking for X" >&5
 echo $ECHO_N "checking for X... $ECHO_C" >&6
@@ -6501,6 +6510,11 @@ echo "${ECHO_T}could not find any!  Using -lX11." >&6
 	PKG_LIBS="${PKG_LIBS} ${XLIBSW}"
     fi
 
+		TEA_WINDOWINGSYSTEM="x11"
+		;;
+	esac
+    elif test "${TEA_PLATFORM}" = "windows" ; then
+	TEA_WINDOWINGSYSTEM="windows"
     fi
 
 
