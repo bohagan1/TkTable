@@ -105,6 +105,10 @@
 
 #define MAX(A,B)	(((A)>(B))?(A):(B))
 #define MIN(A,B)	(((A)>(B))?(B):(A))
+#define BETWEEN(val,min,max)	( ((val)<(min)) ? (min) : \
+				( ((val)>(max)) ? (max) : (val) ) )
+#define CONSTRAIN(val,min,max)	if ((val) < (min)) { (val) = (min); } \
+				else if ((val) > (max)) { (val) = (max); }
 #define ARSIZE(A)	(sizeof(A)/sizeof(*A))
 #define INDEX_BUFSIZE	32		/* max size of buffer for indices */
 #define TEST_KEY	"#TEST KEY#"	/* index for testing array existence */

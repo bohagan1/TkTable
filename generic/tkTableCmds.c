@@ -781,7 +781,7 @@ Table_GetCmd(ClientData clientData, register Tcl_Interp *interp,
 	for ( row = r1; row <= r2; row++ ) {
 	    for ( col = c1; col <= c2; col++ ) {
 		objPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr,
-							    row, col), -1);
+			row, col), -1);
 		Tcl_ListObjAppendElement(NULL, resultPtr, objPtr);
 	    }
 	}
@@ -816,38 +816,39 @@ Table_ScanCmd(ClientData clientData, register Tcl_Interp *interp,
 	Tcl_WrongNumArgs(interp, 2, objv, "mark|dragto x y");
 	return TCL_ERROR;
     } else if (Tcl_GetIndexFromObj(interp, objv[2], bdCmdNames,
-				   "option", 0, &cmdIndex) != TCL_OK ||
-	       Tcl_GetIntFromObj(interp, objv[3], &x) == TCL_ERROR ||
-	       Tcl_GetIntFromObj(interp, objv[4], &y) == TCL_ERROR) {
+	    "option", 0, &cmdIndex) != TCL_OK ||
+	    Tcl_GetIntFromObj(interp, objv[3], &x) == TCL_ERROR ||
+	    Tcl_GetIntFromObj(interp, objv[4], &y) == TCL_ERROR) {
 	return TCL_ERROR;
     }
     switch ((enum bdCmd) cmdIndex) {
-    case BD_MARK:
-	TableWhatCell(tablePtr, x, y, &row, &col);
-	tablePtr->scanMarkRow = row-tablePtr->topRow;
-	tablePtr->scanMarkCol = col-tablePtr->leftCol;
-	tablePtr->scanMarkX = x;
-	tablePtr->scanMarkY = y;
-	break;
+	case BD_MARK:
+	    TableWhatCell(tablePtr, x, y, &row, &col);
+	    tablePtr->scanMarkRow = row-tablePtr->topRow;
+	    tablePtr->scanMarkCol = col-tablePtr->leftCol;
+	    tablePtr->scanMarkX = x;
+	    tablePtr->scanMarkY = y;
+	    break;
 
-    case BD_DRAGTO: {
-	int oldTop = tablePtr->topRow, oldLeft = tablePtr->leftCol;
-	y += (5*(y-tablePtr->scanMarkY));
-	x += (5*(x-tablePtr->scanMarkX));
+	case BD_DRAGTO: {
+	    int oldTop = tablePtr->topRow, oldLeft = tablePtr->leftCol;
+	    y += (5*(y-tablePtr->scanMarkY));
+	    x += (5*(x-tablePtr->scanMarkX));
 
-	TableWhatCell(tablePtr, x, y, &row, &col);
+	    TableWhatCell(tablePtr, x, y, &row, &col);
 
-	/* maintain appropriate real index */
-	tablePtr->topRow  = MAX(MIN(row-tablePtr->scanMarkRow,
-				    tablePtr->rows-1), tablePtr->titleRows);
-	tablePtr->leftCol = MAX(MIN(col-tablePtr->scanMarkCol,
-				    tablePtr->cols-1), tablePtr->titleCols);
+	    /* maintain appropriate real index */
+	    tablePtr->topRow  = BETWEEN(row-tablePtr->scanMarkRow,
+		    tablePtr->titleRows, tablePtr->rows-1);
+	    tablePtr->leftCol = BETWEEN(col-tablePtr->scanMarkCol,
+		    tablePtr->titleCols, tablePtr->cols-1);
 
-	/* Adjust the table if new top left */
-	if (oldTop != tablePtr->topRow || oldLeft != tablePtr->leftCol)
-	    TableAdjustParams(tablePtr);
-	break;
-    }
+	    /* Adjust the table if new top left */
+	    if (oldTop != tablePtr->topRow || oldLeft != tablePtr->leftCol) {
+		TableAdjustParams(tablePtr);
+	    }
+	    break;
+	}
     }
     return TCL_OK;
 }
@@ -884,17 +885,15 @@ Table_SelAnchorCmd(ClientData clientData, register Tcl_Interp *interp,
     tablePtr->flags |= HAS_ANCHOR;
     /* maintain appropriate real index */
     if (tablePtr->selectTitles) {
-	tablePtr->anchorRow = MIN(MAX(0,row-tablePtr->rowOffset),
-				  tablePtr->rows-1);
-	tablePtr->anchorCol = MIN(MAX(0,col-tablePtr->colOffset),
-				  tablePtr->cols-1);
+	tablePtr->anchorRow = BETWEEN(row-tablePtr->rowOffset,
+		0, tablePtr->rows-1);
+	tablePtr->anchorCol = BETWEEN(col-tablePtr->colOffset,
+		0, tablePtr->cols-1);
     } else {
-	tablePtr->anchorRow = MIN(MAX(tablePtr->titleRows,
-				      row-tablePtr->rowOffset),
-				  tablePtr->rows-1);
-	tablePtr->anchorCol = MIN(MAX(tablePtr->titleCols,
-				      col-tablePtr->colOffset),
-				  tablePtr->cols-1);
+	tablePtr->anchorRow = BETWEEN(row-tablePtr->rowOffset,
+		tablePtr->titleRows, tablePtr->rows-1);
+	tablePtr->anchorCol = BETWEEN(col-tablePtr->colOffset,
+		tablePtr->titleCols, tablePtr->cols-1);
     }
     return TCL_OK;
 }
@@ -1075,14 +1074,14 @@ Table_SelSetCmd(ClientData clientData, register Tcl_Interp *interp,
 	firstCol = tablePtr->titleCols+tablePtr->colOffset;
     }
     /* maintain appropriate user index */
-    row = MIN(MAX(firstRow, row), lastRow);
-    col = MIN(MAX(firstCol, col), lastCol);
+    CONSTRAIN(row, firstRow, lastRow);
+    CONSTRAIN(col, firstCol, lastCol);
     if (objc == 4) {
 	r1 = r2 = row;
 	c1 = c2 = col;
     } else {
-	r2 = MIN(MAX(firstRow, r2), lastRow);
-	c2 = MIN(MAX(firstCol, c2), lastCol);
+	CONSTRAIN(r2, firstRow, lastRow);
+	CONSTRAIN(c2, firstCol, lastCol);
 	r1 = MIN(row,r2); r2 = MAX(row,r2);
 	c1 = MIN(col,c2); c2 = MAX(col,c2);
     }
@@ -1256,10 +1255,8 @@ Table_ViewCmd(ClientData clientData, register Tcl_Interp *interp,
 	    }
 	}
 	/* maintain appropriate real index */
-	tablePtr->topRow  = MAX(tablePtr->titleRows,
-				MIN(tablePtr->topRow, tablePtr->rows-1));
-	tablePtr->leftCol = MAX(tablePtr->titleCols,
-				MIN(tablePtr->leftCol, tablePtr->cols-1));
+	CONSTRAIN(tablePtr->topRow, tablePtr->titleRows, tablePtr->rows-1);
+	CONSTRAIN(tablePtr->leftCol, tablePtr->titleCols, tablePtr->cols-1);
 	/* Do the table adjustment if topRow || leftCol changed */	
 	if (oldTop != tablePtr->topRow || oldLeft != tablePtr->leftCol) {
 	    TableAdjustParams(tablePtr);

@@ -632,13 +632,13 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
 
     offset = 2 + Tk_ClassOptionObjCmd(tkwin, "Table", objc, objv);
     Tk_CreateEventHandler(tablePtr->tkwin,
-			  PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask,
-			  TableEventProc, (ClientData) tablePtr);
+	    PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask,
+	    TableEventProc, (ClientData) tablePtr);
     Tk_CreateSelHandler(tablePtr->tkwin, XA_PRIMARY, XA_STRING,
-			TableFetchSelection, (ClientData) tablePtr, XA_STRING);
+	    TableFetchSelection, (ClientData) tablePtr, XA_STRING);
 
     if (TableConfigure(interp, tablePtr, objc - offset, objv + offset,
-		       0, 1 /* force update */) != TCL_OK) {
+	    0, 1 /* force update */) != TCL_OK) {
 	Tk_DestroyWindow(tkwin);
 	return TCL_ERROR;
     }
@@ -1203,8 +1203,8 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     /* Ensure that certain values are within proper constraints */
     tablePtr->rows = MAX(1,tablePtr->rows);
     tablePtr->cols = MAX(1,tablePtr->cols);
-    tablePtr->titleRows = MIN(MAX(0,tablePtr->titleRows),tablePtr->rows);
-    tablePtr->titleCols = MIN(MAX(0,tablePtr->titleCols),tablePtr->cols);
+    CONSTRAIN(tablePtr->titleRows, 0, tablePtr->rows);
+    CONSTRAIN(tablePtr->titleCols, 0, tablePtr->cols);
     tablePtr->padX = MAX(0,tablePtr->padX);
     tablePtr->padY = MAX(0,tablePtr->padY);
     tablePtr->maxReqCols = MAX(0,tablePtr->maxReqCols);
@@ -1322,9 +1322,11 @@ TableEventProc(clientData, eventPtr)
 	break;
 
     case Expose:
-	TableInvalidate(tablePtr, eventPtr->xexpose.x, eventPtr->xexpose.y,
-			eventPtr->xexpose.width, eventPtr->xexpose.height,
-			INV_HIGHLIGHT);
+	if (eventPtr->xexpose.count == 0) {
+	    TableInvalidate(tablePtr, eventPtr->xexpose.x, eventPtr->xexpose.y,
+		    eventPtr->xexpose.width, eventPtr->xexpose.height,
+		    INV_HIGHLIGHT);
+	}
 	break;
 
     case DestroyNotify:
@@ -1471,6 +1473,13 @@ TableRefresh(register Table *tablePtr, int row, int col, int mode)
 {
     int x, y, w, h;
 
+    if ((row < 0) || (col < 0)) {
+	/*
+	 * Invalid coords passed in.  This can happen when the "active" cell
+	 * is refreshed, but doesn't really exist (row==-1 && col==-1).
+	 */
+	return;
+    }
     if (mode & CELL) {
 	if (TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 0)) {
 	    TableInvalidate(tablePtr, x, y, w, h, mode);
@@ -1659,7 +1668,7 @@ TableDisplay(ClientData clientdata)
     /* Constrain drawable to not include highlight borders */
     invalidX = MAX(tablePtr->highlightWidth, tablePtr->invalidX);
     invalidY = MAX(tablePtr->highlightWidth, tablePtr->invalidY);
-    invalidWidth = MIN(tablePtr->invalidWidth, MAX(1, boundW-invalidX));
+    invalidWidth  = MIN(tablePtr->invalidWidth, MAX(1, boundW-invalidX));
     invalidHeight = MIN(tablePtr->invalidHeight, MAX(1, boundH-invalidY));
 
     /* 
@@ -2650,10 +2659,8 @@ TableAdjustActive(tablePtr)
 {
     if (tablePtr->flags & HAS_ACTIVE) {
 	/* make sure the active cell has a reasonable real index */
-	tablePtr->activeRow = MAX(0, MIN(tablePtr->activeRow,
-					 tablePtr->rows-1));
-	tablePtr->activeCol = MAX(0, MIN(tablePtr->activeCol,
-					 tablePtr->cols-1));
+	CONSTRAIN(tablePtr->activeRow, 0, tablePtr->rows-1);
+	CONSTRAIN(tablePtr->activeCol, 0, tablePtr->cols-1);
     }
 
     /*
@@ -2923,10 +2930,8 @@ TableAdjustParams(register Table *tablePtr)
     tablePtr->rowStarts[i] = tablePtr->maxHeight = total;
 
     /* make sure the top row and col have reasonable real indices */
-    tablePtr->topRow = topRow =
-	MAX(tablePtr->titleRows, MIN(tablePtr->topRow, tablePtr->rows-1));
-    tablePtr->leftCol = leftCol =
-	MAX(tablePtr->titleCols, MIN(tablePtr->leftCol, tablePtr->cols-1));
+    CONSTRAIN(tablePtr->topRow, tablePtr->titleRows, tablePtr->rows-1);
+    CONSTRAIN(tablePtr->leftCol, tablePtr->titleCols, tablePtr->cols-1);
 
     /* If we dont have the info, dont bother to fix up the other parameters */
     if (Tk_WindowId(tablePtr->tkwin) == None) {
@@ -2934,6 +2939,8 @@ TableAdjustParams(register Table *tablePtr)
 	return;
     }
 
+    topRow  = tablePtr->topRow;
+    leftCol = tablePtr->leftCol;
     w += hl;
     h += hl;
     /* 
@@ -2941,21 +2948,25 @@ TableAdjustParams(register Table *tablePtr)
      * if not, decrease it until we will, or until it gets to titleRows 
      * make sure we don't cut off the bottom row
      */
-    for (; topRow > tablePtr->titleRows; topRow--)
+    for (; topRow > tablePtr->titleRows; topRow--) {
 	if ((tablePtr->maxHeight-(tablePtr->rowStarts[topRow-1] -
-				  tablePtr->rowStarts[tablePtr->titleRows])) > h)
+		tablePtr->rowStarts[tablePtr->titleRows])) > h) {
 	    break;
+	}
+    }
     /* 
      * If we use this value of topCol, will we fill the window?
      * if not, decrease it until we will, or until it gets to titleCols 
      * make sure we don't cut off the left column
      */
-    for (; leftCol > tablePtr->titleCols; leftCol--)
+    for (; leftCol > tablePtr->titleCols; leftCol--) {
 	if ((tablePtr->maxWidth-(tablePtr->colStarts[leftCol-1] -
-				 tablePtr->colStarts[tablePtr->titleCols])) > w)
+		tablePtr->colStarts[tablePtr->titleCols])) > w) {
 	    break;
+	}
+    }
 
-    tablePtr->topRow = topRow;
+    tablePtr->topRow  = topRow;
     tablePtr->leftCol = leftCol;
 
     /* Now work out where the bottom right for scrollbar update

@@ -45,18 +45,17 @@ TableTrueCell(Table *tablePtr, int r, int c, int *row, int *col)
 	TableMakeArrayIndex(r, c, buf);
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
 	if ((entryPtr != NULL) &&
-	    ((char *)Tcl_GetHashValue(entryPtr) != NULL)) {
+		((char *)Tcl_GetHashValue(entryPtr) != NULL)) {
 	    /* This cell is covered by another spanning cell */
 	    /* We need to return the coords for that cell */
-	    TableParseArrayIndex(row, col,
-				 (char *)Tcl_GetHashValue(entryPtr));
+	    TableParseArrayIndex(row, col, (char *)Tcl_GetHashValue(entryPtr));
 	    return 0;
 	}
     }
-    *row = MIN(MAX(tablePtr->rowOffset,r),
-	       tablePtr->rows-1+tablePtr->rowOffset);
-    *col = MIN(MAX(tablePtr->colOffset,c),
-	       tablePtr->cols-1+tablePtr->colOffset);
+    *row = BETWEEN(r, tablePtr->rowOffset,
+	    tablePtr->rows-1+tablePtr->rowOffset);
+    *col = BETWEEN(c, tablePtr->colOffset,
+	    tablePtr->cols-1+tablePtr->colOffset);
     return ((*row == r) && (*col == c));
 }
 
@@ -87,17 +86,21 @@ TableCellCoords(Table *tablePtr, int row, int col,
 	*w = *h = *x = *y = 0;
 	return CELL_BAD;
     }
-    /* real coords required, always should be passed acceptable values,
-   * but this is a possible seg fault otherwise */
+    /*
+     * Real coords required, always should be passed acceptable values,
+     * but this is a possible seg fault otherwise
+     */
+#define BOUNDS_CHECK 1
 #ifdef BOUNDS_CHECK
-    row = MIN(tablePtr->rows-1, MAX(0, row));
-    col = MIN(tablePtr->cols-1, MAX(0, col));
+    CONSTRAIN(row, 0, tablePtr->rows-1);
+    CONSTRAIN(col, 0, tablePtr->cols-1);
 #endif
     *w = tablePtr->colPixels[col];
     *h = tablePtr->rowPixels[row];
-    /* Adjust for sizes of spanning cells
-   * and ensure that this cell isn't "hidden"
-   */
+    /*
+     * Adjust for sizes of spanning cells
+     * and ensure that this cell isn't "hidden"
+     */
     if (tablePtr->spanAffTbl && !(tablePtr->flags & AVOID_SPANS)) {
 	char buf[INDEX_BUFSIZE];
 	Tcl_HashEntry *entryPtr;
@@ -148,14 +151,16 @@ TableCellCoords(Table *tablePtr, int row, int col,
 	}
     }
 setxy:
-    *x = hl + tablePtr->colStarts[col] - 
-	((col < tablePtr->titleCols) ? 0 :
-	 tablePtr->colStarts[tablePtr->leftCol]
-	 - tablePtr->colStarts[tablePtr->titleCols]);
-    *y = hl + tablePtr->rowStarts[row] -
-	((row < tablePtr->titleRows) ? 0 :
-	 tablePtr->rowStarts[tablePtr->topRow]
-	 - tablePtr->rowStarts[tablePtr->titleRows]);
+    *x = hl + tablePtr->colStarts[col];
+    if (col >= tablePtr->titleCols) {
+	*x -= tablePtr->colStarts[tablePtr->leftCol]
+	    - tablePtr->colStarts[tablePtr->titleCols];
+    }
+    *y = hl + tablePtr->rowStarts[row];
+    if (row >= tablePtr->titleRows) {
+	*y -= tablePtr->rowStarts[tablePtr->topRow]
+	    - tablePtr->rowStarts[tablePtr->titleRows];
+    }
     return result;
 }
 
@@ -200,7 +205,7 @@ TableCellVCoords(Table *tablePtr, int row, int col,
 	 * cell is visible */
 	int topX = tablePtr->colStarts[tablePtr->titleCols]+hl;
 	int topY = tablePtr->rowStarts[tablePtr->titleRows]+hl;
-	if (col < tablePtr->leftCol && col >= tablePtr->titleCols) {
+	if ((col < tablePtr->leftCol) && (col >= tablePtr->titleCols)) {
 	    if (full || (x+w < topX)) {
 		return 0;
 	    } else {
@@ -208,7 +213,7 @@ TableCellVCoords(Table *tablePtr, int row, int col,
 		x = topX;
 	    }
 	}
-	if (row < tablePtr->topRow && row >= tablePtr->titleRows) {
+	if ((row < tablePtr->topRow) && (row >= tablePtr->titleRows)) {
 	    if (full || (y+h < topY)) {
 		return 0;
 	    } else {
@@ -621,7 +626,7 @@ TableGetIcursor(Table *tablePtr, char *arg, int *posn)
 	if (Tcl_GetInt(tablePtr->interp, arg, &tmp) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	tmp = MIN(MAX(0, tmp), len);
+	CONSTRAIN(tmp, 0, len);
     }
     if (posn) {
 	*posn = tmp;
@@ -679,9 +684,9 @@ TableGetIndex(tablePtr, str, row_p, col_p)
 	    goto IndexError;
 	}
 	/* ensure appropriate user index */
-	r = MIN(MAX(tablePtr->rowOffset,r),
+	CONSTRAIN(r, tablePtr->rowOffset,
 		tablePtr->rows-1+tablePtr->rowOffset);
-	c = MIN(MAX(tablePtr->colOffset,c),
+	CONSTRAIN(c, tablePtr->colOffset,
 		tablePtr->cols-1+tablePtr->colOffset);
     } else if (len > 1 && strncmp(str, "active", len) == 0 ) {	/* active */
 	if (tablePtr->flags & HAS_ACTIVE) {
