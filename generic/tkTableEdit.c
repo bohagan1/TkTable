@@ -377,8 +377,7 @@ TableDeleteChars(tablePtr, index, count)
 
     TableSetActiveIndex(tablePtr);
 
-    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
-		 CELL|INV_FORCE);
+    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
 }
 
 /*
@@ -507,8 +506,7 @@ TableInsertChars(tablePtr, index, value)
 
     TableSetActiveIndex(tablePtr);
 
-    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
-		 CELL|INV_FORCE);
+    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
 }
 
 /*

@@ -731,8 +731,7 @@ Table_CurvalueCmd(ClientData clientData, register Tcl_Interp *interp,
 	TableSetActiveIndex(tablePtr);
 	/* check for possible adjustment of icursor */
 	TableGetIcursor(tablePtr, "insert", (int *)0);
-	TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
-		     CELL|INV_FORCE);
+	TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
     }
 
     Tcl_SetStringObj(Tcl_GetObjResult(interp), tablePtr->activeBuf, -1);

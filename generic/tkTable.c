@@ -473,7 +473,7 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     }
 
     tkwin = Tk_CreateWindowFromPath(interp, mainWin, Tcl_GetString(objv[1]),
-				  (char *)NULL);
+	    (char *)NULL);
     if (tkwin == NULL) {
 	return TCL_ERROR;
     }
@@ -484,9 +484,8 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     tablePtr->display		= Tk_Display(tkwin);
     tablePtr->interp		= interp;
     tablePtr->widgetCmd	= Tcl_CreateObjCommand(interp,
-				Tk_PathName(tablePtr->tkwin),
-				TableWidgetObjCmd, (ClientData) tablePtr,
-				(Tcl_CmdDeleteProc *) TableCmdDeletedProc);
+	    Tk_PathName(tablePtr->tkwin), TableWidgetObjCmd,
+	    (ClientData) tablePtr, (Tcl_CmdDeleteProc *) TableCmdDeletedProc);
 
     tablePtr->topRow		= 0;
     tablePtr->leftCol		= 0;
@@ -495,7 +494,7 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     tablePtr->activeRow		= -1;
     tablePtr->activeCol		= -1;
     tablePtr->oldTopRow		= -1;
-    tablePtr->oldLeftCol		= -1;
+    tablePtr->oldLeftCol	= -1;
     tablePtr->oldActRow		= -1;
     tablePtr->oldActCol		= -1;
     tablePtr->seen[0]		= -1;
@@ -1353,7 +1352,7 @@ TableEventProc(clientData, eventPtr)
 	    tablePtr->flags &= ~REDRAW_ON_MAP;
 	    Tcl_Preserve((ClientData) tablePtr);
 	    TableAdjustParams(tablePtr);
-	    TableInvalidateAll(tablePtr, INV_FORCE|INV_HIGHLIGHT);
+	    TableInvalidateAll(tablePtr, INV_HIGHLIGHT);
 	    Tcl_Release((ClientData) tablePtr);
 	}
 	break;
@@ -1361,7 +1360,7 @@ TableEventProc(clientData, eventPtr)
     case ConfigureNotify:
 	Tcl_Preserve((ClientData) tablePtr);
 	TableAdjustParams(tablePtr);
-	TableInvalidateAll(tablePtr, INV_FORCE|INV_HIGHLIGHT);
+	TableInvalidateAll(tablePtr, INV_HIGHLIGHT);
 	Tcl_Release((ClientData) tablePtr);
 	break;
 
@@ -2259,16 +2258,22 @@ TableDisplay(ClientData clientdata)
  */
 void
 TableInvalidate(Table * tablePtr, int x, int y,
-		int width, int height, int flags)
+		int w, int h, int flags)
 {
-    register int hl = tablePtr->highlightWidth;
-    register Tk_Window tkwin = tablePtr->tkwin;
+    Tk_Window tkwin = tablePtr->tkwin;
+    int hl	= tablePtr->highlightWidth;
+    int height	= Tk_Height(tkwin);
+    int width	= Tk_Width(tkwin);
 
-    /* make sure that the window hasn't been destroyed already */
-    /* avoid allocating 0 sized pixmaps which would be fatal */
-    /* and check if rectangle is even on the screen */
-    if ((tkwin == NULL) || (width <= 0) || (height <= 0)
-	|| (x > Tk_Width(tkwin)) || (y > Tk_Height(tkwin))) return;
+    /*
+     * Make sure that the window hasn't been destroyed already.
+     * Avoid allocating 0 sized pixmaps which would be fatal,
+     * and check if rectangle is even on the screen.
+     */
+    if ((tkwin == NULL)
+	    || (w <= 0) || (h <= 0) || (x > width) || (y > height)) {
+	return;
+    }
 
     /* If not even mapped, wait for the remap to redraw all */
     if (!Tk_IsMapped(tkwin)) {
@@ -2276,24 +2281,25 @@ TableInvalidate(Table * tablePtr, int x, int y,
 	return;
     }
 
-    /* if no pending updates then replace the rectangle,
-     * otherwise find the bounding rectangle */
+    /*
+     * If no pending updates exist, then replace the rectangle.
+     * Otherwise find the bounding rectangle.
+     */
     if ((flags & INV_HIGHLIGHT) &&
-	(x < hl || y < hl || x+width >= Tk_Width(tkwin)-hl ||
-	 y+height >= Tk_Height(tkwin)-hl)) {
+	    (x < hl || y < hl || x+w >= width-hl || y+h >= height-hl)) {
 	tablePtr->flags |= REDRAW_BORDER;
     }
 
     if (tablePtr->flags & REDRAW_PENDING) {
-	tablePtr->invalidWidth = MAX(tablePtr->invalidX+tablePtr->invalidWidth,
-				     x + width);
-	tablePtr->invalidHeight = MAX(tablePtr->invalidY
-				      +tablePtr->invalidHeight, y + height);
+	tablePtr->invalidWidth = MAX(x + w,
+		tablePtr->invalidX+tablePtr->invalidWidth);
+	tablePtr->invalidHeight = MAX(y + h,
+		tablePtr->invalidY+tablePtr->invalidHeight);
 	if (tablePtr->invalidX > x) tablePtr->invalidX = x;
 	if (tablePtr->invalidY > y) tablePtr->invalidY = y;
 	tablePtr->invalidWidth  -= tablePtr->invalidX;
 	tablePtr->invalidHeight -= tablePtr->invalidY;
-	/* are we forcing this update out */
+	/* Do we want to force this update out? */
 	if (flags & INV_FORCE) {
 	    Tcl_CancelIdleCall(TableDisplay, (ClientData) tablePtr);
 	    TableDisplay((ClientData) tablePtr);
@@ -2301,8 +2307,8 @@ TableInvalidate(Table * tablePtr, int x, int y,
     } else {
 	tablePtr->invalidX = x;
 	tablePtr->invalidY = y;
-	tablePtr->invalidWidth = width;
-	tablePtr->invalidHeight = height;
+	tablePtr->invalidWidth = w;
+	tablePtr->invalidHeight = h;
 	if (flags & INV_FORCE) {
 	    TableDisplay((ClientData) tablePtr);
 	} else {
@@ -2350,7 +2356,7 @@ TableFlashEvent(ClientData clientdata)
 	    Tcl_DeleteHashEntry(entryPtr);
 
 	    TableRefresh(tablePtr, row-tablePtr->rowOffset,
-			 col-tablePtr->colOffset, CELL|INV_FORCE);
+			 col-tablePtr->colOffset, CELL);
 	} else {
 	    Tcl_SetHashValue(entryPtr, (ClientData) count);
 	    entries++;
@@ -2697,8 +2703,9 @@ TableAdjustActive(tablePtr)
 
 	/* invalidate the new active cell */
 	TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
-	/* set the old active row/col for the next time this
-	 * function is called */
+	/*
+	 * set the old active row/col for the next time this is called
+	 */
 	tablePtr->oldActRow = tablePtr->activeRow;
 	tablePtr->oldActCol = tablePtr->activeCol;
     }
@@ -3104,8 +3111,7 @@ TableCursorEvent(ClientData clientData)
     tablePtr->flags ^= CURSOR_ON;
 
     /* invalidate the cell */
-    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
-	    CELL|INV_FORCE);
+    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
 }
 
 /*
@@ -3156,8 +3162,7 @@ TableConfigCursor(register Table *tablePtr)
     }
 
     /* Invalidate the selection window to show or hide the cursor */
-    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
-	    CELL|INV_FORCE);
+    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
 }
 
 /*
@@ -3603,6 +3608,10 @@ ExpandPercents(tablePtr, before, r, c, old, new, index, dsPtr, cmdType)
 
 /* Function to call on loading the Table module */
 
+#ifdef BUILD_tkTable
+#   undef TCL_STORAGE_CLASS
+#   define TCL_STORAGE_CLASS DLLEXPORT
+#endif
 #ifdef MAC_TCL
 #pragma export on
 #endif
