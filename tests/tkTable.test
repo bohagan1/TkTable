@@ -6,7 +6,7 @@
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tkTable.test,v 1.9 2002/06/21 18:15:43 hobbs Exp $
+# RCS: @(#) $Id: tkTable.test,v 1.10 2002/10/16 07:32:22 hobbs Exp $
 
 # deletes:
 # test 2 -5
@@ -845,6 +845,20 @@ test table-3.132 {TableWidgetCmd procedure, "xview" option} {
     .t yview scroll -4 pages
     .t yview
 } {0.55 0.65}
+
+test table-4.1 {TableGetCellValue, command with large result} {
+    # test bug 651685
+    proc getcell {rc i} {
+	if {$i == 0} {
+	    return [string repeat $rc 200]
+	}
+    }
+    destroy .t
+    table .t -rows 5 -cols 5 -command {getcell %C %i}
+    pack .t -fill both -expand 1
+    update
+    list
+} {}
 
 eval destroy [winfo children .]
 option clear

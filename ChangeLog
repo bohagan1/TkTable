@@ -1,3 +1,11 @@
+2002-12-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tests/tkTable.test:
+	* generic/tkTableCell.c (TableGetCellValue): make caching allows
+	NULLs throughout to save mem.
+	Do not call Tcl_FreeResult as it will be freed before the next
+	result is set, and causes us to lose large results. [Bug #651685]
+
 2002-10-16  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	**** 2.8 TAGGED FOR RELEASE ****

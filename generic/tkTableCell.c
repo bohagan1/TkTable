@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableCell.c,v 1.8 2002/03/13 20:15:20 hobbs Exp $
+ * RCS: @(#) $Id: tkTableCell.c,v 1.9 2002/10/16 07:31:10 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -484,9 +484,6 @@ TableGetCellValue(Table *tablePtr, int r, int c)
 	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
 	if (!new) {
 	    result = (char *) Tcl_GetHashValue(entryPtr);
-	    if (result == NULL) {
-		result = "";
-	    }
 	    goto VALUE;
 	}
     }
@@ -507,14 +504,11 @@ TableGetCellValue(Table *tablePtr, int r, int c)
 	} else {
 	    result = (char *) Tcl_GetStringResult(interp);
 	}
-	Tcl_FreeResult(interp);
 	Tcl_DStringFree(&script);
     } else if (tablePtr->arrayVar) {
 	result = (char *) Tcl_GetVar2(interp, tablePtr->arrayVar, buf,
 		TCL_GLOBAL_ONLY);
     }
-    if (result == NULL)
-	result = "";
     if (tablePtr->caching && entryPtr != NULL) {
 	/*
 	 * If we are caching, make sure we cache the returned value
@@ -522,9 +516,11 @@ TableGetCellValue(Table *tablePtr, int r, int c)
 	 * entryPtr will have been set from above, but check to make sure
 	 * someone didn't change caching during -command evaluation.
 	 */
-	char *val;
-	val = (char *)ckalloc(strlen(result)+1);
-	strcpy(val, result);
+	char *val = NULL;
+	if (result) {
+	    val = (char *)ckalloc(strlen(result)+1);
+	    strcpy(val, result);
+	}
 	Tcl_SetHashValue(entryPtr, val);
     }
 VALUE:
@@ -616,9 +612,11 @@ TableSetCellValue(Table *tablePtr, int r, int c, char *value)
 	Tcl_DStringFree(&script);
     } else if (tablePtr->arrayVar) {
 	/* Warning: checking for \0 as the first char could invalidate
-	 * allowing it as a valid first char */
+	 * allowing it as a valid first char, but only with incorrect utf-8
+	 */
 	if ((value == NULL || *value == '\0') && tablePtr->sparse) {
 	    Tcl_UnsetVar2(interp, tablePtr->arrayVar, buf, TCL_GLOBAL_ONLY);
+	    value = NULL;
 	} else if (Tcl_SetVar2(interp, tablePtr->arrayVar, buf, value,
 			       TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG) == NULL) {
 	    code = TCL_ERROR;
@@ -631,15 +629,17 @@ TableSetCellValue(Table *tablePtr, int r, int c, char *value)
     if (tablePtr->caching) {
 	Tcl_HashEntry *entryPtr;
 	int new;
-	char *val;
+	char *val = NULL;
 
 	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
 	if (!new) {
 	    val = (char *) Tcl_GetHashValue(entryPtr);
 	    if (val) ckfree(val);
 	}
-	val = (char *)ckalloc(strlen(value)+1);
-	strcpy(val, value);
+	if (value) {
+	    val = (char *)ckalloc(strlen(value)+1);
+	    strcpy(val, value);
+	}
 	Tcl_SetHashValue(entryPtr, val);
 	flash = 1;
     }
@@ -719,12 +719,15 @@ TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf,
 		Tcl_UnsetVar2(interp, tablePtr->arrayVar, frombuf,
 			TCL_GLOBAL_ONLY);
 		/*
-		 * Warning: checking for \0 as the first char could invalidate
-		 * allowing it as a valid first char
+		 * Do not set the value if it is empty and we are a
+		 * sparse array.
 		 */
-		if (Tcl_SetVar2(interp, tablePtr->arrayVar, tobuf, result,
-			TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG) == NULL) {
-		    return TCL_ERROR;
+		if ((result != NULL && *result != '\0') || !tablePtr->sparse) {
+		    if (Tcl_SetVar2(interp, tablePtr->arrayVar, tobuf,
+				(result ? result : ""),
+				TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG) == NULL) {
+			return TCL_ERROR;
+		    }
 		}
 	    }     
       
