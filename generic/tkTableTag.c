@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableTag.c,v 1.2 2000/08/18 03:34:11 hobbs Exp $
+ * RCS: @(#) $Id: tkTableTag.c,v 1.3 2000/08/31 02:09:17 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -422,7 +422,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
     int result = TCL_OK, cmdIndex, i, newEntry, value, len;
     int row, col;
     TableTag *tagPtr;
-    Tcl_HashEntry *entryPtr, *scanPtr, *newEntryPtr, *oldEntryPtr;
+    Tcl_HashEntry *entryPtr, *scanPtr;
     Tcl_HashTable *hashTblPtr;
     Tcl_HashSearch search;
     Tk_Image image;
@@ -466,7 +466,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		/*
 		 * Get the pointer to the tag structure
 		 */
-		tagPtr = (TableTag *) Tcl_GetHashValue (entryPtr);
+		tagPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
 	    }
 
 	    if (objc == 4) {
@@ -563,18 +563,21 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		    /*
 		     * This is a deletion
 		     */
-		    oldEntryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf);
-		    if (oldEntryPtr != NULL) {
-			Tcl_DeleteHashEntry(oldEntryPtr);
+		    entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf);
+		    if (entryPtr != NULL) {
+			Tcl_DeleteHashEntry(entryPtr);
 		    }
 		} else {
 		    /*
-		     * Add a key to the hash table
-		     * and set it to point to the Tag structure
+		     * Add a key to the hash table and set it to point to the
+		     * Tag structure if it wasn't the same as an existing one
 		     */
-		    newEntryPtr = Tcl_CreateHashEntry(tablePtr->cellStyles,
+		    entryPtr = Tcl_CreateHashEntry(tablePtr->cellStyles,
 			    buf, &newEntry);
-		    Tcl_SetHashValue(newEntryPtr, (ClientData) tagPtr);
+		    if (newEntry || (tagPtr !=
+			    (TableTag *) Tcl_GetHashValue(entryPtr))) {
+			Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
+		    }
 		}
 		/*
 		 * Now invalidate this cell for redraw
@@ -608,7 +611,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 			    tagname, "\"", (char *) NULL);
 		    return TCL_ERROR;
 		}
-		tagPtr = (TableTag *) Tcl_GetHashValue (entryPtr);
+		tagPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
 	    }
 
 	    /*
@@ -687,24 +690,36 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		}
 		return TCL_OK;
 	    }
-	    /* Now loop through the arguments and fill in the hash table */
+
+	    /*
+	     * Loop through the arguments and fill in the hash table
+	     */
 	    for (i = 4; i < objc; i++) {
-		/* can I parse this argument */
+		/*
+		 * Try and parse the index
+		 */
 		if (Tcl_GetIntFromObj(interp, objv[i], &value) != TCL_OK) {
 		    return TCL_ERROR;
 		}
-		/* deleting or adding */
 		if (tagPtr == NULL) {
-		    oldEntryPtr = Tcl_FindHashEntry(hashTblPtr, (char *)value);
-		    if (oldEntryPtr != NULL) {
-			Tcl_DeleteHashEntry(oldEntryPtr);
+		    /*
+		     * This is a deletion
+		     */
+		    entryPtr = Tcl_FindHashEntry(hashTblPtr, (char *)value);
+		    if (entryPtr != NULL) {
+			Tcl_DeleteHashEntry(entryPtr);
 		    }
 		} else {
-		    /* add a key to the hash table */
-		    newEntryPtr = Tcl_CreateHashEntry(hashTblPtr,
-			    (char *)value, &newEntry);
-		    /* and set it to point to the Tag structure */
-		    Tcl_SetHashValue (newEntryPtr, (ClientData) tagPtr);
+		    /*
+		     * Add a key to the hash table and set it to point to the
+		     * Tag structure if it wasn't the same as an existing one
+		     */
+		    entryPtr = Tcl_CreateHashEntry(hashTblPtr,
+			    (char *) value, &newEntry);
+		    if (newEntry || (tagPtr !=
+			    (TableTag *) Tcl_GetHashValue(entryPtr))) {
+			Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
+		    }
 		}
 		/* and invalidate the row or column affected */
 		if (cmdIndex == TAG_ROWTAG) {
