@@ -6,7 +6,7 @@
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id:  $
+# RCS: @(#) $Id: tkTable.test,v 1.2 2000/10/19 18:29:29 hobbs Exp $
 
 # deletes:
 # test 2 -5
@@ -55,6 +55,10 @@ proc mkPartial {{w .partial}} {
     update
 }
 
+proc Some args { # do nothing command }
+proc Another args { # do nothing command }
+
+
 # Create entries in the option database to be sure that geometry options
 # like border width have predictable values.
 
@@ -74,19 +78,19 @@ foreach test {
     {-bd "4 2" "4 2" badValue {bad screen distance "badValue"}}
     {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
     {-bordercursor arrow arrow badValue {bad cursor spec "badValue"}}
-    {-borderwidth 1.3 1 badValue {bad screen distance "badValue"}}
+    {-borderwidth 1 1 badValue {bad screen distance "badValue"}}
     {-browsecommand {Some command} {Some command} {} {}}
     {-browsecmd {Some command} {Some command} {} {}}
     {-cache yes 1 xyzzy {expected boolean value but got "xyzzy"}}
     {-colorigin 1 1 xyzzy {expected integer but got "xyzzy"}}
     {-cols 12 12 xyzzy {expected integer but got "xyzzy"}}
     {-colseparator , , {} {}}
-    {-colstretchmode unset unset bogus {unknown stretchmode "bogus"}}
+    {-colstretchmode unset unset bogus {bad option "bogus" must be none, unset, all, last, fill}}
     {-coltagcommand {Some command} {Some command} {} {}}
     {-colwidth 5 5 xyzzy {expected integer but got "xyzzy"}}
     {-command {Some command} {Some command} {} {}}
     {-cursor arrow arrow badValue {bad cursor spec "badValue"}}
-    {-drawmode slow slow badValue {unknown drawmode "badValue"}}
+    {-drawmode slow slow badValue {bad option "badValue" must be fast, compatible, slow, single}}
     {-exportselection yes 1 xyzzy {expected boolean value but got "xyzzy"}}
     {-fg #110022 #110022 bogus {unknown color name "bogus"}}
     {-flashmode yes 1 xyzzy {expected boolean value but got "xyzzy"}}
@@ -111,20 +115,20 @@ foreach test {
     {-multiline yes 1 xyzzy {expected boolean value but got "xyzzy"}}
     {-padx 1.3 1 2.6x {bad screen distance "2.6x"}}
     {-pady 1.3 1 2.6x {bad screen distance "2.6x"}}
-    {-relief groove groove 1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
+    {-relief groove groove 1.5 {bad relief type "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
     {-rowheight -20 -20 xyzzy {expected integer but got "xyzzy"}}
     {-roworigin -20 -20 xyzzy {expected integer but got "xyzzy"}}
     {-rows 20 20 xyzzy {expected integer but got "xyzzy"}}
     {-rowseparator , , {} {}}
-    {-rowstretchmode unset unset bogus {unknown stretchmode "bogus"}}
+    {-rowstretchmode unset unset bogus {bad option "bogus" must be none, unset, all, last, fill}}
     {-rowtagcommand {Some command} {Some command} {} {}}
     {-selcmd {Some command} {Some command} {} {}}
     {-selectioncommand {Some command} {Some command} {} {}}
     {-selectmode extended extended {} {}}
     {-selecttitles yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-selecttype row row bogus {bad selecttype "bogus": must be }}
+    {-selecttype row row bogus {bad option "bogus" must be row, col, both, cell}}
     {-sparsearray yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-state disabled disabled foo {bad state "foo": must be disabled or normal}}
+    {-state disabled disabled foo {bad option "foo" must be normal, disabled}}
     {-takefocus "any string" "any string" {} {}}
     {-titlecols 4 4 3p {expected integer but got "3p"}}
     {-titlerows 4 4 3p {expected integer but got "3p"}}
@@ -174,140 +178,92 @@ test table-2.5 {Tk_TableCmd procedure} {
     table .t
 } {.t}
 
-catch {destroy .t}
-table .t -width 20 -height 5
-pack .t
-.t insert 0 el0 el1 el2 el3 el4 el5 el6 el7 el8 el9 el10 el11 el12 el13 el14 \
-	el15 el16 el17
+option clear
+destroy .t
+table .t -cache 1
+update
+update
+update
+update
+update
 update
 
 test table-3.1 {TableWidgetCmd procedure} {
     list [catch .t msg] $msg
 } {1 {wrong # args: should be ".t option ?arg arg ...?"}}
-test table-3.2 {TableWidgetCmd procedure, "xview" option} {
+test table-3.2 {TableWidgetCmd procedure, commands} {
     list [catch {.t whoknows} msg] $msg
-} {1 {bad option "whoknows": must be activate, bbox, cget, configure, curselection, delete, get, index, insert, itemcget, itemconfigure, nearest, scan, see, selection, size, xview, or yview}}
-test table-3.3 {TableWidgetCmd procedure, "xview" option} {
+} {1 {bad option "whoknows": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, get, height, hidden, icursor, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview}}
+test table-3.3 {TableWidgetCmd procedure, commands} {
     list [catch {.t c} msg] $msg
-} {1 {ambiguous option "c": must be activate, bbox, cget, configure, curselection, delete, get, index, insert, itemcget, itemconfigure, nearest, scan, see, selection, size, xview, or yview}}
-test table-3.4 {TableWidgetCmd procedure, "xview" option} {
-    list [catch {.t in} msg] $msg
-} {1 {ambiguous option "in": must be activate, bbox, cget, configure, curselection, delete, get, index, insert, itemcget, itemconfigure, nearest, scan, see, selection, size, xview, or yview}}
-test table-3.5 {TableWidgetCmd procedure, "xview" option} {
-    list [catch {.t s} msg] $msg
-} {1 {ambiguous option "s": must be activate, bbox, cget, configure, curselection, delete, get, index, insert, itemcget, itemconfigure, nearest, scan, see, selection, size, xview, or yview}}
-test table-3.6 {TableWidgetCmd procedure, "xview" option} {
-    list [catch {.t se} msg] $msg
-} {1 {ambiguous option "se": must be activate, bbox, cget, configure, curselection, delete, get, index, insert, itemcget, itemconfigure, nearest, scan, see, selection, size, xview, or yview}}
+} {1 {ambiguous option "c": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, get, height, hidden, icursor, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview}}
 
-test table-3.2 {TableWidgetCmd procedure, "activate" option} {
+test table-4.1 {TableWidgetCmd procedure, "activate" option} {
     list [catch {.t activate} msg] $msg
 } {1 {wrong # args: should be ".t activate index"}}
-test table-3.3 {TableWidgetCmd procedure, "activate" option} {
+test table-4.2 {TableWidgetCmd procedure, "activate" option} {
     list [catch {.t activate a b} msg] $msg
 } {1 {wrong # args: should be ".t activate index"}}
-test table-3.4 {TableWidgetCmd procedure, "activate" option} {
+test table-4.3 {TableWidgetCmd procedure, "activate" option} {
     list [catch {.t activate fooey} msg] $msg
-} {1 {bad table index "fooey": must be active, anchor, end, @x,y, or a number}}
-test table-3.5 {TableWidgetCmd procedure, "activate" option} {
-    .t activate 3
+} {1 {bad table index "fooey": must be active, anchor, end, origin, topleft, bottomright, @x,y, or <row>,<col>}}
+test table-4.4 {TableWidgetCmd procedure, "activate" option} {
+    .t activate 3,0
     .t index active
-} 3
-test table-3.6 {TableWidgetCmd procedure, "activate" option} {
-    .t activate -1
+} 3,0
+test table-4.5 {TableWidgetCmd procedure, "activate" option} {
+    .t activate -1,0
     .t index active
-} {0}
-test table-3.7 {TableWidgetCmd procedure, "activate" option} {
-    .t activate 30
+} {0,0}
+test table-4.6 {TableWidgetCmd procedure, "activate" option} {
+    .t activate 30,30
     .t index active
-} {17}
-test table-3.8 {TableWidgetCmd procedure, "activate" option} {
+} {9,9}
+test table-4.7 {TableWidgetCmd procedure, "activate" option} {
+    .t activate origin
+    .t index active
+} {0,0}
+test table-4.8 {TableWidgetCmd procedure, "activate" option} {
     .t activate end
     .t index active
-} {17}
+} {9,9}
 
-test table-3.9 {TableWidgetCmd procedure, "bbox" option} {
+test table-5.1 {TableWidgetCmd procedure, "bbox" option} {
     list [catch {.t bbox} msg] $msg
-} {1 {wrong # args: should be ".t bbox index"}}
-test table-3.10 {TableWidgetCmd procedure, "bbox" option} {
-    list [catch {.t bbox a b} msg] $msg
-} {1 {wrong # args: should be ".t bbox index"}}
-test table-3.11 {TableWidgetCmd procedure, "bbox" option} {
+} {1 {wrong # args: should be ".t bbox first ?last?"}}
+test table-5.2 {TableWidgetCmd procedure, "bbox" option} {
+    list [catch {.t bbox a b c} msg] $msg
+} {1 {wrong # args: should be ".t bbox first ?last?"}}
+test table-5.3 {TableWidgetCmd procedure, "bbox" option} {
     list [catch {.t bbox fooey} msg] $msg
-} {1 {bad table index "fooey": must be active, anchor, end, @x,y, or a number}}
-test table-3.12 {TableWidgetCmd procedure, "bbox" option} {
-    .t yview 3
-    update
-    list [.t bbox 2] [.t bbox 8]
-} {{} {}}
-test table-3.13 {TableWidgetCmd procedure, "bbox" option} {
-    # Used to generate a core dump before a bug was fixed (the last
-    # element would be on-screen if it existed, but it doesn't exist).
+} {1 {bad table index "fooey": must be active, anchor, end, origin, topleft, bottomright, @x,y, or <row>,<col>}}
 
-    table .t2
-    pack .t2 -side top
-    tkwait visibility .t2
-    set x [.t2 bbox 0]
-    destroy .t2
-    set x
-} {}
-test table-3.14 {TableWidgetCmd procedure, "bbox" option} {fonts} {
-    .t yview 3
-    update
-    list [.t bbox 3] [.t bbox 4]
-} {{7 7 17 14} {7 26 17 14}}
-test table-3.15 {TableWidgetCmd procedure, "bbox" option} {fonts} {
-    .t yview 0
-    update
-    list [.t bbox -1] [.t bbox 0]
-} {{} {7 7 17 14}}
-test table-3.16 {TableWidgetCmd procedure, "bbox" option} {fonts} {
-    .t yview end
-    update
-    list [.t bbox 17] [.t bbox end] [.t bbox 18]
-} {{7 83 24 14} {7 83 24 14} {}}
-test table-3.17 {TableWidgetCmd procedure, "bbox" option} {fonts} {
-    catch {destroy .t}
-    toplevel .t
-    wm geom .t +0+0
-    table .t.t -width 10 -height 5
-    .t.t insert 0 "Short" "Somewhat longer" "Really, quite a whole lot longer than can possibly fit on the screen" "Short"
-    pack .t.t
-    update
-    .t.t xview moveto .2
-    .t.t bbox 2
-} {-72 39 393 14}
-test table-3.18 {TableWidgetCmd procedure, "bbox" option, partial last line} {fonts} {
-    mkPartial
-    list [.partial.t bbox 3] [.partial.t bbox 4]
-} {{5 56 24 14} {5 73 23 14}}
-
-test table-3.19 {TableWidgetCmd procedure, "cget" option} {
+test table-6.1 {TableWidgetCmd procedure, "cget" option} {
     list [catch {.t cget} msg] $msg
 } {1 {wrong # args: should be ".t cget option"}}
-test table-3.20 {TableWidgetCmd procedure, "cget" option} {
+test table-6.2 {TableWidgetCmd procedure, "cget" option} {
     list [catch {.t cget a b} msg] $msg
 } {1 {wrong # args: should be ".t cget option"}}
-test table-3.21 {TableWidgetCmd procedure, "cget" option} {
+test table-6.3 {TableWidgetCmd procedure, "cget" option} {
     list [catch {.t cget -gorp} msg] $msg
 } {1 {unknown option "-gorp"}}
-test table-3.22 {TableWidgetCmd procedure, "cget" option} {
-    .t cget -setgrid
-} {0}
+test table-6.4 {TableWidgetCmd procedure, "cget" option} {
+    .t cget -rows
+} {10}
 
-test table-3.23 {TableWidgetCmd procedure, "configure" option} {
+test table-7.1 {TableWidgetCmd procedure, "configure" option} {
     llength [.t configure]
-} {26}
-test table-3.24 {TableWidgetCmd procedure, "configure" option} {
+} {69}
+test table-7.2 {TableWidgetCmd procedure, "configure" option} {
     list [catch {.t configure -gorp} msg] $msg
 } {1 {unknown option "-gorp"}}
-test table-3.25 {TableWidgetCmd procedure, "configure" option} {
-    .t configure -setgrid
-} {-setgrid setGrid SetGrid 0 0}
-test table-3.26 {TableWidgetCmd procedure, "configure" option} {
+test table-7.3 {TableWidgetCmd procedure, "configure" option} {
+    .t configure -browsecommand
+} {-browsecommand browseCommand BrowseCommand {} {}}
+test table-7.4 {TableWidgetCmd procedure, "configure" option} {
     list [catch {.t configure -gorp is_messy} msg] $msg
 } {1 {unknown option "-gorp"}}
-test table-3.27 {TableWidgetCmd procedure, "configure" option} {
+test table-7.5 {TableWidgetCmd procedure, "configure" option} {
     set oldbd [.t cget -bd]
     set oldht [.t cget -highlightthickness]
     .t configure -bd 3 -highlightthickness 0
@@ -316,15 +272,114 @@ test table-3.27 {TableWidgetCmd procedure, "configure" option} {
     set x
 } {3 0}
 
-test table-3.28 {TableWidgetCmd procedure, "curselection" option} {
-    list [catch {.t curselection a} msg] $msg
-} {1 {wrong # args: should be ".t curselection"}}
-test table-3.29 {TableWidgetCmd procedure, "curselection" option} {
-    .t selection clear 0 end
-    .t selection set 3 6
-    .t selection set 9
+test table-8.1 {TableWidgetCmd procedure, "curselection" option} {
+    list [catch {.t curselection a b} msg] $msg
+} {1 {wrong # args: should be ".t curselection ?value?"}}
+test table-8.2 {TableWidgetCmd procedure, "curselection" option} {
+    .t selection clear all
     .t curselection
-} {3 4 5 6 9}
+} {}
+test table-8.2 {TableWidgetCmd procedure, "curselection" option} {
+    .t selection clear all
+    .t selection set 1,0 2,2
+    .t selection set 3,3
+    .t curselection
+} {1,0 1,1 1,2 2,0 2,1 2,2 3,3}
+
+test table-9.1 {TableWidgetCmd procedure, "border" option} {
+    list [catch {.t border} msg] $msg
+} {1 {wrong # args: should be ".t border mark|dragto x y ?row|col?"}}
+
+test table-10.1 {TableWidgetCmd procedure, "clear" option} {
+    list [catch {.t clear} msg] $msg
+} {1 {wrong # args: should be ".t clear option ?first? ?last?"}}
+
+test table-11.1 {TableWidgetCmd procedure, "curvalue" option} {
+    list [catch {.t curvalue this that} msg] $msg
+} {1 {wrong # args: should be ".t curvalue ?<value>?"}}
+
+test table-12.1 {TableWidgetCmd procedure, "delete" option} {
+    list [catch {.t delete} msg] $msg
+} {1 {wrong # args: should be ".t delete option ?switches? arg ?arg?"}}
+
+test table-13.1 {TableWidgetCmd procedure, "get" option} {
+    list [catch {.t get} msg] $msg
+} {1 {wrong # args: should be ".t get first ?last?"}}
+
+test table-14.1 {TableWidgetCmd procedure, "height" option} {
+    list [catch {.t height a} msg] $msg
+} {1 {expected integer but got "a"}}
+
+#test table-15.1 {TableWidgetCmd procedure, "hidden" option} {
+#    list [catch {.t hidden fooey} msg] $msg
+#} {1 {bad table index "fooey": must be active, anchor, end, origin, topleft, bottomright, @x,y, or <row>,<col>}}
+
+test table-16.1 {TableWidgetCmd procedure, "icursor" option} {
+    list [catch {.t icursor a b} msg] $msg
+} {1 {wrong # args: should be ".t icursor ?cursorPos?"}}
+
+test table-17.1 {TableWidgetCmd procedure, "index" option} {
+    list [catch {.t index} msg] $msg
+} {1 {wrong # args: should be ".t index <index> ?row|col?"}}
+
+test table-18.1 {TableWidgetCmd procedure, "insert" option} {
+    list [catch {.t insert} msg] $msg
+} {1 {wrong # args: should be ".t insert option ?switches? arg ?arg?"}}
+
+test table-19.1 {TableWidgetCmd procedure, "reread" option} {
+    list [catch {.t reread foo} msg] $msg
+} {1 {wrong # args: should be ".t reread"}}
+
+test table-20.1 {TableWidgetCmd procedure, "scan" option} {
+    list [catch {.t scan} msg] $msg
+} {1 {wrong # args: should be ".t scan mark|dragto x y"}}
+
+test table-21.1 {TableWidgetCmd procedure, "see" option} {
+    list [catch {.t see} msg] $msg
+} {1 {wrong # args: should be ".t see index"}}
+
+test table-22.1 {TableWidgetCmd procedure, "selection" option} {
+    list [catch {.t selection} msg] $msg
+} {1 {wrong # args: should be ".t selection option ?arg arg ...?"}}
+
+test table-23.1 {TableWidgetCmd procedure, "set" option} {
+    list [catch {.t set} msg] $msg
+} {1 {wrong # args: should be ".t set ?row|col? index ?value? ?index value ...?"}}
+
+test table-24.1 {TableWidgetCmd procedure, "spans" option} {
+    list [catch {.t spans this} msg] $msg
+} {1 {bad table index "this": must be active, anchor, end, origin, topleft, bottomright, @x,y, or <row>,<col>}}
+
+test table-25.1 {TableWidgetCmd procedure, "tag" option} {
+    list [catch {.t tag} msg] $msg
+} {1 {wrong # args: should be ".t tag option ?arg arg ...?"}}
+
+test table-26.1 {TableWidgetCmd procedure, "validate" option} {
+    list [catch {.t validate} msg] $msg
+} {1 {wrong # args: should be ".t validate index"}}
+
+test table-27.1 {TableWidgetCmd procedure, "version" option} {
+    list [catch {.t version foo} msg] $msg
+} {1 {wrong # args: should be ".t version"}}
+test table-.1 {TableWidgetCmd procedure, "version" option} {
+    .t version
+} {2.7}
+
+test table-28.1 {TableWidgetCmd procedure, "window" option} {
+    list [catch {.t window} msg] $msg
+} {1 {wrong # args: should be ".t window option ?arg arg ...?"}}
+
+test table-29.1 {TableWidgetCmd procedure, "width" option} {
+    list [catch {.t width a} msg] $msg
+} {1 {expected integer but got "a"}}
+
+
+return
+##
+## STOP TESTS HERE
+##
+## The rest of the tests need to be adapted from the listbox tests.
+##
 
 test table-3.30 {TableWidgetCmd procedure, "delete" option} {
     list [catch {.t delete} msg] $msg
@@ -352,48 +407,6 @@ test table-3.35 {TableWidgetCmd procedure, "delete" option} {
     .t2 delete 2 4
     list [.t2 get 1] [.t2 get 2] [.t2 index end]
 } {el1 el5 5}
-test table-3.36 {TableWidgetCmd procedure, "delete" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 el0 el1 el2 el3 el4 el5 el6 el7
-    .t2 delete -3 2
-    .t2 get 0 end
-} {el3 el4 el5 el6 el7}
-test table-3.37 {TableWidgetCmd procedure, "delete" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 el0 el1 el2 el3 el4 el5 el6 el7
-    .t2 delete -3 -1
-    .t2 get 0 end
-} {el0 el1 el2 el3 el4 el5 el6 el7}
-test table-3.38 {TableWidgetCmd procedure, "delete" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 el0 el1 el2 el3 el4 el5 el6 el7
-    .t2 delete 2 end
-    .t2 get 0 end
-} {el0 el1}
-test table-3.39 {TableWidgetCmd procedure, "delete" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 el0 el1 el2 el3 el4 el5 el6 el7
-    .t2 delete 5 20
-    .t2 get 0 end
-} {el0 el1 el2 el3 el4}
-test table-3.40 {TableWidgetCmd procedure, "delete" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 el0 el1 el2 el3 el4 el5 el6 el7
-    .t2 delete end 20
-    .t2 get 0 end
-} {el0 el1 el2 el3 el4 el5 el6}
-test table-3.41 {TableWidgetCmd procedure, "delete" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 el0 el1 el2 el3 el4 el5 el6 el7
-    .t2 delete 8 20
-    .t2 get 0 end
-} {el0 el1 el2 el3 el4 el5 el6 el7}
 
 test table-3.42 {TableWidgetCmd procedure, "get" option} {
     list [catch {.t get} msg] $msg
@@ -418,36 +431,6 @@ test table-3.47 {TableWidgetCmd procedure, "get" option} {
     table .t2
     list [.t2 get 0] [.t2 get end]
 } {{} {}}
-test table-3.48 {TableWidgetCmd procedure, "get" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 el0 el1 el2 "two words" el4 el5 el6 el7
-    .t2 get 3 end
-} {{two words} el4 el5 el6 el7}
-test table-3.49 {TableWidgetCmd procedure, "get" option} {
-    .t get -1
-} {}
-test table-3.50 {TableWidgetCmd procedure, "get" option} {
-    .t get -2 -1
-} {}
-test table-3.51 {TableWidgetCmd procedure, "get" option} {
-    .t get -2 3
-} {el0 el1 el2 el3}
-test table-3.52 {TableWidgetCmd procedure, "get" option} {
-    .t get 12 end
-} {el12 el13 el14 el15 el16 el17}
-test table-3.53 {TableWidgetCmd procedure, "get" option} {
-    .t get 12 20
-} {el12 el13 el14 el15 el16 el17}
-test table-3.54 {TableWidgetCmd procedure, "get" option} {
-    .t get end
-} {el17}
-test table-3.55 {TableWidgetCmd procedure, "get" option} {
-    .t get 30
-} {}
-test table-3.56 {TableWidgetCmd procedure, "get" option} {
-    .t get 30 35
-} {}
 
 test table-3.57 {TableWidgetCmd procedure, "index" option} {
     list [catch {.t index} msg] $msg
@@ -491,34 +474,6 @@ test table-3.67 {TableWidgetCmd procedure, "insert" option} {
     .t2 insert -1 x
     .t2 get 0 end
 } {x a b c}
-test table-3.68 {TableWidgetCmd procedure, "insert" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert end a b c
-    .t2 insert end x
-    .t2 get 0 end
-} {a b c x}
-test table-3.69 {TableWidgetCmd procedure, "insert" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert end a b c
-    .t2 insert 43 x
-    .t2 get 0 end
-} {a b c x}
-
-test table-3.70 {TableWidgetCmd procedure, "nearest" option} {
-    list [catch {.t nearest} msg] $msg
-} {1 {wrong # args: should be ".t nearest y"}}
-test table-3.71 {TableWidgetCmd procedure, "nearest" option} {
-    list [catch {.t nearest a b} msg] $msg
-} {1 {wrong # args: should be ".t nearest y"}}
-test table-3.72 {TableWidgetCmd procedure, "nearest" option} {
-    list [catch {.t nearest 20p} msg] $msg
-} {1 {expected integer but got "20p"}}
-test table-3.73 {TableWidgetCmd procedure, "nearest" option} {
-    .t yview 3
-    .t nearest 1000
-} {7}
 
 test table-3.74 {TableWidgetCmd procedure, "scan" option} {
     list [catch {.t scan a b} msg] $msg
@@ -568,46 +523,6 @@ test table-3.84 {TableWidgetCmd procedure, "see" option} {
     .t see 11
     .t index @0,0
 } {7}
-test table-3.85 {TableWidgetCmd procedure, "see" option} {
-    .t yview 7
-    .t see 6
-    .t index @0,0
-} {6}
-test table-3.86 {TableWidgetCmd procedure, "see" option} {
-    .t yview 7
-    .t see 5
-    .t index @0,0
-} {3}
-test table-3.87 {TableWidgetCmd procedure, "see" option} {
-    .t yview 7
-    .t see 12
-    .t index @0,0
-} {8}
-test table-3.88 {TableWidgetCmd procedure, "see" option} {
-    .t yview 7
-    .t see 13
-    .t index @0,0
-} {11}
-test table-3.89 {TableWidgetCmd procedure, "see" option} {
-    .t yview 7
-    .t see -1
-    .t index @0,0
-} {0}
-test table-3.90 {TableWidgetCmd procedure, "see" option} {
-    .t yview 7
-    .t see end
-    .t index @0,0
-} {13}
-test table-3.91 {TableWidgetCmd procedure, "see" option} {
-    .t yview 7
-    .t see 322
-    .t index @0,0
-} {13}
-test table-3.92 {TableWidgetCmd procedure, "see" option, partial last line} {
-    mkPartial
-    .partial.t see 4
-    .partial.t index @0,0
-} {1}
 
 test table-3.93 {TableWidgetCmd procedure, "selection" option} {
     list [catch {.t select a} msg] $msg
@@ -687,13 +602,6 @@ test table-3.110 {TableWidgetCmd procedure, "selection" option} {
 test table-3.111 {TableWidgetCmd procedure, "selection" option} {
     list [catch {.t selection badOption 0 0} msg] $msg
 } {1 {bad option "badOption": must be anchor, clear, includes, or set}}
-
-test table-3.112 {TableWidgetCmd procedure, "size" option} {
-    list [catch {.t size a} msg] $msg
-} {1 {wrong # args: should be ".t size"}}
-test table-3.113 {TableWidgetCmd procedure, "size" option} {
-    .t size
-} {18}
 
 test table-3.114 {TableWidgetCmd procedure, "xview" option} {
     catch {destroy .t2}
@@ -809,1298 +717,6 @@ test table-3.132 {TableWidgetCmd procedure, "xview" option} {
     .t yview scroll -4 pages
     .t yview
 } {0.55 0.65}
-
-# No tests for DestroyTable:  I can't come up with anything to test
-# in this procedure.
-
-test table-4.1 {ConfigureTable procedure} {fonts} {
-    catch {destroy .t}
-    table .t -setgrid 1 -width 25 -height 15
-    pack .t
-    update
-    set x [getsize .]
-    .t configure -setgrid 0
-    update
-    list $x [getsize .]
-} {25x15 185x263}
-test table-4.2 {ConfigureTable procedure} {
-    .t configure -highlightthickness -3
-    .t cget -highlightthickness
-} {0}
-test table-4.3 {ConfigureTable procedure} {
-    .t configure -exportselection 0
-    .t delete 0 end
-    .t insert 0 el0 el1 el2 el3 el4 el5 el6 el7 el8
-    .t selection set 3 5
-    .t configure -exportselection 1
-    selection get
-} {el3
-el4
-el5}
-test table-4.4 {ConfigureTable procedure} {
-    catch {destroy .e}
-    entry .e
-    .e insert 0 abc
-    .e select from 0
-    .e select to 2
-    .t configure -exportselection 0
-    .t delete 0 end
-    .t insert 0 el0 el1 el2 el3 el4 el5 el6 el7 el8
-    .t selection set 3 5
-    .t selection clear 3 5
-    .t configure -exportselection 1
-    list [selection own] [selection get]
-} {.e ab}
-test table-4.5 {-exportselection option} {
-    selection clear .
-    .t configure -exportselection 1
-    .t delete 0 end
-    .t insert 0 el0 el1 el2 el3 el4 el5 el6 el7 el8
-    .t selection set 1 1
-    set x {}
-    lappend x [catch {selection get} msg] $msg [.t curselection]
-    .t config -exportselection 0
-    lappend x [catch {selection get} msg] $msg [.t curselection]
-    .t selection clear 0 end
-    lappend x [catch {selection get} msg] $msg [.t curselection]
-    .t selection set 1 3
-    lappend x [catch {selection get} msg] $msg [.t curselection]
-    .t config -exportselection 1
-    lappend x [catch {selection get} msg] $msg [.t curselection]
-} {0 el1 1 1 {PRIMARY selection doesn't exist or form "STRING" not defined} 1 1 {PRIMARY selection doesn't exist or form "STRING" not defined} {} 1 {PRIMARY selection doesn't exist or form "STRING" not defined} {1 2 3} 0 {el1
-el2
-el3} {1 2 3}}
-test table-4.6 {ConfigureTable procedure} {fonts} {
-    catch {destroy .t}
-
-    # The following code (reset geometry, withdraw, etc.) is necessary
-    # to reset the state of some window managers like olvwm under
-    # SunOS 4.1.3.
-
-    wm geom . 300x300
-    update
-    wm geom . {}
-    wm withdraw .
-    table .t -font $fixed -width 15 -height 20
-    pack .t
-    update
-    wm deiconify .
-    set x [getsize .]
-    .t configure -setgrid 1
-    update
-    list $x [getsize .]
-} {115x328 15x20}
-test table-4.7 {ConfigureTable procedure} {
-    catch {destroy .t}
-    wm withdraw .
-    table .t -font $fixed -width 30 -height 20 -setgrid 1
-    wm geom . +0+0
-    pack .t
-    update
-    wm deiconify .
-    set result [getsize .]
-    wm geom . 26x15
-    update
-    lappend result [getsize .]
-    .t configure -setgrid 1
-    update
-    lappend result [getsize .]
-} {30x20 26x15 26x15}
-wm geom . {}
-catch {destroy .t}
-test table-4.8 {ConfigureTable procedure} {
-    catch {destroy .t}
-    table .t -width 15 -height 20 -xscrollcommand "lappend ::log x" \
-	    -yscrollcommand "lappend ::log y"
-    pack .t
-    update
-    .t configure -fg black
-    set log {}
-    update
-    set log
-} {{y 0 1} {x 0 1}}
-test table-4.9 {ConfigureTable procedure, -listvar} {
-    catch {destroy .t}
-    set x [list a b c d]
-    table .t -listvar x
-    .t get 0 end
-} [list a b c d]
-test table-4.10 {ConfigureTable, no listvar -> existing listvar} {
-    catch {destroy .t}
-    set x [list a b c d]
-    table .t
-    .t insert end 1 2 3 4
-    .t configure -listvar x
-    .t get 0 end
-} [list a b c d]
-test table-4.11 {ConfigureTable procedure, listvar -> no listvar} {
-    catch {destroy .t}
-    set x [list a b c d]
-    table .t -listvar x
-    .t configure -listvar {}
-    .t insert end 1 2 3 4
-    list $x [.t get 0 end]
-} [list [list a b c d] [list a b c d 1 2 3 4]]
-test table-4.12 {ConfigureTable procedure, listvar -> different listvar} {
-    catch {destroy .t}
-    set x [list a b c d]
-    set y [list 1 2 3 4]
-    table .t 
-    .t configure -listvar x
-    .t configure -listvar y
-    .t insert end 5 6 7 8
-    list $x $y
-} [list [list a b c d] [list 1 2 3 4 5 6 7 8]]
-test table-4.13 {ConfigureTable, no listvar -> non-existant listvar} {
-    catch {destroy .t}
-    catch {unset x}
-    table .t
-    .t insert end a b c d
-    .t configure -listvar x
-    set x
-} [list a b c d]
-test table-4.14 {ConfigureTable, non-existant listvar} {
-    catch {destroy .t}
-    catch {unset x}
-    table .t -listvar x
-    list [info exists x] $x
-} [list 1 {}]
-test table-4.15 {ConfigureTable, listvar -> non-existant listvar} {
-    catch {destroy .t}
-    catch {unset y}
-    set x [list a b c d]
-    table .t -listvar x
-    .t configure -listvar y
-    list [info exists y] $y
-} [list 1 [list a b c d]]
-test table-4.16 {ConfigureTable, listvar -> same listvar} {
-    catch {destroy .t}
-    set x [list a b c d]
-    table .t -listvar x
-    .t configure -listvar x
-    set x
-} [list a b c d]
-test table-4.17 {ConfigureTable, no listvar -> no listvar} {
-    catch {destroy .t}
-    table .t
-    .t insert end a b c d
-    .t configure -listvar {}
-    .t get 0 end
-} [list a b c d]
-test table-4.18 {ConfigureTable, no listvar -> bad listvar} {
-    catch {destroy .t}
-    table .t
-    .t insert end a b c d
-    set x "this is a \" bad list"
-    catch {.t configure -listvar x} result
-    list [.t get 0 end] [.t cget -listvar] $result
-} [list [list a b c d] {} \
-	"unmatched open quote in list: invalid listvar value"]
-
-# No tests for DisplayTable:  I don't know how to test this procedure.
-
-test table-5.1 {TableComputeGeometry procedure} {fonts} {
-    catch {destroy .t}
-    table .t -font $fixed -width 15 -height 20
-    pack .t
-    list [winfo reqwidth .t] [winfo reqheight .t]
-} {115 328}
-test table-5.2 {TableComputeGeometry procedure} {fonts} {
-    catch {destroy .t}
-    table .t -font $fixed -width 0 -height 10
-    pack .t
-    update
-    list [winfo reqwidth .t] [winfo reqheight .t]
-} {17 168}
-test table-5.3 {TableComputeGeometry procedure} {fonts} {
-    catch {destroy .t}
-    table .t -font $fixed -width 0 -height 10 -bd 3
-    .t insert 0 Short "Really much longer" Longer
-    pack .t
-    update
-    list [winfo reqwidth .t] [winfo reqheight .t]
-} {138 170}
-test table-5.4 {TableComputeGeometry procedure} {fonts} {
-    catch {destroy .t}
-    table .t -font $fixed -width 10 -height 0
-    pack .t
-    update
-    list [winfo reqwidth .t] [winfo reqheight .t]
-} {80 24}
-test table-5.5 {TableComputeGeometry procedure} {fonts} {
-    catch {destroy .t}
-    table .t -font $fixed -width 10 -height 0 -highlightthickness 0
-    .t insert 0 Short "Really much longer" Longer
-    pack .t
-    update
-    list [winfo reqwidth .t] [winfo reqheight .t]
-} {76 52}
-test table-5.6 {TableComputeGeometry procedure} {
-    # If "0" in selected font had 0 width, caused divide-by-zero error.
-
-    catch {destroy .t}
-    pack [table .t -font {{open look glyph}}]
-    update
-} {}
-    
-
-catch {destroy .t}
-table .t -height 2 -xscrollcommand "lappend ::log x" -yscrollcommand "lappend ::log y"
-pack .t
-update
-test table-6.1 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert end a b c d
-    .t insert 5 x y z
-    .t insert 2 A
-    .t insert 0 q r s
-    .t get 0 end
-} {q r s a b A c d x y z}
-test table-6.2 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t selection anchor 2
-    .t insert 2 A B
-    .t index anchor
-} {4}
-test table-6.3 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t selection anchor 2
-    .t insert 3 A B
-    .t index anchor
-} {2}
-test table-6.4 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t yview 3
-    update
-    .t insert 2 A B
-    .t index @0,0
-} {5}
-test table-6.5 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t yview 3
-    update
-    .t insert 3 A B
-    .t index @0,0
-} {3}
-test table-6.6 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t activate 5
-    .t insert 5 A B
-    .t index active
-} {7}
-test table-6.7 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t activate 5
-    .t insert 6 A B
-    .t index active
-} {5}
-test table-6.8 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c
-    .t index active
-} {2}
-test table-6.9 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert 0
-    .t index active
-} {0}
-test table-6.10 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b "two words"  c d e f g h i j
-    update
-    set log {}
-    .t insert 0 word
-    update
-    set log
-} {{y 0 0.166667}}
-test table-6.11 {InsertEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b "two words"  c d e f g h i j
-    update
-    set log {}
-    .t insert 0 "much longer entry"
-    update
-    set log
-} {{y 0 0.166667} {x 0 1}}
-test table-6.12 {InsertEls procedure} {fonts} {
-    catch {destroy .t2}
-    table .t2 -width 0 -height 0
-    pack .t2 -side top
-    .t2 insert 0 a b "two words"  c d
-    set x {}
-    lappend x [winfo reqwidth .t2] [winfo reqheight .t2]
-    .t2 insert 0 "much longer entry"
-    lappend x [winfo reqwidth .t2] [winfo reqheight .t2]
-} {80 93 122 110}
-test table-6.13 {InsertEls procedure, check -listvar update} {
-    catch {destroy .t2}
-    set x [list a b c d]
-    table .t2 -listvar x
-    .t2 insert 0 1 2 3 4
-    set x
-} [list 1 2 3 4 a b c d]
-test table-6.14 {InsertEls procedure, check selection update} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 0 1 2 3 4
-    .t2 selection set 2 4
-    .t2 insert 0 a
-    .t2 curselection
-} [list 3 4 5]
-
-
-test table-7.1 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t selection set 1 6
-    .t delete 4 3
-    list [.t size] [selection get]
-} {10 {b
-c
-d
-e
-f
-g}}
-test table-7.2 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t selection set 3 6
-    .t delete 4 4
-    list [.t size] [.t get 4] [.t curselection]
-} {9 f {3 4 5}}
-test table-7.3 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t delete 0 3
-    list [.t size] [.t get 0] [.t get 1]
-} {6 e f}
-test table-7.4 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t delete 8 1000
-    list [.t size] [.t get 7]
-} {8 h}
-test table-7.5 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t selection anchor 2
-    .t delete 0 1
-    .t index anchor
-} {0}
-test table-7.6 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t selection anchor 2
-    .t delete 2
-    .t index anchor
-} {2}
-test table-7.7 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t selection anchor 4
-    .t delete 2 5
-    .t index anchor
-} {2}
-test table-7.8 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t selection anchor 3
-    .t delete 4 5
-    .t index anchor
-} {3}
-test table-7.9 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t yview 3
-    update
-    .t delete 1 2
-    .t index @0,0
-} {1}
-test table-7.10 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t yview 3
-    update
-    .t delete 3 4
-    .t index @0,0
-} {3}
-test table-7.11 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t yview 3
-    update
-    .t delete 4 6
-    .t index @0,0
-} {3}
-test table-7.12 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t yview 3
-    update
-    .t delete 3 end
-    .t index @0,0
-} {1}
-test table-7.13 {DeleteEls procedure, updating view with partial last line} {
-    mkPartial
-    .partial.t yview 8
-    update
-    .partial.t delete 10 13
-    .partial.t index @0,0
-} {7}
-test table-7.14 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t activate 6
-    .t delete 3 4
-    .t index active
-} {4}
-test table-7.15 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t activate 6
-    .t delete 5 7
-    .t index active
-} {5}
-test table-7.16 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t activate 6
-    .t delete 5 end
-    .t index active
-} {4}
-test table-7.17 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j
-    .t activate 6
-    .t delete 0 end
-    .t index active
-} {0}
-test table-7.18 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c "two words" d e f g h i j
-    update
-    set log {}
-    .t delete 4 6
-    update
-    set log
-} {{y 0 0.25}}
-test table-7.19 {DeleteEls procedure} {
-    .t delete 0 end
-    .t insert 0 a b c "two words" d e f g h i j
-    update
-    set log {}
-    .t delete 3
-    update
-    set log
-} {{y 0 0.2} {x 0 1}}
-test table-7.20 {DeleteEls procedure} {fonts} {
-    catch {destroy .t2}
-    table .t2 -width 0 -height 0
-    pack .t2 -side top
-    .t2 insert 0 a b "two words" c d e f g
-    set x {}
-    lappend x [winfo reqwidth .t2] [winfo reqheight .t2]
-    .t2 delete 2 4
-    lappend x [winfo reqwidth .t2] [winfo reqheight .t2]
-} {80 144 17 93}
-catch {destroy .t2}
-test table-7.21 {DeleteEls procedure, check -listvar update} {
-    catch {destroy .t2}
-    set x [list a b c d]
-    table .t2 -listvar x
-    .t2 delete 0 1
-    set x
-} [list c d]
-
-test table-8.1 {TableEventProc procedure} {fonts} {
-    catch {destroy .t}
-    table .t -setgrid 1
-    pack .t
-    update
-    set x [getsize .]
-    destroy .t
-    list $x [getsize .] [winfo exists .t] [info command .t]
-} {20x10 150x178 0 {}}
-test table-8.2 {TableEventProc procedure} {fonts} {
-    catch {destroy .t}
-    table .t -height 5 -width 10
-    .t insert 0 a b c "A string that is very very long" d e f g h i j k
-    pack .t
-    update
-    place .t -width 50 -height 80
-    update
-    list [.t xview] [.t yview]
-} {{0 0.222222} {0 0.333333}}
-test table-8.3 {TableEventProc procedure} {
-    eval destroy [winfo children .]
-    table .t1 -bg #543210
-    rename .t1 .t2
-    set x {}
-    lappend x [winfo children .]
-    lappend x [.t2 cget -bg]
-    destroy .t1
-    lappend x [info command .t*] [winfo children .]
-} {.t1 #543210 {} {}}
-
-test table-9.1 {TableCmdDeletedProc procedure} {
-    eval destroy [winfo children .]
-    table .t1
-    rename .t1 {}
-    list [info command .t*] [winfo children .]
-} {{} {}}
-test table-9.2 {TableCmdDeletedProc procedure, disabling -setgrid} fonts {
-    catch {destroy .top}
-    toplevel .top
-    wm geom .top +0+0
-    table .top.t -setgrid 1 -width 20 -height 10
-    pack .top.t
-    update
-    set x [wm geometry .top]
-    rename .top.t {}
-    update
-    lappend x [wm geometry .top]
-    destroy .top
-    set x
-} {20x10+0+0 150x178+0+0}
-
-catch {destroy .t}
-table .t
-pack .t
-.t delete 0 end
-.t insert 0 el0 el1 el2 el3 el4 el5 el6 el7 el8 el9 el10 el11
-test table-10.1 {GetTableIndex procedure} {
-    .t activate 3
-    list [.t activate 3; .t index active] [.t activate 6; .t index active]
-} {3 6}
-test table-10.2 {GetTableIndex procedure} {
-    .t selection anchor 2
-    .t index anchor
-} 2
-test table-10.3 {GetTableIndex procedure} {
-    .t insert end A B C D E
-    .t selection anchor end
-    .t delete 12 end
-    list [.t index anchor] [.t index end]
-} {12 12}
-test table-10.4 {GetTableIndex procedure} {
-    list [catch {.t index a} msg] $msg
-} {1 {bad table index "a": must be active, anchor, end, @x,y, or a number}}
-test table-10.5 {GetTableIndex procedure} {
-    .t index end
-} {12}
-test table-10.6 {GetTableIndex procedure} {
-    .t get end
-} {el11}
-test table-10.7 {GetTableIndex procedure} {
-    .t delete 0 end
-    .t index end
-} 0
-.t delete 0 end
-.t insert 0 el0 el1 el2 el3 el4 el5 el6 el7 el8 el9 el10 el11
-update
-test table-10.8 {GetTableIndex procedure} {
-    list [catch {.t index @} msg] $msg
-} {1 {bad table index "@": must be active, anchor, end, @x,y, or a number}}
-test table-10.9 {GetTableIndex procedure} {
-    list [catch {.t index @foo} msg] $msg
-} {1 {bad table index "@foo": must be active, anchor, end, @x,y, or a number}}
-test table-10.10 {GetTableIndex procedure} {
-    list [catch {.t index @1x3} msg] $msg
-} {1 {bad table index "@1x3": must be active, anchor, end, @x,y, or a number}}
-test table-10.11 {GetTableIndex procedure} {
-    list [catch {.t index @1,} msg] $msg
-} {1 {bad table index "@1,": must be active, anchor, end, @x,y, or a number}}
-test table-10.12 {GetTableIndex procedure} {
-    list [catch {.t index @1,foo} msg] $msg
-} {1 {bad table index "@1,foo": must be active, anchor, end, @x,y, or a number}}
-test table-10.13 {GetTableIndex procedure} {
-    list [catch {.t index @1,2x} msg] $msg
-} {1 {bad table index "@1,2x": must be active, anchor, end, @x,y, or a number}}
-test table-10.14 {GetTableIndex procedure} {fonts} {
-    list [.t index @5,57] [.t index @5,58]
-} {3 3}
-test table-10.15 {GetTableIndex procedure} {
-    list [catch {.t index 1xy} msg] $msg
-} {1 {bad table index "1xy": must be active, anchor, end, @x,y, or a number}}
-test table-10.16 {GetTableIndex procedure} {
-    .t index 3
-} {3}
-test table-10.17 {GetTableIndex procedure} {
-    .t index 20
-} {20}
-test table-10.18 {GetTableIndex procedure} {
-    .t get 20
-} {}
-test table-10.19 {GetTableIndex procedure} {
-    .t index -2
-} -2
-test table-10.20 {GetTableIndex procedure} {
-    .t delete 0 end
-    .t index 1
-} 1
-
-test table-11.1 {ChangeTableView procedure, boundary conditions for index} {
-    catch {destroy .t}
-    table .t -height 5
-    pack .t
-    .t insert 0 a b c d e f g h i j
-    .t yview 3
-    update
-    set x [.t index @0,0]
-    .t yview -1
-    update
-    lappend x [.t index @0,0]
-} {3 0}
-test table-11.2 {ChangeTableView procedure, boundary conditions for index} {
-    catch {destroy .t}
-    table .t -height 5
-    pack .t
-    .t insert 0 a b c d e f g h i j
-    .t yview 3
-    update
-    set x [.t index @0,0]
-    .t yview 20
-    update
-    lappend x [.t index @0,0]
-} {3 5}
-test table-11.3 {ChangeTableView procedure} {
-    catch {destroy .t}
-    table .t -height 5 -yscrollcommand "lappend ::log y"
-    pack .t
-    .t insert 0 a b c d e f g h i j
-    update
-    set log {}
-    .t yview 2
-    update
-    list [.t yview] $log
-}  {{0.2 0.7} {{y 0.2 0.7}}}
-test table-11.4 {ChangeTableView procedure} {
-    catch {destroy .t}
-    table .t -height 5 -yscrollcommand "lappend ::log y"
-    pack .t
-    .t insert 0 a b c d e f g h i j
-    update
-    set log {}
-    .t yview 8
-    update
-    list [.t yview] $log
-}  {{0.5 1} {{y 0.5 1}}}
-test table-11.5 {ChangeTableView procedure} {
-    catch {destroy .t}
-    table .t -height 5 -yscrollcommand "lappend ::log y"
-    pack .t
-    .t insert 0 a b c d e f g h i j
-    .t yview 3
-    update
-    set log {}
-    .t yview 3
-    update
-    list [.t yview] $log
-}  {{0.3 0.8} {}}
-test table-11.6 {ChangeTableView procedure, partial last line} {
-    mkPartial
-    .partial.t yview 13
-    .partial.t index @0,0
-} {11}
-
-catch {destroy .t}
-table .t -font $fixed -xscrollcommand "lappend ::log x" -width 10
-.t insert 0 0123456789a123456789b123456789c123456789d123456789e123456789f123456789g123456789h123456789i123456789
-pack .t
-update
-test table-12.1 {ChangeTableOffset procedure} {fonts} {
-    set log {}
-    .t xview 99
-    update
-    list [.t xview] $log
-} {{0.9 1} {{x 0.9 1}}}
-test table-12.2 {ChangeTableOffset procedure} {fonts} {
-    set log {}
-    .t xview moveto -.25
-    update
-    list [.t xview] $log
-} {{0 0.1} {{x 0 0.1}}}
-test table-12.3 {ChangeTableOffset procedure} {fonts} {
-    .t xview 10
-    update
-    set log {}
-    .t xview 10
-    update
-    list [.t xview] $log
-} {{0.1 0.2} {}}
-
-catch {destroy .t}
-table .t -font $fixed -width 10 -height 5
-pack .t
-.t insert 0 a bb c d e f g h i j k l m n o p q r s
-.t insert 0 0123456789a123456789b123456789c123456789d123456789
-update
-set width [expr [lindex [.t bbox 2] 2] - [lindex [.t bbox 1] 2]]
-set height [expr [lindex [.t bbox 2] 1] - [lindex [.t bbox 1] 1]]
-test table-13.1 {TableScanTo procedure} {fonts} {
-    .t yview 0
-    .t xview 0
-    .t scan mark 10 20
-    .t scan dragto [expr 10-$width] [expr 20-$height]
-    update
-    list [.t xview] [.t yview]
-} {{0.2 0.4} {0.5 0.75}}
-test table-13.2 {TableScanTo procedure} {fonts} {
-    .t yview 5
-    .t xview 10
-    .t scan mark 10 20
-    .t scan dragto 20 40
-    update
-    set x [list [.t xview] [.t yview]]
-    .t scan dragto [expr 20-$width] [expr 40-$height]
-    update
-    lappend x [.t xview] [.t yview]
-} {{0 0.2} {0 0.25} {0.2 0.4} {0.5 0.75}}
-test table-13.3 {TableScanTo procedure} {fonts} {
-    .t yview moveto 1.0
-    .t xview moveto 1.0
-    .t scan mark 10 20
-    .t scan dragto 5 10
-    update
-    set x [list [.t xview] [.t yview]]
-    .t scan dragto [expr 5+$width] [expr 10+$height]
-    update
-    lappend x [.t xview] [.t yview]
-} {{0.8 1} {0.75 1} {0.62 0.82} {0.25 0.5}}
-
-test table-14.1 {NearestTableElement procedure, partial last line} {
-    mkPartial
-    .partial.t nearest [winfo height .partial.t]
-} {4}
-catch {destroy .t}
-table .t -font $fixed -width 20 -height 10
-.t insert 0 a b c d e f g h i j k l m n o p q r s t
-.t yview 4
-pack .t
-update
-test table-14.2 {NearestTableElement procedure} {fonts} {
-    .t index @50,0
-} {4}
-test table-14.3 {NearestTableElement procedure} {fonts} {
-    list [.t index @50,35] [.t index @50,36]
-} {5 6}
-test table-14.4 {NearestTableElement procedure} {fonts} {
-    .t index @50,200
-} {13}
-
-test table-15.1 {TableSelect procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j k l m n o p
-    .t select set 2 4
-    .t select set 7 12
-    .t select clear 4 7
-    .t curselection
-} {2 3 8 9 10 11 12}
-test table-15.2 {TableSelect procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e f g h i j k l m n o p
-    catch {destroy .e}
-    entry .e
-    .e insert 0 "This is some text"
-    .e select from 0
-    .e select to 7
-    .t selection clear 2 4
-    set x [selection own]
-    .t selection set 3
-    list $x [selection own] [selection get]
-} {.e .t d}
-test table-15.3 {TableSelect procedure} {
-    .t delete 0 end
-    .t selection clear 0 end
-    .t select set 0 end
-    .t curselection
-} {}
-test table-15.4 {TableSelect procedure, boundary conditions for indices} {
-    .t delete 0 end
-    .t insert 0 a b c d e f
-    .t select clear 0 end
-    .t select set -2 -1
-    .t curselection
-} {}
-test table-15.5 {TableSelect procedure, boundary conditions for indices} {
-    .t delete 0 end
-    .t insert 0 a b c d e f
-    .t select clear 0 end
-    .t select set -1 3
-    .t curselection
-} {0 1 2 3}
-test table-15.6 {TableSelect procedure, boundary conditions for indices} {
-    .t delete 0 end
-    .t insert 0 a b c d e f
-    .t select clear 0 end
-    .t select set 2 4
-    .t curselection
-} {2 3 4}
-test table-15.7 {TableSelect procedure, boundary conditions for indices} {
-    .t delete 0 end
-    .t insert 0 a b c d e f
-    .t select clear 0 end
-    .t select set 4 end
-    .t curselection
-} {4 5}
-test table-15.8 {TableSelect procedure, boundary conditions for indices} {
-    .t delete 0 end
-    .t insert 0 a b c d e f
-    .t select clear 0 end
-    .t select set 4 30
-    .t curselection
-} {4 5}
-test table-15.9 {TableSelect procedure, boundary conditions for indices} {
-    .t delete 0 end
-    .t insert 0 a b c d e f
-    .t select clear 0 end
-    .t select set end 30
-    .t curselection
-} {5}
-test table-15.10 {TableSelect procedure, boundary conditions for indices} {
-    .t delete 0 end
-    .t insert 0 a b c d e f
-    .t select clear 0 end
-    .t select set 20 25
-    .t curselection
-} {}
-
-test table-16.1 {TableFetchSelection procedure} {
-    .t delete 0 end
-    .t insert 0 a b c "two words" e f g h i \\ k l m n o p
-    .t selection set 2 4
-    .t selection set 9
-    .t selection set 11 12
-    selection get
-} "c\ntwo words\ne\n\\\nl\nm"
-test table-16.2 {TableFetchSelection procedure} {
-    .t delete 0 end
-    .t insert 0 a b c "two words" e f g h i \\ k l m n o p
-    .t selection set 3
-    selection get
-} "two words"
-test table-16.3 {TableFetchSelection procedure, retrieve in several parts} {
-    set long "This is quite a long string\n"
-    append long $long $long $long $long
-    append long $long $long $long $long
-    append long $long $long
-    .t delete 0 end
-    .t insert 0 1$long 2$long 3$long 4$long 5$long
-    .t selection set 0 end
-    set sel [selection get]
-    string compare 1$long\n2$long\n3$long\n4$long\n5$long $sel
-} {0}
-catch {unset long sel}
-
-test table-17.1 {TableLostSelection procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e
-    .t select set 0 end
-    catch {destroy .e}
-    entry .e
-    .e insert 0 "This is some text"
-    .e select from 0
-    .e select to 5
-    .t curselection
-} {}
-test table-17.2 {TableLostSelection procedure} {
-    .t delete 0 end
-    .t insert 0 a b c d e
-    .t select set 0 end
-    .t configure -exportselection 0
-    catch {destroy .e}
-    entry .e
-    .e insert 0 "This is some text"
-    .e select from 0
-    .e select to 5
-    .t curselection
-} {0 1 2 3 4}
-
-catch {destroy .t}
-table .t -font $fixed -width 10 -height 5
-pack .t
-update
-test table-18.1 {TableUpdateVScrollbar procedure} {
-    .t configure -yscrollcommand "lappend ::log y"
-    set log {}
-    .t insert 0 a b c
-    update
-    .t insert end d e f g h
-    update
-    .t delete 0 end
-    update
-    set log
-} {{y 0 1} {y 0 0.625} {y 0 1}}
-test table-18.2 {TableUpdateVScrollbar procedure, partial last line} {
-    mkPartial
-    .partial.t configure -yscrollcommand "lappend ::log y"
-    set log {}
-    .partial.t yview 3
-    update
-    set log
-} {{y 0.2 0.466667}}
-test table-18.3 {TableUpdateVScrollbar procedure} {
-    proc bgerror args {
-	global x errorInfo
-	set x [list $args $errorInfo]
-    }
-    .t configure -yscrollcommand gorp
-    .t insert 0 foo
-    update
-    set x
-} {{{invalid command name "gorp"}} {invalid command name "gorp"
-    while executing
-"gorp 0 1"
-    (vertical scrolling command executed by table)}}
-if {[info exists bgerror]} {
-    rename bgerror {}
-}
-
-catch {destroy .t}
-table .t -font $fixed -width 10 -height 5
-pack .t
-update
-test table-19.1 {TableUpdateVScrollbar procedure} {fonts} {
-    .t configure -xscrollcommand "lappend ::log x"
-    set log {}
-    .t insert 0 abc
-    update
-    .t insert 0 "This is a much longer string..."
-    update
-    .t delete 0 end
-    update
-    set log
-} {{x 0 1} {x 0 0.322581} {x 0 1}}
-test table-19.2 {TableUpdateVScrollbar procedure} {
-    proc bgerror args {
-	global x errorInfo
-	set x [list $args $errorInfo]
-    }
-    .t configure -xscrollcommand bogus
-    .t insert 0 foo
-    update
-    set x
-} {{{invalid command name "bogus"}} {invalid command name "bogus"
-    while executing
-"bogus 0 1"
-    (horizontal scrolling command executed by table)}}
-
-set l [interp hidden]
-eval destroy [winfo children .]
-
-test table-20.1 {table vs hidden commands} {
-    catch {destroy .t}
-    table .t
-    interp hide {} .t
-    destroy .t
-    list [winfo children .] [interp hidden]
-} [list {} $l]
-
-# tests for TableListVarProc
-test table-21.1 {TableListVarProc} {
-    catch {destroy .t}
-    catch {unset x}
-    table .t -listvar x
-    set x [list a b c d]
-    .t get 0 end
-} [list a b c d]
-test table-21.2 {TableListVarProc} {
-    catch {destroy .t}
-    set x [list a b c d]
-    table .t -listvar x
-    unset x
-    set x
-} [list a b c d]
-test table-21.3 {TableListVarProc} {
-    catch {destroy .t}
-    set x [list a b c d]
-    table .t -listvar x
-    .t configure -listvar {}
-    unset x
-    info exists x
-} 0
-test table-21.4 {TableListVarProc} {
-    catch {destroy .t}
-    set x [list a b c d]
-    table .t -listvar x
-    lappend x e f g
-    .t size
-} 7
-test table-21.5 {TableListVarProc, test selection after listvar mod} {
-    catch {destroy .t}
-    set x [list a b c d e f g]
-    table .t -listvar x
-    .t selection set end
-    set x [list a b c d]
-    set x [list 0 1 2 3 4 5 6]
-    .t curselection
-} {}
-test table-21.6 {TableListVarProc, test selection after listvar mod} {
-    catch {destroy .t}
-    set x [list a b c d]
-    table .t -listvar x
-    .t selection set 3
-    lappend x e f g
-    .t curselection
-} 3
-test table-21.7 {TableListVarProc, test selection after listvar mod} {
-    catch {destroy .t}
-    set x [list a b c d]
-    table .t -listvar x
-    .t selection set 0
-    set x [linsert $x 0 1 2 3 4]
-    .t curselection
-} 0
-test table-21.8 {TableListVarProc, test selection after listvar mod} {
-    catch {destroy .t}
-    set x [list a b c d]
-    table .t -listvar x
-    .t selection set 2
-    set x [list a b c]
-    .t curselection
-} 2
-test table-21.9 {TableListVarProc, test hscrollbar after listvar mod} {
-    catch {destroy .t}
-    catch {unset x}
-    set log {}
-    table .t -font $fixed -width 10 -xscrollcommand "lappend ::log x" -listvar x
-    pack .t
-    update
-    lappend x "0000000000"
-    update
-    lappend x "00000000000000000000"
-    update
-    set log
-} [list {x 0 1} {x 0 1} {x 0 0.5}]
-test table-21.10 {TableListVarProc, test hscrollbar after listvar mod} {
-    catch {destroy .t}
-    catch {unset x}
-    set log {}
-    table .t -font $fixed -width 10 -xscrollcommand "lappend ::log x" -listvar x
-    pack .t
-    update
-    lappend x "0000000000"
-    update
-    lappend x "00000000000000000000"
-    update
-    set x [list "0000000000"]
-    update
-    set log
-} [list {x 0 1} {x 0 1} {x 0 0.5} {x 0 1}]
-test table-21.11 {TableListVarProc, bad list} {
-    catch {destroy .t}
-    catch {unset x}
-    table .t -listvar x
-    set x [list a b c d]
-    catch {set x "this is a \" bad list"} result
-    set result
-} {can't set "x": invalid listvar value}
-test table-21.12 {TableListVarProc, cleanup item attributes} {
-    catch {destroy .t}
-    set x [list a b c d e f g]
-    table .t -listvar x
-    .t itemconfigure end -fg red
-    set x [list a b c d]
-    set x [list 0 1 2 3 4 5 6]
-    .t itemcget end -fg
-} {}
-test table-21.12 {TableListVarProc, cleanup item attributes} {
-    catch {destroy .t}
-    set x [list a b c d e f g]
-    table .t -listvar x
-    .t itemconfigure end -fg red
-    set x [list a b c d]
-    set x [list 0 1 2 3 4 5 6]
-    .t itemcget end -fg
-} {}
-test table-21.13 {table item configurations and listvar based deletions} {
-    catch {destroy .t}
-    catch {unset x}
-    table .t -listvar x
-    .t insert end a b c
-    .t itemconfigure 1 -fg red
-    set x [list b c]
-    .t itemcget 1 -fg
-} red
-test table-21.14 {table item configurations and listvar based inserts} {
-    catch {destroy .t}
-    catch {unset x}
-    table .t -listvar x
-    .t insert end a b c
-    .t itemconfigure 0 -fg red
-    set x [list 1 2 3 4 a b c]
-    .t itemcget 0 -fg
-} red
-test table-21.15 {TableListVarProc, update vertical scrollbar} {
-    catch {destroy .t}
-    catch {unset x}
-    set log {}
-    table .t -listvar x -yscrollcommand "lappend ::log y" -font fixed -height 3
-    pack .t
-    update
-    lappend x a b c d e f
-    update
-    set log
-} [list {y 0 1} {y 0 0.5}]
-test table-21.16 {TableListVarProc, update vertical scrollbar} {
-    catch {destroy .t}
-    catch {unset x}
-    table .t -listvar x -height 3
-    pack .t
-    update
-    set x [list 0 1 2 3 4 5]
-    .t yview scroll 3 units
-    update
-    set result {}
-    lappend result [.t yview]
-    set x [lreplace $x 3 3]
-    set x [lreplace $x 3 3]
-    set x [lreplace $x 3 3]
-    update
-    lappend result [.t yview]
-    set result
-} [list {0.5 1} {0 1}]
-
-# UpdateHScrollbar
-test table-22.1 {UpdateHScrollbar} {
-    catch {destroy .t}
-    set log {}
-    table .t -font $fixed -width 10 -xscrollcommand "lappend ::log x"
-    pack .t
-    update
-    .t insert end "0000000000"
-    update
-    .t insert end "00000000000000000000"
-    update
-    set log
-} [list {x 0 1} {x 0 1} {x 0 0.5}]
-
-# ConfigureTableItem
-test table-23.1 {ConfigureTableItem} {
-    catch {destroy .t}
-    table .t
-    catch {.t itemconfigure 0} result
-    set result
-} {item number "0" out of range}
-test table-23.2 {ConfigureTableItem} {
-    catch {destroy .t}
-    table .t
-    .t insert end a b c d
-    .t itemconfigure 0
-} [list {-background background Background {} {}} \
-	{-bg -background} \
-	{-fg -foreground} \
-	{-foreground foreground Foreground {} {}} \
-	{-selectbackground selectBackground Foreground {} {}} \
-	{-selectforeground selectForeground Background {} {}}]
-test table-23.3 {ConfigureTableItem, itemco shortcut} {
-    catch {destroy .t}
-    table .t
-    .t insert end a b c d
-    .t itemco 0 -background
-} {-background background Background {} {}}
-test table-23.4 {ConfigureTableItem, wrong num args} {
-    catch {destroy .t}
-    table .t
-    .t insert end a
-    catch {.t itemco} result
-    set result
-} {wrong # args: should be ".t itemconfigure index ?option? ?value? ?option value ...?"}
-test table-23.5 {ConfigureTableItem, multiple calls} {
-    catch {destroy .t}
-    table .t
-    set i 0
-    foreach color {red orange yellow green blue darkblue violet} {
-	.t insert end $color
-	.t itemconfigure $i -bg $color
-	incr i
-    }
-    pack .t
-    update
-    list [.t itemcget 0 -bg] [.t itemcget 1 -bg] [.t itemcget 2 -bg] \
-	    [.t itemcget 3 -bg] [.t itemcget 4 -bg] [.t itemcget 5 -bg] \
-	    [.t itemcget 6 -bg]
-} {red orange yellow green blue darkblue violet}
-catch {destroy .t}
-table .t
-.t insert end a b c d
-set i 6
-foreach test {
-    {-background #ff0000 #ff0000 non-existent
-	    {unknown color name "non-existent"}}
-    {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
-    {-fg #110022 #110022 bogus {unknown color name "bogus"}}
-    {-foreground #110022 #110022 bogus {unknown color name "bogus"}}
-    {-selectbackground #110022 #110022 bogus {unknown color name "bogus"}}
-    {-selectforeground #654321 #654321 bogus {unknown color name "bogus"}}
-} {
-    set name [lindex $test 0]
-    test table-23.$i {configuration options} {
-	.t itemconfigure 0 $name [lindex $test 1]
-	list [lindex [.t itemconfigure 0 $name] 4] [.t itemcget 0 $name]
-    } [list [lindex $test 2] [lindex $test 2]]
-    incr i
-    if {[lindex $test 3] != ""} {
-	test table-1.$i {configuration options} {
-	    list [catch {.t configure $name [lindex $test 3]} msg] $msg
-	} [list 1 [lindex $test 4]]
-    }
-    .t configure $name [lindex [.t configure $name] 3]
-    incr i
-}
-
-# state issues
-test table-26.1 {table disabled state disallows inserts} {
-    catch {destroy .t}
-    table .t
-    .t insert end a b c
-    .t configure -state disabled
-    .t insert end d e f
-    .t get 0 end
-} [list a b c]
-test table-26.2 {table disabled state disallows deletions} {
-    catch {destroy .t}
-    table .t
-    .t insert end a b c
-    .t configure -state disabled
-    .t delete 0 end
-    .t get 0 end
-} [list a b c]
-test table-26.3 {table disabled state disallows selection modification} {
-    catch {destroy .t}
-    table .t
-    .t insert end a b c
-    .t selection set 0
-    .t selection set 2
-    .t configure -state disabled
-    .t selection clear 0 end
-    .t selection set 1
-    .t curselection
-} [list 0 2]
-test table-26.4 {table disabled state disallows anchor modification} {
-    catch {destroy .t}
-    table .t
-    .t insert end a b c
-    .t selection anchor 0
-    .t configure -state disabled
-    .t selection anchor 2
-    .t index anchor
-} 0
-test table-26.5 {table disabled state disallows active modification} {
-    catch {destroy .t}
-    table .t
-    .t insert end a b c
-    .t activate 0
-    .t configure -state disabled
-    .t activate 2
-    .t index active
-} 0
 
 eval destroy [winfo children .]
 option clear
