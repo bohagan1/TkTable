@@ -2,7 +2,7 @@
 '\" The definitions below are for supplemental macros used in Tcl/Tk
 '\" manual entries.
 '\"
-'\" RCS: @(#) $Id: tkTable.n,v 1.7 2002/10/16 07:32:22 hobbs Exp $
+'\" RCS: @(#) $Id: tkTable.n,v 1.8 2003/01/30 21:01:31 hobbs Exp $
 '\"
 '\" .AP type name in/out ?indent?
 '\"	Start paragraph describing an argument to a library procedure.
@@ -756,10 +756,10 @@ specified, it uses the table's default relief.
 Stickiness of the window inside the cell, as defined by the \fBgrid\fR command.
 .TP
 \fB\-window \fIpathName\fR
-Specifies the name of a window to display in the  annotation.  It must
-exist before being specified here.
+Specifies the name of a window (widget) to display in the annotation.  It
+must exist before being specified here.  When an empty string is specified,
+if a window was displayed it will cease to be managed by the table widget.
 .RE
-
 
 .SH "THE SELECTION"
 .PP
