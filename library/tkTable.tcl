@@ -239,7 +239,8 @@ proc tkTableBeginSelect {w el} {
 		if {$r < [$w cget -titlerows]+[$w cget -roworigin]} {
 		    ## We're in a column header
 		    if {$c < [$w cget -titlecols]+[$w cget -colorigin]} {
-			$w selection set origin end
+			## We're in the topleft title area
+			$w selection set $el end
 		    } else {
 			$w selection set $el [$w index end row],$c
 		    }
@@ -512,6 +513,8 @@ proc tkTableSelectAll {w} {
 	$w selection clear all
 	$w selection set active
 	tkTableHandleType $w [$w index active]
+    } elseif {[$w cget -selecttitles]} {
+	$w selection set [$w cget -roworigin],[$w cget -colorigin] end
     } else {
 	$w selection set origin end
     }
@@ -530,7 +533,7 @@ proc tkTableChangeWidth {w i a} {
     if {[set width [$w width $tmp]] >= 0} {
 	$w width $tmp [incr width $a]
     } else {
-	$w width $tmp [incr width -$a]
+	$w width $tmp [incr width [expr {-$a}]]
     }
 }
 
