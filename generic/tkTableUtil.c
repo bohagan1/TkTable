@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableUtil.c,v 1.1 2000/08/31 02:06:25 hobbs Exp $
+ * RCS: @(#) $Id: tkTableUtil.c,v 1.2 2002/03/13 20:15:20 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -19,6 +19,39 @@ static int	Cmd_GetValue _ANSI_ARGS_((const Cmd_Struct *cmds,
 static void	Cmd_GetError _ANSI_ARGS_((Tcl_Interp *interp,
 			const Cmd_Struct *cmds, const char *arg));
 
+/*
+ *--------------------------------------------------------------
+ *
+ * Table_ClearHashTable --
+ *	This procedure is invoked to clear a STRING_KEY hash table,
+ *	freeing the string entries and then deleting the hash table.
+ *	The hash table cannot be used after calling this, except to
+ *	be freed or reinitialized.
+ *
+ * Results:
+ *	Cached info will be lost.
+ *
+ * Side effects:
+ *	Can cause redraw.
+ *	See the user documentation.
+ *
+ *--------------------------------------------------------------
+ */
+void
+Table_ClearHashTable(Tcl_HashTable *hashTblPtr)
+{
+    Tcl_HashEntry *entryPtr;
+    Tcl_HashSearch search;
+    char *value;
+
+    for (entryPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
+	 entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
+	value = (char *) Tcl_GetHashValue(entryPtr);
+	if (value != NULL) ckfree(value);
+    }
+
+    Tcl_DeleteHashTable(hashTblPtr);
+}
 
 /*
  *----------------------------------------------------------------------

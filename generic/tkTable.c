@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.18 2002/03/13 20:14:37 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.19 2002/03/20 02:08:59 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -925,13 +925,12 @@ TableDestroy(ClientData clientdata)
     if (tablePtr->activeTagPtr) ckfree((char *) tablePtr->activeTagPtr);
     if (tablePtr->activeBuf != NULL) ckfree(tablePtr->activeBuf);
 
-    /* delete the cache, row, column and cell style hash tables */
-    for (entryPtr = Tcl_FirstHashEntry(tablePtr->cache, &search);
-	 entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	value = (char *) Tcl_GetHashValue(entryPtr);
-	if (value != NULL) ckfree(value);
-    }
-    Tcl_DeleteHashTable(tablePtr->cache);
+    /*
+     * Delete the various hash tables, make sure to clear the STRING_KEYS
+     * tables that allocate their strings:
+     *   cache, spanTbl (spanAffTbl shares spanTbl info)
+     */
+    Table_ClearHashTable(tablePtr->cache);
     ckfree((char *) (tablePtr->cache));
     Tcl_DeleteHashTable(tablePtr->rowStyles);
     ckfree((char *) (tablePtr->rowStyles));
@@ -952,11 +951,7 @@ TableDestroy(ClientData clientdata)
     ckfree((char *) (tablePtr->inProc));
 #endif
     if (tablePtr->spanTbl) {
-	for (entryPtr = Tcl_FirstHashEntry(tablePtr->spanTbl, &search);
-	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	    ckfree((char *) Tcl_GetHashValue(entryPtr));
-	}
-	Tcl_DeleteHashTable(tablePtr->spanTbl);
+	Table_ClearHashTable(tablePtr->spanTbl);
 	ckfree((char *) (tablePtr->spanTbl));
 	Tcl_DeleteHashTable(tablePtr->spanAffTbl);
 	ckfree((char *) (tablePtr->spanAffTbl));
@@ -1118,7 +1113,7 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
 	 * Our effective data source changed, so flush and
 	 * retrieve new active buffer
 	 */
-	Tcl_DeleteHashTable(tablePtr->cache);
+	Table_ClearHashTable(tablePtr->cache);
 	Tcl_InitHashTable(tablePtr->cache, TCL_STRING_KEYS);
 	TableGetActiveBuf(tablePtr);
 	forceUpdate = 1;
@@ -1126,7 +1121,7 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
 	/*
 	 * Caching changed, so just clear the cache for safety
 	 */
-	Tcl_DeleteHashTable(tablePtr->cache);
+	Table_ClearHashTable(tablePtr->cache);
 	Tcl_InitHashTable(tablePtr->cache, TCL_STRING_KEYS);
 	forceUpdate = 1;
     }
@@ -2612,7 +2607,7 @@ TableVarProc(clientData, interp, name, index, flags)
      int flags;			/* Information about what happened. */
 {
     Table *tablePtr = (Table *) clientData;
-    int dummy, row, col, update = 1;
+    int row, col, update = 1;
 
     /* This is redundant, as the name should always == arrayVar */
     name = tablePtr->arrayVar;
@@ -2635,7 +2630,7 @@ TableVarProc(clientData, interp, name, index, flags)
 		/* clear the selection buffer */
 		TableGetActiveBuf(tablePtr);
 		/* flush any cache */
-		Tcl_DeleteHashTable(tablePtr->cache);
+		Table_ClearHashTable(tablePtr->cache);
 		Tcl_InitHashTable(tablePtr->cache, TCL_STRING_KEYS);
 		/* and invalidate the table */
 		TableInvalidateAll(tablePtr, 0);
@@ -2676,6 +2671,7 @@ TableVarProc(clientData, interp, name, index, flags)
 	}
     } else if (TableParseArrayIndex(&row, &col, index) == 2) {
 	char buf[INDEX_BUFSIZE];
+
 	/* Make sure it won't trigger on array(2,3extrastuff) */
 	TableMakeArrayIndex(row, col, buf);
 	if (strcmp(buf, index)) {
@@ -2683,14 +2679,18 @@ TableVarProc(clientData, interp, name, index, flags)
 	}
 	if (tablePtr->caching) {
 	    Tcl_HashEntry *entryPtr;
-	    char *val;
-	    CONST char *data = NULL;
+	    int new;
+	    char *val, *data;
 
-	    data = Tcl_GetVar2(interp, name, index, TCL_GLOBAL_ONLY);
+	    entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
+	    if (!new) {
+		data = (char *) Tcl_GetHashValue(entryPtr);
+		if (data) { ckfree(data); }
+	    }
+	    data = (char *) Tcl_GetVar2(interp, name, index, TCL_GLOBAL_ONLY);
 	    if (!data) data = "";
 	    val = (char *)ckalloc(strlen(data)+1);
 	    strcpy(val, data);
-	    entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &dummy);
 	    Tcl_SetHashValue(entryPtr, val);
 	}
 	/* convert index to real coords */

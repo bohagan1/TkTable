@@ -9,7 +9,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.10 2001/07/01 01:33:17 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.11 2002/03/13 20:15:20 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -512,6 +512,7 @@ extern int	Table_TagCmd _ANSI_ARGS_((ClientData clientData,
  * HEADERS IN tkTableUtil.c
  */
 
+extern void	Table_ClearHashTable _ANSI_ARGS_((Tcl_HashTable *hashTblPtr));
 extern int	TableOptionBdSet _ANSI_ARGS_((ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
 			char *value, char *widgRec, int offset));
