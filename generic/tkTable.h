@@ -9,7 +9,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.8 2001/06/22 23:15:43 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.9 2001/06/23 08:57:43 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -97,6 +97,7 @@
 				( ((val)>(max)) ? (max) : (val) ) )
 #define CONSTRAIN(val,min,max)	if ((val) < (min)) { (val) = (min); } \
 				else if ((val) > (max)) { (val) = (max); }
+#define STREQ(s1, s2)	(strcmp((s1), (s2)) == 0)
 #define ARSIZE(A)	(sizeof(A)/sizeof(*A))
 #define INDEX_BUFSIZE	32		/* max size of buffer for indices */
 #define TEST_KEY	"#TEST KEY#"	/* index for testing array existence */
@@ -484,8 +485,9 @@ extern void	TableInsertChars _ANSI_ARGS_((register Table *tablePtr,
  * HEADERS IN tkTableTag.c
  */
 
-extern TableTag *TableNewTag _ANSI_ARGS_((void));
-extern TableTag *TableMergeTag _ANSI_ARGS_((Table *tablePtr, TableTag *baseTag,
+extern TableTag *TableNewTag _ANSI_ARGS_((Table *tablePtr));
+extern void	TableResetTag _ANSI_ARGS_((Table *tablePtr, TableTag *tagPtr));
+extern void	TableMergeTag _ANSI_ARGS_((Table *tablePtr, TableTag *baseTag,
 			TableTag *addTag));
 extern void	TableInvertTag _ANSI_ARGS_((TableTag *baseTag));
 extern int	TableGetTagBorders _ANSI_ARGS_((TableTag *tagPtr,

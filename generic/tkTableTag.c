@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableTag.c,v 1.8 2001/06/24 23:45:24 hobbs Exp $
+ * RCS: @(#) $Id: tkTableTag.c,v 1.9 2001/06/26 00:46:07 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -49,7 +49,7 @@ static Tk_CustomOption tagBdOpt		= { TableOptionBdSet, TableOptionBdGet,
 
 static Tk_ConfigSpec tagConfig[] = {
   {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor", "center",
-   Tk_Offset(TableTag, anchor), TK_CONFIG_DONT_SET_DEFAULT },
+   Tk_Offset(TableTag, anchor), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_BORDER, "-background", "background", "Background", NULL,
    Tk_Offset(TableTag, bg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 0},
@@ -66,7 +66,7 @@ static Tk_ConfigSpec tagConfig[] = {
    Tk_Offset(TableTag, imageStr),
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_JUSTIFY, "-justify", "justify", "Justify", "left",
-   Tk_Offset(TableTag, justify), TK_CONFIG_DONT_SET_DEFAULT },
+   Tk_Offset(TableTag, justify), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_INT, "-multiline", "multiline", "Multiline", "-1",
    Tk_Offset(TableTag, multiline), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_RELIEF, "-relief", "relief", "Relief", "flat",
@@ -129,14 +129,82 @@ TableImageProc(ClientData clientData, int x, int y, int width, int height,
  *----------------------------------------------------------------------
  */
 TableTag *
-TableNewTag(void)
+TableNewTag(Table *tablePtr)
 {
-    TableTag *tagPtr = (TableTag *) ckalloc(sizeof(TableTag));
-    memset((VOID *) tagPtr, 0, sizeof(TableTag));
+    TableTag *tagPtr;
 
     /*
-     * Set the values that aren't 0/NULL by default
+     * If tablePtr is NULL, make a regular tag, otherwise make a join tag.
      */
+    if (tablePtr == NULL) {
+	tagPtr = (TableTag *) ckalloc(sizeof(TableTag));
+	memset((VOID *) tagPtr, 0, sizeof(TableTag));
+
+	/*
+	 * Set the values that aren't 0/NULL by default
+	 */
+	tagPtr->anchor		= (Tk_Anchor)-1;
+	tagPtr->justify		= (Tk_Justify)-1;
+	tagPtr->multiline	= -1;
+	tagPtr->relief		= -1;
+	tagPtr->showtext	= -1;
+	tagPtr->state		= STATE_UNKNOWN;
+	tagPtr->wrap		= -1;
+    } else {
+	TableJoinTag *jtagPtr = (TableJoinTag *) ckalloc(sizeof(TableJoinTag));
+	memset((VOID *) jtagPtr, 0, sizeof(TableJoinTag));
+	tagPtr = (TableTag *) jtagPtr;
+
+	tagPtr->anchor		= (Tk_Anchor)-1;
+	tagPtr->justify		= (Tk_Justify)-1;
+	tagPtr->multiline	= -1;
+	tagPtr->relief		= -1;
+	tagPtr->showtext	= -1;
+	tagPtr->state		= STATE_UNKNOWN;
+	tagPtr->wrap		= -1;
+	jtagPtr->magic		= 0x99ABCDEF;
+	jtagPtr->pbg		= -1;
+	jtagPtr->pfg		= -1;
+	jtagPtr->pborders	= -1;
+	jtagPtr->prelief	= -1;
+	jtagPtr->ptkfont	= -1;
+	jtagPtr->panchor	= -1;
+	jtagPtr->pimage		= -1;
+	jtagPtr->pstate		= -1;
+	jtagPtr->pjustify	= -1;
+	jtagPtr->pmultiline	= -1;
+	jtagPtr->pwrap		= -1;
+	jtagPtr->pshowtext	= -1;
+    }
+
+    return (TableTag *) tagPtr;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TableResetTag --
+ *	This routine resets a given tag to the table defaults.
+ *
+ * Results:
+ *	Tag will have values changed.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+void
+TableResetTag(Table *tablePtr, TableTag *tagPtr)
+{
+    TableJoinTag *jtagPtr = (TableJoinTag *) tagPtr;
+
+    if (jtagPtr->magic != 0x99ABCDEF) {
+	panic("bad mojo in TableResetTag");
+    }
+
+    memset((VOID *) jtagPtr, 0, sizeof(TableJoinTag));
+
     tagPtr->anchor	= (Tk_Anchor)-1;
     tagPtr->justify	= (Tk_Justify)-1;
     tagPtr->multiline	= -1;
@@ -144,8 +212,25 @@ TableNewTag(void)
     tagPtr->showtext	= -1;
     tagPtr->state	= STATE_UNKNOWN;
     tagPtr->wrap	= -1;
+    jtagPtr->magic	= 0x99ABCDEF;
+    jtagPtr->pbg	= -1;
+    jtagPtr->pfg	= -1;
+    jtagPtr->pborders	= -1;
+    jtagPtr->prelief	= -1;
+    jtagPtr->ptkfont	= -1;
+    jtagPtr->panchor	= -1;
+    jtagPtr->pimage	= -1;
+    jtagPtr->pstate	= -1;
+    jtagPtr->pjustify	= -1;
+    jtagPtr->pmultiline	= -1;
+    jtagPtr->pwrap	= -1;
+    jtagPtr->pshowtext	= -1;
 
-    return tagPtr;
+    /*
+     * Merge in the default tag.
+     */
+    memcpy((VOID *) jtagPtr, (VOID *) &(tablePtr->defaultTag),
+	    sizeof(TableTag));
 }
 
 /*
@@ -164,49 +249,13 @@ TableNewTag(void)
  *
  *----------------------------------------------------------------------
  */
-TableTag *
+void
 TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag)
 {
-    TableJoinTag *tagPtr = (TableJoinTag *) baseTag;
+    TableJoinTag *jtagPtr = (TableJoinTag *) baseTag;
     unsigned int prio;
 
-    if (tagPtr == NULL) {
-	/*
-	 * TableNewTag for JoinTags
-	 */
-	TableJoinTag *tagPtr = (TableJoinTag *) ckalloc(sizeof(TableJoinTag));
-	memset((VOID *) tagPtr, 0, sizeof(TableJoinTag));
-	baseTag = (TableTag *) tagPtr;
-
-	baseTag->anchor		= (Tk_Anchor)-1;
-	baseTag->justify	= (Tk_Justify)-1;
-	baseTag->multiline	= -1;
-	baseTag->relief		= -1;
-	baseTag->showtext	= -1;
-	baseTag->state		= STATE_UNKNOWN;
-	baseTag->wrap		= -1;
-	tagPtr->magic		= 0x99ABCDEF;
-	tagPtr->pbg		= -1;
-	tagPtr->pfg		= -1;
-	tagPtr->pborders	= -1;
-	tagPtr->prelief		= -1;
-	tagPtr->ptkfont		= -1;
-	tagPtr->panchor		= -1;
-	tagPtr->pimage		= -1;
-	tagPtr->pstate		= -1;
-	tagPtr->pjustify	= -1;
-	tagPtr->pmultiline	= -1;
-	tagPtr->pwrap		= -1;
-	tagPtr->pshowtext	= -1;
-
-	/*
-	 * Merge in the default tag and return.
-	 */
-	memcpy((VOID *) tagPtr, (VOID *) &(tablePtr->defaultTag),
-		sizeof(TableTag));
-	return (TableTag *) tagPtr;
-    }
-    if (tagPtr->magic != 0x99ABCDEF) {
+    if (jtagPtr->magic != 0x99ABCDEF) {
 	panic("bad mojo in TableMergeTag");
     }
 
@@ -216,59 +265,59 @@ TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag)
      */
     prio = TableTagGetPriority(tablePtr, addTag);
 
-    if ((addTag->anchor != -1) && (prio < tagPtr->panchor)) {
+    if ((addTag->anchor != -1) && (prio < jtagPtr->panchor)) {
 	baseTag->anchor		= addTag->anchor;
-	tagPtr->panchor		= prio;
+	jtagPtr->panchor	= prio;
     }
-    if ((addTag->bg != NULL) && (prio < tagPtr->pbg)) {
+    if ((addTag->bg != NULL) && (prio < jtagPtr->pbg)) {
 	baseTag->bg		= addTag->bg;
-	tagPtr->pbg		= prio;
+	jtagPtr->pbg		= prio;
     }
-    if ((addTag->fg != NULL) && (prio < tagPtr->pfg)) {
+    if ((addTag->fg != NULL) && (prio < jtagPtr->pfg)) {
 	baseTag->fg		= addTag->fg;
-	tagPtr->pfg		= prio;
+	jtagPtr->pfg		= prio;
     }
-    if ((addTag->tkfont != NULL) && (prio < tagPtr->ptkfont)) {
+    if ((addTag->tkfont != NULL) && (prio < jtagPtr->ptkfont)) {
 	baseTag->tkfont		= addTag->tkfont;
-	tagPtr->ptkfont		= prio;
+	jtagPtr->ptkfont	= prio;
     }
-    if ((addTag->imageStr != NULL) && (prio < tagPtr->pimage)) {
+    if ((addTag->imageStr != NULL) && (prio < jtagPtr->pimage)) {
 	baseTag->imageStr	= addTag->imageStr;
 	baseTag->image		= addTag->image;
-	tagPtr->pimage		= prio;
+	jtagPtr->pimage		= prio;
     }
-    if ((addTag->multiline >= 0) && (prio < tagPtr->pmultiline)) {
+    if ((addTag->multiline >= 0) && (prio < jtagPtr->pmultiline)) {
 	baseTag->multiline	= addTag->multiline;
-	tagPtr->pmultiline	= prio;
+	jtagPtr->pmultiline	= prio;
     }
-    if ((addTag->relief != -1) && (prio < tagPtr->prelief)) {
+    if ((addTag->relief != -1) && (prio < jtagPtr->prelief)) {
 	baseTag->relief		= addTag->relief;
-	tagPtr->prelief		= prio;
+	jtagPtr->prelief	= prio;
     }
-    if ((addTag->showtext >= 0) && (prio < tagPtr->pshowtext)) {
+    if ((addTag->showtext >= 0) && (prio < jtagPtr->pshowtext)) {
 	baseTag->showtext	= addTag->showtext;
-	tagPtr->pshowtext	= prio;
+	jtagPtr->pshowtext	= prio;
     }
-    if ((addTag->state != STATE_UNKNOWN) && (prio < tagPtr->pstate)) {
+    if ((addTag->state != STATE_UNKNOWN) && (prio < jtagPtr->pstate)) {
 	baseTag->state		= addTag->state;
-	tagPtr->pstate		= prio;
+	jtagPtr->pstate		= prio;
     }
-    if ((addTag->justify != -1) && (prio < tagPtr->pjustify)) {
+    if ((addTag->justify != -1) && (prio < jtagPtr->pjustify)) {
 	baseTag->justify	= addTag->justify;
-	tagPtr->pjustify	= prio;
+	jtagPtr->pjustify	= prio;
     }
-    if ((addTag->wrap >= 0) && (prio < tagPtr->pwrap)) {
+    if ((addTag->wrap >= 0) && (prio < jtagPtr->pwrap)) {
 	baseTag->wrap		= addTag->wrap;
-	tagPtr->pwrap		= prio;
+	jtagPtr->pwrap		= prio;
     }
-    if ((addTag->borders) && (prio < tagPtr->pborders)) {
+    if ((addTag->borders) && (prio < jtagPtr->pborders)) {
 	baseTag->borderStr	= addTag->borderStr;
 	baseTag->borders	= addTag->borders;
 	baseTag->bd[0]		= addTag->bd[0];
 	baseTag->bd[1]		= addTag->bd[1];
 	baseTag->bd[2]		= addTag->bd[2];
 	baseTag->bd[3]		= addTag->bd[3];
-	tagPtr->pborders	= prio;
+	jtagPtr->pborders	= prio;
     }
 #else
     if (addTag->anchor != -1)	baseTag->anchor = addTag->anchor;
@@ -294,7 +343,6 @@ TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag)
 	baseTag->bd[3]		= addTag->bd[3];
     }
 #endif
-    return (TableTag *) tagPtr;
 }
 
 /*
@@ -396,7 +444,7 @@ TableTagGetEntry(Table *tablePtr, char *name, int objc, char **argv)
 
     entryPtr = Tcl_CreateHashEntry(tablePtr->tagTable, name, &new);
     if (new) {
-	tagPtr = TableNewTag();
+	tagPtr = TableNewTag(NULL);
 	Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
 	if (tablePtr->tagPrioSize >= tablePtr->tagPrioMax) {
 	    int i;
@@ -618,7 +666,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
     resultPtr = Tcl_GetObjResult(interp);
 
     switch ((enum tagCmd) cmdIndex) {
-	case TAG_CELLTAG:	/* tag a (group of) cell(s) */
+	case TAG_CELLTAG:	/* add named tag to a (group of) cell(s) */
 	    if (objc < 4) {
 		Tcl_WrongNumArgs(interp, 3, objv, "tag ?arg arg ...?");
 		return TCL_ERROR;
@@ -639,23 +687,28 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 
 	    if (objc == 4) {
 		/*
-		 * The user just wants the tagged cells to be returned.
+		 * The user just wants the cells with this tag returned.
 		 * Handle specially tags named: active, flash, sel, title
 		 */
 
-		hashTblPtr = NULL;
 		if ((tablePtr->flags & HAS_ACTIVE) &&
-			strcmp(tagname, "active") == 0) {
+			STREQ(tagname, "active")) {
 		    TableMakeArrayIndex(
 			tablePtr->activeRow+tablePtr->rowOffset,
 			tablePtr->activeCol+tablePtr->colOffset, buf);
 		    Tcl_SetStringObj(resultPtr, buf, -1);
-		} else if (tablePtr->flashMode
-			&& strcmp(tagname, "flash") == 0) {
-		    hashTblPtr = tablePtr->flashCells;
-		} else if (strcmp(tagname, "sel") == 0) {
-		    hashTblPtr = tablePtr->selCells;
-		} else if (strcmp(tagname, "title") == 0 &&
+		} else if ((tablePtr->flashMode && STREQ(tagname, "flash"))
+			|| STREQ(tagname, "sel")) {
+		    hashTblPtr = (*tagname == 's') ?
+			tablePtr->selCells : tablePtr->flashCells;
+		    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
+			 scanPtr != NULL;
+			 scanPtr = Tcl_NextHashEntry(&search)) {
+			keybuf = (char *) Tcl_GetHashKey(hashTblPtr, scanPtr);
+			Tcl_ListObjAppendElement(NULL, resultPtr,
+				Tcl_NewStringObj(keybuf, -1));
+		    }
+		} else if (STREQ(tagname, "title") &&
 			(tablePtr->titleRows || tablePtr->titleCols)) {
 		    for (row = tablePtr->rowOffset;
 			 row < tablePtr->rowOffset+tablePtr->rows; row++) {
@@ -679,7 +732,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		    }
 		} else {
 		    /*
-		     * Check if this is the tag pointer for this cell
+		     * Check this tag pointer amongst all tagged cells
 		     */
 		    for (scanPtr = Tcl_FirstHashEntry(tablePtr->cellStyles,
 			    &search);
@@ -691,15 +744,6 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 			    Tcl_ListObjAppendElement(NULL, resultPtr,
 				    Tcl_NewStringObj(keybuf, -1));
 			}
-		    }
-		}
-		if (hashTblPtr != NULL) {
-		    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
-			 scanPtr != NULL;
-			 scanPtr = Tcl_NextHashEntry(&search)) {
-			keybuf = (char *) Tcl_GetHashKey(hashTblPtr, scanPtr);
-			Tcl_ListObjAppendElement(NULL, resultPtr,
-				Tcl_NewStringObj(keybuf, -1));
 		    }
 		}
 		return TCL_OK;
@@ -790,20 +834,16 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 			    (forRows ?
 				    tablePtr->activeRow+tablePtr->rowOffset :
 				    tablePtr->activeCol+tablePtr->colOffset));
-		} else if ((tablePtr->flashMode
-			&& strcmp(tagname, "flash") == 0)
-			|| (strcmp(tagname, "sel") == 0)) {
+		} else if ((tablePtr->flashMode && STREQ(tagname, "flash"))
+			|| STREQ(tagname, "sel")) {
 		    Tcl_HashTable *cacheTblPtr;
 
 		    cacheTblPtr = (Tcl_HashTable *)
 			ckalloc(sizeof(Tcl_HashTable));
 		    Tcl_InitHashTable(cacheTblPtr, TCL_ONE_WORD_KEYS);
 
-		    if (strcmp(tagname, "sel") == 0) {
-			hashTblPtr = tablePtr->selCells;
-		    } else {
-			hashTblPtr = tablePtr->flashCells;
-		    }
+		    hashTblPtr = (*tagname == 's') ?
+			tablePtr->selCells : tablePtr->flashCells;
 		    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
 			 scanPtr != NULL;
 			 scanPtr = Tcl_NextHashEntry(&search)) {
@@ -820,7 +860,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 
 		    Tcl_DeleteHashTable(cacheTblPtr);
 		    ckfree((char *) (cacheTblPtr));
-		} else if (strcmp(tagname, "title") == 0 &&
+		} else if (STREQ(tagname, "title") &&
 			(forRows?tablePtr->titleRows:tablePtr->titleCols)) {
 		    if (forRows) {
 			for (row = tablePtr->rowOffset;
@@ -987,10 +1027,10 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	    for (i = 3; i < objc; i++) {
 		tagname  = Tcl_GetString(objv[i]);
 		/* cannot delete the title tag */
-		if (strcmp(tagname, "title") == 0 ||
-			strcmp(tagname, "sel") == 0 ||
-			strcmp(tagname, "flash") == 0 ||
-			strcmp(tagname, "active") == 0) {
+		if (STREQ(tagname, "title") ||
+			STREQ(tagname, "sel") ||
+			STREQ(tagname, "flash") ||
+			STREQ(tagname, "active")) {
 		    Tcl_AppendStringsToObj(resultPtr, "cannot delete ",
 			    tagname, " tag", (char *) NULL);
 		    return TCL_ERROR;
@@ -1091,16 +1131,16 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	    /* create hash key */
 	    TableMakeArrayIndex(row, col, buf);
     
-	    if (strcmp(tagname, "active") == 0) {
+	    if (STREQ(tagname, "active")) {
 		result = (tablePtr->activeRow+tablePtr->rowOffset==row &&
 			tablePtr->activeCol+tablePtr->colOffset==col);
-	    } else if (strcmp(tagname, "flash") == 0) {
+	    } else if (STREQ(tagname, "flash")) {
 		result = (tablePtr->flashMode &&
 			(Tcl_FindHashEntry(tablePtr->flashCells, buf)
 				!= NULL));
-	    } else if (strcmp(tagname, "sel") == 0) {
+	    } else if (STREQ(tagname, "sel")) {
 		result = (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL);
-	    } else if (strcmp(tagname, "title") == 0) {
+	    } else if (STREQ(tagname, "title")) {
 		result = (row < tablePtr->titleRows+tablePtr->rowOffset ||
 			col < tablePtr->titleCols+tablePtr->colOffset);
 	    } else {

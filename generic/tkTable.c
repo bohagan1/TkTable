@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.13 2001/06/23 08:57:43 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.14 2001/06/23 09:21:21 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -439,7 +439,7 @@ Tk_ClassOptionObjCmd(Tk_Window tkwin, char *defaultclass,
     char *classname = defaultclass;
     int offset = 0;
 
-    if ((objc >= 4) && (strcmp(Tcl_GetString(objv[2]),"-class")==0)) {
+    if ((objc >= 4) && STREQ(Tcl_GetString(objv[2]),"-class")) {
 	classname = Tcl_GetString(objv[3]);
 	offset = 2;
     }
@@ -741,10 +741,8 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 		/* recreate the index, just in case it got bounded */
 		TableMakeArrayIndex(row, col, buf);
 		Tcl_SetStringObj(resultPtr, buf, -1);
-	    } else if (*which == 'r') {	/* INDEX row */
-		Tcl_SetIntObj(resultPtr, row);
-	    } else {			/* INDEX col */
-		Tcl_SetIntObj(resultPtr, col);
+	    } else {	/* INDEX row|col */
+		Tcl_SetIntObj(resultPtr, (*which == 'r') ? row : col);
 	    }
 	    break;
 	}
@@ -1699,6 +1697,13 @@ TableDisplay(ClientData clientdata)
     drawnCache = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
     Tcl_InitHashTable(drawnCache, TCL_STRING_KEYS);
 
+    /*
+     * Create the tag here.  This will actually create a JoinTag
+     * That will handle the priority management of merging for us.
+     * We only need one allocated, and we'll reset it for each cell.
+     */
+    tagPtr = TableNewTag(tablePtr);
+
     /* Cycle through the cells and display them */
     for (row = rowFrom; row <= rowTo; row++) {
 	/* 
@@ -1766,11 +1771,9 @@ TableDisplay(ClientData clientdata)
 	    }
 
 	    /*
-	     * Create the tag here.  This will actually create a JoinTag
-	     * That will handle the priority management of merging for us.
+	     * Make sure we start with a clean tag (set to table defaults).
 	     */
-	    tagPtr = TableMergeTag(tablePtr,
-		    (TableTag *) NULL, (TableTag *) NULL);
+	    TableResetTag(tablePtr, tagPtr);
 
 	    /*
 	     * Check to see if we have an embedded window in this cell.
@@ -1824,10 +1827,12 @@ TableDisplay(ClientData clientdata)
 
 	    shouldInvert = 0;
 	    /*
-	     * get the combined tag structure for the cell
-	     * first clear out a new tag structure that we will build in
+	     * Get the combined tag structure for the cell.
+	     * First clear out a new tag structure that we will build in
 	     * then add tags as we realize they belong.
-	     * Tags with the highest priority are added last
+	     *
+	     * Tags have their own priorities which TableMergeTag will
+	     * take into account when merging tags.
 	     */
 
 	    /*
@@ -1859,14 +1864,6 @@ TableDisplay(ClientData clientdata)
 		TableMergeTag(tablePtr, tagPtr,
 			(TableTag *) Tcl_GetHashValue(entryPtr));
 	    }
-	    /* is this cell selected? */
-	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL) {
-		if (tablePtr->invertSelected && !activeCell) {
-		    shouldInvert = 1;
-		} else {
-		    TableMergeTag(tablePtr, tagPtr, selPtr);
-		}
-	    }
 	    /* is this cell active? */
 	    if ((tablePtr->flags & HAS_ACTIVE) &&
 		    (tablePtr->state == STATE_NORMAL) &&
@@ -1879,7 +1876,15 @@ TableDisplay(ClientData clientdata)
 		    tablePtr->flags &= ~ACTIVE_DISABLED;
 		}
 	    }
-	    /* if flash mode is on, is this cell flashing */
+	    /* is this cell selected? */
+	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL) {
+		if (tablePtr->invertSelected && !activeCell) {
+		    shouldInvert = 1;
+		} else {
+		    TableMergeTag(tablePtr, tagPtr, selPtr);
+		}
+	    }
+	    /* if flash mode is on, is this cell flashing? */
 	    if (tablePtr->flashMode &&
 		    Tcl_FindHashEntry(tablePtr->flashCells, buf) != NULL) {
 		TableMergeTag(tablePtr, tagPtr, flashPtr);
@@ -2039,7 +2044,7 @@ TableDisplay(ClientData clientdata)
 		}
 
 		/*
-		 * If this is the selected cell and we are editing,
+		 * If this is the active cell and we are editing,
 		 * ensure that the cursor will be displayed
 		 */
 		if (activeCell) {
@@ -2259,8 +2264,14 @@ TableDisplay(ClientData clientdata)
 	    }
 
 	    /* clean up the necessaries */
-	    if (!activeCell) { /* we buffer the active tag */
-		ckfree((char *) (tagPtr));
+	    if (tagPtr == tablePtr->activeTagPtr) {
+		/*
+		 * This means it was the activeCell with text displayed.
+		 * We buffer the active tag for the 'activate' command.
+		 */
+		tablePtr->activeTagPtr = TableNewTag(NULL);
+		memcpy((VOID *) tablePtr->activeTagPtr,
+			(VOID *) tagPtr, sizeof(TableTag));
 	    }
 	    if (textLayout) {
 		Tk_FreeTextLayout(textLayout);
@@ -2275,6 +2286,7 @@ TableDisplay(ClientData clientdata)
 	    }
 	}
     }
+    ckfree((char *) tagPtr);
 #ifdef NO_XSETCLIP
     Tk_FreePixmap(display, clipWind);
 #endif
@@ -2558,7 +2570,7 @@ TableGetActiveBuf(register Table *tablePtr)
 		tablePtr->activeCol+tablePtr->colOffset);
     }
 
-    if (strcmp(tablePtr->activeBuf, data) == 0) {
+    if (STREQ(tablePtr->activeBuf, data)) {
 	/* this forced SetActiveIndex is necessary if we change array vars and
 	 * they happen to have these cells equal, we won't properly set the
 	 * active index for the new array var unless we do this here */
@@ -2636,7 +2648,7 @@ TableVarProc(clientData, interp, name, index, flags)
     }
     /* get the cell address and invalidate that region only.
      * Make sure that it is a valid cell address. */
-    if (strcmp("active", index) == 0) {
+    if (STREQ("active", index)) {
 	if (tablePtr->flags & SET_ACTIVE) {
 	    /* If we are already setting the active cell, the update
 	     * will occur in other code */
@@ -2651,7 +2663,7 @@ TableVarProc(clientData, interp, name, index, flags)
 		data = Tcl_GetVar2(interp, name, index, TCL_GLOBAL_ONLY);
 	    if (!data) data = "";
 
-	    if (strcmp(tablePtr->activeBuf, data) == 0) {
+	    if (STREQ(tablePtr->activeBuf, data)) {
 		return (char *)NULL;
 	    }
 	    tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf,
