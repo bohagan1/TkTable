@@ -1,6 +1,10 @@
 # This sets the name that tkTable will define for itself when loaded
 # If you change this, then the demos won't work, but it might be necessary
 # for those with another built-in "table" command
+#
+# RCS: @(#) $Id:  $
+#
+
 TBL_COMMAND	= table
 TBL_RUNTIME	= tkTable.tcl
 
