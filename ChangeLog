@@ -1,5 +1,8 @@
 2001-08-23  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* unix/Makefile.in (tkTable.tcl.h): corrected target to sed \'s
+	properly in the .tcl file.
+
 	* library/tkTable.tcl: added the ability to select borders with
 	button 1. (backe)  The user can turn off this ability by calling
 	[set ::tk::table::Priv(borderB1) 0] in their code.  button 3 is

@@ -2,7 +2,7 @@
 # If you change this, then the demos won't work, but it might be necessary
 # for those with another built-in "table" command
 #
-# RCS: @(#) $Id: Makefile.in,v 1.9 2001/06/22 22:58:32 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.10 2001/07/01 01:56:08 hobbs Exp $
 #
 
 TBL_COMMAND	= table
@@ -187,7 +187,7 @@ tkTableUtil.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTableUtil.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
 
 tkTable.tcl.h: $(LIB_DIR)/tkTable.tcl
-	sed -e '/^$\#/d' -e '/^$$/d' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' <$(LIB_DIR)/tkTable.tcl > $@ || { $(RM) $@; exit 1; }
+	sed -e '/^$\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' <$(LIB_DIR)/tkTable.tcl > $@ || { $(RM) $@; exit 1; }
 
 ## If you are using stubs, this first one should work, as stubs are OK
 ## for 8.1+ (not 8.0 because of UTF calls).  We require 8.2 because
