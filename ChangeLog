@@ -1,3 +1,41 @@
+2001-06-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c (TableDisplay): changed use of NO_XSETCLIP to
+	only operate on Macintosh, added new Windows code that is the
+	equivalent of XSetClipRectangles. (teske)
+	Removed XFillRectangle function that was there for support with
+	8.1 (nobody should use 8.1 anymore).
+	(TableDisplay): Corrected clearing of the area beyond the last
+	cell to not be incorrect when there is a span on the last cell.
+	(TableAdjustParams): handle possible div-by-zero for scrollbar
+	calculations. (christian brunner)
+
+	* generic/tkTable.h: added TableMoveCellValue decl.
+	* generic/tkTableEdit.c (TableModifyRC): made use of
+	TableMoveCellValue.
+	* generic/tkTableCell.c (TableSetCellValue): fixed mem leak in
+	-cache option.
+	(TableMoveCellValue): new function to support possible speedier
+	movement of cells when caching is being used. (michael teske)
+
+	* generic/tkTableCell.c (TableCellCoords): corrected
+	rowspan/colspan dimension calculation for title cells.
+	(Table_SetCmd): correct possible abuse in setting result object
+	pointer.
+
+	* README.txt: updated links
+
+	* win/makefile.vc (pkgIndex.tcl):
+	* unix/Makefile.in (pkgIndex.tcl): made 8.2 the required base for
+	the stubs version
+
+	* generic/tkTableCmds.c (Table_GetCmd): fixed potential crash from
+	abusing object pointer. (jonas hodges) Bug #230701
+
+	* generic/tkTableTag.c (Table_TagCmd): fix possible hang situation
+	by preventing refresh when setting the same tag on a cell/row/col.
+	(Michael Shulz)
+
 2001-03-28  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* generic/tkTable.h: change 'char *new' -> 'char *newVal' to not

@@ -14,22 +14,18 @@
  * Tom Moore		tmoore@spatial.ca
  * Sebastian Wangnick	wangnick@orthogon.de
  *
- * Copyright (c) 1997-2000 Jeffrey Hobbs
+ * Copyright (c) 1997-2001 Jeffrey Hobbs
  *
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.10 2000/08/31 02:09:17 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.11 2000/10/19 18:26:47 hobbs Exp $
  */
 
 #include "tkTable.h"
 
 #ifdef DEBUG
 #include "dprint.h"
-#endif
-
-#if defined(WIN32) || defined(macintosh)
-#define NO_XSETCLIP
 #endif
 
 static char **	StringifyObjects _ANSI_ARGS_((int objc,
@@ -349,42 +345,41 @@ static char *updateOpts[] = {
     "-xscrollcommand",	"-yscrollcommand", (char *) NULL
 };
 
+#ifdef WIN32
+/*
+ * Some code from TkWinInt.h that we use to correct and speed up
+ * drawing of cells that need clipping in TableDisplay.
+ */
+typedef struct {
+    int type;
+    HWND handle;
+    void *winPtr;
+} TkWinWindow;
+
+typedef struct {
+    int type;
+    HBITMAP handle;
+    Colormap colormap;
+    int depth;
+} TkWinBitmap;
+
+typedef struct {
+    int type;
+    HDC hdc;
+} TkWinDC;
+
+typedef union {
+    int type;
+    TkWinWindow window;
+    TkWinBitmap bitmap;
+    TkWinDC winDC;
+} TkWinDrawable;
+#endif
+
 /*
  * END HEADER INFORMATION
  */
-
-#if defined(__WIN32__) && defined(USE_TK_STUBS)
-/*
- *  The following code is a workaround for the lack of the function
- *  XFillRectangle in Tk 8.1's stub table. It's the same implementation as in
- *  Tk 8.2 and higher, so the only side effect of this workaround is making
- *  the library a few bytes larger.
- */
-
-/* Just to prevent some compiler warnings */
-#undef XFillRectangle
-#define XFillRectangle fillrectangle
-
-static void
-XFillRectangle(display, d, gc, x, y, width, height)
-    Display* display;
-    Drawable d;
-    GC gc;
-    int x;
-    int y;
-    unsigned int width;
-    unsigned int height;
-{
-    XRectangle rectangle;
-    rectangle.x = x;
-    rectangle.y = y;
-    rectangle.width = width;
-    rectangle.height = height;
-    XFillRectangles(display, d, gc, &rectangle, 1);
-}
-#endif
-
-
+
 /*
  *---------------------------------------------------------------------------
  *
@@ -480,7 +475,7 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     int offset;
 
     if (objc < 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "pathname ?options?");
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName ?options?");
 	return TCL_ERROR;
     }
 
@@ -619,6 +614,10 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
     if (result != TCL_OK) {
 	return result;
     }
+    /*
+     * It's important to ensure that between here and setting the resultPtr,
+     * we don't cause the result to change, as that might free resultPtr.
+     */
     resultPtr = Tcl_GetObjResult(interp);
     Tcl_Preserve((ClientData) tablePtr);
 
@@ -1557,13 +1556,17 @@ TableUndisplay(register Table *tablePtr)
     seen[3] = col;
 }
 
+#ifdef MAC_TCL
+#define NO_XSETCLIP
+#endif
 /*
  *--------------------------------------------------------------
  *
  * TableDisplay --
  *	This procedure redraws the contents of a table window.
  *	The conditional code in this function is due to these factors:
- *		o Lack of XSetClipRectangles on Windows
+ *		o Lack of XSetClipRectangles on Macintosh
+ *		o Use of alternative routine for Windows
  *
  * Results:
  *	None.
@@ -1582,7 +1585,7 @@ TableDisplay(ClientData clientdata)
     Drawable window;
 #ifdef NO_XSETCLIP
     Drawable clipWind;
-#else
+#elif !defined(WIN32)
     XRectangle clipRect;
 #endif
     int rowFrom, rowTo, colFrom, colTo,
@@ -2054,10 +2057,13 @@ TableDisplay(ClientData clientdata)
 		 */
 		if ((originX < 0) || (originY < 0) ||
 			(originX+itemW > width) || (originY+itemH > height)) {
-		    /* The text wants to overflow the boundaries of the
-		     * displayed cell, so we must clip in some way */
+		    /*
+		     * The text wants to overflow the boundaries of the
+		     * displayed cell, so we must clip in some way
+		     */
 #ifdef NO_XSETCLIP
 		    /*
+		     * This code is basically for the Macintosh.
 		     * Copy the the current contents of the cell into the
 		     * clipped window area.  This keeps any fg/bg and image
 		     * data intact.
@@ -2079,6 +2085,29 @@ TableDisplay(ClientData clientdata)
 		    XCopyArea(display, clipWind, window, tagGc,
 			    bd[0] + padx, bd[2] + pady,
 			    width, height, x + bd[0] + padx, y + bd[2] + pady);
+#elif defined(WIN32)
+		    /*
+		     * This is evil, evil evil! but the XCopyArea
+		     * doesn't work in all cases - Michael Teske.
+		     * The general structure follows the comments below.
+		     */
+		    TkWinDrawable *twdPtr = (TkWinDrawable *) window;
+		    HDC dc = GetDC(twdPtr->window.handle);
+		    HRGN clipR;
+
+		    clipR = CreateRectRgn(x + bd[0] + padx, y + bd[2] + pady,
+			    x + bd[0] + padx + width,
+			    y + bd[2] + pady + height);
+
+		    SelectClipRgn(dc, clipR);
+		    OffsetClipRgn(dc, 0, 0);
+
+		    Tk_DrawTextLayout(display, window, tagGc, textLayout,
+			    x + originX + bd[0] + padx,
+			    y + originY + bd[2] + pady, 0, -1);
+
+		    SelectClipRgn(dc, NULL);
+		    DeleteObject(clipR);
 #else
 		    /*
 		     * Use an X clipping rectangle.  The clipping is the
@@ -2238,12 +2267,14 @@ TableDisplay(ClientData clientdata)
     }
 
     /* 
-     * if we have got to the end of the table, 
-     * clear the area after the last row/col
+     * If we are at the end of the table, clear the area after the last
+     * row/col.  We discount spans here because we just need the coords
+     * for the area that would be the last physical cell.
      */
-    /* FIX to either VCoords or if .. */
+    tablePtr->flags |= AVOID_SPANS;
     TableCellCoords(tablePtr, tablePtr->rows-1, tablePtr->cols-1,
 	    &x, &y, &width, &height);
+    tablePtr->flags &= ~AVOID_SPANS;
 
     /* This should occur before moving pixmap, but this simplifies things
      *
@@ -3054,11 +3085,14 @@ TableAdjustParams(register Table *tablePtr)
     tablePtr->leftCol = leftCol;
 
     /*
-     * Now work out where the bottom right is for scrollbar update
-     * and to test for one last stretch
+     * Now work out where the bottom right is for scrollbar update and to test
+     * for one last stretch.  Avoid the confusion that spans could cause for
+     * determining the last cell dimensions.
      */
+    tablePtr->flags |= AVOID_SPANS;
     TableGetLastCell(tablePtr, &row, &col);
     TableCellVCoords(tablePtr, row, col, &x, &y, &width, &height, 0);
+    tablePtr->flags &= ~AVOID_SPANS;
 
     /*
      * Do we have scrollbars, if so, calculate and call the TCL functions In
@@ -3087,8 +3121,13 @@ TableAdjustParams(register Table *tablePtr)
 	    } else {
 		diff = tablePtr->rowStarts[tablePtr->titleRows];
 		last = (double) (tablePtr->rowStarts[tablePtr->rows]-diff);
-		first = (tablePtr->rowStarts[topRow]-diff) / last;
-		last  = (height+tablePtr->rowStarts[row]-diff) / last;
+		if (last <= 0.0) {
+		    first = 0;
+		    last  = 1;
+		} else {
+		    first = (tablePtr->rowStarts[topRow]-diff) / last;
+		    last  = (height+tablePtr->rowStarts[row]-diff) / last;
+		}
 	    }
 	    sprintf(buf, " %g %g", first, last);
 	    if (Tcl_VarEval(interp, tablePtr->yScrollCmd,
@@ -3106,8 +3145,13 @@ TableAdjustParams(register Table *tablePtr)
 	    } else {
 		diff = tablePtr->colStarts[tablePtr->titleCols];
 		last = (double) (tablePtr->colStarts[tablePtr->cols]-diff);
-		first = (tablePtr->colStarts[leftCol]-diff) / last;
-		last  = (width+tablePtr->colStarts[col]-diff) / last;
+		if (last <= 0.0) {
+		    first = 0;
+		    last  = 1;
+		} else {
+		    first = (tablePtr->colStarts[leftCol]-diff) / last;
+		    last  = (width+tablePtr->colStarts[col]-diff) / last;
+		}
 	    }
 	    sprintf(buf, " %g %g", first, last);
 	    if (Tcl_VarEval(interp, tablePtr->xScrollCmd,
