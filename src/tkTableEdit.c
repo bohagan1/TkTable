@@ -12,17 +12,34 @@
 
 #include "tkTable.h"
 
+static void	TableModifyRC _ANSI_ARGS_((register Table *tablePtr,
+			int doRows, int movetag,
+			Tcl_HashTable *tagTblPtr, Tcl_HashTable *dimTblPtr,
+			int offset, int from, int to, int lo, int hi,
+			int outOfBounds));
 
 /* insert/delete subcommands */
-#define MOD_ACTIVE	1
-#define MOD_COLS	2
-#define MOD_ROWS	3
-static Cmd_Struct modCmds[] = {
-  {"active",	MOD_ACTIVE},
-  {"cols",	MOD_COLS},
-  {"rows",	MOD_ROWS},
-  {"", 0}
+static char *modCmdNames[] = {
+    "active", "cols", "rows", (char *)NULL
 };
+enum modCmd {
+    MOD_ACTIVE, MOD_COLS, MOD_ROWS
+};
+
+/* insert/delete row/col switches */
+static char *rcCmdNames[] = {
+    "-keeptitles",	"-holddimensions",	"-holdtags",
+    "-holdwindows"	"--", (char *) NULL
+};
+enum rcCmd {
+    OPT_TITLES,	OPT_DIMS,	OPT_TAGS,	OPT_WINS,	OPT_LAST
+};
+
+#define HOLD_TITLES	1<<0
+#define HOLD_DIMS	1<<1
+#define HOLD_TAGS	1<<2
+#define HOLD_WINS	1<<3
+
 
 /*
  *--------------------------------------------------------------
@@ -42,62 +59,228 @@ static Cmd_Struct modCmds[] = {
  */
 int
 Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
-	      int argc, char **argv)
+	      int objc, Tcl_Obj *CONST objv[])
 {
-  register Table *tablePtr = (Table *) clientData;
-  int insertType, retval, value, posn;
+    register Table *tablePtr = (Table *) clientData;
+    int doInsert, cmdIndex, first, last;
 
-  insertType = (strncmp(argv[1], "insert", strlen(argv[1]))==0);
-  if (argc < 4) {
-    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		     insertType ? " insert" : " delete",
-		     " option ?switches? arg ?arg?\"",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-  retval = Cmd_Parse(interp, modCmds, argv[2]);
-  switch (retval) {
-  case 0:
-    return TCL_ERROR;
-  case MOD_ACTIVE:
-    if (insertType) {
-      if (argc != 5) {
-	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-			 " insert active index string\"", (char *)NULL);
+    if (objc < 4) {
+	Tcl_WrongNumArgs(interp, 2, objv,
+			 "option ?switches? arg ?arg?");
 	return TCL_ERROR;
-      } else if (TableGetIcursor(tablePtr, argv[3], &posn) != TCL_OK) {
-	return TCL_ERROR;
-      } else if ((tablePtr->flags & HAS_ACTIVE) &&
-		 !(tablePtr->flags & ACTIVE_DISABLED) &&
-		 tablePtr->state == STATE_NORMAL) {
-	TableInsertChars(tablePtr, posn, argv[4]);
-      }
-    } else {
-      if (argc > 5) {
-	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-			 " delete active first ?last?\"", (char *) NULL);
-	return TCL_ERROR;
-      }
-      if (TableGetIcursor(tablePtr, argv[3], &posn) == TCL_ERROR) {
-	return TCL_ERROR;
-      }
-      if (argc == 4) {
-	value = posn+1;
-      } else if (TableGetIcursor(tablePtr, argv[4], &value) == TCL_ERROR) {
-	return TCL_ERROR;
-      }
-      if (value >= posn && (tablePtr->flags & HAS_ACTIVE) &&
-	  !(tablePtr->flags & ACTIVE_DISABLED) &&
-	  tablePtr->state == STATE_NORMAL)
-	TableDeleteChars(tablePtr, posn, value-posn);
     }
-    break;	/* EDIT ACTIVE */
-  case MOD_COLS:
-  case MOD_ROWS:
-    return TableModifyRC(tablePtr, interp, insertType?1:0,
-			 (retval==MOD_ROWS)?1:0, argc, argv);
-  }
-  return TCL_OK;
+    if (Tcl_GetIndexFromObj(interp, objv[2], modCmdNames,
+			    "option", 0, &cmdIndex) != TCL_OK) {
+	return TCL_ERROR;
+    }
+
+    doInsert = (*(Tcl_GetString(objv[1])) == 'i');
+    switch ((enum modCmd) cmdIndex) {
+    case MOD_ACTIVE:
+	if (doInsert) {
+	    /* INSERT */
+	    if (objc != 5) {
+		Tcl_WrongNumArgs(interp, 3, objv, "index string");
+		return TCL_ERROR;
+	    }
+	    if (TableGetIcursorObj(tablePtr, objv[3], &first) != TCL_OK) {
+		return TCL_ERROR;
+	    } else if ((tablePtr->flags & HAS_ACTIVE) &&
+		       !(tablePtr->flags & ACTIVE_DISABLED) &&
+		       tablePtr->state == STATE_NORMAL) {
+		TableInsertChars(tablePtr, first, Tcl_GetString(objv[4]));
+	    }
+	} else {
+	    /* DELETE */
+	    if (objc > 5) {
+		Tcl_WrongNumArgs(interp, 3, objv, "first ?last?");
+		return TCL_ERROR;
+	    }
+	    if (TableGetIcursorObj(tablePtr, objv[3], &first) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if (objc == 4) {
+		last = first+1;
+	    } else if (TableGetIcursorObj(tablePtr, objv[4],
+					  &last) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if ((last >= first) && (tablePtr->flags & HAS_ACTIVE) &&
+		!(tablePtr->flags & ACTIVE_DISABLED) &&
+		tablePtr->state == STATE_NORMAL) {
+		TableDeleteChars(tablePtr, first, last-first);
+	    }
+	}
+	break;	/* EDIT ACTIVE */
+
+    case MOD_COLS:
+    case MOD_ROWS: {
+	/*
+	 * ROW/COL INSERTION/DELETION
+	 * FIX: This doesn't handle spans
+	 */
+	int i, lo, hi, argsLeft, offset, minkeyoff, doRows;
+	int maxrow, maxcol, maxkey, minkey, flags, count, *dimPtr;
+	Tcl_HashTable *tagTblPtr, *dimTblPtr;
+	Tcl_HashSearch search;
+
+	doRows	= (cmdIndex == MOD_ROWS);
+	flags	= 0;
+	for (i = 3; i < objc; i++) {
+	    if (*(Tcl_GetString(objv[i])) != '-') {
+		break;
+	    }
+	    if (Tcl_GetIndexFromObj(interp, objv[i], rcCmdNames,
+				    "switch", 0, &cmdIndex) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if (cmdIndex == OPT_LAST) {
+		i++;
+		break;
+	    }
+	    switch (cmdIndex) {
+	    case OPT_TITLES:
+		flags |= HOLD_TITLES;
+		break;
+	    case OPT_DIMS:
+		flags |= HOLD_DIMS;
+		break;
+	    case OPT_TAGS:
+		flags |= HOLD_TAGS;
+		break;
+	    case OPT_WINS:
+		flags |= HOLD_WINS;
+		break;
+	    }
+	}
+	argsLeft = objc - i;
+	if (argsLeft < 1 || argsLeft > 2) {
+	    Tcl_WrongNumArgs(interp, 3, objv, "?switches? index ?count?");
+	    return TCL_ERROR;
+	}
+
+	count	= 1;
+	maxcol	= tablePtr->cols-1+tablePtr->colOffset;
+	maxrow	= tablePtr->rows-1+tablePtr->rowOffset;
+	if (strcmp(Tcl_GetString(objv[i]), "end") == 0) {
+	    /* allow "end" to be specified as an index */
+	    first = (doRows) ? maxrow : maxcol;
+	} else if (Tcl_GetIntFromObj(interp, objv[i], &first) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (argsLeft == 2 &&
+	    Tcl_GetIntFromObj(interp, objv[++i], &count) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (count == 0 || (tablePtr->state == STATE_DISABLED)) {
+	    return TCL_OK;
+	}
+
+	if (doRows) {
+	    maxkey	= maxrow;
+	    minkey	= tablePtr->rowOffset;
+	    minkeyoff	= tablePtr->rowOffset+tablePtr->titleRows;
+	    offset	= tablePtr->rowOffset;
+	    tagTblPtr	= tablePtr->rowStyles;
+	    dimTblPtr	= tablePtr->rowHeights;
+	    dimPtr	= &(tablePtr->rows);
+	    lo		= tablePtr->colOffset+((flags & HOLD_TITLES) ?
+					       tablePtr->titleCols : 0);
+	    hi		= maxcol;
+	} else {
+	    maxkey	= maxcol;
+	    minkey	= tablePtr->colOffset;
+	    minkeyoff	= tablePtr->colOffset+tablePtr->titleCols;
+	    offset	= tablePtr->colOffset;
+	    tagTblPtr	= tablePtr->colStyles;
+	    dimTblPtr	= tablePtr->colWidths;
+	    dimPtr	= &(tablePtr->cols);
+	    lo		= tablePtr->rowOffset+((flags & HOLD_TITLES) ?
+					       tablePtr->titleRows : 0);
+	    hi		= maxrow;
+	}
+
+	/* constrain the starting index */
+	if (first > maxkey) {
+	    first = maxkey;
+	} else if (first < minkey) {
+	    first = minkey;
+	}
+	if (doInsert) {
+	    /* +count means insert after index,
+	     * -count means insert before index */
+	    if (count < 0) {
+		count = -count;
+	    } else {
+		first++;
+	    }
+	    if ((flags & HOLD_TITLES) && (first < minkeyoff)) {
+		count -= minkeyoff-first;
+		if (count <= 0) {
+		    return TCL_OK;
+		}
+		first = minkeyoff;
+	    }
+	    if (!(flags & HOLD_DIMS)) {
+		maxkey += count;
+		*dimPtr += count;
+	    }
+	    for (i = maxkey; i >= first; i--) {
+		/* move row/col style && width/height here */
+		TableModifyRC(tablePtr, doRows, flags, tagTblPtr, dimTblPtr,
+			      offset, i, i-count, lo, hi, ((i-count) < first));
+	    }
+	} else {
+	    /* (index = i && count = 1) == (index = i && count = -1) */
+	    if (count < 0) {
+		/* if the count is negative, make sure that the col count will
+		 * delete no greater than the original index */
+		if (first+count < minkey) {
+		    count += first-minkey;
+		    first = minkey;
+		} else {
+		    first += count;
+		    count = -count;
+		}
+	    }
+	    if ((flags & HOLD_TITLES) && (first <= minkeyoff)) {
+		count -= minkeyoff-first;
+		if (count <= 0) {
+		    return TCL_OK;
+		}
+		first = minkeyoff;
+	    }
+	    if (count > maxkey-first+1) {
+		count = maxkey-first+1;
+	    }
+	    if (!(flags & HOLD_DIMS)) {
+		*dimPtr -= count;
+	    }
+	    for (i = first; i <= maxkey; i++) {
+		TableModifyRC(tablePtr, doRows, flags, tagTblPtr, dimTblPtr,
+			      offset, i, i+count, lo, hi, ((i+count)>maxkey));
+	    }
+	}
+	if (Tcl_FirstHashEntry(tablePtr->selCells, &search) != NULL) {
+	    /* clear selection - forceful, but effective */
+	    Tcl_DeleteHashTable(tablePtr->selCells);
+	    Tcl_InitHashTable(tablePtr->selCells, TCL_STRING_KEYS);
+	}
+
+	TableAdjustParams(tablePtr);
+	/* change the geometry */
+	TableGeometryRequest(tablePtr);
+	/* FIX:
+	 * This has to handle when the previous rows/cols resize because
+	 * of the *stretchmode.  InvalidateAll does that, but could be
+	 * more efficient.
+	 */
+	TableInvalidateAll(tablePtr, 0);
+	break;
+    }
+
+    }
+    return TCL_OK;
 }
 
 /*
@@ -122,72 +305,73 @@ TableDeleteChars(tablePtr, index, count)
     int count;			/* How many characters to delete. */
 {
 #ifdef TCL_UTF_MAX
-  int byteIndex, byteCount, newByteCount, numBytes, numChars;
-  char *new, *string;
+    int byteIndex, byteCount, newByteCount, numBytes, numChars;
+    char *new, *string;
 
-  string = tablePtr->activeBuf;
-  numBytes = strlen(string);
-  numChars = Tcl_NumUtfChars(string, numBytes);
-  if ((index + count) > numChars) {
-    count = numChars - index;
-  }
-  if (count <= 0) {
-    return;
-  }
-
-  byteIndex = Tcl_UtfAtIndex(string, index) - string;
-  byteCount = Tcl_UtfAtIndex(string + byteIndex, count) - (string + byteIndex);
-
-  newByteCount = numBytes + 1 - byteCount;
-  new = (char *) ckalloc((unsigned) newByteCount);
-  memcpy(new, string, (size_t) byteIndex);
-  strcpy(new + byteIndex, string + byteIndex + byteCount);
-#else
-  int oldlen;
-  char *new;
-
-  /* this gets the length of the string, as well as ensuring that
-   * the cursor isn't beyond the end char */
-  TableGetIcursor(tablePtr, "end", &oldlen);
-
-  if ((index+count) > oldlen)
-    count = oldlen-index;
-  if (count <= 0)
-    return;
-
-  new = (char *) ckalloc((unsigned)(oldlen-count+1));
-  strncpy(new, tablePtr->activeBuf, (size_t) index);
-  strcpy(new+index, tablePtr->activeBuf+index+count);
-  /* make sure this string is null terminated */
-  new[oldlen-count] = '\0';
-#endif
-  /* This prevents deletes on BREAK or validation error. */
-  if (tablePtr->validate &&
-      TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
-			  tablePtr->activeCol+tablePtr->colOffset,
-			  tablePtr->activeBuf, new, index) != TCL_OK) {
-    ckfree(new);
-    return;
-  }
-
-  ckfree(tablePtr->activeBuf);
-  tablePtr->activeBuf = new;
-
-  /* mark the text as changed */
-  tablePtr->flags |= TEXT_CHANGED;
-
-  if (tablePtr->icursor >= index) {
-    if (tablePtr->icursor >= (index+count)) {
-      tablePtr->icursor -= count;
-    } else {
-      tablePtr->icursor = index;
+    string = tablePtr->activeBuf;
+    numBytes = strlen(string);
+    numChars = Tcl_NumUtfChars(string, numBytes);
+    if ((index + count) > numChars) {
+	count = numChars - index;
     }
-  }
+    if (count <= 0) {
+	return;
+    }
 
-  TableSetActiveIndex(tablePtr);
+    byteIndex = Tcl_UtfAtIndex(string, index) - string;
+    byteCount = Tcl_UtfAtIndex(string + byteIndex, count)
+	- (string + byteIndex);
 
-  TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
-	       CELL|INV_FORCE);
+    newByteCount = numBytes + 1 - byteCount;
+    new = (char *) ckalloc((unsigned) newByteCount);
+    memcpy(new, string, (size_t) byteIndex);
+    strcpy(new + byteIndex, string + byteIndex + byteCount);
+#else
+    int oldlen;
+    char *new;
+
+    /* this gets the length of the string, as well as ensuring that
+     * the cursor isn't beyond the end char */
+    TableGetIcursor(tablePtr, "end", &oldlen);
+
+    if ((index+count) > oldlen)
+	count = oldlen-index;
+    if (count <= 0)
+	return;
+
+    new = (char *) ckalloc((unsigned)(oldlen-count+1));
+    strncpy(new, tablePtr->activeBuf, (size_t) index);
+    strcpy(new+index, tablePtr->activeBuf+index+count);
+    /* make sure this string is null terminated */
+    new[oldlen-count] = '\0';
+#endif
+    /* This prevents deletes on BREAK or validation error. */
+    if (tablePtr->validate &&
+	TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
+			    tablePtr->activeCol+tablePtr->colOffset,
+			    tablePtr->activeBuf, new, index) != TCL_OK) {
+	ckfree(new);
+	return;
+    }
+
+    ckfree(tablePtr->activeBuf);
+    tablePtr->activeBuf = new;
+
+    /* mark the text as changed */
+    tablePtr->flags |= TEXT_CHANGED;
+
+    if (tablePtr->icursor >= index) {
+	if (tablePtr->icursor >= (index+count)) {
+	    tablePtr->icursor -= count;
+	} else {
+	    tablePtr->icursor = index;
+	}
+    }
+
+    TableSetActiveIndex(tablePtr);
+
+    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
+		 CELL|INV_FORCE);
 }
 
 /*
@@ -213,117 +397,117 @@ TableInsertChars(tablePtr, index, value)
 				 * string). */
 {
 #ifdef TCL_UTF_MAX
-  int oldlen, byteIndex, byteCount;
-  char *new, *string;
+    int oldlen, byteIndex, byteCount;
+    char *new, *string;
 
-  byteCount = strlen(value);
-  if (byteCount == 0) {
-    return;
-  }
+    byteCount = strlen(value);
+    if (byteCount == 0) {
+	return;
+    }
 
-  /* Is this an autoclear and this is the first update */
-  /* Note that this clears without validating */
-  if (tablePtr->autoClear && !(tablePtr->flags & TEXT_CHANGED)) {
-    /* set the buffer to be empty */
-    tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf, 1);
-    tablePtr->activeBuf[0] = '\0';
-    /* the insert position now has to be 0 */
-    index = 0;
-    tablePtr->icursor = 0;
-  }
+    /* Is this an autoclear and this is the first update */
+    /* Note that this clears without validating */
+    if (tablePtr->autoClear && !(tablePtr->flags & TEXT_CHANGED)) {
+	/* set the buffer to be empty */
+	tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf, 1);
+	tablePtr->activeBuf[0] = '\0';
+	/* the insert position now has to be 0 */
+	index = 0;
+	tablePtr->icursor = 0;
+    }
 
-  string = tablePtr->activeBuf;
-  byteIndex = Tcl_UtfAtIndex(string, index) - string;
+    string = tablePtr->activeBuf;
+    byteIndex = Tcl_UtfAtIndex(string, index) - string;
 
-  oldlen = strlen(string);
-  new = (char *) ckalloc((unsigned)(oldlen + byteCount + 1));
-  memcpy(new, string, (size_t) byteIndex);
-  strcpy(new + byteIndex, value);
-  strcpy(new + byteIndex + byteCount, string + byteIndex);
+    oldlen = strlen(string);
+    new = (char *) ckalloc((unsigned)(oldlen + byteCount + 1));
+    memcpy(new, string, (size_t) byteIndex);
+    strcpy(new + byteIndex, value);
+    strcpy(new + byteIndex + byteCount, string + byteIndex);
 
-  /* validate potential new active buffer */
-  /* This prevents inserts on either BREAK or validation error. */
-  if (tablePtr->validate &&
-      TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
-			  tablePtr->activeCol+tablePtr->colOffset,
-			  tablePtr->activeBuf, new, byteIndex) != TCL_OK) {
-    ckfree(new);
-    return;
-  }
+    /* validate potential new active buffer */
+    /* This prevents inserts on either BREAK or validation error. */
+    if (tablePtr->validate &&
+	TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
+			    tablePtr->activeCol+tablePtr->colOffset,
+			    tablePtr->activeBuf, new, byteIndex) != TCL_OK) {
+	ckfree(new);
+	return;
+    }
 
-  /*
-   * The following construction is used because inserting improperly
-   * formed UTF-8 sequences between other improperly formed UTF-8
-   * sequences could result in actually forming valid UTF-8 sequences;
-   * the number of characters added may not be Tcl_NumUtfChars(string, -1),
-   * because of context.  The actual number of characters added is how
-   * many characters were are in the string now minus the number that
-   * used to be there.
-   */
+    /*
+     * The following construction is used because inserting improperly
+     * formed UTF-8 sequences between other improperly formed UTF-8
+     * sequences could result in actually forming valid UTF-8 sequences;
+     * the number of characters added may not be Tcl_NumUtfChars(string, -1),
+     * because of context.  The actual number of characters added is how
+     * many characters were are in the string now minus the number that
+     * used to be there.
+     */
 
-  if (tablePtr->icursor >= index) {
-    tablePtr->icursor += Tcl_NumUtfChars(new, oldlen+byteCount)
-      - Tcl_NumUtfChars(tablePtr->activeBuf, oldlen);
-  }
+    if (tablePtr->icursor >= index) {
+	tablePtr->icursor += Tcl_NumUtfChars(new, oldlen+byteCount)
+	    - Tcl_NumUtfChars(tablePtr->activeBuf, oldlen);
+    }
 
-  ckfree(string);
-  tablePtr->activeBuf = new;
+    ckfree(string);
+    tablePtr->activeBuf = new;
 
 #else
-  int oldlen, newlen;
-  char *new;
+    int oldlen, newlen;
+    char *new;
 
-  newlen = strlen(value);
-  if (newlen == 0) return;
+    newlen = strlen(value);
+    if (newlen == 0) return;
 
-  /* Is this an autoclear and this is the first update */
-  /* Note that this clears without validating */
-  if (tablePtr->autoClear && !(tablePtr->flags & TEXT_CHANGED)) {
-    /* set the buffer to be empty */
-    tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf, 1);
-    tablePtr->activeBuf[0] = '\0';
-    /* the insert position now has to be 0 */
-    index = 0;
-  }
-  oldlen = strlen(tablePtr->activeBuf);
-  /* get the buffer to at least the right length */
-  new = (char *) ckalloc((unsigned)(oldlen+newlen+1));
-  strncpy(new, tablePtr->activeBuf, (size_t) index);
-  strcpy(new+index, value);
-  strcpy(new+index+newlen, (tablePtr->activeBuf)+index);
-  /* make sure this string is null terminated */
-  new[oldlen+newlen] = '\0';
+    /* Is this an autoclear and this is the first update */
+    /* Note that this clears without validating */
+    if (tablePtr->autoClear && !(tablePtr->flags & TEXT_CHANGED)) {
+	/* set the buffer to be empty */
+	tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf, 1);
+	tablePtr->activeBuf[0] = '\0';
+	/* the insert position now has to be 0 */
+	index = 0;
+    }
+    oldlen = strlen(tablePtr->activeBuf);
+    /* get the buffer to at least the right length */
+    new = (char *) ckalloc((unsigned)(oldlen+newlen+1));
+    strncpy(new, tablePtr->activeBuf, (size_t) index);
+    strcpy(new+index, value);
+    strcpy(new+index+newlen, (tablePtr->activeBuf)+index);
+    /* make sure this string is null terminated */
+    new[oldlen+newlen] = '\0';
 
-  /* validate potential new active buffer */
-  /* This prevents inserts on either BREAK or validation error. */
-  if (tablePtr->validate &&
-      TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
-			  tablePtr->activeCol+tablePtr->colOffset,
-			  tablePtr->activeBuf, new, index) != TCL_OK) {
-    ckfree(new);
-    return;
-  }
-  ckfree(tablePtr->activeBuf);
-  tablePtr->activeBuf = new;
+    /* validate potential new active buffer */
+    /* This prevents inserts on either BREAK or validation error. */
+    if (tablePtr->validate &&
+	TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
+			    tablePtr->activeCol+tablePtr->colOffset,
+			    tablePtr->activeBuf, new, index) != TCL_OK) {
+	ckfree(new);
+	return;
+    }
+    ckfree(tablePtr->activeBuf);
+    tablePtr->activeBuf = new;
 
-  if (tablePtr->icursor >= index) {
-    tablePtr->icursor += newlen;
-  }
+    if (tablePtr->icursor >= index) {
+	tablePtr->icursor += newlen;
+    }
 #endif
 
-  /* mark the text as changed */
-  tablePtr->flags |= TEXT_CHANGED;
+    /* mark the text as changed */
+    tablePtr->flags |= TEXT_CHANGED;
 
-  TableSetActiveIndex(tablePtr);
+    TableSetActiveIndex(tablePtr);
 
-  TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
-	       CELL|INV_FORCE);
+    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
+		 CELL|INV_FORCE);
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * TableModifyRCaux --
+ * TableModifyRC --
  *	Helper function that does the core work of moving rows/cols
  *	and associated tags.
  *
@@ -336,270 +520,83 @@ TableInsertChars(tablePtr, index, value)
  *----------------------------------------------------------------------
  */
 static void
-TableModifyRCaux(tablePtr, which, movetag, tagTblPtr, dimTblPtr,
-		 offset, from, to, lo, hi, check)
+TableModifyRC(tablePtr, doRows, flags, tagTblPtr, dimTblPtr,
+	      offset, from, to, lo, hi, outOfBounds)
     Table *tablePtr;	/* Information about text widget. */
-    int which;		/* rows (1) or cols (0) */
-    int movetag;	/* whether tags are supposed to be moved */
+    int doRows;		/* rows (1) or cols (0) */
+    int flags;		/* flags indicating what to move */
     Tcl_HashTable *tagTblPtr, *dimTblPtr; /* Pointers to the row/col tags
 					   * and width/height tags */
     int offset;		/* appropriate offset */
     int from, to;	/* the from and to row/col */
     int lo, hi;		/* the lo and hi col/row */
-    int check;		/* the boundary check for shifting items */
+    int outOfBounds;	/* the boundary check for shifting items */
 {
   int j, dummy;
   char buf[INDEX_BUFSIZE], buf1[INDEX_BUFSIZE];
   Tcl_HashEntry *entryPtr, *newPtr;
 
   /* move row/col style && width/height here */
-  if (movetag) {
-    if ((entryPtr=Tcl_FindHashEntry(tagTblPtr, (char *)from)) != NULL) {
-      Tcl_DeleteHashEntry(entryPtr);
-    }
-    if ((entryPtr=Tcl_FindHashEntry(dimTblPtr, (char *)from-offset)) != NULL) {
-      Tcl_DeleteHashEntry(entryPtr);
-    }
-    if (!check) {
-      if ((entryPtr=Tcl_FindHashEntry(tagTblPtr, (char *)to)) != NULL) {
-	newPtr = Tcl_CreateHashEntry(tagTblPtr, (char *)from, &dummy);
-	Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-	Tcl_DeleteHashEntry(entryPtr);
+  if (!(flags & HOLD_TAGS)) {
+      entryPtr = Tcl_FindHashEntry(tagTblPtr, (char *)from);
+      if (entryPtr != NULL) {
+	  Tcl_DeleteHashEntry(entryPtr);
       }
-      if ((entryPtr=Tcl_FindHashEntry(dimTblPtr, (char *)to-offset)) != NULL) {
-	newPtr = Tcl_CreateHashEntry(dimTblPtr, (char *)from-offset, &dummy);
-	Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-	Tcl_DeleteHashEntry(entryPtr);
+      entryPtr = Tcl_FindHashEntry(dimTblPtr, (char *)from-offset);
+      if (entryPtr != NULL) {
+	  Tcl_DeleteHashEntry(entryPtr);
       }
-    }
+      if (!outOfBounds) {
+	  entryPtr = Tcl_FindHashEntry(tagTblPtr, (char *)to);
+	  if (entryPtr != NULL) {
+	      newPtr = Tcl_CreateHashEntry(tagTblPtr, (char *)from, &dummy);
+	      Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+	      Tcl_DeleteHashEntry(entryPtr);
+	  }
+	  entryPtr = Tcl_FindHashEntry(dimTblPtr, (char *)to-offset);
+	  if (entryPtr != NULL) {
+	      newPtr = Tcl_CreateHashEntry(dimTblPtr, (char *)from-offset,
+					   &dummy);
+	      Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+	      Tcl_DeleteHashEntry(entryPtr);
+	  }
+      }
   }
   for (j = lo; j <= hi; j++) {
-    if (which /* rows */) {
-      TableMakeArrayIndex(from, j, buf);
-      TableMakeArrayIndex(to, j, buf1);
-      TableSetCellValue(tablePtr, from, j, check ? "" :
-			TableGetCellValue(tablePtr, to, j));
-    } else {
-      TableMakeArrayIndex(j, from, buf);
-      TableMakeArrayIndex(j, to, buf1);
-      TableSetCellValue(tablePtr, j, from, check ? "" :
-			TableGetCellValue(tablePtr, j, to));
-    }
-    /* move cell style here */
-    if (movetag) {
-      if ((entryPtr=Tcl_FindHashEntry(tablePtr->cellStyles,buf)) != NULL) {
-	Tcl_DeleteHashEntry(entryPtr);
+      if (doRows /* rows */) {
+	  TableMakeArrayIndex(from, j, buf);
+	  TableMakeArrayIndex(to, j, buf1);
+	  TableSetCellValue(tablePtr, from, j, outOfBounds ? "" :
+			    TableGetCellValue(tablePtr, to, j));
+      } else {
+	  TableMakeArrayIndex(j, from, buf);
+	  TableMakeArrayIndex(j, to, buf1);
+	  TableSetCellValue(tablePtr, j, from, outOfBounds ? "" :
+			    TableGetCellValue(tablePtr, j, to));
       }
-      if (!check &&
-	  (entryPtr=Tcl_FindHashEntry(tablePtr->cellStyles,buf1))!=NULL) {
-	newPtr = Tcl_CreateHashEntry(tablePtr->cellStyles, buf, &dummy);
-	Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-	Tcl_DeleteHashEntry(entryPtr);
+      /* move cell style here */
+      if (!(flags & HOLD_TAGS)) {
+	  entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf);
+	  if (entryPtr != NULL) {
+	      Tcl_DeleteHashEntry(entryPtr);
+	  }
+	  if (!outOfBounds) {
+	      entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf1);
+	      if (entryPtr != NULL) {
+		  newPtr = Tcl_CreateHashEntry(tablePtr->cellStyles, buf,
+					       &dummy);
+		  Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+		  Tcl_DeleteHashEntry(entryPtr);
+	      }
+	  }
       }
-    }
-  }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TableModifyRC --
- *	Modify rows/cols of the table (insert or delete)
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Modifies associated row/col data
- *
- *----------------------------------------------------------------------
- */
-int
-TableModifyRC(tablePtr, interp, insertType, which, argc, argv)
-    Table *tablePtr;		/* Information about text widget. */
-    Tcl_Interp *interp;		/* Current interpreter. */
-    int insertType;		/* insert (1) | delete (0) */
-    int which;			/* rows (1) or cols (0) */
-    int argc;			/* Number of arguments. */
-    char **argv;		/* Argument strings. */
-{
-  int i, first, lo, hi, idx, c, argsLeft, x, y, offset, minkeyoff;
-  int maxrow, maxcol, maxkey, minkey, movetitle, movetag, movedim;
-  size_t length;
-  char *arg;
-  Tcl_HashTable *tagTblPtr, *dimTblPtr;
-  Tcl_HashSearch search;
-  int *dimPtr;
-
-  movetitle	= 1;
-  movetag	= 1;
-  movedim	= 1;
-  maxcol	= tablePtr->cols-1+tablePtr->colOffset;
-  maxrow	= tablePtr->rows-1+tablePtr->rowOffset;
-  for (i = 3; i < argc; i++) {
-    arg = argv[i];
-    if (arg[0] != '-') {
-      break;
-    }
-    length = strlen(arg);
-    if (length < 2) {
-    badSwitch:
-      Tcl_AppendResult(interp, "bad switch \"", arg,
-		       "\": must be -cols, -keeptitles, -holddimensions, ",
-		       "-holdtags, -rows, or --",
-		       (char *) NULL);
-      return TCL_ERROR;
-    }
-    c = arg[1];
-    if ((c == 'h') && (length > 5) &&
-	(strncmp(argv[i], "-holddimensions", length) == 0)) {
-      movedim = 0;
-    } else if ((c == 'h') && (length > 5) &&
-	       (strncmp(argv[i], "-holdtags", length) == 0)) {
-      movetag = 0;
-    } else if ((c == 'k') && (strncmp(argv[i], "-keeptitles", length) == 0)) {
-      movetitle = 0;
-    } else if ((c == 'c') && (strncmp(argv[i], "-cols", length) == 0)) {
-      if (i >= (argc-1)) {
-	Tcl_SetResult(interp, "no value given for \"-cols\" option",
-		      TCL_STATIC);
-	return TCL_ERROR;
+      /* move embedded windows here */
+      if (!(flags & HOLD_WINS)) {
+	  if (outOfBounds) {
+	      Table_WinDelete(tablePtr, buf);
+	  } else {
+	      Table_WinMove(tablePtr, buf, buf1, 0);
+	  }
       }
-      if (Tcl_GetInt(interp, argv[++i], &maxcol) != TCL_OK) {
-	return TCL_ERROR;
-      }
-      maxcol = MAX(maxcol, tablePtr->titleCols+tablePtr->colOffset);
-    } else if ((c == 'r') && (strncmp(argv[i], "-rows", length) == 0)) {
-      if (i >= (argc-1)) {
-	Tcl_SetResult(interp, "no value given for \"-rows\" option",
-		      TCL_STATIC);
-	return TCL_ERROR;
-      }
-      if (Tcl_GetInt(interp, argv[++i], &maxrow) != TCL_OK) {
-	return TCL_ERROR;
-      }
-      maxrow = MAX(maxrow, tablePtr->titleRows+tablePtr->rowOffset);
-    } else if ((c == '-') && (strncmp(argv[i], "--", length) == 0)) {
-      i++;
-      break;
-    } else {
-      goto badSwitch;
-    }
   }
-  argsLeft = argc - i;
-  if (argsLeft != 1 && argsLeft != 2) {
-    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		     (insertType) ? " insert" : " delete",
-		     (which /* rows */) ? " rows" : " cols",
-		     " ?switches? index ?count?\"", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  c = 1;
-  if (strcmp(argv[i], "end") == 0) {
-    /* allow "end" to be specified as an index */
-    idx = (which /* rows */) ? maxrow : maxcol ;
-  } else if (Tcl_GetInt(interp, argv[i], &idx) != TCL_OK) {
-    return TCL_ERROR;
-  }
-  if (argsLeft == 2 && Tcl_GetInt(interp, argv[++i], &c) != TCL_OK) {
-    return TCL_ERROR;
-  }
-  if (tablePtr->state == STATE_DISABLED || c == 0)
-    return TCL_OK;
-
-  if (which /* rows */) {
-    maxkey	= maxrow;
-    minkey	= tablePtr->rowOffset;
-    minkeyoff	= tablePtr->rowOffset+tablePtr->titleRows;
-    lo		= tablePtr->colOffset+(movetitle?0:tablePtr->titleCols);
-    hi		= maxcol;
-    offset	= tablePtr->rowOffset;
-    tagTblPtr	= tablePtr->rowStyles;
-    dimTblPtr	= tablePtr->rowHeights;
-    dimPtr	= &(tablePtr->rows);
-  } else {
-    maxkey	= maxcol;
-    minkey	= tablePtr->colOffset;
-    minkeyoff	= tablePtr->colOffset+tablePtr->titleCols;
-    lo		= tablePtr->rowOffset+(movetitle?0:tablePtr->titleRows);
-    hi		= maxrow;
-    offset	= tablePtr->colOffset;
-    tagTblPtr	= tablePtr->colStyles;
-    dimTblPtr	= tablePtr->colWidths;
-    dimPtr	= &(tablePtr->cols);
-  }
-
-  if (insertType) {
-    /* Handle row/col insertion */
-    first = MAX(MIN(idx, maxkey), minkey);
-    /* +count means insert after index, -count means insert before index */
-    if (c < 0) {
-      c = -c;
-    } else {
-      first++;
-    }
-    if (movedim) {
-      maxkey += c;
-      *dimPtr += c;
-    }
-    if (!movetitle && (first < minkeyoff)) {
-      c -= minkeyoff-first;
-      if (c <= 0)
-	return TCL_OK;
-      first = MAX(first, minkeyoff);
-    }
-    for (i = maxkey; i >= first; i--) {
-      /* move row/col style && width/height here */
-      TableModifyRCaux(tablePtr, which, movetag, tagTblPtr,
-		       dimTblPtr, offset, i, i-c, lo, hi, ((i-c)<first));
-    }
-  } else {
-    /* Handle row/col deletion */
-    first = MAX(MIN(idx,idx+c), minkey);
-    /* (index = i && count = 1) == (index = i && count = -1) */
-    if (c < 0) {
-      /* if the count is negative, make sure that the col count will delete
-       * no greater than the original index */
-      c = idx-first;
-      first++;
-    }
-    if (movedim) {
-      *dimPtr -= c;
-    }
-    if (!movetitle && (first < minkeyoff)) {
-      c -= minkeyoff-first;
-      if (c <= 0)
-	return TCL_OK;
-      first = MAX(first, minkeyoff);
-    }
-    for (i = first; i <= maxkey; i++) {
-      TableModifyRCaux(tablePtr, which, movetag, tagTblPtr,
-		       dimTblPtr, offset, i, i+c, lo, hi, ((i+c)>maxkey));
-    }
-  }
-  if (Tcl_FirstHashEntry(tablePtr->selCells, &search) != NULL) {
-    /* clear selection - forceful, but effective */
-    Tcl_DeleteHashTable(tablePtr->selCells);
-    ckfree((char *) (tablePtr->selCells));
-    tablePtr->selCells = (Tcl_HashTable *)ckalloc(sizeof(Tcl_HashTable));
-    Tcl_InitHashTable(tablePtr->selCells, TCL_STRING_KEYS);
-  }
-
-  TableAdjustParams(tablePtr);
-  /* change the geometry */
-  TableGeometryRequest(tablePtr);
-  /* FIX: make this TableRefresh */
-  if (which /* rows */) {
-    TableCellCoords(tablePtr, first, 0, &x, &y, &offset, &offset);
-    TableInvalidate(tablePtr, x, y,
-		    Tk_Width(tablePtr->tkwin),
-		    Tk_Height(tablePtr->tkwin)-y, 0);
-  } else {
-    TableCellCoords(tablePtr, 0, first, &x, &y, &offset, &offset);
-    TableInvalidate(tablePtr, x, y,
-		    Tk_Width(tablePtr->tkwin)-x,
-		    Tk_Height(tablePtr->tkwin), 0);
-  }
-  return TCL_OK;
 }

@@ -7,6 +7,9 @@ These are recommendations, not all of the same priority, and not
 all necessarily will be implemented.  If you see something you
 feel is important, email me and say so.  Very democratic.
 
+* some sort of textbbox command that will return the size of the
+  text in a cell, to allow for perfect cell sizing.
+
 * Tcl8 object model will be supported when it is supported in Tk
   (or somewhere else that has good examples for widgets)
 

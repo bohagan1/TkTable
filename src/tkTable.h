@@ -4,7 +4,7 @@
  *	This is the header file for the module that implements
  *	table widgets for the Tk toolkit.
  *
- * Copyright (c) 1997,1998 Jeffrey Hobbs
+ * Copyright (c) 1997-1999 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -22,6 +22,10 @@
 #else
 # include <X11/Xatom.h>
 #endif /* MAC_TCL */
+
+#if (TCL_MINOR_VERSION == 0) /* Tcl8.0 stuff */
+#define Tcl_GetString(objPtr)	Tcl_GetStringFromObj(objPtr, (int *)NULL)
+#endif
 
 /* This EXTERN declaration is needed for Tcl < 8.0.3 */
 #ifndef EXTERN
@@ -126,7 +130,7 @@
  * ACTIVE_DISABLED:	Non-zero means the active cell is -state disabled
  * OVER_BORDER:		Non-zero means we are over a table cell border
  * REDRAW_ON_MAP:	Forces a redraw on the unmap
- * NO_SPANS:		prevent cell spans from being used
+ * AVOID_SPANS:		prevent cell spans from being used
  *
  * FIX - consider adding UPDATE_SCROLLBAR a la entry
  */
@@ -143,9 +147,7 @@
 #define ACTIVE_DISABLED		(1L<<10)
 #define OVER_BORDER		(1L<<11)
 #define REDRAW_ON_MAP		(1L<<12)
-#ifndef NO_SPANS
 #define AVOID_SPANS		(1L<<13)
-#endif
 
 /* Flags for TableInvalidate && TableRedraw */
 #define ROW		(1L<<0)
@@ -169,10 +171,6 @@
 #define SEL_BOTH	(1<<2)
 #define SEL_CELL	(1<<3)
 #define SEL_NONE	(1<<4)
-
-#define CLEAR_TAGS	(1<<0)
-#define CLEAR_SIZES	(1<<1)
-#define CLEAR_CACHE	(1<<2)
 
 /*
  * Definitions for tablePtr->dataSource, by bit
@@ -318,10 +316,8 @@ typedef struct {
      by the appropriate *Offset factor */
   Tcl_HashTable *colWidths;	/* hash table of non default column widths */
   Tcl_HashTable *rowHeights;	/* hash table of non default row heights */
-#ifndef NO_SPANS
   Tcl_HashTable *spanTbl;	/* table for spans */
   Tcl_HashTable *spanAffTbl;	/* table for cells affected by spans */
-#endif
   Tcl_HashTable *tagTable;	/* table for style tags */
   Tcl_HashTable *winTable;	/* table for embedded windows */
   Tcl_HashTable *rowStyles;	/* table for row styles */
@@ -346,9 +342,11 @@ typedef struct {
   /* The invalid rectangle if there is an update pending */
   int invalidX, invalidY, invalidWidth, invalidHeight;
   int seen[4];			/* see TableUndisplay */
+#ifdef POSTSCRIPT
   /* Pointer to information used for generating Postscript for the canvas.
    * NULL means no Postscript is currently being generated. */
   struct TkPostscriptInfo *psInfoPtr;
+#endif
 } Table;
 
 /*
@@ -389,9 +387,13 @@ extern void	EmbWinDisplay _ANSI_ARGS_((Table *tablePtr, Drawable window,
 extern void	EmbWinUnmap _ANSI_ARGS_((register Table *tablePtr,
 			int rlo, int rhi, int clo, int chi));
 extern void	EmbWinDelete _ANSI_ARGS_((register Table *tablePtr,
-					  TableEmbWindow *ewPtr));
+			TableEmbWindow *ewPtr));
+extern int	Table_WinMove _ANSI_ARGS_((register Table *tablePtr,
+			char *CONST srcPtr, char *CONST destPtr, int flags));
+extern int	Table_WinDelete _ANSI_ARGS_((register Table *tablePtr,
+			char *CONST idxPtr));
 extern int	Table_WindowCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	TableValidateChange _ANSI_ARGS_((Table *tablePtr, int r,
 			int c, char *old, char *new, int index));
 extern void	TableLostSelection _ANSI_ARGS_((ClientData clientData));
@@ -402,80 +404,62 @@ extern void	TableSetActiveIndex _ANSI_ARGS_((register Table *tablePtr));
  */
 
 extern int	Table_ActivateCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_AdjustCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_BboxCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_BorderCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
-extern int	Table_CgetCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
-extern int	Table_ConfigureCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_ClearCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_CurselectionCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_CurvalueCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
-extern int	Table_EditCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_GetCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
-extern int	Table_IcursorCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
-extern int	Table_IndexCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
-extern int	Table_RereadCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_ScanCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_SeeCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_SelAnchorCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_SelClearCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_SelIncludesCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_SelSetCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
-extern int	Table_ValidateCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
-extern int	Table_VersionCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_ViewCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
-extern int	Table_Cmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char *argv[]));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 
 /*
  * HEADERS IN tkTableEdit
  */
 
+extern int	Table_EditCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern void	TableDeleteChars _ANSI_ARGS_((register Table *tablePtr,
-					      int index, int count));
+			int index, int count));
 extern void	TableInsertChars _ANSI_ARGS_((register Table *tablePtr,
-					      int index, char *string));
-extern int	TableModifyRC _ANSI_ARGS_((register Table *tablePtr,
-			Tcl_Interp *interp, int type, int which,
-			int argc, char **argv));
+			int index, char *string));
+
 /*
  * HEADERS IN TKTABLETAG
  */
 
 extern TableTag *TableNewTag _ANSI_ARGS_((void));
 extern void	TableMergeTag _ANSI_ARGS_((TableTag *baseTag,
-					   TableTag *addTag));
+			TableTag *addTag));
 extern void	TableInvertTag _ANSI_ARGS_((TableTag *baseTag));
 extern void	TableInitTags _ANSI_ARGS_((Table *tablePtr));
 extern TableTag *FindRowColTag _ANSI_ARGS_((Table *tablePtr,
-					     int cell, int type));
+			int cell, int type));
 extern void	TableCleanupTag _ANSI_ARGS_((Table *tablePtr,
-					     TableTag *tagPtr));
+			TableTag *tagPtr));
 extern int	Table_TagCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char **argv));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 
 /*
  * HEADERS IN TKTABLECELL
@@ -484,43 +468,43 @@ extern int	Table_TagCmd _ANSI_ARGS_((ClientData clientData,
 extern int	TableTrueCell _ANSI_ARGS_((Table *tablePtr, int row, int col,
 					   int *trow, int *tcol));
 extern int	TableCellCoords _ANSI_ARGS_((Table *tablePtr, int row,
-					     int col, int *rx, int *ry,
-					     int *rw, int *rh));
+			int col, int *rx, int *ry, int *rw, int *rh));
 extern int	TableCellVCoords _ANSI_ARGS_((Table *tablePtr, int row,
-					      int col, int *rx, int *ry,
-					      int *rw, int *rh, int full));
+			int col, int *rx, int *ry,
+			int *rw, int *rh, int full));
 extern void	TableWhatCell _ANSI_ARGS_((register Table *tablePtr,
-					   int x, int y, int *row, int *col));
+			int x, int y, int *row, int *col));
 extern int	TableAtBorder _ANSI_ARGS_((Table *tablePtr, int x, int y,
-					   int *row, int *col));
+			int *row, int *col));
 extern char *	TableGetCellValue _ANSI_ARGS_((Table *tablePtr, int r, int c));
 extern int	TableSetCellValue _ANSI_ARGS_((Table *tablePtr, int r, int c,
-					       char *value));
+			char *value));
 extern char *	TableCellSort _ANSI_ARGS_((Table *tablePtr, char *str));
 extern int	TableGetIcursor _ANSI_ARGS_((Table *tablePtr, char *arg,
-					     int *posn));
-extern int	TableGetIndex _ANSI_ARGS_((register Table *tablePtr, char *str,
-					   int *row_p, int *col_p));
+			int *posn));
+#define TableGetIcursorObj(tablePtr, objPtr, posnPtr) \
+	TableGetIcursor(tablePtr, Tcl_GetString(objPtr), posnPtr)
+extern int	TableGetIndex _ANSI_ARGS_((register Table *tablePtr,
+			char *str, int *row_p, int *col_p));
+#define TableGetIndexObj(tablePtr, objPtr, rowPtr, colPtr) \
+	TableGetIndex(tablePtr, Tcl_GetString(objPtr), rowPtr, colPtr)
 extern int	Table_SetCmd _ANSI_ARGS_((ClientData clientData,
-					 Tcl_Interp *interp,
-					 int argc, char **argv));
-#ifndef NO_SPANS
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_HiddenCmd _ANSI_ARGS_((ClientData clientData,
-					     Tcl_Interp *interp,
-					     int argc, char **argv));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	Table_SpanCmd _ANSI_ARGS_((ClientData clientData,
-					  Tcl_Interp *interp,
-					  int argc, char **argv));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern void	TableSpanSanCheck _ANSI_ARGS_((register Table *tablePtr));
-#endif
 
 /*
  * HEADERS IN TKTABLEPS
  */
 
+#ifdef POSTSCRIPT
 extern int	Table_PostscriptCmd _ANSI_ARGS_((ClientData clientData,
-			Tcl_Interp *interp, int argc, char **argv));
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern void	Tcl_DStringAppendAll _ANSI_ARGS_(TCL_VARARGS(Tcl_DString *, arg1));
+#endif
 
 /*
  * HEADERS IN TKTABLE
@@ -529,24 +513,21 @@ extern void	Tcl_DStringAppendAll _ANSI_ARGS_(TCL_VARARGS(Tcl_DString *, arg1));
 EXTERN int Tktable_Init		_ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int Tktable_SafeInit	_ANSI_ARGS_((Tcl_Interp *interp));
 
+int	TableConfigure _ANSI_ARGS_((Tcl_Interp *interp,
+			Table *tablePtr, int objc, Tcl_Obj *CONST objv[],
+			int flags, int forceUpdate));
 extern void	TableGetActiveBuf _ANSI_ARGS_((register Table *tablePtr));
 extern void	ExpandPercents _ANSI_ARGS_((Table *tablePtr, char *before,
 			int r, int c, char *old, char *new, int index,
 			Tcl_DString *dsPtr, int cmdType));
 extern void	TableInvalidate _ANSI_ARGS_((Table *tablePtr, int x, int y,
-					     int width, int height,
-					     int force));
+			int width, int height, int force));
 extern void	TableRefresh _ANSI_ARGS_((register Table *tablePtr,
-					  int arg1, int arg2, int mode));
- int	TableClear _ANSI_ARGS_((register Table *tablePtr, int mode,
-					char *first, char *last));
+			int arg1, int arg2, int mode));
 void	TableGeometryRequest _ANSI_ARGS_((Table *tablePtr));
 void	TableAdjustActive _ANSI_ARGS_((register Table *tablePtr));
 void	TableAdjustParams _ANSI_ARGS_((register Table *tablePtr));
 void	TableConfigCursor _ANSI_ARGS_((register Table *tablePtr));
- int	TableConfigure _ANSI_ARGS_((Tcl_Interp *interp,
-			Table *tablePtr, int argc, char **argv,
-			int flags, int forceUpdate));
 
 #define TableInvalidateAll(tablePtr, flags)	\
 	TableInvalidate((tablePtr), 0, 0, Tk_Width((tablePtr)->tkwin),\

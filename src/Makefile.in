@@ -14,7 +14,8 @@ DOCDIR		= $(TOPDIR)/doc
 
 PACKAGE		= Tktable
 OBJS		= tkTable.o tkTableWin.o tkTableTag.o tkTableEdit.o \
-		  tkTableCell.o tkTableCmds.o cmd.o mm.o
+		  tkTableCell.o tkTableCmds.o cmd.o
+## PostScript is on the drawing board
 #OBJS		+= tkTablePs.o
 MANS		= tkTable.n
 
@@ -38,14 +39,23 @@ TK_LIB_SPEC	= @TK_LIB_SPEC@
 TCL_LIBS	= @TCL_LIBS@
 TK_LIBS		= @TK_LIBS@
 
-# NO_EMBEDDED_RUNTIME means that the tkTable.tcl file will not be embedded
-# into the executable, thus the default tkTable.tcl library file will not
-# be available when the library is loaded.
-# If this is defined, the tkTable.tcl file must be available in a
-# predefined set of directories (see docs).
 TBL_CFLAGS	= -O
-#TBL_CFLAGS	+= -DPROCS
+
+## NO_EMBEDDED_RUNTIME means that the tkTable.tcl file will not be embedded
+## into the executable, thus the default tkTable.tcl library file will not
+## be available when the library is loaded.
+## If this is defined, the tkTable.tcl file must be available in a
+## predefined set of directories (see docs).
 #TBL_CFLAGS	+= -DNO_EMBEDDED_RUNTIME
+
+## USE_EXIT_HANDLER is necessary for 8.1 before b3 and 8.0
+## It is a work-around for the improper unloading of DLLs when exiting
+#TBL_CFLAGS	+= -DUSE_EXIT_HANDLER
+
+## Experimental, not documented, not complete...
+#TBL_CFLAGS	+= -DPROCS
+
+## I use this for helping hunt down the slightest error
 #TBL_CFLAGS	+= -DDEBUG -g -Wall -Wno-implicit -Wshadow \
 		   -Wpointer-arith -Wmissing-prototypes \
 		   -Wmissing-declarations -Wnested-externs -Winline

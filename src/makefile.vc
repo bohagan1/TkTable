@@ -32,10 +32,10 @@ DESTDIRU	= C:/Progra~1/Tcl
 
 # Set your version of Tcl
 
-TCL_VERSION	= 8.0
-TK_VERSION	= 8.0
-TCL_LIB_V	= 80
-TK_LIB_V	= 80
+TCL_VERSION	= 8.1
+TK_VERSION	= 8.1
+TCL_LIB_V	= 81
+TK_LIB_V	= 81
 
 INST_RUNTIME	= $(DESTDIR)\lib\tkTable$(TBL_VERSION)
 INST_RUNTIMEU	= $(DESTDIRU)/lib/tkTable$(TBL_VERSION)
@@ -84,7 +84,8 @@ DEFINES = -DDLL_BUILD -DBUILD_tkTable $(TBL_CFLAGS) \
 # Global makefile settings
 #
 
-DLLOBJS = $(TMPDIR)\tkTable.obj $(TMPDIR)\tkTableWin.obj $(TMPDIR)\tkTableTag.obj $(TMPDIR)\tkTableEdit.obj $(TMPDIR)\tkTableCell.obj $(TMPDIR)\tkTableCmds.obj $(TMPDIR)\cmd.obj $(TMPDIR)\mm.obj
+DLLOBJS = $(TMPDIR)\tkTable.obj $(TMPDIR)\tkTableWin.obj $(TMPDIR)\tkTableTag.obj $(TMPDIR)\tkTableEdit.obj $(TMPDIR)\tkTableCell.obj $(TMPDIR)\tkTableCmds.obj $(TMPDIR)\cmd.obj
+# $(TMPDIR)\tkTablePs.obj
 DLL=$(PROJECT).dll
 
 # Targets

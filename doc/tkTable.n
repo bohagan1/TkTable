@@ -429,7 +429,8 @@ less memory).  If false, then all values in the array will be maintained.
 Specifies one of two states for the entry:  \fBnormal\fR or \fBdisabled\fR.
 If the table is disabled then the value may not be changed using widget
 commands and no insertion cursor will be displayed, even if the input focus
-is in the widget.  Defaults to \fBnormal\fR.
+is in the widget.  Also, all insert or delete methods will be ignored.
+Defaults to \fBnormal\fR.
 .OP \-titlecols titleCols TitleCols
 Number of columns to use as a title area.  Defaults to 0.
 .OP \-titlerows titleRows TitleRows
@@ -868,7 +869,7 @@ this case the command returns an empty string.
 \fIOption\fR may have any of the values accepted by the \fBtable\fR
 command.
 .TP
-\fIpathName \fBcurselection\fR ?\fIset value\fR?
+\fIpathName \fBcurselection\fR ?\fIvalue\fR?
 With no arguments, it returns the sorted indices of the currently selected
 cells.  Otherwise it sets all the selected cells to the given value.  The
 set has no effect if there is no associated Tcl array or the state is
@@ -889,36 +890,30 @@ the character after that index, otherwise it deletes from the first index to
 the second.  \fIindex\fR can be a number, \fBinsert\fR or \fBend\fR.
 .TP
 \fIpathName \fBdelete cols\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
-Deletes \fBcount\fR cols starting at (and including) col \fBindex\fR.  If
-\fBcount\fR is negative, it deletes cols to the left.  Otherwise it deletes
-cols to the right.  The selection will be cleared.  The optional switches
-are:
+Deletes \fIcount\fR cols starting at (and including) col \fIindex\fR.  The
+\fIindex\fR will be constrained to the limits of the tables.  If
+\fIcount\fR is negative, it deletes cols to the left.  Otherwise it deletes
+cols to the right.  \fIcount\fR defaults to 1 (meaning just the column
+specified).  The selection will be cleared.  At the moment, spans are
+not adjusted with this action.  Optional switches are:
 .RS
-.TP
-\fB\-cols\fR \fIvalue\fR
-Sets an artificial maximum column boundary to use when collapsing the rest
-of the columns.  By default it uses the value of the \fB\-cols\fR widget
-option.  This can cause interesting side\-effects when used in conjunction
-with the other options.
 .TP
 \fB\-holddimensions\fR
 Causes the table cols to be unaffected by the deletion (empty cols may
 appear).  By default the dimensions are adjusted by \fBcount\fR.
 .TP
 \fB\-holdtags\fR
-Causes the tags specified by the \fItag\fR method to not collapse along
+Causes the tags specified by the \fItag\fR method to not move along
 with the data.  Also prevents specific widths set by the \fIwidth\fR method
 from being adjusted.  By default, these tags are properly adjusted.
+.TP
+\fB\-holdwindows\fR
+Causes the embedded windows created with the \fIwindow\fR method to not
+move along with the data.  By default, these windows are properly adjusted.
 .TP
 \fB\-keeptitles\fR
 Prevents title area cells from being changed.  Otherwise they are
 treated just like regular cells and will move as specified.
-.TP
-\fB\-rows\fR \fIvalue\fR
-Sets an artificial maximum row boundary to use when collapsing the rest of
-the rows.  By default it uses the value of the \fB\-rows\fR widget option.
-This can cause interesting side\-effects when used in conjunction with the
-other options.
 .TP
 \fB\-\-\fR
 Signifies the end of the switches.
@@ -954,7 +949,9 @@ specified, it returns 1 if all indices are hidden cells, 0 otherwise.
 With no arguments, prints out the location of the insertion cursor in the
 active cell.  With one argument, sets the cursor to that point in the
 string.  0 is before the first character, you can also use \fBinsert\fR or
-\fBend\fR for the current insertion point or the end of the text.
+\fBend\fR for the current insertion point or the end of the text.  If
+there is no active cell, or the cell or table is disabled, this will
+return -1.
 .TP
 \fIpathName \fBindex\fR \fIindex\fR ?\fIrow|col\fR?
 Returns the integer cell coordinate that corresponds to \fIindex\fR in the
@@ -1064,7 +1061,7 @@ cell.  See EXAMPLES for more info.
 \fIpathName \fBtag\fR option ?\fIarg arg ...\fR?
 This command is used to manipulate tags.  The exact behavior of the command
 depends on the \fIoption\fR argument that follows the \fBtag\fR argument.
-Only \fIcget\fR complains about unknown tag names.
+\fIcget\fR, \fIcell\fR, and \fIrow|col\fR complain about unknown tag names.
 The following forms of the command are currently supported:
 .RS
 .TP

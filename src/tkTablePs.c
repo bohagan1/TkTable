@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1991-1994 The Regents of the University of California.
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
- * Copyright (c) 1998 Jeffrey Hobbs
+ * changes 1998 Copyright (c) 1998 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -381,6 +381,8 @@ static int	GetPostscriptPoints _ANSI_ARGS_((Tcl_Interp *interp,
 			char *string, double *doublePtr));
 int		Tk_TablePsFont _ANSI_ARGS_((Tcl_Interp *interp,
 			Table *tablePtr, Tk_Font tkfont));
+int		Tk_TablePsColor _ANSI_ARGS_((Tcl_Interp *interp,
+			Table *tablePtr, XColor *colorPtr));
 static int	TextToPostscript _ANSI_ARGS_((Tcl_Interp *interp,
 			Table *tablePtr, TableTag *tagPtr, int tagX, int tagY,
 			int width, int height, int row, int col,
@@ -425,536 +427,554 @@ Tcl_DStringAppendAll TCL_VARARGS_DEF(Tcl_DString *, arg1)
 
     /* ARGSUSED */
 int
-Table_PostscriptCmd(clientData, interp, argc, argv)
+Table_PostscriptCmd(clientData, interp, objc, objv)
      ClientData clientData;	/* Information about table widget. */
      Tcl_Interp *interp;	/* Current interpreter. */
-     int argc;			/* Number of arguments. */
-     char **argv;		/* Argument strings.  Caller has
-				 * already parsed this command enough
-				 * to know that argv[1] is
-				 * "postscript". */
+     int objc;			/* Number of argument objects. */
+     Tcl_Obj *CONST objv[];
 {
-  register Table *tablePtr = (Table *) clientData;
-  TkPostscriptInfo psInfo, *oldInfoPtr;
-  int result;
-  int row, col, firstRow, firstCol, lastRow, lastCol;
-  /* dimensions of first and last cell to output */
-  int x0, y0, w0, h0, xn, yn, wn, hn;
-  int x, y, w, h;
+#ifdef _WIN32
+    /*
+     * At the moment, it just doesn't like this code...
+     */
+    return TCL_OK;
+#else
+    register Table *tablePtr = (Table *) clientData;
+    TkPostscriptInfo psInfo, *oldInfoPtr;
+    int result;
+    int row, col, firstRow, firstCol, lastRow, lastCol;
+    /* dimensions of first and last cell to output */
+    int x0, y0, w0, h0, xn, yn, wn, hn;
+    int x, y, w, h, i;
 #define STRING_LENGTH 400
-  char string[STRING_LENGTH+1], *p;
-  time_t now;
-  size_t length;
-  int deltaX = 0, deltaY = 0;	/* Offset of lower-left corner of area to
+    char string[STRING_LENGTH+1], *p, **argv;
+    size_t length;
+    int deltaX = 0, deltaY = 0;	/* Offset of lower-left corner of area to
 				 * be marked up, measured in table units
 				 * from the positioning point on the page
 				 * (reflects anchor position).  Initial
 				 * values needed only to stop compiler
 				 * warnings. */
-  Tcl_HashSearch search;
-  Tcl_HashEntry *hPtr;
-  CONST char * CONST *chunk;
-  Tk_TextLayout textLayout = NULL;
-  char *value;
-  int rowHeight, total, *colWidths, iW, iH;
-  TableTag *tagPtr, *colPtr, *rowPtr, *titlePtr;
-  Tcl_DString postscript, buffer;
+    Tcl_HashSearch search;
+    Tcl_HashEntry *hPtr;
+    CONST char * CONST *chunk;
+    Tk_TextLayout textLayout = NULL;
+    char *value;
+    int rowHeight, total, *colWidths, iW, iH;
+    TableTag *tagPtr, *colPtr, *rowPtr, *titlePtr;
+    Tcl_DString postscript, buffer;
 
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		     " postscript ?option value ...?\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /*
-   *----------------------------------------------------------------
-   * Initialize the data structure describing Postscript generation,
-   * then process all the arguments to fill the data structure in.
-   *----------------------------------------------------------------
-   */
-
-  Tcl_DStringInit(&postscript);
-  Tcl_DStringInit(&buffer);
-  oldInfoPtr = tablePtr->psInfoPtr;
-  tablePtr->psInfoPtr = &psInfo;
-  /* This is where in the window that we start printing from */
-  psInfo.x		= 0;
-  psInfo.y		= 0;
-  psInfo.width		= -1;
-  psInfo.height		= -1;
-  psInfo.pageXString	= NULL;
-  psInfo.pageYString	= NULL;
-  psInfo.pageX		= 72*4.25;
-  psInfo.pageY		= 72*5.5;
-  psInfo.pageWidthString	= NULL;
-  psInfo.pageHeightString	= NULL;
-  psInfo.scale		= 1.0;
-  psInfo.pageAnchor	= TK_ANCHOR_CENTER;
-  psInfo.rotate		= 0;
-  psInfo.fontVar	= NULL;
-  psInfo.colorVar	= NULL;
-  psInfo.colorMode	= NULL;
-  psInfo.colorLevel	= 0;
-  psInfo.fileName	= NULL;
-  psInfo.channelName	= NULL;
-  psInfo.chan		= NULL;
-  psInfo.first		= NULL;
-  psInfo.last		= NULL;
-  Tcl_InitHashTable(&psInfo.fontTable, TCL_STRING_KEYS);
-  result = Tk_ConfigureWidget(interp, tablePtr->tkwin, configSpecs,
-			      argc-2, argv+2, (char *) &psInfo,
-			      TK_CONFIG_ARGV_ONLY);
-  if (result != TCL_OK) {
-    goto cleanup;
-  }
-
-  if (psInfo.first == NULL) {
-    firstRow = 0;
-    firstCol = 0;
-  } else if (TableGetIndex(tablePtr, psInfo.first, &firstRow, &firstCol)
-	     != TCL_OK) {
-    result = TCL_ERROR;
-    goto cleanup;
-  }
-  if (psInfo.last == NULL) {
-    lastRow = tablePtr->rows-1;
-    lastCol = tablePtr->cols-1;
-  } else if (TableGetIndex(tablePtr, psInfo.last, &lastRow, &lastCol)
-	     != TCL_OK) {
-    result = TCL_ERROR;
-    goto cleanup;
-  }
-
-  if (psInfo.fileName != NULL) {
-    /* Check that -file and -channel are not both specified. */
-    if (psInfo.channelName != NULL) {
-      Tcl_AppendResult(interp, "can't specify both -file",
-		       " and -channel", (char *) NULL);
-      result = TCL_ERROR;
-      goto cleanup;
+    if (objc < 2) {
+	Tcl_WrongNumArgs(interp, 2, objv, "?option value ...?");
+	return TCL_ERROR;
     }
 
     /*
-     * Check that we are not in a safe interpreter. If we are, disallow
-     * the -file specification.
+     *----------------------------------------------------------------
+     * Initialize the data structure describing Postscript generation,
+     * then process all the arguments to fill the data structure in.
+     *----------------------------------------------------------------
      */
-    if (Tcl_IsSafe(interp)) {
-      Tcl_AppendResult(interp, "can't specify -file in a",
-		       " safe interpreter", (char *) NULL);
-      result = TCL_ERROR;
-      goto cleanup;
-    }
 
-    p = Tcl_TranslateFileName(interp, psInfo.fileName, &buffer);
-    if (p == NULL) {
-      result = TCL_ERROR;
-      goto cleanup;
-    }
-    psInfo.chan = Tcl_OpenFileChannel(interp, p, "w", 0666);
-    Tcl_DStringFree(&buffer);
+    Tcl_DStringInit(&postscript);
     Tcl_DStringInit(&buffer);
-    if (psInfo.chan == NULL) {
-      result = TCL_ERROR;
-      goto cleanup;
-    }
-  }
+    oldInfoPtr = tablePtr->psInfoPtr;
+    tablePtr->psInfoPtr = &psInfo;
+    /* This is where in the window that we start printing from */
+    psInfo.x			= 0;
+    psInfo.y			= 0;
+    psInfo.width		= -1;
+    psInfo.height		= -1;
+    psInfo.pageXString		= NULL;
+    psInfo.pageYString		= NULL;
+    psInfo.pageX		= 72*4.25;
+    psInfo.pageY		= 72*5.5;
+    psInfo.pageWidthString	= NULL;
+    psInfo.pageHeightString	= NULL;
+    psInfo.scale		= 1.0;
+    psInfo.pageAnchor		= TK_ANCHOR_CENTER;
+    psInfo.rotate		= 0;
+    psInfo.fontVar		= NULL;
+    psInfo.colorVar		= NULL;
+    psInfo.colorMode		= NULL;
+    psInfo.colorLevel		= 0;
+    psInfo.fileName		= NULL;
+    psInfo.channelName		= NULL;
+    psInfo.chan			= NULL;
+    psInfo.first		= NULL;
+    psInfo.last			= NULL;
+    Tcl_InitHashTable(&psInfo.fontTable, TCL_STRING_KEYS);
 
-  if (psInfo.channelName != NULL) {
-    int mode;
     /*
-     * Check that the channel is found in this interpreter and that it
-     * is open for writing.
+     * The magic StringifyObjects
      */
-    psInfo.chan = Tcl_GetChannel(interp, psInfo.channelName, &mode);
-    if (psInfo.chan == (Tcl_Channel) NULL) {
-      result = TCL_ERROR;
-      goto cleanup;
-    }
-    if ((mode & TCL_WRITABLE) == 0) {
-      Tcl_AppendResult(interp, "channel \"", psInfo.channelName,
-		       "\" wasn't opened for writing", (char *) NULL);
-      result = TCL_ERROR;
-      goto cleanup;
-    }
-  }
+    argv = (char **) ckalloc((objc + 1) * sizeof(char *));
+    for (i = 0; i < objc; i++)
+	argv[i] = Tcl_GetString(objv[i]);
+    argv[i] = NULL;
 
-  if (psInfo.colorMode == NULL) {
-    psInfo.colorLevel = 2;
-  } else {
-    length = strlen(psInfo.colorMode);
-    if (strncmp(psInfo.colorMode, "monochrome", length) == 0) {
-      psInfo.colorLevel = 0;
-    } else if (strncmp(psInfo.colorMode, "gray", length) == 0) {
-      psInfo.colorLevel = 1;
-    } else if (strncmp(psInfo.colorMode, "color", length) == 0) {
-      psInfo.colorLevel = 2;
-    } else {
-      Tcl_AppendResult(interp, "bad color mode \"", psInfo.colorMode,
-		       "\": must be monochrome, gray or color", (char *) NULL);
-      goto cleanup;
-    }
-  }
-
-  TableCellCoords(tablePtr, firstRow, firstCol, &x0, &y0, &w0, &h0);
-  TableCellCoords(tablePtr, lastRow, lastCol, &xn, &yn, &wn, &hn);
-  psInfo.x = x0;
-  psInfo.y = y0;
-  if (psInfo.width == -1) {
-    psInfo.width = xn+wn;
-  }
-  if (psInfo.height == -1) {
-    psInfo.height = yn+hn;
-  }
-  psInfo.x2 = psInfo.x + psInfo.width;
-  psInfo.y2 = psInfo.y + psInfo.height;
-
-  if (psInfo.pageXString != NULL) {
-    if (GetPostscriptPoints(interp, psInfo.pageXString,
-			    &psInfo.pageX) != TCL_OK) {
-      goto cleanup;
-    }
-  }
-  if (psInfo.pageYString != NULL) {
-    if (GetPostscriptPoints(interp, psInfo.pageYString,
-			    &psInfo.pageY) != TCL_OK) {
-      goto cleanup;
-    }
-  }
-  if (psInfo.pageWidthString != NULL) {
-    if (GetPostscriptPoints(interp, psInfo.pageWidthString,
-			    &psInfo.scale) != TCL_OK) {
-      goto cleanup;
-    }
-    psInfo.scale /= psInfo.width;
-  } else if (psInfo.pageHeightString != NULL) {
-    if (GetPostscriptPoints(interp, psInfo.pageHeightString,
-			    &psInfo.scale) != TCL_OK) {
-      goto cleanup;
-    }
-    psInfo.scale /= psInfo.height;
-  } else {
-    psInfo.scale = (72.0/25.4)*WidthMMOfScreen(Tk_Screen(tablePtr->tkwin))
-      / WidthOfScreen(Tk_Screen(tablePtr->tkwin));
-  }
-  switch (psInfo.pageAnchor) {
-  case TK_ANCHOR_NW:
-  case TK_ANCHOR_W:
-  case TK_ANCHOR_SW:
-    deltaX = 0;
-    break;
-  case TK_ANCHOR_N:
-  case TK_ANCHOR_CENTER:
-  case TK_ANCHOR_S:
-    deltaX = -psInfo.width/2;
-    break;
-  case TK_ANCHOR_NE:
-  case TK_ANCHOR_E:
-  case TK_ANCHOR_SE:
-    deltaX = -psInfo.width;
-    break;
-  }
-  switch (psInfo.pageAnchor) {
-  case TK_ANCHOR_NW:
-  case TK_ANCHOR_N:
-  case TK_ANCHOR_NE:
-    deltaY = - psInfo.height;
-    break;
-  case TK_ANCHOR_W:
-  case TK_ANCHOR_CENTER:
-  case TK_ANCHOR_E:
-    deltaY = -psInfo.height/2;
-    break;
-  case TK_ANCHOR_SW:
-  case TK_ANCHOR_S:
-  case TK_ANCHOR_SE:
-    deltaY = 0;
-    break;
-  }
-
-  /*
-   *--------------------------------------------------------
-   * Make a PREPASS over all of the tags
-   * to collect information about all the fonts in use, so that
-   * we can output font information in the proper form required
-   * by the Document Structuring Conventions.
-   *--------------------------------------------------------
-   */
-
-  Tk_TablePsFont(interp, tablePtr, tablePtr->defaultTag.tkfont);
-  Tcl_ResetResult(interp);
-  for (hPtr = Tcl_FirstHashEntry(tablePtr->tagTable, &search);
-       hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-    tagPtr = (TableTag *) Tcl_GetHashValue(hPtr);
-    if (tagPtr->tkfont != NULL) {
-      Tk_TablePsFont(interp, tablePtr, tagPtr->tkfont);
-    }
-  }
-  Tcl_ResetResult(interp);
-
-  /*
-   *--------------------------------------------------------
-   * Generate the header and prolog for the Postscript.
-   *--------------------------------------------------------
-   */
-
-  sprintf(string, " %d,%d => %d,%d\n", firstRow, firstCol, lastRow, lastCol);
-  time(&now);
-  Tcl_DStringAppendAll(&postscript,
-		       "%!PS-Adobe-3.0 EPSF-3.0\n",
-		       "%%Creator: Tk Table Widget\n",
-		       "%%Title: Window ",
-		       Tk_PathName(tablePtr->tkwin), string,
-		       "%%CreationDate: ", ctime(&now),
-		       "%%BoundingBox: ",
-		       (char *) NULL);
-  if (!psInfo.rotate) {
-    sprintf(string, "%d %d %d %d\n",
-	    (int) (psInfo.pageX + psInfo.scale*deltaX),
-	    (int) (psInfo.pageY + psInfo.scale*deltaY),
-	    (int) (psInfo.pageX + psInfo.scale*(deltaX + psInfo.width)
-		   + 1.0),
-	    (int) (psInfo.pageY + psInfo.scale*(deltaY + psInfo.height)
-		   + 1.0));
-  } else {
-    sprintf(string, "%d %d %d %d\n",
-	    (int) (psInfo.pageX - psInfo.scale*(deltaY + psInfo.height)),
-	    (int) (psInfo.pageY + psInfo.scale*deltaX),
-	    (int) (psInfo.pageX - psInfo.scale*deltaY + 1.0),
-	    (int) (psInfo.pageY + psInfo.scale*(deltaX + psInfo.width)
-		   + 1.0));
-  }
-  Tcl_DStringAppendAll(&postscript, string,
-		       "%%Pages: 1\n%%DocumentData: Clean7Bit\n",
-		       "%%Orientation: ",
-		       psInfo.rotate?"Landscape\n":"Portrait\n",
-		       (char *) NULL);
-  p = "%%DocumentNeededResources: font ";
-  for (hPtr = Tcl_FirstHashEntry(&psInfo.fontTable, &search);
-       hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-    sprintf(string, "%s%s\n", p, Tcl_GetHashKey(&psInfo.fontTable, hPtr));
-    Tcl_DStringAppend(&postscript, string, -1);
-    p = "%%+ font ";
-  }
-  Tcl_DStringAppend(&postscript, "%%EndComments\n\n", -1);
-
-  /*
-   * Insert the prolog
-   */
-  for (chunk=prolog; *chunk; chunk++) {
-    Tcl_DStringAppend(&postscript, *chunk, -1);
-  }
-
-  if (psInfo.chan != NULL) {
-    Tcl_Write(psInfo.chan, Tcl_DStringValue(&postscript), -1);
-    Tcl_DStringFree(&postscript);
-    Tcl_DStringInit(&postscript);
-  }
-
-  /*
-   * Document setup:  set the color level and include fonts.
-   * This is where we start using &postscript
-   */
-
-  sprintf(string, "/CL %d def\n", psInfo.colorLevel);
-  Tcl_DStringAppendAll(&postscript, "%%BeginSetup\n", string, (char *) NULL);
-  for (hPtr = Tcl_FirstHashEntry(&psInfo.fontTable, &search);
-       hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-    sprintf(string, "%s%s\n", "%%IncludeResource: font ",
-	    Tcl_GetHashKey(&psInfo.fontTable, hPtr));
-    Tcl_DStringAppend(&postscript, string, -1);
-  }
-  Tcl_DStringAppend(&postscript, "%%EndSetup\n\n", -1);
-
-  /*
-   * Page setup:  move to page positioning point, rotate if
-   * needed, set scale factor, offset for proper anchor position,
-   * and set clip region.
-   */
-
-  sprintf(string, "%.1f %.1f translate\n",
-	  psInfo.pageX, psInfo.pageY);
-  Tcl_DStringAppendAll(&postscript, "%%Page: 1 1\nsave\n",
-		       string, psInfo.rotate?"90 rotate\n":"",
-		       (char *) NULL);
-  sprintf(string, "%.4g %.4g scale\n%d %d translate\n",
-	  psInfo.scale, psInfo.scale, deltaX - psInfo.x, deltaY);
-  Tcl_DStringAppend(&postscript, string, -1);
-  sprintf(string, "%d %.15g moveto %d %.15g lineto %d %.15g lineto %d %.15g",
-	  psInfo.x, (double) psInfo.y2-psInfo.y,
-	  psInfo.x2,(double) psInfo.y2-psInfo.y,
-	  psInfo.x2, 0.0, psInfo.x, 0.0);
-  Tcl_DStringAppend(&postscript, string, -1);
-  Tcl_DStringAppend(&postscript, " lineto closepath clip newpath\n", -1);
-  if (psInfo.chan != NULL) {
-    Tcl_Write(psInfo.chan, Tcl_DStringValue(&postscript), -1);
-    Tcl_DStringFree(&postscript);
-    Tcl_DStringInit(&postscript);
-  }
-
-  /*
-   * Go through each cell, calculating full desired height
-   */
-  result = TCL_OK;
-
-  hPtr = Tcl_FindHashEntry(tablePtr->tagTable, "title");
-  titlePtr = (TableTag *) Tcl_GetHashValue(hPtr);
-
-  total = 0;
-  colWidths = (int *) ckalloc((lastCol-firstCol) * sizeof(int));
-  for (col = 0; col <= lastCol-firstCol; col++) colWidths[col] = 0;
-  Tcl_DStringAppend(&buffer, "gsave\n", -1);
-  for (row = firstRow; row <= lastRow; row++) {
-    rowHeight = 0;
-    rowPtr = FindRowColTag(tablePtr, row+tablePtr->rowOffset, ROW);
-    for (col = firstCol; col <= lastCol; col++) {
-      /* get the coordinates for the cell */
-      TableCellCoords(tablePtr, row, col, &x, &y, &w, &h);
-      if ((x >= psInfo.x2) || (x+w < psInfo.x)
-	  || (y >= psInfo.y2) || (y+h < psInfo.y)) {
-	continue;
-      }
-
-      if (row == tablePtr->activeRow && col == tablePtr->activeCol) {
-	value = tablePtr->activeBuf;
-      } else {
-	value = TableGetCellValue(tablePtr, row+tablePtr->rowOffset,
-				   col+tablePtr->colOffset);
-      }
-      if (!strlen(value))
-	continue;
-
-      /* Create the tag here */
-      tagPtr = TableNewTag();
-      /* First, merge in the default tag */
-      TableMergeTag(tagPtr, &(tablePtr->defaultTag));
-
-      colPtr = FindRowColTag(tablePtr, col+tablePtr->colOffset, COL);
-      if (colPtr != (TableTag *) NULL) TableMergeTag(tagPtr, colPtr);
-      if (rowPtr != (TableTag *) NULL) TableMergeTag(tagPtr, rowPtr);
-      /* Am I in the titles */
-      if (row < tablePtr->topRow || col < tablePtr->leftCol)
-	TableMergeTag(tagPtr, titlePtr);
-      /* Does this have a cell tag */
-      TableMakeArrayIndex(row+tablePtr->rowOffset,
-			  col+tablePtr->colOffset, string);
-      if ((hPtr = Tcl_FindHashEntry(tablePtr->cellStyles, string)) != NULL)
-	TableMergeTag(tagPtr, (TableTag *) Tcl_GetHashValue(hPtr));
-
-      /* the use of -1 instead of Tcl_NumUtfChars means we don't
-       * pass NULLs to postscript */
-      textLayout = Tk_ComputeTextLayout(tagPtr->tkfont, value, -1,
-					(tagPtr->wrap>0) ? w : 0,
-					tagPtr->justify,
-					(tagPtr->multiline>0) ? 0 :
-					TK_IGNORE_NEWLINES, &iW, &iH);
-
-      rowHeight = MAX(rowHeight, iH);
-      colWidths[col-firstCol] = MAX(colWidths[col-firstCol], iW);
-
-      result = TextToPostscript(interp, tablePtr, tagPtr,
-				x, y, iW, iH, row, col, textLayout);
-      Tk_FreeTextLayout(textLayout);
-      if (result != TCL_OK) {
-	char msg[64 + TCL_INTEGER_SPACE];
-
-	sprintf(msg, "\n    (generating Postscript for cell %s)", string);
-	Tcl_AddErrorInfo(interp, msg);
+    result = Tk_ConfigureWidget(interp, tablePtr->tkwin, configSpecs,
+				objc-2, argv+2, (char *) &psInfo,
+				TK_CONFIG_ARGV_ONLY);
+    if (result != TCL_OK) {
 	goto cleanup;
-      }
-      Tcl_DStringAppend(&buffer, Tcl_GetStringResult(interp), -1);
     }
+
+    if (psInfo.first == NULL) {
+	firstRow = 0;
+	firstCol = 0;
+    } else if (TableGetIndex(tablePtr, psInfo.first, &firstRow, &firstCol)
+	       != TCL_OK) {
+	result = TCL_ERROR;
+	goto cleanup;
+    }
+    if (psInfo.last == NULL) {
+	lastRow = tablePtr->rows-1;
+	lastCol = tablePtr->cols-1;
+    } else if (TableGetIndex(tablePtr, psInfo.last, &lastRow, &lastCol)
+	       != TCL_OK) {
+	result = TCL_ERROR;
+	goto cleanup;
+    }
+
+    if (psInfo.fileName != NULL) {
+	/* Check that -file and -channel are not both specified. */
+	if (psInfo.channelName != NULL) {
+	    Tcl_AppendResult(interp, "can't specify both -file",
+			     " and -channel", (char *) NULL);
+	    result = TCL_ERROR;
+	    goto cleanup;
+	}
+
+	/*
+	 * Check that we are not in a safe interpreter. If we are, disallow
+	 * the -file specification.
+	 */
+	if (Tcl_IsSafe(interp)) {
+	    Tcl_AppendResult(interp, "can't specify -file in a",
+			     " safe interpreter", (char *) NULL);
+	    result = TCL_ERROR;
+	    goto cleanup;
+	}
+
+	p = Tcl_TranslateFileName(interp, psInfo.fileName, &buffer);
+	if (p == NULL) {
+	    result = TCL_ERROR;
+	    goto cleanup;
+	}
+	psInfo.chan = Tcl_OpenFileChannel(interp, p, "w", 0666);
+	Tcl_DStringFree(&buffer);
+	Tcl_DStringInit(&buffer);
+	if (psInfo.chan == NULL) {
+	    result = TCL_ERROR;
+	    goto cleanup;
+	}
+    }
+
+    if (psInfo.channelName != NULL) {
+	int mode;
+	/*
+	 * Check that the channel is found in this interpreter and that it
+	 * is open for writing.
+	 */
+	psInfo.chan = Tcl_GetChannel(interp, psInfo.channelName, &mode);
+	if (psInfo.chan == (Tcl_Channel) NULL) {
+	    result = TCL_ERROR;
+	    goto cleanup;
+	}
+	if ((mode & TCL_WRITABLE) == 0) {
+	    Tcl_AppendResult(interp, "channel \"", psInfo.channelName,
+			     "\" wasn't opened for writing", (char *) NULL);
+	    result = TCL_ERROR;
+	    goto cleanup;
+	}
+    }
+
+    if (psInfo.colorMode == NULL) {
+	psInfo.colorLevel = 2;
+    } else {
+	length = strlen(psInfo.colorMode);
+	if (strncmp(psInfo.colorMode, "monochrome", length) == 0) {
+	    psInfo.colorLevel = 0;
+	} else if (strncmp(psInfo.colorMode, "gray", length) == 0) {
+	    psInfo.colorLevel = 1;
+	} else if (strncmp(psInfo.colorMode, "color", length) == 0) {
+	    psInfo.colorLevel = 2;
+	} else {
+	    Tcl_AppendResult(interp, "bad color mode \"", psInfo.colorMode,
+			     "\": must be monochrome, gray or color", (char *) NULL);
+	    goto cleanup;
+	}
+    }
+
+    TableCellCoords(tablePtr, firstRow, firstCol, &x0, &y0, &w0, &h0);
+    TableCellCoords(tablePtr, lastRow, lastCol, &xn, &yn, &wn, &hn);
+    psInfo.x = x0;
+    psInfo.y = y0;
+    if (psInfo.width == -1) {
+	psInfo.width = xn+wn;
+    }
+    if (psInfo.height == -1) {
+	psInfo.height = yn+hn;
+    }
+    psInfo.x2 = psInfo.x + psInfo.width;
+    psInfo.y2 = psInfo.y + psInfo.height;
+
+    if (psInfo.pageXString != NULL) {
+	if (GetPostscriptPoints(interp, psInfo.pageXString,
+				&psInfo.pageX) != TCL_OK) {
+	    goto cleanup;
+	}
+    }
+    if (psInfo.pageYString != NULL) {
+	if (GetPostscriptPoints(interp, psInfo.pageYString,
+				&psInfo.pageY) != TCL_OK) {
+	    goto cleanup;
+	}
+    }
+    if (psInfo.pageWidthString != NULL) {
+	if (GetPostscriptPoints(interp, psInfo.pageWidthString,
+				&psInfo.scale) != TCL_OK) {
+	    goto cleanup;
+	}
+	psInfo.scale /= psInfo.width;
+    } else if (psInfo.pageHeightString != NULL) {
+	if (GetPostscriptPoints(interp, psInfo.pageHeightString,
+				&psInfo.scale) != TCL_OK) {
+	    goto cleanup;
+	}
+	psInfo.scale /= psInfo.height;
+    } else {
+	psInfo.scale = (72.0/25.4)*WidthMMOfScreen(Tk_Screen(tablePtr->tkwin))
+	    / WidthOfScreen(Tk_Screen(tablePtr->tkwin));
+    }
+    switch (psInfo.pageAnchor) {
+    case TK_ANCHOR_NW:
+    case TK_ANCHOR_W:
+    case TK_ANCHOR_SW:
+	deltaX = 0;
+	break;
+    case TK_ANCHOR_N:
+    case TK_ANCHOR_CENTER:
+    case TK_ANCHOR_S:
+	deltaX = -psInfo.width/2;
+	break;
+    case TK_ANCHOR_NE:
+    case TK_ANCHOR_E:
+    case TK_ANCHOR_SE:
+	deltaX = -psInfo.width;
+	break;
+    }
+    switch (psInfo.pageAnchor) {
+    case TK_ANCHOR_NW:
+    case TK_ANCHOR_N:
+    case TK_ANCHOR_NE:
+	deltaY = - psInfo.height;
+	break;
+    case TK_ANCHOR_W:
+    case TK_ANCHOR_CENTER:
+    case TK_ANCHOR_E:
+	deltaY = -psInfo.height/2;
+	break;
+    case TK_ANCHOR_SW:
+    case TK_ANCHOR_S:
+    case TK_ANCHOR_SE:
+	deltaY = 0;
+	break;
+    }
+
+    /*
+     *--------------------------------------------------------
+     * Make a PREPASS over all of the tags
+     * to collect information about all the fonts in use, so that
+     * we can output font information in the proper form required
+     * by the Document Structuring Conventions.
+     *--------------------------------------------------------
+     */
+
+    Tk_TablePsFont(interp, tablePtr, tablePtr->defaultTag.tkfont);
+    Tcl_ResetResult(interp);
+    for (hPtr = Tcl_FirstHashEntry(tablePtr->tagTable, &search);
+	 hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
+	tagPtr = (TableTag *) Tcl_GetHashValue(hPtr);
+	if (tagPtr->tkfont != NULL) {
+	    Tk_TablePsFont(interp, tablePtr, tagPtr->tkfont);
+	}
+    }
+    Tcl_ResetResult(interp);
+
+    /*
+     *--------------------------------------------------------
+     * Generate the header and prolog for the Postscript.
+     *--------------------------------------------------------
+     */
+
+    sprintf(string, " %d,%d => %d,%d\n", firstRow, firstCol, lastRow, lastCol);
+    Tcl_DStringAppendAll(&postscript,
+			 "%!PS-Adobe-3.0 EPSF-3.0\n",
+			 "%%Creator: Tk Table Widget ", TBL_VERSION, "\n",
+			 "%%Title: Window ",
+			 Tk_PathName(tablePtr->tkwin), string,
+			 "%%BoundingBox: ",
+			 (char *) NULL);
+    if (!psInfo.rotate) {
+	sprintf(string, "%d %d %d %d\n",
+		(int) (psInfo.pageX + psInfo.scale*deltaX),
+		(int) (psInfo.pageY + psInfo.scale*deltaY),
+		(int) (psInfo.pageX + psInfo.scale*(deltaX + psInfo.width)
+		       + 1.0),
+		(int) (psInfo.pageY + psInfo.scale*(deltaY + psInfo.height)
+		       + 1.0));
+    } else {
+	sprintf(string, "%d %d %d %d\n",
+		(int) (psInfo.pageX - psInfo.scale*(deltaY + psInfo.height)),
+		(int) (psInfo.pageY + psInfo.scale*deltaX),
+		(int) (psInfo.pageX - psInfo.scale*deltaY + 1.0),
+		(int) (psInfo.pageY + psInfo.scale*(deltaX + psInfo.width)
+		       + 1.0));
+    }
+    Tcl_DStringAppendAll(&postscript, string,
+			 "%%Pages: 1\n%%DocumentData: Clean7Bit\n",
+			 "%%Orientation: ",
+			 psInfo.rotate?"Landscape\n":"Portrait\n",
+			 (char *) NULL);
+    p = "%%DocumentNeededResources: font ";
+    for (hPtr = Tcl_FirstHashEntry(&psInfo.fontTable, &search);
+	 hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
+	sprintf(string, "%s%s\n", p, Tcl_GetHashKey(&psInfo.fontTable, hPtr));
+	Tcl_DStringAppend(&postscript, string, -1);
+	p = "%%+ font ";
+    }
+    Tcl_DStringAppend(&postscript, "%%EndComments\n\n", -1);
+
+    /*
+     * Insert the prolog
+     */
+    for (chunk=prolog; *chunk; chunk++) {
+	Tcl_DStringAppend(&postscript, *chunk, -1);
+    }
+
+    if (psInfo.chan != NULL) {
+	Tcl_Write(psInfo.chan, Tcl_DStringValue(&postscript), -1);
+	Tcl_DStringFree(&postscript);
+	Tcl_DStringInit(&postscript);
+    }
+
+    /*
+     * Document setup:  set the color level and include fonts.
+     * This is where we start using &postscript
+     */
+
+    sprintf(string, "/CL %d def\n", psInfo.colorLevel);
+    Tcl_DStringAppendAll(&postscript, "%%BeginSetup\n", string, (char *) NULL);
+    for (hPtr = Tcl_FirstHashEntry(&psInfo.fontTable, &search);
+	 hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
+	sprintf(string, "%s%s\n", "%%IncludeResource: font ",
+		Tcl_GetHashKey(&psInfo.fontTable, hPtr));
+	Tcl_DStringAppend(&postscript, string, -1);
+    }
+    Tcl_DStringAppend(&postscript, "%%EndSetup\n\n", -1);
+
+    /*
+     * Page setup:  move to page positioning point, rotate if
+     * needed, set scale factor, offset for proper anchor position,
+     * and set clip region.
+     */
+
+    sprintf(string, "%.1f %.1f translate\n",
+	    psInfo.pageX, psInfo.pageY);
+    Tcl_DStringAppendAll(&postscript, "%%Page: 1 1\nsave\n",
+			 string, psInfo.rotate?"90 rotate\n":"",
+			 (char *) NULL);
+    sprintf(string, "%.4g %.4g scale\n%d %d translate\n",
+	    psInfo.scale, psInfo.scale, deltaX - psInfo.x, deltaY);
+    Tcl_DStringAppend(&postscript, string, -1);
+    sprintf(string, "%d %.15g moveto %d %.15g lineto %d %.15g lineto %d %.15g",
+	    psInfo.x, (double) psInfo.y2-psInfo.y,
+	    psInfo.x2,(double) psInfo.y2-psInfo.y,
+	    psInfo.x2, 0.0, psInfo.x, 0.0);
+    Tcl_DStringAppend(&postscript, string, -1);
+    Tcl_DStringAppend(&postscript, " lineto closepath clip newpath\n", -1);
+    if (psInfo.chan != NULL) {
+	Tcl_Write(psInfo.chan, Tcl_DStringValue(&postscript), -1);
+	Tcl_DStringFree(&postscript);
+	Tcl_DStringInit(&postscript);
+    }
+
+    /*
+     * Go through each cell, calculating full desired height
+     */
+    result = TCL_OK;
+
+    hPtr = Tcl_FindHashEntry(tablePtr->tagTable, "title");
+    titlePtr = (TableTag *) Tcl_GetHashValue(hPtr);
+
+    total = 0;
+    colWidths = (int *) ckalloc((lastCol-firstCol) * sizeof(int));
+    for (col = 0; col <= lastCol-firstCol; col++) colWidths[col] = 0;
+    Tcl_DStringAppend(&buffer, "gsave\n", -1);
+    for (row = firstRow; row <= lastRow; row++) {
+	rowHeight = 0;
+	rowPtr = FindRowColTag(tablePtr, row+tablePtr->rowOffset, ROW);
+	for (col = firstCol; col <= lastCol; col++) {
+	    /* get the coordinates for the cell */
+	    TableCellCoords(tablePtr, row, col, &x, &y, &w, &h);
+	    if ((x >= psInfo.x2) || (x+w < psInfo.x) ||
+		(y >= psInfo.y2) || (y+h < psInfo.y)) {
+		continue;
+	    }
+
+	    if (row == tablePtr->activeRow && col == tablePtr->activeCol) {
+		value = tablePtr->activeBuf;
+	    } else {
+		value = TableGetCellValue(tablePtr, row+tablePtr->rowOffset,
+					  col+tablePtr->colOffset);
+	    }
+	    if (!strlen(value)) {
+		continue;
+	    }
+
+	    /* Create the tag here */
+	    tagPtr = TableNewTag();
+	    /* First, merge in the default tag */
+	    TableMergeTag(tagPtr, &(tablePtr->defaultTag));
+
+	    colPtr = FindRowColTag(tablePtr, col+tablePtr->colOffset, COL);
+	    if (colPtr != (TableTag *) NULL) TableMergeTag(tagPtr, colPtr);
+	    if (rowPtr != (TableTag *) NULL) TableMergeTag(tagPtr, rowPtr);
+	    /* Am I in the titles */
+	    if (row < tablePtr->topRow || col < tablePtr->leftCol) {
+		TableMergeTag(tagPtr, titlePtr);
+	    }
+	    /* Does this have a cell tag */
+	    TableMakeArrayIndex(row+tablePtr->rowOffset,
+				col+tablePtr->colOffset, string);
+	    hPtr = Tcl_FindHashEntry(tablePtr->cellStyles, string);
+	    if (hPtr != NULL) {
+		TableMergeTag(tagPtr, (TableTag *) Tcl_GetHashValue(hPtr));
+	    }
+
+	    /*
+	     * the use of -1 instead of Tcl_NumUtfChars means we don't
+	     * pass NULLs to postscript
+	     */
+	    textLayout = Tk_ComputeTextLayout(tagPtr->tkfont, value, -1,
+					      (tagPtr->wrap>0) ? w : 0,
+					      tagPtr->justify,
+					      (tagPtr->multiline>0) ? 0 :
+					      TK_IGNORE_NEWLINES, &iW, &iH);
+
+	    rowHeight = MAX(rowHeight, iH);
+	    colWidths[col-firstCol] = MAX(colWidths[col-firstCol], iW);
+
+	    result = TextToPostscript(interp, tablePtr, tagPtr,
+				      x, y, iW, iH, row, col, textLayout);
+	    Tk_FreeTextLayout(textLayout);
+	    if (result != TCL_OK) {
+		char msg[64 + TCL_INTEGER_SPACE];
+
+		sprintf(msg, "\n    (generating Postscript for cell %s)",
+			string);
+		Tcl_AddErrorInfo(interp, msg);
+		goto cleanup;
+	    }
+	    Tcl_DStringAppend(&buffer, Tcl_GetStringResult(interp), -1);
+	}
+	sprintf(string, "/row%d %d def\n",
+		row, tablePtr->psInfoPtr->y2 - total);
+	Tcl_DStringAppend(&postscript, string, -1);
+	total += rowHeight + 2*tablePtr->defaultTag.bd;
+    }
+    Tcl_DStringAppend(&buffer, "grestore\n", -1);
     sprintf(string, "/row%d %d def\n", row, tablePtr->psInfoPtr->y2 - total);
     Tcl_DStringAppend(&postscript, string, -1);
-    total += rowHeight + 2*tablePtr->defaultTag.bd;
-  }
-  Tcl_DStringAppend(&buffer, "grestore\n", -1);
-  sprintf(string, "/row%d %d def\n", row, tablePtr->psInfoPtr->y2 - total);
-  Tcl_DStringAppend(&postscript, string, -1);
 
-  total = tablePtr->defaultTag.bd;
-  for (col = firstCol; col <= lastCol; col++) {
+    total = tablePtr->defaultTag.bd;
+    for (col = firstCol; col <= lastCol; col++) {
+	sprintf(string, "/col%d %d def\n", col, total);
+	Tcl_DStringAppend(&postscript, string, -1);
+	total += colWidths[col-firstCol] + 2*tablePtr->defaultTag.bd;
+    }
     sprintf(string, "/col%d %d def\n", col, total);
     Tcl_DStringAppend(&postscript, string, -1);
-    total += colWidths[col-firstCol] + 2*tablePtr->defaultTag.bd;
-  }
-  sprintf(string, "/col%d %d def\n", col, total);
-  Tcl_DStringAppend(&postscript, string, -1);
 
-  Tcl_DStringAppend(&postscript, Tcl_DStringValue(&buffer), -1);
+    Tcl_DStringAppend(&postscript, Tcl_DStringValue(&buffer), -1);
 
-  /*
-   * Output to channel at the end of it all
-   * This should more incremental, but that can't be avoided in order
-   * to post-define width/height of the cols/rows
-   */
-  if (psInfo.chan != NULL) {
-    Tcl_Write(psInfo.chan, Tcl_DStringValue(&postscript), -1);
-    Tcl_DStringFree(&postscript);
-    Tcl_DStringInit(&postscript);
-  }
+    /*
+     * Output to channel at the end of it all
+     * This should more incremental, but that can't be avoided in order
+     * to post-define width/height of the cols/rows
+     */
+    if (psInfo.chan != NULL) {
+	Tcl_Write(psInfo.chan, Tcl_DStringValue(&postscript), -1);
+	Tcl_DStringFree(&postscript);
+	Tcl_DStringInit(&postscript);
+    }
 
-  /*
-   *---------------------------------------------------------------------
-   * Output page-end information, such as commands to print the page
-   * and document trailer stuff.
-   *---------------------------------------------------------------------
-   */
+    /*
+     *---------------------------------------------------------------------
+     * Output page-end information, such as commands to print the page
+     * and document trailer stuff.
+     *---------------------------------------------------------------------
+     */
 
-  Tcl_DStringAppend(&postscript,
-		    "restore showpage\n\n%%Trailer\nend\n%%EOF\n", -1);
-  if (psInfo.chan != NULL) {
-    Tcl_Write(psInfo.chan, Tcl_DStringValue(&postscript), -1);
-    Tcl_DStringFree(&postscript);
-    Tcl_DStringInit(&postscript);
-  }
+    Tcl_DStringAppend(&postscript,
+		      "restore showpage\n\n%%Trailer\nend\n%%EOF\n", -1);
+    if (psInfo.chan != NULL) {
+	Tcl_Write(psInfo.chan, Tcl_DStringValue(&postscript), -1);
+	Tcl_DStringFree(&postscript);
+	Tcl_DStringInit(&postscript);
+    }
 
-  /*
+    /*
    * Clean up psInfo to release malloc'ed stuff.
    */
 
 cleanup:
-  Tcl_DStringResult(interp, &postscript);
-  Tcl_DStringFree(&postscript);
-  Tcl_DStringFree(&buffer);
-  if (psInfo.first != NULL) {
-    ckfree(psInfo.first);
-  }
-  if (psInfo.last != NULL) {
-    ckfree(psInfo.last);
-  }
-  if (psInfo.pageXString != NULL) {
-    ckfree(psInfo.pageXString);
-  }
-  if (psInfo.pageYString != NULL) {
-    ckfree(psInfo.pageYString);
-  }
-  if (psInfo.pageWidthString != NULL) {
-    ckfree(psInfo.pageWidthString);
-  }
-  if (psInfo.pageHeightString != NULL) {
-    ckfree(psInfo.pageHeightString);
-  }
-  if (psInfo.fontVar != NULL) {
-    ckfree(psInfo.fontVar);
-  }
-  if (psInfo.colorVar != NULL) {
-    ckfree(psInfo.colorVar);
-  }
-  if (psInfo.colorMode != NULL) {
-    ckfree(psInfo.colorMode);
-  }
-  if (psInfo.fileName != NULL) {
-    ckfree(psInfo.fileName);
-  }
-  if ((psInfo.chan != NULL) && (psInfo.channelName == NULL)) {
-    Tcl_Close(interp, psInfo.chan);
-  }
-  if (psInfo.channelName != NULL) {
-    ckfree(psInfo.channelName);
-  }
-  Tcl_DeleteHashTable(&psInfo.fontTable);
-  tablePtr->psInfoPtr = oldInfoPtr;
-  return result;
+    ckfree((char *) argv);
+    Tcl_DStringResult(interp, &postscript);
+    Tcl_DStringFree(&postscript);
+    Tcl_DStringFree(&buffer);
+    if (psInfo.first != NULL) {
+	ckfree(psInfo.first);
+    }
+    if (psInfo.last != NULL) {
+	ckfree(psInfo.last);
+    }
+    if (psInfo.pageXString != NULL) {
+	ckfree(psInfo.pageXString);
+    }
+    if (psInfo.pageYString != NULL) {
+	ckfree(psInfo.pageYString);
+    }
+    if (psInfo.pageWidthString != NULL) {
+	ckfree(psInfo.pageWidthString);
+    }
+    if (psInfo.pageHeightString != NULL) {
+	ckfree(psInfo.pageHeightString);
+    }
+    if (psInfo.fontVar != NULL) {
+	ckfree(psInfo.fontVar);
+    }
+    if (psInfo.colorVar != NULL) {
+	ckfree(psInfo.colorVar);
+    }
+    if (psInfo.colorMode != NULL) {
+	ckfree(psInfo.colorMode);
+    }
+    if (psInfo.fileName != NULL) {
+	ckfree(psInfo.fileName);
+    }
+    if ((psInfo.chan != NULL) && (psInfo.channelName == NULL)) {
+	Tcl_Close(interp, psInfo.chan);
+    }
+    if (psInfo.channelName != NULL) {
+	ckfree(psInfo.channelName);
+    }
+    Tcl_DeleteHashTable(&psInfo.fontTable);
+    tablePtr->psInfoPtr = oldInfoPtr;
+    return result;
+#endif
 }
 
 /*
@@ -986,51 +1006,51 @@ Tk_TablePsColor(interp, tablePtr, colorPtr)
      Table *tablePtr;			/* Information about table. */
      XColor *colorPtr;			/* Information about color. */
 {
-  TkPostscriptInfo *psInfoPtr = tablePtr->psInfoPtr;
-  int tmp;
-  double red, green, blue;
-  char string[200];
+    TkPostscriptInfo *psInfoPtr = tablePtr->psInfoPtr;
+    int tmp;
+    double red, green, blue;
+    char string[200];
 
-  /*
-   * If there is a color map defined, then look up the color's name
-   * in the map and use the Postscript commands found there, if there
-   * are any.
-   */
+    /*
+     * If there is a color map defined, then look up the color's name
+     * in the map and use the Postscript commands found there, if there
+     * are any.
+     */
 
-  if (psInfoPtr->colorVar != NULL) {
-    char *cmdString;
+    if (psInfoPtr->colorVar != NULL) {
+	char *cmdString;
 
-    cmdString = Tcl_GetVar2(interp, psInfoPtr->colorVar,
-			    Tk_NameOfColor(colorPtr), 0);
-    if (cmdString != NULL) {
-      Tcl_AppendResult(interp, cmdString, "\n", (char *) NULL);
-      return TCL_OK;
+	cmdString = Tcl_GetVar2(interp, psInfoPtr->colorVar,
+				Tk_NameOfColor(colorPtr), 0);
+	if (cmdString != NULL) {
+	    Tcl_AppendResult(interp, cmdString, "\n", (char *) NULL);
+	    return TCL_OK;
+	}
     }
-  }
 
-  /*
-   * No color map entry for this color.  Grab the color's intensities
-   * and output Postscript commands for them.  Special note:  X uses
-   * a range of 0-65535 for intensities, but most displays only use
-   * a range of 0-255, which maps to (0, 256, 512, ... 65280) in the
-   * X scale.  This means that there's no way to get perfect white,
-   * since the highest intensity is only 65280 out of 65535.  To
-   * work around this problem, rescale the X intensity to a 0-255
-   * scale and use that as the basis for the Postscript colors.  This
-   * scheme still won't work if the display only uses 4 bits per color,
-   * but most diplays use at least 8 bits.
-   */
+    /*
+     * No color map entry for this color.  Grab the color's intensities
+     * and output Postscript commands for them.  Special note:  X uses
+     * a range of 0-65535 for intensities, but most displays only use
+     * a range of 0-255, which maps to (0, 256, 512, ... 65280) in the
+     * X scale.  This means that there's no way to get perfect white,
+     * since the highest intensity is only 65280 out of 65535.  To
+     * work around this problem, rescale the X intensity to a 0-255
+     * scale and use that as the basis for the Postscript colors.  This
+     * scheme still won't work if the display only uses 4 bits per color,
+     * but most diplays use at least 8 bits.
+     */
 
-  tmp = colorPtr->red;
-  red = ((double) (tmp >> 8))/255.0;
-  tmp = colorPtr->green;
-  green = ((double) (tmp >> 8))/255.0;
-  tmp = colorPtr->blue;
-  blue = ((double) (tmp >> 8))/255.0;
-  sprintf(string, "%.3f %.3f %.3f AdjustColor\n",
-	  red, green, blue);
-  Tcl_AppendResult(interp, string, (char *) NULL);
-  return TCL_OK;
+    tmp = colorPtr->red;
+    red = ((double) (tmp >> 8))/255.0;
+    tmp = colorPtr->green;
+    green = ((double) (tmp >> 8))/255.0;
+    tmp = colorPtr->blue;
+    blue = ((double) (tmp >> 8))/255.0;
+    sprintf(string, "%.3f %.3f %.3f AdjustColor\n",
+	    red, green, blue);
+    Tcl_AppendResult(interp, string, (char *) NULL);
+    return TCL_OK;
 }
 
 /*
@@ -1064,62 +1084,62 @@ Tk_TablePsFont(interp, tablePtr, tkfont)
      Tk_Font tkfont;			/* Information about font in which text
 					 * is to be printed. */
 {
-  TkPostscriptInfo *psInfoPtr = tablePtr->psInfoPtr;
-  char *end;
-  char pointString[TCL_INTEGER_SPACE];
-  Tcl_DString ds;
-  int i, points;
+    TkPostscriptInfo *psInfoPtr = tablePtr->psInfoPtr;
+    char *end;
+    char pointString[TCL_INTEGER_SPACE];
+    Tcl_DString ds;
+    int i, points;
 
-  /*
-   * First, look up the font's name in the font map, if there is one.
-   * If there is an entry for this font, it consists of a list
-   * containing font name and size.  Use this information.
-   */
+    /*
+     * First, look up the font's name in the font map, if there is one.
+     * If there is an entry for this font, it consists of a list
+     * containing font name and size.  Use this information.
+     */
 
-  Tcl_DStringInit(&ds);
+    Tcl_DStringInit(&ds);
     
-  if (psInfoPtr->fontVar != NULL) {
-    char *list, **argv;
-    int argc;
-    double size;
-    char *name;
+    if (psInfoPtr->fontVar != NULL) {
+	char *list, **argv;
+	int objc;
+	double size;
+	char *name;
 
-    name = Tk_NameOfFont(tkfont);
-    list = Tcl_GetVar2(interp, psInfoPtr->fontVar, name, 0);
-    if (list != NULL) {
-      if (Tcl_SplitList(interp, list, &argc, &argv) != TCL_OK) {
-      badMapEntry:
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "bad font map entry for \"", name,
-			 "\": \"", list, "\"", (char *) NULL);
-	return TCL_ERROR;
-      }
-      if (argc != 2) {
-	goto badMapEntry;
-      }
-      size = strtod(argv[1], &end);
-      if ((size <= 0) || (*end != 0)) {
-	goto badMapEntry;
-      }
+	name = Tk_NameOfFont(tkfont);
+	list = Tcl_GetVar2(interp, psInfoPtr->fontVar, name, 0);
+	if (list != NULL) {
+	    if (Tcl_SplitList(interp, list, &objc, &argv) != TCL_OK) {
+	    badMapEntry:
+		Tcl_ResetResult(interp);
+		Tcl_AppendResult(interp, "bad font map entry for \"", name,
+				 "\": \"", list, "\"", (char *) NULL);
+		return TCL_ERROR;
+	    }
+	    if (objc != 2) {
+		goto badMapEntry;
+	    }
+	    size = strtod(argv[1], &end);
+	    if ((size <= 0) || (*end != 0)) {
+		goto badMapEntry;
+	    }
 
-      Tcl_DStringAppend(&ds, argv[0], -1);
-      points = (int) size;
+	    Tcl_DStringAppend(&ds, argv[0], -1);
+	    points = (int) size;
 	    
-      ckfree((char *) argv);
-      goto findfont;
-    }
-  } 
+	    ckfree((char *) argv);
+	    goto findfont;
+	}
+    } 
 
-  points = Tk_PostscriptFontName(tkfont, &ds);
+    points = Tk_PostscriptFontName(tkfont, &ds);
 
 findfont:
-  sprintf(pointString, "%d", points);
-  Tcl_AppendResult(interp, pointString, " /", Tcl_DStringValue(&ds),
-		   " SetFont\n", (char *) NULL);
-  Tcl_CreateHashEntry(&psInfoPtr->fontTable, Tcl_DStringValue(&ds), &i);
-  Tcl_DStringFree(&ds);
+    sprintf(pointString, "%d", points);
+    Tcl_AppendResult(interp, pointString, " /", Tcl_DStringValue(&ds),
+		     " SetFont\n", (char *) NULL);
+    Tcl_CreateHashEntry(&psInfoPtr->fontTable, Tcl_DStringValue(&ds), &i);
+    Tcl_DStringFree(&ds);
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -1149,49 +1169,49 @@ GetPostscriptPoints(interp, string, doublePtr)
      char *string;		/* String describing a screen distance. */
      double *doublePtr;		/* Place to store converted result. */
 {
-  char *end;
-  double d;
+    char *end;
+    double d;
 
-  d = strtod(string, &end);
-  if (end == string) {
-  error:
-    Tcl_AppendResult(interp, "bad distance \"", string,
-		     "\"", (char *) NULL);
-    return TCL_ERROR;
-  }
+    d = strtod(string, &end);
+    if (end == string) {
+    error:
+	Tcl_AppendResult(interp, "bad distance \"", string,
+			 "\"", (char *) NULL);
+	return TCL_ERROR;
+    }
 #define UCHAR(c) ((unsigned char) (c))
-  while ((*end != '\0') && isspace(UCHAR(*end))) {
-    end++;
-  }
-  switch (*end) {
-  case 'c':
-    d *= 72.0/2.54;
-    end++;
-    break;
-  case 'i':
-    d *= 72.0;
-    end++;
-    break;
-  case 'm':
-    d *= 72.0/25.4;
-    end++;
-    break;
-  case 0:
-    break;
-  case 'p':
-    end++;
-    break;
-  default:
-    goto error;
-  }
-  while ((*end != '\0') && isspace(UCHAR(*end))) {
-    end++;
-  }
-  if (*end != 0) {
-    goto error;
-  }
-  *doublePtr = d;
-  return TCL_OK;
+    while ((*end != '\0') && isspace(UCHAR(*end))) {
+	end++;
+    }
+    switch (*end) {
+    case 'c':
+	d *= 72.0/2.54;
+	end++;
+	break;
+    case 'i':
+	d *= 72.0;
+	end++;
+	break;
+    case 'm':
+	d *= 72.0/25.4;
+	end++;
+	break;
+    case 0:
+	break;
+    case 'p':
+	end++;
+	break;
+    default:
+	goto error;
+    }
+    while ((*end != '\0') && isspace(UCHAR(*end))) {
+	end++;
+    }
+    if (*end != 0) {
+	goto error;
+    }
+    *doublePtr = d;
+    return TCL_OK;
 }
 
 /*
@@ -1226,54 +1246,54 @@ TextToPostscript(interp, tablePtr, tagPtr, tagX, tagY, width, height,
      int row, col;		/*  */
      Tk_TextLayout textLayout;	/*  */
 {
-  int x, y;
-  Tk_FontMetrics fm;
-  char *justify;
-  char buffer[500];
-  Tk_3DBorder fg = tagPtr->fg;
+    int x, y;
+    Tk_FontMetrics fm;
+    char *justify;
+    char buffer[500];
+    Tk_3DBorder fg = tagPtr->fg;
 
-  if (fg == NULL) {
-    fg = tablePtr->defaultTag.fg;
-  }
+    if (fg == NULL) {
+	fg = tablePtr->defaultTag.fg;
+    }
 
-  if (Tk_TablePsFont(interp, tablePtr, tagPtr->tkfont) != TCL_OK) {
-    return TCL_ERROR;
-  }
-  if (Tk_TablePsColor(interp, tablePtr, Tk_3DBorderColor(fg)) != TCL_OK) {
-    return TCL_ERROR;
-  }
+    if (Tk_TablePsFont(interp, tablePtr, tagPtr->tkfont) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    if (Tk_TablePsColor(interp, tablePtr, Tk_3DBorderColor(fg)) != TCL_OK) {
+	return TCL_ERROR;
+    }
 
-  sprintf(buffer, "%% %.15g %.15g [\n", (tagX+width)/2.0,
-	  tablePtr->psInfoPtr->y2 - ((tagY+height)/2.0));
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-  sprintf(buffer, "col%d row%d [\n", col, row);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
+    sprintf(buffer, "%% %.15g %.15g [\n", (tagX+width)/2.0,
+	    tablePtr->psInfoPtr->y2 - ((tagY+height)/2.0));
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    sprintf(buffer, "col%d row%d [\n", col, row);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
 
-  Tk_TextLayoutToPostscript(interp, textLayout);
+    Tk_TextLayoutToPostscript(interp, textLayout);
 
-  x = 0;  y = 0;  justify = NULL;	/* lint. */
-  switch (tagPtr->anchor) {
-  case TK_ANCHOR_NW:		x = 0; y = 0;	break;
-  case TK_ANCHOR_N:		x = 1; y = 0;	break;
-  case TK_ANCHOR_NE:		x = 2; y = 0;	break;
-  case TK_ANCHOR_E:		x = 2; y = 1;	break;
-  case TK_ANCHOR_SE:		x = 2; y = 2;	break;
-  case TK_ANCHOR_S:		x = 1; y = 2;	break;
-  case TK_ANCHOR_SW:		x = 0; y = 2;	break;
-  case TK_ANCHOR_W:		x = 0; y = 1;	break;
-  case TK_ANCHOR_CENTER:	x = 1; y = 1;	break;
-  }
-  switch (tagPtr->justify) {
-  case TK_JUSTIFY_RIGHT:	justify = "1";	break;
-  case TK_JUSTIFY_CENTER:	justify = "0.5";break;
-  case TK_JUSTIFY_LEFT:		justify = "0";
-  }
+    x = 0;  y = 0;  justify = NULL;	/* lint. */
+    switch (tagPtr->anchor) {
+    case TK_ANCHOR_NW:		x = 0; y = 0;	break;
+    case TK_ANCHOR_N:		x = 1; y = 0;	break;
+    case TK_ANCHOR_NE:		x = 2; y = 0;	break;
+    case TK_ANCHOR_E:		x = 2; y = 1;	break;
+    case TK_ANCHOR_SE:		x = 2; y = 2;	break;
+    case TK_ANCHOR_S:		x = 1; y = 2;	break;
+    case TK_ANCHOR_SW:		x = 0; y = 2;	break;
+    case TK_ANCHOR_W:		x = 0; y = 1;	break;
+    case TK_ANCHOR_CENTER:	x = 1; y = 1;	break;
+    }
+    switch (tagPtr->justify) {
+    case TK_JUSTIFY_RIGHT:	justify = "1";	break;
+    case TK_JUSTIFY_CENTER:	justify = "0.5";break;
+    case TK_JUSTIFY_LEFT:	justify = "0";
+    }
 
-  Tk_GetFontMetrics(tagPtr->tkfont, &fm);
-  sprintf(buffer, "] %d %g %g %s %d %d DrawCellText\n",
-	  fm.linespace, (x / -2.0), (y / 2.0), justify,
-	  width, height);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tk_GetFontMetrics(tagPtr->tkfont, &fm);
+    sprintf(buffer, "] %d %g %g %s %d %d DrawCellText\n",
+	    fm.linespace, (x / -2.0), (y / 2.0), justify,
+	    width, height);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
 
-  return TCL_OK;
+    return TCL_OK;
 }

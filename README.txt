@@ -1,6 +1,5 @@
 /*
- * Based on Tk3 table widget by Roland King (rols@lehman.com)
- * tkTable2.0+ represents a 96% rewrite of this code.
+ * Conceptually based on Tk3 table widget by Roland King (rols@lehman.com)
  *
  * see CHANGES file for details
  *
@@ -18,6 +17,7 @@ The basic features of the widget are:
 
  * multi-line cells
  * support for embedded windows (one per cell)
+ * row & column spanning
  * variable width columns / height rows (interactively resizable)
  * row and column titles
  * multiple data sources ((Tcl array || Tcl command) &| internal caching)
@@ -36,7 +36,11 @@ The basic features of the widget are:
 FINDING THE WIDGET
 
 0. The newest version is most likely found at:
-	http://oprs.mchh.siemens.de/tcl/capp/
+	http://www.purl.org/net/hobbs/tcl/capp/
+	http://www.hobbs.wservice.com/tcl/capp/
+
+0a. Neosoft might not have the newest, but it should have something:
+	http://www.neosoft.com/tcl/	
 
 BUILDING AND INSTALLING THE WIDGET
 

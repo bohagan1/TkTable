@@ -39,7 +39,7 @@ table $table(table) -rows $table(rows) -cols $table(cols) \
 	-yscrollcommand {.sy set} -xscrollcommand {.sx set} \
 	-rowtagcommand rowProc -coltagcommand colProc \
 	-colstretchmode last -rowstretchmode last \
-	-selectmode extended
+	-selectmode extended -sparsearray 0
 
 scrollbar .sy -command [list $table(table) yview]
 scrollbar .sx -command [list $table(table) xview] -orient horizontal

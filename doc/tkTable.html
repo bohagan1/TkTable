@@ -466,7 +466,8 @@ Specifies one of two states for the entry: <B>normal</B> or
 <B>disabled</B>. If the table is disabled then the value may
 not be changed using widget commands and no insertion
 cursor will be displayed, even if the input focus is in
-the widget. Defaults to <B>normal</B>.
+the widget. Also, all insert or delete methods will be
+ignored. Defaults to <B>normal</B>.
 <P>
 Command-Line Name:-<B>titlecols</B><BR>
 
@@ -525,12 +526,10 @@ Database Name: <B>variable</B><BR>
 Database Class: <B>Variable</B>
 <P>
 Global Tcl array variable to attach to the table's C
-array.<BR>
-
-It will be created if it doesn't already exist or is a
-simple variable. Keys used by the table in the array
-are of the form <I>row</I>,<I>col</I> for cells and the special key
-<I>active</I> which contains the value of the active cell
+array. It will be created if it doesn't already exist
+or is a simple variable. Keys used by the table in the
+array are of the form <I>row</I>,<I>col</I> for cells and the special
+key <I>active</I> which contains the value of the active cell
 buffer. The Tcl array is managed as a sparse array
 (the table doesn't require all valid indices have
 values). No stored value for an index is equivalent to
@@ -1092,7 +1091,7 @@ option(s) to have the given value(s); in this case the
 command returns an empty string. <I>Option</I> may have any
 of the values accepted by the <B>table</B> command.
 <P>
-<I>pathName</I> <B>curselection</B> ?<I>set</I> <I>value</I>?<BR>
+<I>pathName</I> <B>curselection</B> ?<I>value</I>?<BR>
 
 With no arguments, it returns the sorted indices of the
 currently selected cells. Otherwise it sets all the
@@ -1119,23 +1118,16 @@ index to the second. <I>index</I> can be a number,
 <B>insert</B> or <B>end</B>.
 <P>
 <I>pathName</I> <B>delete</B> <B>cols</B> ?<I>switches</I>? <I>index</I> ?<I>count</I>?
-Deletes <B>count</B> cols starting at (and including) col
-<B>index</B>. If <B>count</B> is negative, it deletes cols to
-the left. Otherwise it deletes cols to the right.
-The selection will be cleared. The optional
-switches are:
+Deletes <I>count</I> cols starting at (and including) col
+<I>index</I>. The <I>index</I> will be constrained to the limits
+of the tables. If <I>count</I> is negative, it
+deletes cols to the left. Otherwise it deletes
+cols to the right. <I>count</I> defaults to 1 (meaning
+just the column specified). The selection will be
+cleared. At the moment, spans are not adjusted
+with this action. Optional switches are:
 
 <DL>
-
-<DT><B>-cols</B> <I>value</I></DT></DT>
-<DD>
-Sets an artificial maximum column boundary to
-use when collapsing the rest of the columns.
-By default it uses the value of the <B>-cols</B>
-widget option. This can cause interesting
-side-effects when used in conjunction with
-the other options.
-</DD>
 
 <DT><B>-holddimensions</B></DT></DT>
 <DD>
@@ -1147,10 +1139,18 @@ the dimensions are adjusted by <B>count</B>.
 <DT><B>-holdtags</B></DT></DT>
 <DD>
 Causes the tags specified by the <I>tag</I> method
-to not collapse along with the data. Also
+to not move along with the data. Also
 prevents specific widths set by the <I>width</I>
 method from being adjusted. By default,
 these tags are properly adjusted.
+</DD>
+
+<DT><B>-holdwindows</B></DT></DT>
+<DD>
+Causes the embedded windows created with the
+<I>window</I> method to not move along with the
+data. By default, these windows are properly
+adjusted.
 </DD>
 
 <DT><B>-keeptitles</B></DT></DT>
@@ -1158,16 +1158,6 @@ these tags are properly adjusted.
 Prevents title area cells from being changed.
 Otherwise they are treated just like regular
 cells and will move as specified.
-</DD>
-
-<DT><B>-rows</B> <I>value</I></DT></DT>
-<DD>
-Sets an artificial maximum row boundary to
-use when collapsing the rest of the rows. By
-default it uses the value of the <B>-rows</B> widget
-option.     This    can cause interesting
-side-effects when used in conjunction with
-the other options.
 </DD>
 
 <DT><B>--</B> </DT></DT>
@@ -1214,7 +1204,8 @@ insertion cursor in the active cell. With one argument,
 sets the cursor to that point in the string. 0
 is before the first character, you can also use <B>insert</B>
 or <B>end</B> for the current insertion point or the end of
-the text.
+the text. If there is no active cell, or the cell or
+table is disabled, this will return -1.
 <P>
 <I>pathName</I> <B>index</B> <I>index</I> ?<I>row</I>|<I>col</I>?<BR>
 
@@ -1291,6 +1282,7 @@ be different to keep the screen full.
 
 This command is used to adjust the selection within a
 table. It has several forms, depending on <I>option</I>:
+<P>
 <I>pathName</I> <B>selection</B> <B>anchor</B> <I>index</I><BR>
 
 Sets the selection anchor to the cell given by
@@ -1344,9 +1336,10 @@ See EXAMPLES for more info.
 
 This command is used to manipulate tags. The exact
 behavior of the command depends on the <I>option</I> argument
-that follows the <B>tag</B> argument. Only <I>cget</I> complains
-about unknown tag names. The following forms of the
-command are currently supported:
+that follows the <B>tag</B> argument. <I>cget</I>, <I>cell</I>, and <I>row</I>|<I>col</I>
+complain about unknown tag names. The following forms
+of the command are currently supported:
+<P>
 <I>pathName</I> <B>tag</B> <B>cell</B> <I>tagName</I> ?<I>index</I> ...?
 With no arguments, prints out the list of cells
 that use the <I>tag</I>. Otherwise it sets the specified
@@ -1465,10 +1458,10 @@ list describing all of the available options for
 <I>index</I> (see <B>Tk_ConfigureInfo</B> for information on the
 format of this list). If <I>option</I> is specified with
 no <I>value</I>, then the command returns a list describing
-the one named option (this list will be identical
-to the corresponding sublist of the value
-returned if no <I>option</I> is specified). If one or
-more <I>option</I>-<I>value</I> pairs are specified, then the
+the one named option (this list will be
+identical to the corresponding sublist of the
+value returned if no <I>option</I> is specified). If one
+or more <I>option</I>-<I>value</I> pairs are specified, then the
 command modifies the given option(s) to have the
 given value(s) in <I>index</I>; in this case the command
 returns an empty string. See EMBEDDED WINDOWS
@@ -1683,8 +1676,8 @@ for each request of a cell value.
 <P>
 Set the topleft title area to be one spanning cell. This
 overestimates both row and column span by one, but the command
-does all the constraining for us.
-<P>
+does all the constraining for us.<BR>
+
 $table span [$table cget -roworigin],[$table cget -colorigin] [$table cget -titlerows],[$table cget -titlecols]
 Force a table window refresh (useful for the slight chance
 that a bug in the table is not causing proper refresh):

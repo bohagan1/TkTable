@@ -1,0 +1,130 @@
+## 1. Used Procs
+##
+proc rowProc row {
+    if {$row == -1} {return kopf}
+    if {$row%2} { return OddRow } else { return EvenRow }
+}
+proc colProc spalte {
+    if {[in $spalte {0 3 13 15 17 19}]} {return links}
+    if {[in $spalte {2 4 5 6 7 8 9 10 11 12 14 16 18}]} {return rechts}
+}
+#
+# Command Procedure for Database
+#
+proc pgtKom {set zeile spalte wert} {
+    global uebersch pgListe listeH aktPgr widget
+    if {$set} {
+    } else {
+	# Tabelle aktualisieren
+	if {$zeile == -1} {
+	    # Überschrift
+	    return [lindex $uebersch $spalte]
+	} else {
+	    if {$aktPgr(LFDNR) != [lindex $pgListe $zeile]} {
+		array set aktPgr [holeDatensatzA PGVK [lindex $pgListe $zeile] LFDNR]
+	    }
+	    switch $spalte {
+		3 {return xxx}
+		13 -       15 -       17 -       19 {return xxx}
+		5 -        7 -        9 -       11 {return xxx}
+		2 -       12 -       14 -       16 -       18 {return xxx}
+		default {return $aktPgr([lindex $listeH $spalte])}
+	    }
+	}
+    }
+}
+#
+# Überprüfung der korrekten Eingabe
+#
+proc pgtValid {spalte wert} {
+    switch $spalte {
+	0 { set ausdr {[A-Za-z0-9 -_]*} }
+	1 { set ausdr {^[0-9]+\.?[0-9]*\.?[0-9]*$} }
+	3 -    13 -    15 -    17 -    19 {}
+	2 -     5 -     7 -     9 -    11 -    12 -    14 -    16 -
+	18 { set ausdr {^[+-]?[0-9]*,?[0-9]*$} }
+	default { set ausdr {^[+-]?[0-9]*$} }
+    }
+    if {[regexp $ausdr $wert]} {
+	return 1
+    } else {
+	bell
+	return 0
+    }
+}
+
+## 
+## 
+## 2. Creating the widget:
+## 
+set pgt [table $widget(pgswPg).t -height 8 \
+	-colstretchmode unset \
+	-flashmode on \
+	-validate 1 \
+	-cache 1 \
+	-rows [expr [llength $pgListe]+1] \
+	-cols 20 \
+	-colwidth 10 \
+	-titlerows 1 \
+	-titlecols 1 \
+	-rowtagcommand rowProc \
+	-selecttitle 1 \
+	-roworigin -1 \
+	-xscrollcommand "$widget(pghsb) set" \
+	-yscrollcommand "$widget(pgvsb) set" \
+	-command [list pgtKom %i %r %c %s] \
+	-browsecommand {set pg(Name) [$widget(PgTab) get %r,0]} \
+	-vcmd {pgtValid %c %S}]
+$widget(pghsb) config -command "$pgt xview"
+$widget(pgvsb) config -command "$pgt yview"
+set widget(PgTab) $pgt
+pack $pgt -in $widget(pgswPreisgruppen) -anchor n -expand 1 \
+	-fill both -side left 
+
+## 
+## 3. Defining some tag's
+## 
+$pgt tag config OddRow -bg orange
+$pgt tag config EvenRow -bg lightblue
+$pgt tag config kopf -state disabled
+$pgt tag config title -bg grey80 -fg blue -relief raised -state normal
+$pgt tag config links -anchor w
+$pgt tag config rechts -anchor e
+$pgt tag config mitte -anchor c -state disabled
+$pgt tag config OO -anchor c -state disabled -fg blue 
+$pgt tag config dis -state disabled
+# Spaltenbreite einstellen
+$pgt width 0 20 1 12 2 12 3 8
+$pgt tag col links 0 
+$pgt tag col rechts 2 4 5 6 7 8 9 10 11 12 14 16 18
+$pgt tag col dis 3 13 15 17 19
+$pgt tag row mitte -1
+$pgt tag cell OO -1,0
+
+## 
+## 4. Deleting a row
+## 
+proc deleteRow {zIndex} {
+
+    #....database manipulation...
+
+    # Tabelle anpassen, nicht vergessen: Command-Interface abschalten!!!
+    $widget(PgTab) config -usecommand 0
+    $widget(PgTab) delete rows $zIndex 1
+    $widget(PgTab) config -usecommand 1
+    $widget(PgTab) see $zIndex,0
+}
+
+## 
+## 5. Creating a row
+## 
+proc addRow {zIndex} {
+
+    #....database manipulation...
+
+    # Tabelle aktualisieren
+    $widget(PgTab) config -usecommand 0
+    $widget(PgTab) insert rows $zIndex -1
+    $widget(PgTab) config -usecommand 1
+    $widget(PgTab) see $zIndex,0
+}

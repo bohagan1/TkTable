@@ -29,7 +29,7 @@ static void	EmbWinCleanup _ANSI_ARGS_((Table *tablePtr,
 					   TableEmbWindow *ewPtr));
 static int	EmbWinConfigure _ANSI_ARGS_((Table *tablePtr,
 					     TableEmbWindow *ewPtr,
-					     int argc, char **argv));
+					     int objc, Tcl_Obj *CONST objv[]));
 static void	EmbWinStructureProc _ANSI_ARGS_((ClientData clientData,
 						 XEvent *eventPtr));
 static void	EmbWinUnmapNow _ANSI_ARGS_((Tk_Window ewTkwin,
@@ -42,18 +42,11 @@ static Tk_GeomMgr tableGeomType = {
 };
 
 /* windows subcommands */
-#define WIN_CGET	1	/* get config item of embedded window */
-#define WIN_CONFIGURE	2	/* configure an embedded window */
-#define WIN_DELETE	3	/* delete an embedded window */
-#define WIN_MOVE	4	/* moves a window index */
-#define	WIN_NAMES	5	/* print the embedded window names */
-static Cmd_Struct win_cmds[] = {
-  {"configure",	WIN_CONFIGURE},
-  {"cget",	WIN_CGET},
-  {"delete",	WIN_DELETE},
-  {"move",	WIN_MOVE},
-  {"names",	WIN_NAMES},
-  {"", 0}
+static char *winCmdNames[] = {
+    "cget", "configure", "delete", "move", "names", (char *) NULL
+};
+enum winCommand {
+    WIN_CGET, WIN_CONFIGURE, WIN_DELETE, WIN_MOVE, WIN_NAMES
 };
 
 /* Flag values for "sticky"ness  The 16 combinations subsume the packer's
@@ -131,18 +124,18 @@ StickyPrintProc(clientData, tkwin, widgRec, offset, freeProcPtr)
 					 * information about how to reclaim
 					 * storage for return string. */
 {
-  int flags = ((TableEmbWindow *) widgRec)->sticky;
-  int count = 0;
-  char *result = (char *) ckalloc(5*sizeof(char));
+    int flags = ((TableEmbWindow *) widgRec)->sticky;
+    int count = 0;
+    char *result = (char *) ckalloc(5*sizeof(char));
 
-  if (flags&STICK_NORTH) result[count++] = 'n';
-  if (flags&STICK_EAST)  result[count++] = 'e';
-  if (flags&STICK_SOUTH) result[count++] = 's';
-  if (flags&STICK_WEST)  result[count++] = 'w';
+    if (flags&STICK_NORTH) result[count++] = 'n';
+    if (flags&STICK_EAST)  result[count++] = 'e';
+    if (flags&STICK_SOUTH) result[count++] = 's';
+    if (flags&STICK_WEST)  result[count++] = 'w';
 
-  *freeProcPtr = TCL_DYNAMIC;
-  result[count] = '\0';
-  return result;
+    *freeProcPtr = TCL_DYNAMIC;
+    result[count] = '\0';
+    return result;
 }
 
 /*
@@ -171,26 +164,27 @@ StickyParseProc(clientData, interp, tkwin, value, widgRec, offset)
 					 * structure. */
     int offset;				/* Offset into item (ignored). */
 {
-  register TableEmbWindow *ewPtr = (TableEmbWindow *) widgRec;
-  int sticky = 0;
-  char c;
+    register TableEmbWindow *ewPtr = (TableEmbWindow *) widgRec;
+    int sticky = 0;
+    char c;
 
-  while ((c = *value++) != '\0') {
-    switch (c) {
-    case 'n': case 'N': sticky |= STICK_NORTH; break;
-    case 'e': case 'E': sticky |= STICK_EAST;  break;
-    case 's': case 'S': sticky |= STICK_SOUTH; break;
-    case 'w': case 'W': sticky |= STICK_WEST;  break;
-    case ' ': case ',': case '\t': case '\r': case '\n': break;
-    default:
-      Tcl_AppendResult(interp, "bad sticky value \"", --value,
-		       "\": must contain n, s, e or w",
-		       (char *)NULL);
-      return TCL_ERROR;
+    while ((c = *value++) != '\0') {
+	switch (c) {
+	case 'n': case 'N': sticky |= STICK_NORTH; break;
+	case 'e': case 'E': sticky |= STICK_EAST;  break;
+	case 's': case 'S': sticky |= STICK_SOUTH; break;
+	case 'w': case 'W': sticky |= STICK_WEST;  break;
+	case ' ': case ',': case '\t': case '\r': case '\n': break;
+	default:
+	    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+				   "bad sticky value \"", --value,
+				   "\": must contain n, s, e or w",
+				   (char *) NULL);
+	    return TCL_ERROR;
+	}
     }
-  }
-  ewPtr->sticky = sticky;
-  return TCL_OK;
+    ewPtr->sticky = sticky;
+    return TCL_OK;
 }		
 
 /*
@@ -200,19 +194,19 @@ StickyParseProc(clientData, interp, tkwin, value, widgRec, offset)
 static TableEmbWindow *
 TableNewEmbWindow(Table *tablePtr)
 {
-  TableEmbWindow *ewPtr = (TableEmbWindow *) ckalloc(sizeof(TableEmbWindow));
-  ewPtr->tablePtr	= tablePtr;
-  ewPtr->tkwin		= NULL;
-  ewPtr->hPtr		= NULL;
-  ewPtr->bg		= NULL;
-  ewPtr->bd		= -1;
-  ewPtr->create		= NULL;
-  ewPtr->relief		= -1;
-  ewPtr->sticky		= 0;
-  ewPtr->padX		= 0;
-  ewPtr->padY		= 0;
-  ewPtr->displayed	= 0;
-  return ewPtr;
+    TableEmbWindow *ewPtr = (TableEmbWindow *) ckalloc(sizeof(TableEmbWindow));
+    ewPtr->tablePtr	= tablePtr;
+    ewPtr->tkwin	= NULL;
+    ewPtr->hPtr		= NULL;
+    ewPtr->bg		= NULL;
+    ewPtr->bd		= -1;
+    ewPtr->create	= NULL;
+    ewPtr->relief	= -1;
+    ewPtr->sticky	= 0;
+    ewPtr->padX		= 0;
+    ewPtr->padY		= 0;
+    ewPtr->displayed	= 0;
+    return ewPtr;
 }
 
 /* 
@@ -232,8 +226,8 @@ TableNewEmbWindow(Table *tablePtr)
 static void
 EmbWinCleanup(Table *tablePtr, TableEmbWindow *ewPtr)
 {
-  /* free the options in the widget */
-  Tk_FreeOptions(winConfigSpecs, (char *) ewPtr, tablePtr->display, 0);
+    /* free the options in the widget */
+    Tk_FreeOptions(winConfigSpecs, (char *) ewPtr, tablePtr->display, 0);
 }
 
 /*
@@ -256,61 +250,62 @@ void
 EmbWinDisplay(Table *tablePtr, Drawable window, TableEmbWindow *ewPtr,
 	      TableTag *tagPtr, int x, int y, int width, int height)
 {
-  Tk_Window tkwin = tablePtr->tkwin;
-  Tk_Window ewTkwin = ewPtr->tkwin;
-  int diffx=0;	/* Cavity width - slave width. */
-  int diffy=0;	/* Cavity hight - slave height. */
-  int sticky = ewPtr->sticky;
+    Tk_Window tkwin = tablePtr->tkwin;
+    Tk_Window ewTkwin = ewPtr->tkwin;
+    int diffx=0;	/* Cavity width - slave width. */
+    int diffy=0;	/* Cavity hight - slave height. */
+    int sticky = ewPtr->sticky;
 
-  if (ewPtr->bg)		tagPtr->bg = ewPtr->bg;
-  if (ewPtr->relief != -1)	tagPtr->relief = ewPtr->relief;
-  if (ewPtr->bd >= 0)		tagPtr->bd = ewPtr->bd;
+    if (ewPtr->bg)		tagPtr->bg = ewPtr->bg;
+    if (ewPtr->relief != -1)	tagPtr->relief = ewPtr->relief;
+    if (ewPtr->bd >= 0)		tagPtr->bd = ewPtr->bd;
 
-  x += ewPtr->padX/2;
-  width -= ewPtr->padX;
-  y += ewPtr->padY/2;
-  height -= ewPtr->padY;
+    x += ewPtr->padX/2;
+    width -= ewPtr->padX;
+    y += ewPtr->padY/2;
+    height -= ewPtr->padY;
 
-  if (width > Tk_ReqWidth(ewPtr->tkwin)) {
-    diffx = width - Tk_ReqWidth(ewPtr->tkwin);
-    width = Tk_ReqWidth(ewPtr->tkwin);
-  }
-  if (height > Tk_ReqHeight(ewPtr->tkwin)) {
-    diffy = height - Tk_ReqHeight(ewPtr->tkwin);
-    height = Tk_ReqHeight(ewPtr->tkwin);
-  }
-  if (sticky&STICK_EAST && sticky&STICK_WEST) {
-    width += diffx;
-  }
-  if (sticky&STICK_NORTH && sticky&STICK_SOUTH) {
-    height += diffy;
-  }
-  if (!(sticky&STICK_WEST)) {
-    x += (sticky&STICK_EAST) ? diffx : diffx/2;
-  }
-  if (!(sticky&STICK_NORTH)) {
-    y += (sticky&STICK_SOUTH) ? diffy : diffy/2;
-  }
+    if (width > Tk_ReqWidth(ewPtr->tkwin)) {
+	diffx = width - Tk_ReqWidth(ewPtr->tkwin);
+	width = Tk_ReqWidth(ewPtr->tkwin);
+    }
+    if (height > Tk_ReqHeight(ewPtr->tkwin)) {
+	diffy = height - Tk_ReqHeight(ewPtr->tkwin);
+	height = Tk_ReqHeight(ewPtr->tkwin);
+    }
+    if (sticky&STICK_EAST && sticky&STICK_WEST) {
+	width += diffx;
+    }
+    if (sticky&STICK_NORTH && sticky&STICK_SOUTH) {
+	height += diffy;
+    }
+    if (!(sticky&STICK_WEST)) {
+	x += (sticky&STICK_EAST) ? diffx : diffx/2;
+    }
+    if (!(sticky&STICK_NORTH)) {
+	y += (sticky&STICK_SOUTH) ? diffy : diffy/2;
+    }
 
-  /* If we fall below a specific minimum width/height requirement,
+    /* If we fall below a specific minimum width/height requirement,
    * we just unmap the window */
-  if (width < 4 || height < 4) {
-    if (ewPtr->displayed) {
-      EmbWinUnmapNow(ewTkwin, tkwin);
+    if (width < 4 || height < 4) {
+	if (ewPtr->displayed) {
+	    EmbWinUnmapNow(ewTkwin, tkwin);
+	}
+	return;
     }
-    return;
-  }
 
-  if (tkwin == Tk_Parent(ewTkwin)) {
-    if ((x != Tk_X(ewTkwin)) || (y != Tk_Y(ewTkwin))
-	|| (width != Tk_Width(ewTkwin))	|| (height != Tk_Height(ewTkwin))) {
-      Tk_MoveResizeWindow(ewTkwin, x, y, width, height);
+    if (tkwin == Tk_Parent(ewTkwin)) {
+	if ((x != Tk_X(ewTkwin)) || (y != Tk_Y(ewTkwin))
+	    || (width != Tk_Width(ewTkwin))
+	    || (height != Tk_Height(ewTkwin))) {
+	    Tk_MoveResizeWindow(ewTkwin, x, y, width, height);
+	}
+	Tk_MapWindow(ewTkwin);
+    } else {
+	Tk_MaintainGeometry(ewTkwin, tkwin, x, y, width, height);
     }
-    Tk_MapWindow(ewTkwin);
-  } else {
-    Tk_MaintainGeometry(ewTkwin, tkwin, x, y, width, height);
-  }
-  ewPtr->displayed = 1;
+    ewPtr->displayed = 1;
 }
 
 /*
@@ -332,10 +327,10 @@ EmbWinDisplay(Table *tablePtr, Drawable window, TableEmbWindow *ewPtr,
 static void
 EmbWinUnmapNow(Tk_Window ewTkwin, Tk_Window tkwin)
 {
-  if (tkwin != Tk_Parent(ewTkwin)) {
-    Tk_UnmaintainGeometry(ewTkwin, tkwin);
-  }
-  Tk_UnmapWindow(ewTkwin);
+    if (tkwin != Tk_Parent(ewTkwin)) {
+	Tk_UnmaintainGeometry(ewTkwin, tkwin);
+    }
+    Tk_UnmapWindow(ewTkwin);
 }
 
 /*
@@ -357,31 +352,32 @@ EmbWinUnmapNow(Tk_Window ewTkwin, Tk_Window tkwin)
 void
 EmbWinUnmap(Table *tablePtr, int rlo, int rhi, int clo, int chi)
 {
-  register TableEmbWindow *ewPtr;
-  Tcl_HashEntry *entryPtr;
-  int row, col, trow, tcol;
-  char buf[INDEX_BUFSIZE];
+    register TableEmbWindow *ewPtr;
+    Tcl_HashEntry *entryPtr;
+    int row, col, trow, tcol;
+    char buf[INDEX_BUFSIZE];
 
-  /* we need to deal with things user coords */
-  rlo += tablePtr->rowOffset;
-  rhi += tablePtr->rowOffset;
-  clo += tablePtr->colOffset;
-  chi += tablePtr->colOffset;
-  for (row = rlo; row <= rhi; row++) {
-    for (col = clo; col <= chi; col++) {
-      TableTrueCell(tablePtr, row, col, &trow, &tcol);
-      TableMakeArrayIndex(trow, tcol, buf);
-      if ((entryPtr = Tcl_FindHashEntry(tablePtr->winTable, buf)) != NULL) {
-	ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
-	if (ewPtr->displayed) {
-	  ewPtr->displayed = 0;
-	  if (ewPtr->tkwin != NULL && tablePtr->tkwin != NULL) {
-	    EmbWinUnmapNow(ewPtr->tkwin, tablePtr->tkwin);
-	  }
+    /* we need to deal with things user coords */
+    rlo += tablePtr->rowOffset;
+    rhi += tablePtr->rowOffset;
+    clo += tablePtr->colOffset;
+    chi += tablePtr->colOffset;
+    for (row = rlo; row <= rhi; row++) {
+	for (col = clo; col <= chi; col++) {
+	    TableTrueCell(tablePtr, row, col, &trow, &tcol);
+	    TableMakeArrayIndex(trow, tcol, buf);
+	    entryPtr = Tcl_FindHashEntry(tablePtr->winTable, buf);
+	    if (entryPtr != NULL) {
+		ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
+		if (ewPtr->displayed) {
+		    ewPtr->displayed = 0;
+		    if (ewPtr->tkwin != NULL && tablePtr->tkwin != NULL) {
+			EmbWinUnmapNow(ewPtr->tkwin, tablePtr->tkwin);
+		    }
+		}
+	    }
 	}
-      }
     }
-  }
 }
 
 /*
@@ -408,49 +404,51 @@ EmbWinRequestProc(clientData, tkwin)
     Tk_Window tkwin;		/* Other Tk-related information
 				 * about the window. */
 {
-  register TableEmbWindow *ewPtr = (TableEmbWindow *) clientData;
+    register TableEmbWindow *ewPtr = (TableEmbWindow *) clientData;
 
   /* resize depends on the sticky */
-  if (ewPtr->displayed && ewPtr->hPtr != NULL) {
-    Table *tablePtr = ewPtr->tablePtr;
-    int row, col, x, y, width, height;
+    if (ewPtr->displayed && ewPtr->hPtr != NULL) {
+	Table *tablePtr = ewPtr->tablePtr;
+	int row, col, x, y, width, height;
 
-    TableParseArrayIndex(&row, &col,
-			 Tcl_GetHashKey(tablePtr->winTable, ewPtr->hPtr));
-    if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
-		     col-tablePtr->colOffset, &x, &y, &width, &height, 0)) {
-      TableInvalidate(tablePtr, x, y, width, height, 0);
+	TableParseArrayIndex(&row, &col,
+			     Tcl_GetHashKey(tablePtr->winTable, ewPtr->hPtr));
+	if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
+			     col-tablePtr->colOffset, &x, &y, &width, &height,
+			     0)) {
+	    TableInvalidate(tablePtr, x, y, width, height, 0);
+	}
     }
-  }
 }
 
 static void
 EmbWinRemove(TableEmbWindow *ewPtr)
 {
-  Table *tablePtr = ewPtr->tablePtr;
+    Table *tablePtr = ewPtr->tablePtr;
 
-  if (ewPtr->tkwin != NULL) {
-    Tk_DeleteEventHandler(ewPtr->tkwin, StructureNotifyMask,
-			  EmbWinStructureProc, (ClientData) ewPtr);
-    ewPtr->tkwin = NULL;
-  }
-  ewPtr->displayed = 0;
-  if (tablePtr->tkwin != NULL) {
-    int row, col, x, y, width, height;
+    if (ewPtr->tkwin != NULL) {
+	Tk_DeleteEventHandler(ewPtr->tkwin, StructureNotifyMask,
+			      EmbWinStructureProc, (ClientData) ewPtr);
+	ewPtr->tkwin = NULL;
+    }
+    ewPtr->displayed = 0;
+    if (tablePtr->tkwin != NULL) {
+	int row, col, x, y, width, height;
 
-    TableParseArrayIndex(&row, &col,
-			 Tcl_GetHashKey(tablePtr->winTable, ewPtr->hPtr));
+	TableParseArrayIndex(&row, &col,
+			     Tcl_GetHashKey(tablePtr->winTable, ewPtr->hPtr));
+	/* this will cause windows removed from the table to actually
+	 * cause the associated embdedded window hash data to be removed */
+	Tcl_DeleteHashEntry(ewPtr->hPtr);
+	if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
+			     col-tablePtr->colOffset, &x, &y, &width, &height,
+			     0))
+	    TableInvalidate(tablePtr, x, y, width, height, 1);
+    }
     /* this will cause windows removed from the table to actually
      * cause the associated embdedded window hash data to be removed */
-    Tcl_DeleteHashEntry(ewPtr->hPtr);
-    if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
-			 col-tablePtr->colOffset, &x, &y, &width, &height, 0))
-      TableInvalidate(tablePtr, x, y, width, height, 1);
-  }
-  /* this will cause windows removed from the table to actually
-   * cause the associated embdedded window hash data to be removed */
-  EmbWinCleanup(tablePtr, ewPtr);
-  ckfree((char *) ewPtr);
+    EmbWinCleanup(tablePtr, ewPtr);
+    ckfree((char *) ewPtr);
 }
 
 /*
@@ -507,13 +505,13 @@ EmbWinStructureProc(clientData, eventPtr)
     ClientData clientData;	/* Pointer to record describing window item. */
     XEvent *eventPtr;		/* Describes what just happened. */
 {
-  register TableEmbWindow *ewPtr = (TableEmbWindow *) clientData;
+    register TableEmbWindow *ewPtr = (TableEmbWindow *) clientData;
 
-  if (eventPtr->type != DestroyNotify) {
-    return;
-  }
+    if (eventPtr->type != DestroyNotify) {
+	return;
+    }
 
-  EmbWinRemove(ewPtr);
+    EmbWinRemove(ewPtr);
 }
 
 /*
@@ -535,38 +533,38 @@ EmbWinStructureProc(clientData, eventPtr)
 void
 EmbWinDelete(register Table *tablePtr, TableEmbWindow *ewPtr)
 {
-  Tcl_HashEntry *entryPtr = ewPtr->hPtr;
+    Tcl_HashEntry *entryPtr = ewPtr->hPtr;
 
-  if (ewPtr->tkwin != NULL) {
-    Tk_Window tkwin = ewPtr->tkwin;
-    /*
-     * Delete the event handler for the window before destroying
-     * the window, so that EmbWinStructureProc doesn't get called
-     * (we'll already do everything that it would have done, and
-     * it will just get confused).
-     */
+    if (ewPtr->tkwin != NULL) {
+	Tk_Window tkwin = ewPtr->tkwin;
+	/*
+	 * Delete the event handler for the window before destroying
+	 * the window, so that EmbWinStructureProc doesn't get called
+	 * (we'll already do everything that it would have done, and
+	 * it will just get confused).
+	 */
 
-    ewPtr->tkwin = NULL;
-    Tk_DeleteEventHandler(tkwin, StructureNotifyMask,
-			  EmbWinStructureProc, (ClientData) ewPtr);
-    Tk_DestroyWindow(tkwin);
-  }
-  if (tablePtr->tkwin != NULL && entryPtr != NULL) {
-    int row, col, x, y, width, height;
-    TableParseArrayIndex(&row, &col,
-			 Tcl_GetHashKey(tablePtr->winTable, entryPtr));
-    Tcl_DeleteHashEntry(entryPtr);
+	ewPtr->tkwin = NULL;
+	Tk_DeleteEventHandler(tkwin, StructureNotifyMask,
+			      EmbWinStructureProc, (ClientData) ewPtr);
+	Tk_DestroyWindow(tkwin);
+    }
+    if (tablePtr->tkwin != NULL && entryPtr != NULL) {
+	int row, col, x, y, width, height;
+	TableParseArrayIndex(&row, &col,
+			     Tcl_GetHashKey(tablePtr->winTable, entryPtr));
+	Tcl_DeleteHashEntry(entryPtr);
 
-    if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
-			 col-tablePtr->colOffset,
-			 &x, &y, &width, &height, 0))
-      TableInvalidate(tablePtr, x, y, width, height, 0);
-  }
+	if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
+			     col-tablePtr->colOffset,
+			     &x, &y, &width, &height, 0))
+	    TableInvalidate(tablePtr, x, y, width, height, 0);
+    }
 #if 0
-  Tcl_CancelIdleCall(EmbWinDelayedUnmap, (ClientData) ewPtr);
+    Tcl_CancelIdleCall(EmbWinDelayedUnmap, (ClientData) ewPtr);
 #endif
-  EmbWinCleanup(tablePtr, ewPtr);
-  ckfree((char *) ewPtr);
+    EmbWinCleanup(tablePtr, ewPtr);
+    ckfree((char *) ewPtr);
 }
 
 /*
@@ -574,7 +572,7 @@ EmbWinDelete(register Table *tablePtr, TableEmbWindow *ewPtr)
  *
  * EmbWinConfigure --
  *	This procedure is called to handle configuration options
- *	for an embedded window, using an argc/argv list.
+ *	for an embedded window.
  *
  * Results:
  *	The return value is a standard Tcl result.  If TCL_ERROR is
@@ -588,71 +586,190 @@ EmbWinDelete(register Table *tablePtr, TableEmbWindow *ewPtr)
  *--------------------------------------------------------------
  */
 static int
-EmbWinConfigure(tablePtr, ewPtr, argc, argv)
+EmbWinConfigure(tablePtr, ewPtr, objc, objv)
      Table *tablePtr;		/* Information about table widget that
 				 * contains embedded window. */
      TableEmbWindow *ewPtr;	/* Embedded window to be configured. */
-     int argc;			/* Number of strings in argv. */
-     char **argv;		/* Array of strings describing configuration
-				 * options. */
+     int objc;			/* Number of objs in objv. */
+     Tcl_Obj *CONST objv[];	/* Obj type options. */
 {
-  Tk_Window oldWindow;
+    Tk_Window oldWindow;
+    int i, result;
+    char **argv;
 
-  oldWindow = ewPtr->tkwin;
-  if (Tk_ConfigureWidget(tablePtr->interp, tablePtr->tkwin, winConfigSpecs,
-			 argc, argv, (char *) ewPtr, TK_CONFIG_ARGV_ONLY)
-      != TCL_OK) {
-    return TCL_ERROR;
-  }
-  if (oldWindow != ewPtr->tkwin) {
-    ewPtr->displayed = 0;
-    if (oldWindow != NULL) {
-      Tk_DeleteEventHandler(oldWindow, StructureNotifyMask,
-			    EmbWinStructureProc, (ClientData) ewPtr);
-      Tk_ManageGeometry(oldWindow, (Tk_GeomMgr *) NULL,
-			(ClientData) NULL);
-      EmbWinUnmapNow(oldWindow, tablePtr->tkwin);
+    oldWindow = ewPtr->tkwin;
+
+    /* Stringify */
+    argv = (char **) ckalloc((objc + 1) * sizeof(char *));
+    for (i = 0; i < objc; i++)
+	argv[i] = Tcl_GetString(objv[i]);
+    argv[i] = NULL;
+    result = Tk_ConfigureWidget(tablePtr->interp, tablePtr->tkwin,
+				winConfigSpecs, objc, argv, (char *) ewPtr,
+				TK_CONFIG_ARGV_ONLY);
+    ckfree((char *) argv);
+    if (result != TCL_OK) {
+	return TCL_ERROR;
     }
-    if (ewPtr->tkwin != NULL) {
-      Tk_Window ancestor, parent;
 
-      /*
-       * Make sure that the table is either the parent of the
-       * embedded window or a descendant of that parent.  Also,
-       * don't allow a top-level window to be managed inside
-       * a table.
-       */
-
-      parent = Tk_Parent(ewPtr->tkwin);
-      for (ancestor = tablePtr->tkwin; ;
-	   ancestor = Tk_Parent(ancestor)) {
-	if (ancestor == parent) {
-	  break;
+    if (oldWindow != ewPtr->tkwin) {
+	ewPtr->displayed = 0;
+	if (oldWindow != NULL) {
+	    Tk_DeleteEventHandler(oldWindow, StructureNotifyMask,
+				  EmbWinStructureProc, (ClientData) ewPtr);
+	    Tk_ManageGeometry(oldWindow, (Tk_GeomMgr *) NULL,
+			      (ClientData) NULL);
+	    EmbWinUnmapNow(oldWindow, tablePtr->tkwin);
 	}
-	if (Tk_IsTopLevel(ancestor)) {
-	badMaster:
-	  Tcl_AppendResult(tablePtr->interp, "can't embed ",
-			   Tk_PathName(ewPtr->tkwin), " in ",
-			   Tk_PathName(tablePtr->tkwin), (char *)NULL);
-	  ewPtr->tkwin = NULL;
-	  return TCL_ERROR;
+	if (ewPtr->tkwin != NULL) {
+	    Tk_Window ancestor, parent;
+
+	    /*
+	     * Make sure that the table is either the parent of the
+	     * embedded window or a descendant of that parent.  Also,
+	     * don't allow a top-level window to be managed inside
+	     * a table.
+	     */
+
+	    parent = Tk_Parent(ewPtr->tkwin);
+	    for (ancestor = tablePtr->tkwin; ;
+		 ancestor = Tk_Parent(ancestor)) {
+		if (ancestor == parent) {
+		    break;
+		}
+		if (Tk_IsTopLevel(ancestor)) {
+		badMaster:
+		    Tcl_AppendStringsToObj(Tcl_GetObjResult(tablePtr->interp),
+					   "can't embed ",
+					   Tk_PathName(ewPtr->tkwin), " in ",
+					   Tk_PathName(tablePtr->tkwin),
+					   (char *)NULL);
+		    ewPtr->tkwin = NULL;
+		    return TCL_ERROR;
+		}
+	    }
+	    if (Tk_IsTopLevel(ewPtr->tkwin) ||
+		(ewPtr->tkwin == tablePtr->tkwin)) {
+		goto badMaster;
+	    }
+
+	    /*
+	     * Take over geometry management for the window, plus create
+	     * an event handler to find out when it is deleted.
+	     */
+
+	    Tk_ManageGeometry(ewPtr->tkwin, &tableGeomType, (ClientData)ewPtr);
+	    Tk_CreateEventHandler(ewPtr->tkwin, StructureNotifyMask,
+				  EmbWinStructureProc, (ClientData) ewPtr);
 	}
-      }
-      if (Tk_IsTopLevel(ewPtr->tkwin) || (ewPtr->tkwin == tablePtr->tkwin)) {
-	goto badMaster;
-      }
-
-      /*
-       * Take over geometry management for the window, plus create
-       * an event handler to find out when it is deleted.
-       */
-
-      Tk_ManageGeometry(ewPtr->tkwin, &tableGeomType, (ClientData) ewPtr);
-      Tk_CreateEventHandler(ewPtr->tkwin, StructureNotifyMask,
-			    EmbWinStructureProc, (ClientData) ewPtr);
     }
-  }
-  return TCL_OK;
+    return TCL_OK;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * Table_WinMove --
+ *	This procedure is invoked by ... whenever
+ *	an embedded window is being moved.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	If an embedded window is in the dest cell, it is deleted.
+ *
+ *--------------------------------------------------------------
+ */
+int
+Table_WinMove(register Table *tablePtr, char *CONST srcPtr,
+	   char *CONST destPtr, int flags)
+{
+    int srow, scol, row, col, new;
+    Tcl_HashEntry *entryPtr;
+    TableEmbWindow *ewPtr;
+    char buf[INDEX_BUFSIZE];
+
+    if (TableGetIndex(tablePtr, srcPtr, &srow, &scol) != TCL_OK ||
+	TableGetIndex(tablePtr, destPtr, &row, &col) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    TableMakeArrayIndex(srow, scol, buf);
+    if ((entryPtr = Tcl_FindHashEntry(tablePtr->winTable, buf)) == NULL) {
+	Tcl_AppendStringsToObj(Tcl_GetObjResult(tablePtr->interp),
+			       "no window at index \"", srcPtr, "\"",
+			       (char *) NULL);
+	return TCL_ERROR;
+    }
+    /* avoid moving it to the same location */
+    if (srow == row && scol == col) {
+	return TCL_OK;
+    }
+    /* get the window pointer */
+    ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
+    /* and free the old hash table entry */
+    Tcl_DeleteHashEntry(entryPtr);
+
+    TableMakeArrayIndex(row, col, buf);
+    entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, buf, &new);
+    if (!new) {
+	/* window already there - just delete it */
+	TableEmbWindow *ewPtrDel;
+
+	ewPtrDel = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
+	/* This prevents the deletion of it's own entry,
+	 * since we need it */
+	ewPtrDel->hPtr = NULL;
+	EmbWinDelete(tablePtr, ewPtrDel);
+    }
+    /* set the new entry's value */
+    Tcl_SetHashValue(entryPtr, (ClientData) ewPtr);
+    ewPtr->hPtr = entryPtr;
+
+    if (flags & INV_FORCE) {
+	int x, y, w, h;
+	/* Invalidate old cell */
+	if (TableCellVCoords(tablePtr, srow-tablePtr->rowOffset,
+			     scol-tablePtr->colOffset,
+			     &x, &y, &w, &h, 0)) {
+	    TableInvalidate(tablePtr, x, y, w, h, 0);
+	}
+	/* Invalidate new cell */
+	if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
+			     col-tablePtr->colOffset,
+			     &x, &y, &w, &h, 0)) {
+	    TableInvalidate(tablePtr, x, y, w, h, 0);
+	}
+    }
+    return TCL_OK;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * Table_WinDelete --
+ *	This procedure is invoked by ... whenever
+ *	an embedded window is being delete.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Window info will be deleted.
+ *
+ *--------------------------------------------------------------
+ */
+int
+Table_WinDelete(register Table *tablePtr, char *CONST idxPtr)
+{
+    Tcl_HashEntry *entryPtr;
+
+    entryPtr = Tcl_FindHashEntry(tablePtr->winTable, idxPtr);
+    if (entryPtr != NULL) {
+	/* get the window pointer & clean up data associated with it */
+	EmbWinDelete(tablePtr, (TableEmbWindow *) Tcl_GetHashValue(entryPtr));
+    }
+    return TCL_OK;
 }
 
 /*
@@ -673,200 +790,147 @@ EmbWinConfigure(tablePtr, ewPtr, argc, argv)
  */
 int
 Table_WindowCmd(ClientData clientData, register Tcl_Interp *interp,
-	       int argc, char *argv[])
+		int objc, Tcl_Obj *CONST objv[])
 {
-  register Table *tablePtr = (Table *)clientData;
-  int result = TCL_OK, retval;
-  int row, col, x, y, width, height, i, new;
-  TableEmbWindow *ewPtr;
-  Tcl_HashEntry *entryPtr;
-  Tcl_HashSearch search;
-  char buf[INDEX_BUFSIZE], *keybuf;
+    register Table *tablePtr = (Table *)clientData;
+    int result = TCL_OK, cmdIndex, row, col, x, y, width, height, i, new;
+    TableEmbWindow *ewPtr;
+    Tcl_HashEntry *entryPtr;
+    Tcl_HashSearch search;
+    char buf[INDEX_BUFSIZE], *keybuf, *winname;
 
-  if (argc < 3) {
-    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		     " window option ?arg arg ...?\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* parse the next argument */
-  retval = Cmd_Parse(interp, win_cmds, argv[2]);
-  switch (retval) {
-    /* failed to parse the argument, error */
-  case 0:
-    return TCL_ERROR;
-
-  case WIN_CGET:
-    if (argc != 5) {
-      Tcl_AppendResult(interp, "wrong # args: should be \"",
-                       argv[0], " window cget index option\"", (char *)NULL);
-      return TCL_ERROR;
-    }
-    if ((entryPtr=Tcl_FindHashEntry(tablePtr->winTable, argv[3])) == NULL) {
-      Tcl_AppendResult(interp, "no window at index \"", argv[3],
-		       "\"", (char *)NULL);
-      return TCL_ERROR;
-    } else {
-      ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
-      result = Tk_ConfigureValue(interp, tablePtr->tkwin, winConfigSpecs,
-				 (char *) ewPtr, argv[4], 0);
-    }
-    return result;	/* CGET */
-
-  case WIN_CONFIGURE:
-    if (argc < 4) {
-      Tcl_AppendResult(interp, "wrong # args: should be \"",
-		       argv[0], " window configure index ?arg arg  ...?\"",
-		       (char *)NULL);
-      return TCL_ERROR;
-    }
-    if (TableGetIndex(tablePtr, argv[3], &row, &col) == TCL_ERROR) {
-      return TCL_ERROR;
-    }
-    TableMakeArrayIndex(row, col, buf);
-    entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, buf, &new);
-    if (new) {
-      /* create the structure */
-      ewPtr = TableNewEmbWindow(tablePtr);
-
-      /* insert it into the table */
-      Tcl_SetHashValue(entryPtr, (ClientData) ewPtr);
-      ewPtr->hPtr = entryPtr;
-
-      /* configure the window structure */
-      result = EmbWinConfigure(tablePtr, ewPtr, argc-4, argv+4);
-      if (result == TCL_ERROR) {
-	/* release the structure */
-	EmbWinCleanup(tablePtr, ewPtr);
-	ckfree((char *) ewPtr);
-
-	/* and free the hash table entry */
-	Tcl_DeleteHashEntry(entryPtr);
+    if (objc < 3) {
+	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg arg ...?");
 	return TCL_ERROR;
-      }
-
-      /* if a window was specified, make sure it exists */
-    } else {
-      /* pointer wasn't null, do a reconfig if we have enough arguments */
-      /* get the window pointer from the table */
-      ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
-
-      /* 5 args means that there are values to replace */
-      if (argc > 5) {
-	/* and do a reconfigure */
-	result = EmbWinConfigure(tablePtr, ewPtr, argc-4, argv+4);
-	if (result == TCL_ERROR)
-	  return TCL_ERROR;
-      }
     }
 
-    /* 
-     * If there were less than 6 args, we need
-     * to do a printout of the config, even for new windows
-     */
-    if (argc < 6) {
-      result = Tk_ConfigureInfo(interp, tablePtr->tkwin, winConfigSpecs,
-				(char *) ewPtr, (argc == 5)?argv[4]:0, 0);
-    } else {
-      /* Otherwise we reconfigured so invalidate the table for a redraw */
-      if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
-			   col-tablePtr->colOffset,
-			   &x, &y, &width, &height, 0)) {
-	TableInvalidate(tablePtr, x, y, width, height, 1);
-      }
+    /* parse the next argument */
+    if (Tcl_GetIndexFromObj(interp, objv[2], winCmdNames,
+			    "option", 0, &cmdIndex) != TCL_OK) {
+	return TCL_ERROR;
     }
-    return result;	/* CONFIGURE */
+    switch ((enum winCommand) cmdIndex) {
+    case WIN_CGET:
+	if (objc != 5) {
+	    Tcl_WrongNumArgs(interp, 3, objv, "index option");
+	    return TCL_ERROR;
+	}
+	entryPtr = Tcl_FindHashEntry(tablePtr->winTable,
+				     Tcl_GetString(objv[3]));
+	if (entryPtr == NULL) {
+	    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+				   "no window at index \"",
+				   Tcl_GetString(objv[3]), "\"", (char *)NULL);
+	    return TCL_ERROR;
+	} else {
+	    ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
+	    result = Tk_ConfigureValue(interp, tablePtr->tkwin, winConfigSpecs,
+				       (char *) ewPtr,
+				       Tcl_GetString(objv[4]), 0);
+	}
+	return result;	/* CGET */
 
-  case WIN_DELETE:
-    if (argc < 4) {
-      Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		       " window delete index ?index ...?\"", (char *)NULL);
-      return TCL_ERROR;
-    }
-    for (i = 3; i < argc; i++) {
-      if ((entryPtr = Tcl_FindHashEntry(tablePtr->winTable, argv[i]))!=NULL) {
-	/* get the window pointer */
-	ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
-	/* clean up data associated with it */
-	EmbWinDelete(tablePtr, ewPtr);
-      }
-    }
-    /* clear up anything that might have been placed in the result string */
-    Tcl_SetResult(interp, "", TCL_STATIC);
-    return result;
+    case WIN_CONFIGURE:
+	if (objc < 4) {
+	    Tcl_WrongNumArgs(interp, 3, objv, "index ?arg arg  ...?");
+	    return TCL_ERROR;
+	}
+	if (TableGetIndexObj(tablePtr, objv[3], &row, &col) == TCL_ERROR) {
+	    return TCL_ERROR;
+	}
+	TableMakeArrayIndex(row, col, buf);
+	entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, buf, &new);
 
-  case WIN_MOVE:
-    if (argc != 5) {
-      Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		       " window move oldIndex newIndex\"", (char *)NULL);
-      return TCL_ERROR;
-    }
-    if (TableGetIndex(tablePtr, argv[3], &x, &y) == TCL_ERROR ||
-	TableGetIndex(tablePtr, argv[4], &row, &col) == TCL_ERROR) {
-      return TCL_ERROR;
-    }
-    TableMakeArrayIndex(x, y, buf);
-    if ((entryPtr = Tcl_FindHashEntry(tablePtr->winTable, buf)) == NULL) {
-      Tcl_AppendResult(interp, "no window at index \"", argv[3],
-		       "\"", (char *)NULL);
-      return TCL_ERROR;
-    }
-    /* avoid moving it to the same location */
-    if (x == row && y == col) {
-      return TCL_OK;
-    }
-    /* get the window pointer */
-    ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
-    /* and free the old hash table entry */
-    Tcl_DeleteHashEntry(entryPtr);
+	if (new) {
+	    /* create the structure */
+	    ewPtr = TableNewEmbWindow(tablePtr);
 
-    TableMakeArrayIndex(row, col, buf);
-    entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, buf, &new);
-    if (!new) {
-      /* window already there - just delete it */
-      TableEmbWindow *ewPtrDel;
+	    /* insert it into the table */
+	    Tcl_SetHashValue(entryPtr, (ClientData) ewPtr);
+	    ewPtr->hPtr = entryPtr;
 
-      ewPtrDel = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
-      /* This prevents the deletion of it's own entry, since we need it */
-      ewPtrDel->hPtr = NULL;
-      EmbWinDelete(tablePtr, ewPtrDel);
-    }
-    /* set the new entry's value */
-    Tcl_SetHashValue(entryPtr, (ClientData) ewPtr);
-    ewPtr->hPtr = entryPtr;
+	    /* configure the window structure */
+	    result = EmbWinConfigure(tablePtr, ewPtr, objc-4, objv+4);
+	    if (result == TCL_ERROR) {
+		/* release the structure */
+		EmbWinCleanup(tablePtr, ewPtr);
+		ckfree((char *) ewPtr);
 
-    /* Invalidate old cell */
-    if (TableCellVCoords(tablePtr, x-tablePtr->rowOffset,
-			 y-tablePtr->colOffset,
-			 &x, &y, &width, &height, 0)) {
-      TableInvalidate(tablePtr, x, y, width, height, 0);
-    }
-    /* Invalidate new cell */
-    if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
-			 col-tablePtr->colOffset,
-			 &x, &y, &width, &height, 0)) {
-      TableInvalidate(tablePtr, x, y, width, height, 0);
-    }
-    break;
+		/* and free the hash table entry */
+		Tcl_DeleteHashEntry(entryPtr);
+	    }
+	} else {
+	    /* window exists, do a reconfig if we have enough args */
+	    /* get the window pointer from the table */
+	    ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
 
-  case WIN_NAMES:
-    /* just print out the image names */
-    if (argc != 3 && argc != 4) {
-      Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		       " window names ?pattern?\"", (char *)NULL);
-      return TCL_ERROR;
+	    /* 5 args means that there are values to replace */
+	    if (objc > 5) {
+		/* and do a reconfigure */
+		result = EmbWinConfigure(tablePtr, ewPtr, objc-4, objv+4);
+	    }
+	}
+	if (result == TCL_ERROR) {
+	    return TCL_ERROR;
+	}
+
+	/* 
+	 * If there were less than 6 args, we need
+	 * to do a printout of the config, even for new windows
+	 */
+	if (objc < 6) {
+	    result = Tk_ConfigureInfo(interp, tablePtr->tkwin, winConfigSpecs,
+				      (char *) ewPtr, (objc == 5)?
+				      Tcl_GetString(objv[4]) : NULL, 0);
+	} else {
+	    /* Otherwise we reconfigured so invalidate
+	     * the table for a redraw */
+	    if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
+				 col-tablePtr->colOffset,
+				 &x, &y, &width, &height, 0)) {
+		TableInvalidate(tablePtr, x, y, width, height, 1);
+	    }
+	}
+	return result;	/* CONFIGURE */
+
+    case WIN_DELETE:
+	if (objc < 4) {
+	    Tcl_WrongNumArgs(interp, 3, objv, "index ?index ...?");
+	    return TCL_ERROR;
+	}
+	for (i = 3; i < objc; i++) {
+	    Table_WinDelete(tablePtr, Tcl_GetString(objv[i]));
+	}
+	break;
+
+    case WIN_MOVE:
+	if (objc != 5) {
+	    Tcl_WrongNumArgs(interp, 3, objv, "srcIndex destIndex");
+	    return TCL_ERROR;
+	}
+	result = Table_WinMove(tablePtr, Tcl_GetString(objv[3]),
+			       Tcl_GetString(objv[4]), INV_FORCE);
+	break;
+
+    case WIN_NAMES:
+	/* just print out the window names */
+	if (objc < 3 || objc > 4) {
+	    Tcl_WrongNumArgs(interp, 3, objv, "?pattern?");
+	    return TCL_ERROR;
+	}
+	winname = (objc == 4) ? Tcl_GetString(objv[3]) : NULL;
+	entryPtr = Tcl_FirstHashEntry(tablePtr->winTable, &search);
+	while (entryPtr != NULL) {
+	    keybuf = Tcl_GetHashKey(tablePtr->winTable, entryPtr);
+	    if (objc == 3 || Tcl_StringMatch(keybuf, winname)) {
+		Tcl_AppendElement(interp, keybuf);
+	    }
+	    entryPtr = Tcl_NextHashEntry(&search);
+	}
+	Tcl_SetResult(interp,
+		      TableCellSort(tablePtr, Tcl_GetStringResult(interp)),
+		      TCL_DYNAMIC);
+	break;
     }
-    entryPtr = Tcl_FirstHashEntry(tablePtr->winTable, &search);
-    while (entryPtr != NULL) {
-      keybuf = Tcl_GetHashKey(tablePtr->winTable, entryPtr);
-      if (argc == 3 || Tcl_StringMatch(keybuf, argv[3]))
-	Tcl_AppendElement(interp, keybuf);
-      entryPtr = Tcl_NextHashEntry(&search);
-    }
-    Tcl_SetResult(interp,
-		  TableCellSort(tablePtr, Tcl_GetStringResult(interp)),
-		  TCL_DYNAMIC);
-    break;
-  }
-  return TCL_OK;
+    return TCL_OK;
 }

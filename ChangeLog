@@ -5,7 +5,7 @@
 ## Release dates between "****"s.
 ##
 ## changes by Hobbs COPYRIGHT 1996-1997 Jeffrey Hobbs, CADIX International
-## changes by Hobbs COPYRIGHT 1998 Jeffrey Hobbs
+## changes by Hobbs COPYRIGHT 1998-1999 Jeffrey Hobbs
 ## jeff.hobbs@acm.org
 ##
 # * tkTable v0.55-1.x includes additions contributed by:
@@ -20,9 +20,32 @@
 ##
 ##########################################################################
 
+Fixed row/col insertion/deletion to move embedded windows, added
+-holdwindows option and Table_Win(Delete|Move).
+
+Removed -rows/-cols switch to insert/delete row/col, as it could
+cause very odd behavioral problems.
+
+Removed ckfree/ckalloc's between a quick delete/init of a hash table.
+
+Upgraded ExpandPercents for UTF awareness.
+
+Changed "tag cell|row|col" to complain when the tag is unknown.
+
+Fixed bug in UTF char length handling (actually due to change in
+the Tk API from 8.1beta to final) for active cell.
+
+fixed bug where scanMark* weren't properly initialized.
+
+Changed icursor method to always return an int, being -1 if there
+really isn't a valid cursor in the active cell (ie - it's disabled).
+
+Converted table widget to mostly Tcl_Obj in/output.
+Reorganized a lot of code in the process.
+
 **** v2.4 10 December 1998 ****
 
-Changed exit handler to not be used (unless -DEXIT_HANDLER is specified).
+Changed exit handler to not be used (unless -DUSE_EXIT_HANDLER is specified).
 
 Changed distribution directory name to go with new 'make distrib'.
 

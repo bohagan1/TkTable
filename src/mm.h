@@ -40,10 +40,10 @@
 
 /* structure for use in parsing general major/minor commands */
 typedef struct {
-  char *name;		/* name of the command/value */
-  Tcl_CmdProc *proc;	/* >0 because 0 represents an error or proc */
-  int type;		/* whether it is proc or just value */
-  ClientData data;	/* optional clientData arg */
+    char *name;		/* name of the command/value */
+    Tcl_CmdProc *proc;	/* >0 because 0 represents an error or proc */
+    int type;		/* whether it is proc or just value */
+    ClientData data;	/* optional clientData arg */
 } MajorMinor_Cmd;
 
 extern int	MM_GetProcExact _ANSI_ARGS_((const MajorMinor_Cmd *cmds,
