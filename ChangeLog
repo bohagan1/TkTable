@@ -1,3 +1,14 @@
+2002-10-09  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure:
+	* configure.in: move TEA_PATH_X below TEA_CONFIG_CFLAGS as it can
+	mess with the configure results.
+
+	* unix/tktable.spec (new): RPM spec file. (fontaine)
+
+	* demos/tktable.py: added a contributed tktable wrapper for
+	Python/Tkinter from Klaus Roethemeyer.
+
 2002-09-27  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* Makefile.in: correct tkTable.tcl.h target to work with FreeBSD's

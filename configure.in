@@ -1,6 +1,6 @@
 #! /bin/bash -norc
 #
-# RCS: @(#) $Id: configure.in,v 1.6 2002/04/02 18:15:39 hobbs Exp $
+# RCS: @(#) $Id: configure.in,v 1.7 2002/04/04 07:59:21 hobbs Exp $
 #
 #--------------------------------------------------------------------
 # Sample configure.in for Tcl Extensions.  The only places you should
@@ -101,8 +101,6 @@ TEA_PUBLIC_TK_HEADERS
 #TEA_PRIVATE_TCL_HEADERS
 #TEA_PRIVATE_TK_HEADERS
 
-TEA_PATH_X
-
 #--------------------------------------------------------------------
 # __CHANGE__
 # A few miscellaneous platform-specific items:
@@ -166,6 +164,13 @@ if test "${SHARED_BUILD}" = "1" ; then
 else
     CFLAGS='${CFLAGS_DEFAULT} ${CFLAGS_WARNING}'
 fi
+
+#--------------------------------------------------------------------
+# For Unix/Tk builds, make sure that the X libraries/headers are found.
+# This must be called after TEA_CONFIG_CFLAGS as it adjusts LIBS.
+#--------------------------------------------------------------------
+
+TEA_PATH_X
 
 #--------------------------------------------------------------------
 # Everyone should be linking against the Tcl stub library.  If you
