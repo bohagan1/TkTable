@@ -33,6 +33,7 @@
 #define	CMD_BATCH	19	/* command to turn batching on/off */
 #define CMD_ROW_STRETCH	20	/* change the row stretching mode */
 #define CMD_COL_STRETCH	21	/* change the row stretching mode */
+#define CMD_CGET	22	/* get configuration value */
 
 /* The list of commands for the command parser*/
 command_struct commandos[]=
@@ -58,6 +59,7 @@ command_struct commandos[]=
 	{ "batch"	, CMD_BATCH},
 	{ "rowstretch"	, CMD_ROW_STRETCH},
 	{ "colstretch"	, CMD_COL_STRETCH},
+	{ "cget"	, CMD_CGET},
 	{ ""		, 0}
 };
 
@@ -198,6 +200,21 @@ int TableWidgetCmd(clientdata, interp, argc, argv)
 		}
 		break;
 
+	case CMD_CGET:
+		switch (argc) {
+		case 3:
+		    result = Tk_ConfigureValue(interp, tablePtr->tkwin,
+			TableConfig, (char *)tablePtr, argv[2], 0);
+		    break;
+		default:
+		    Tcl_AppendResult(tablePtr->interp,
+			"wrong # args should be \"",
+			 argv[0], "-option", (char *)NULL);
+		    result=TCL_ERROR;
+		    break;
+		}
+                break;
+	    
 	/* changes the widths of certain selected columns */
 	case CMD_WIDTH:
 	case CMD_HEIGHT:
@@ -1059,7 +1076,8 @@ TableTagCommand(tablePtr, argc, argv)
 					keybuf=Tcl_GetHashKey(tablePtr->cellStyles, scanPtr);
 		
 					/* Split the value into its two components */
-					TableParseArrayIndex(tablePtr, &row, &col, keybuf);
+					if (TableParseArrayIndex(tablePtr, &row, &col, keybuf) != 2)
+					    return TCL_ERROR;
 					sprintf(buf, "{%d %d} ", row, col);
 					Tcl_AppendResult(tablePtr->interp, buf, (char *)NULL);
 				}

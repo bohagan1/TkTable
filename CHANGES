@@ -38,3 +38,12 @@ tk4.1 and tk4.0 compatability  (John.Ellson@att.com)
 			  entry point:  Tktable_Init
 		        extended wish:  tablewish
 
+version 0.4p8
+   - added patch from wangnick@orthogon.de to make tkTable accept -rows 0
+   - added patch from tmoore@pnfi.forestry.ca for handling of bad
+     array indexes
+   - added patch from tmoore@pnfi.forestry.ca to add rowTagProc and
+     colTagProc
+   - added patch from ellson@lucent.com to support cget so that
+     tkTable can be used with the dragdrop extension by
+     fellowsd@cs.man.ac.uk (Donal K. Fellows).

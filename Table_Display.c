@@ -8,6 +8,9 @@
 
 #include "Table.h"
 
+static Tcl_HashEntry *checkTagProc _ANSI_ARGS_((Tcl_Interp *interp, 
+						  Table *tablePtr, char *tagProc, 
+						  Tcl_HashTable *tagProcTbl, int which));
 
 /* 
 ** The main display procedure
@@ -39,6 +42,7 @@ void TableDisplay(clientdata)
 	tagStruct *selPtr;
 	Tcl_HashEntry *entryPtr;
 	static XPoint rect[6]={{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
+	Tcl_HashTable *rowProcTbl, *colProcTbl;
 
 	tablePtr->tableFlags &= ~TBL_REDRAW_PENDING;
 	invalidX=tablePtr->invalidX;
@@ -76,6 +80,18 @@ void TableDisplay(clientdata)
 	TableWhatCell(tablePtr, invalidX, invalidY, &rowFrom, &colFrom);
 	TableWhatCell(tablePtr, invalidX+invalidWidth-1, invalidY+invalidHeight-1, &rowTo, &colTo);
 
+	/* 
+	** If rowTagProc or colTagProc has been specified then initialize
+	** hash tables to cache evaluations.
+	*/
+	if (tablePtr->rowTagProc) {
+	  rowProcTbl = (Tcl_HashTable*) ckalloc(sizeof(Tcl_HashTable)); 
+	  Tcl_InitHashTable(rowProcTbl, TCL_ONE_WORD_KEYS);
+	}
+	if (tablePtr->colTagProc) {
+	  colProcTbl = (Tcl_HashTable*) ckalloc(sizeof(Tcl_HashTable)); 
+	  Tcl_InitHashTable(colProcTbl, TCL_ONE_WORD_KEYS);
+	}
 
 	/* 
 	** Cycle through the cells and display them 
@@ -122,11 +138,30 @@ void TableDisplay(clientdata)
 			/* check the individual cell reference */
 			if((entryPtr=Tcl_FindHashEntry(tablePtr->cellStyles, buf))!=NULL)
 				TableMergeTag(tagPtr, (tagStruct *)Tcl_GetHashValue(entryPtr));
-			/* then try the rows */
-			if((entryPtr=Tcl_FindHashEntry(tablePtr->rowStyles, (char *)i+tablePtr->rowOffset))!=NULL)
+			/* 
+			** Then try the rows.  First check in the row hash table.
+			** If nothing found there, then try evaluating the row
+			** tag procedure (if specified).
+			*/
+			if((entryPtr=Tcl_FindHashEntry(tablePtr->rowStyles, (char *)i+tablePtr->rowOffset))==NULL) {
+			  if (tablePtr->rowTagProc)
+				entryPtr = checkTagProc(interp, tablePtr, tablePtr->rowTagProc,
+										rowProcTbl, i+tablePtr->rowOffset);
+			}
+			if (entryPtr)
 				TableMergeTag(tagPtr, (tagStruct *)Tcl_GetHashValue(entryPtr));
-			/* then the columns */
-			if((entryPtr=Tcl_FindHashEntry(tablePtr->colStyles, (char *)j+tablePtr->colOffset))!=NULL)
+
+			/* 
+			** Then try the columns.  Same procedure as rows.  First check 
+			** in the row hash table.  If nothing found there, then try 
+			** evaluating the row tag procedure (if specified).
+			*/
+			if((entryPtr=Tcl_FindHashEntry(tablePtr->colStyles, (char *)j+tablePtr->colOffset))==NULL) {
+			  if (tablePtr->colTagProc)
+				entryPtr = checkTagProc(interp, tablePtr, tablePtr->colTagProc,
+										colProcTbl, j+tablePtr->colOffset);
+			}
+			if (entryPtr)
 				TableMergeTag(tagPtr, (tagStruct *)Tcl_GetHashValue(entryPtr));
 			/* then merge in the default type */
 			TableMergeTag(tagPtr, &(tablePtr->defaultTag));
@@ -331,6 +366,19 @@ void TableDisplay(clientdata)
 		XFreePixmap(Tk_Display(tkwin), window);
 	}
 
+	/* 
+	** If rowTagProc or colTagProc were specified then free up
+	** the hash tables that were used to cache evaluations.
+	*/
+	if (tablePtr->rowTagProc) {
+	  Tcl_DeleteHashTable(rowProcTbl);
+	  ckfree(rowProcTbl);
+	}
+	if (tablePtr->colTagProc) {
+	  Tcl_DeleteHashTable(colProcTbl);
+	  ckfree(colProcTbl);
+	}
+
 
 }
 
@@ -351,6 +399,12 @@ TableCellCoords(tablePtr, row, col, x, y, width, height)
      int *height;
 {
 	int i, j, w=0, h=0;
+
+	if (tablePtr->rows<=0 || tablePtr->cols<=0)
+		{
+		*width = *height = *x = *y = 0;
+		return;
+		}
 
 	row=min(tablePtr->rows-1, max(0, row));
 	col=min(tablePtr->cols-1, max(0, col));
@@ -475,4 +529,66 @@ TableGetGc(tablePtr, tagPtr)
 
 	Tcl_SetHashValue(entryPtr, (ClientData)newGc);
 	return newGc;
+}
+
+static Tcl_HashEntry *
+checkTagProc(interp, tablePtr, tagProc, tagProcTbl, which) 
+	 Tcl_Interp *interp;
+	 Table *tablePtr;
+	 char *tagProc;
+	 Tcl_HashTable *tagProcTbl;
+	 int which;
+{
+  Tcl_HashEntry *entryPtr;
+  char temp[16];
+  int new;
+  Tcl_HashEntry	*tblEntry;
+  Tcl_DString string;
+  
+  /* 
+  ** if this row/col already exists in the cache, return the already
+  ** computed tag value.
+  */
+  if ((entryPtr=Tcl_FindHashEntry(tagProcTbl, (char*)which))==NULL) {
+
+	/* 
+    ** Since it does not exist, construct a command string and
+	** evalute it.
+	*/
+	Tcl_DStringInit(&string);
+	Tcl_DStringAppend(&string,tagProc, -1);
+	sprintf(temp,"%10d",which);
+	Tcl_DStringAppend(&string,temp,-1);
+
+	/* Evaluate the procedure, discard any error */
+	if ((Tcl_Eval(interp, Tcl_DStringValue(&string)) != TCL_OK)) 
+	  Tcl_ResetResult(interp);
+	Tcl_DStringFree(&string);
+
+	/*
+	** Add an entry into the cahce, just so that we don't have to
+	** evaluate this row again.
+	*/
+	entryPtr=Tcl_CreateHashEntry(tagProcTbl, (char*)which, &new);
+	Tcl_SetHashValue(entryPtr, NULL);
+
+	/* 
+	** If a result was returned, check to see if it is a known
+	** tag.
+	*/
+	if (interp->result && *interp->result) 
+	  if ((tblEntry=Tcl_FindHashEntry(tablePtr->tagTable, interp->result))!=NULL) 
+		/* A valid tag was return.  Add it into the cache for safe keeping. */
+		Tcl_SetHashValue(entryPtr, Tcl_GetHashValue(tblEntry));
+  }
+
+  /*
+  ** Check the entry pointer found in the hash table.  If the
+  ** value is NULL, return NULL.  If there is a valid value, return
+  ** the entryPtr.
+  */
+  if (Tcl_GetHashValue(entryPtr))
+	return entryPtr;
+  else
+	return NULL;
 }

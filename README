@@ -7,11 +7,17 @@
  */
 
 /*
- * README updated for tkTable.0.4 by John.Ellson@att.com
+ * README updated for tkTable.0.4 by ellson@lucent.com (John Ellson)
+ *
+ *  tkTable.0.4p8 includes patches contributed by:
+ *        tmoore@pnfi.forestry.ca (Tom Moore)
+ *        wangnick@orthogon.de (Sebastian Wangnick)
+ *        paulf@lamont.ldgo.columbia.edu
+ *        ellson@lucent.com
  */
 
 *******************************
-The Tk Table Widget Version 0.4
+The Tk Table Widget Version 0.4p8
 *******************************
 
 Introduction

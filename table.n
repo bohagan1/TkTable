@@ -27,6 +27,10 @@ configuration options and their values, with one argument it prints the
 value for that option.
 .RS
 .TP
+\fIpathname\fR cget \fIarg\fR
+Prints the value of a configuration option.
+.RS
+.TP
 \fB-background\fR	
 background colour
 .TP
@@ -41,6 +45,9 @@ synonym for colour
 .TP
 \fB-cursorbg\fR	
 The colour for the cursor
+.TP
+\fB-cursor\fR	
+The bitap for the mouse pointer
 .TP
 \fB-borderwidth\fR	
 borderwidth in pixels or units like mm
@@ -97,6 +104,23 @@ the command issued to the yscrollbar, usually { <scrollname> set }
 .TP
 \fB-rowfirstmode\fR	
 if true, the index into the array is (row,col) else it is (col,row)
+.TP
+\fB-procrowtag\fR
+provides the name of a procedure that can evaluated by the widget to determine 
+the tag to be used for a given row.  The procedure must be defined by the user. 
+When displaying a cell the table widget will first check to see if a tag has 
+been defined using the 'rowtag' widget command.  If no tag is found, it will 
+evaluate the named procedure passing the row number in question as the sole 
+argument.  The procedure is expected to return the name of a tag to use, or 
+a null string.  Errors occuring during the evaluation of the procedure, or 
+the return of an invalid tag name are silently ignored.
+.TP
+\fB-proccoltag\fR
+provides the name of a procedure that can evaluated by the widget to determine 
+the tag to be used for a given column.  The procedure must be defined by the 
+user to accept a single argument (the column number), and return a tag name or
+a null string.  This operates in a similar manner as '-procrowtag', except 
+that it applies to column tags.
 .RE
 .TP
 \fIpathname\fR width ?\fIarg arg ...\fR?

@@ -98,6 +98,7 @@ typedef struct {
 	char 		*yScrollCmd;	/* the y-scroll command */
 	char		*xScrollCmd;	/* the x-scroll command */
 	Tk_3DBorder	cursorBg;	/* the cursor colour */
+	Tk_Cursor	cursor;         /* the regular mouse pointer */
 	int		rowThenCol;	/* is the table in row then col mode */
 	int		selectionOn;	/* Is selection enabled */
 
@@ -151,6 +152,8 @@ typedef struct {
 			invalidY,
 			invalidWidth,
 			invalidHeight;
+	char           *rowTagProc,
+	               *colTagProc; 
 } Table ;
 
 

@@ -30,9 +30,13 @@ Tk_ConfigSpec TableConfig[]=
 		(char *)NULL, (char *)NULL,
 		0, 0, (Tk_CustomOption *)NULL
 	},
-	{ 	TK_CONFIG_BORDER, "-cursorbg", "cursor",
-		"Cursor", "Black",
+	{ 	TK_CONFIG_BORDER, "-cursorbg", "cursorbg",
+		"Cursorbg", "Black",
 		Tk_Offset(Table, cursorBg), 0, (Tk_CustomOption *)NULL
+	},
+	{       TK_CONFIG_ACTIVE_CURSOR, "-cursor", "cursor",
+		"Cursor", "xterm",
+		Tk_Offset(Table, cursor), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
 	},
 	{ 	TK_CONFIG_PIXELS, "-borderwidth", "borderWidth",
 		"BorderWidth", "1",
@@ -109,6 +113,14 @@ Tk_ConfigSpec TableConfig[]=
 	{	TK_CONFIG_BOOLEAN, "-selection", "selection", 
 		"Selection", "1", 
 		Tk_Offset(Table, selectionOn), 0, (Tk_CustomOption *)NULL
+	},
+	{	TK_CONFIG_STRING, "-procrowtag", "procrowtag", 
+		"Procrowtag",  NULL ,
+		Tk_Offset(Table, rowTagProc), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
+	},
+	{	TK_CONFIG_STRING, "-proccoltag", "proccoltag", 
+		"Proccoltag",  NULL ,
+		Tk_Offset(Table, colTagProc), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
 	},
 	{	TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL,
 		(char *)NULL, 0, 0

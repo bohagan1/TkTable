@@ -7,6 +7,7 @@
 */
 
 #include "Table.h"
+#include "version.h"
 
 static char *init_script[] = {
 #include "TableInit.c"
@@ -26,6 +27,17 @@ Tktable_Init(interp)
     Tcl_DString data;
     Tcl_DStringInit(&data);
 
+    if (Tcl_PkgRequire(interp, "Tcl", TCL_VERSION, 0) == NULL) {
+	return TCL_ERROR;
+    }
+/* 
+    if (Tcl_PkgRequire(interp, "Tk", TK_VERSION, 0) == NULL) {
+	return TCL_ERROR;
+    }
+ */
+    if (Tcl_PkgProvide(interp, "Tktable", TKTABLE_VERSION) != TCL_OK) {
+	return TCL_ERROR;
+    }
     Tcl_CreateCommand(interp, "table", TableCmd,
 	(ClientData) Tk_MainWindow(interp),(Tcl_CmdDeleteProc *)NULL);
     while(*p) {
@@ -89,6 +101,7 @@ int TableCmd(clientdata, interp, argc, argv)
 	tablePtr->yScrollCmd=NULL;
 	tablePtr->xScrollCmd=NULL;
 	tablePtr->cursorBg=NULL;
+	tablePtr->cursor=None;
 	tablePtr->rowThenCol=1;
 	tablePtr->selectionOn=1;
 	tablePtr->topRow=0;
@@ -129,6 +142,8 @@ int TableCmd(clientdata, interp, argc, argv)
 	tablePtr->flashTimer=(Tk_TimerToken)NULL;
 	tablePtr->selectBuf=malloc(1);*(tablePtr->selectBuf)='\0';
 	tablePtr->selectBufLen=1;
+	tablePtr->rowTagProc=NULL;
+	tablePtr->colTagProc=NULL;
 
 	Tk_CreateEventHandler(	tkwin,
 				ExposureMask | StructureNotifyMask | FocusChangeMask, TableEventProc,

@@ -94,6 +94,10 @@ TableInvalidate(tablePtr, x, y, width, height, force)
 
   	int old_x, old_y, old_width, old_height;
 
+        /* avoid allocating 0 sized pixmaps which would be fatal */
+	if (width<=0 || height<=0)
+		return;
+
 	/* If not even mapped, ignore */
 	if(!Tk_IsMapped(tablePtr->tkwin))
 		return;
@@ -284,8 +288,10 @@ TableVarProc(clientdata, interp, name, index, flags)
 		return (char *)NULL;
 	}
 	
-	/* get the cell address and invalidate that region only */
-	TableParseArrayIndex(tablePtr, &i, &j, index);
+	/* get the cell address and invalidate that region only.
+	   * Make sure that it is a valid cell address. */
+	if (TableParseArrayIndex(tablePtr, &i, &j, index) != 2)
+	    return (char *)NULL;
 
 	i-=tablePtr->rowOffset;
 	j-=tablePtr->colOffset;
@@ -434,7 +440,8 @@ TableFlashEvent(clientdata)
 			int row, col, x, y, width, height;
 
 			/* get the cell address and invalidate that region only */
-			TableParseArrayIndex(tablePtr, &row, &col, Tcl_GetHashKey(tablePtr->flashCells, entryPtr));
+			if (TableParseArrayIndex(tablePtr, &row, &col, Tcl_GetHashKey(tablePtr->flashCells, entryPtr)) != 2)
+			    return;
 
 			row-=tablePtr->rowOffset;
 			col-=tablePtr->colOffset;
