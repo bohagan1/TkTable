@@ -1,3 +1,10 @@
+2005-03-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in (AR): use @AR@, improve html doc target
+	* configure, configure.in, tclconfig/tcl.m4: TEA 3.2 patch update
+
+	* doc/tkTable.n, doc/kTable.html: doc cleanup
+
 2005-02-01  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* configure, configure.in, tclconfig/tcl.m4: update to TEA 3.2

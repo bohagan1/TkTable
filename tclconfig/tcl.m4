@@ -9,7 +9,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tcl.m4,v 1.57 2005/02/02 04:25:10 hobbs Exp $
+# RCS: @(#) $Id: tcl.m4,v 1.61 2005/03/19 00:10:48 hobbs Exp $
 
 AC_PREREQ(2.50)
 
@@ -714,7 +714,6 @@ AC_DEFUN(TEA_ENABLE_LANGINFO, [
 #		STLIB_LD
 #		SHLIB_LD
 #		SHLIB_CFLAGS
-#		SHLIB_LD_FLAGS
 #		LDFLAGS_DEBUG
 #		LDFLAGS_OPTIMIZE
 #--------------------------------------------------------------------
@@ -917,7 +916,11 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 		    CFLAGS="$CFLAGS -I\"${CELIB_DIR}/inc\" -I\"${CEINCLUDE}\""
 		    RC="${WCEROOT}/Common/EVC/bin/rc.exe"
 		    arch=`echo ${ARCH} | awk '{print tolower([$]0)}'`
-		    defs="${ARCH} _${ARCH}_ ${arch} PALM_SIZE _MT _DLL _WINDOWS"
+		    defs="${ARCH} _${ARCH}_ ${arch} PALM_SIZE _MT _WINDOWS"
+		    if test "${SHARED_BUILD}" = "1" ; then
+			# Static CE builds require static celib as well
+		    	defs="${defs} _DLL"
+		    fi
 		    for i in $defs ; do
 			AC_DEFINE_UNQUOTED($i)
 		    done
@@ -1023,7 +1026,12 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 		    LD_SEARCH_FLAGS='-R${LIB_RUNTIME_DIR}'
 		fi
 	    else
-		SHLIB_LD="${TCL_SRC_DIR}/unix/ldAix /bin/ld -bhalt:4 -bM:SRE -bE:lib.exp -H512 -T512 -bnoentry ${SHLIB_LD_FLAGS}"
+		if test "$GCC" = "yes" ; then
+		    SHLIB_LD="gcc -shared"
+		else
+		    SHLIB_LD="/bin/ld -bhalt:4 -bM:SRE -bE:lib.exp -H512 -T512 -bnoentry"
+		fi
+		SHLIB_LD="${TCL_SRC_DIR}/unix/ldAix ${SHLIB_LD} ${SHLIB_LD_FLAGS}"
 		DL_LIBS="-ldl"
 		LD_SEARCH_FLAGS='-L${LIB_RUNTIME_DIR}'
 		TCL_NEEDS_EXP_FILE=1
@@ -1103,7 +1111,6 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 	    if test "$GCC" = "yes" ; then
 		SHLIB_LD="gcc -shared"
 		SHLIB_LD_LIBS='${LIBS}'
-		LD_SEARCH_FLAGS=''
 	    fi
 
 	    # Users may want PA-RISC 1.1/2.0 portable code - needs HP cc
@@ -1119,7 +1126,6 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 			    do64bit_ok=yes
 			    SHLIB_LD="${CC} -shared"
 			    SHLIB_LD_LIBS='${LIBS}'
-			    LD_SEARCH_FLAGS=''
 			    ;;
 			*)
 			    AC_MSG_WARN("64bit mode not supported with GCC on $system")
@@ -1576,7 +1582,6 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 				CFLAGS="$CFLAGS -m64 -mcpu=v9"
 				LDFLAGS="$LDFLAGS -m64 -mcpu=v9"
 				SHLIB_CFLAGS="-fPIC"
-				SHLIB_LD_FLAGS=""
 			    fi
 			else
 			    do64bit_ok=yes
@@ -1802,7 +1807,6 @@ dnl AC_CHECK_TOOL(AR, ar, :)
     AC_SUBST(STLIB_LD)
     AC_SUBST(SHLIB_LD)
     AC_SUBST(SHLIB_CFLAGS)
-    AC_SUBST(SHLIB_LD_FLAGS)
     AC_SUBST(SHLIB_LD_LIBS)
     AC_SUBST(LDFLAGS_DEBUG)
     AC_SUBST(LDFLAGS_OPTIMIZE)
@@ -2817,7 +2821,7 @@ AC_DEFUN(TEA_ADD_LIBS, [
     for i in $vars; do
 	if test "${TEA_PLATFORM}" = "windows" -a "$GCC" = "yes" ; then
 	    # Convert foo.lib to -lfoo for GCC.  No-op if not *.lib
-	    i=`echo "$i" | sed -e 's/\(.*\)\.lib[$]/-l\1/i'`
+	    i=`echo "$i" | sed -e 's/^\([[^-]].*\)\.lib[$]/-l\1/i'`
 	fi
 	PKG_LIBS="$PKG_LIBS $i"
     done
@@ -2999,11 +3003,11 @@ AC_DEFUN(TEA_SETUP_COMPILER, [
 AC_DEFUN(TEA_MAKE_LIB, [
     if test "${TEA_PLATFORM}" = "windows" -a "$GCC" != "yes"; then
 	MAKE_STATIC_LIB="\${STLIB_LD} -out:\[$]@ \$(PKG_OBJECTS)"
-	MAKE_SHARED_LIB="\${SHLIB_LD} \${SHLIB_LD_FLAGS} \${SHLIB_LD_LIBS} \${LDFLAGS_DEFAULT} -out:\[$]@ \$(PKG_OBJECTS)"
+	MAKE_SHARED_LIB="\${SHLIB_LD} \${SHLIB_LD_LIBS} \${LDFLAGS_DEFAULT} -out:\[$]@ \$(PKG_OBJECTS)"
 	MAKE_STUB_LIB="\${STLIB_LD} -out:\[$]@ \$(PKG_STUB_OBJECTS)"
     else
 	MAKE_STATIC_LIB="\${STLIB_LD} \[$]@ \$(PKG_OBJECTS)"
-	MAKE_SHARED_LIB="\${SHLIB_LD} -o \[$]@ \$(PKG_OBJECTS) \${SHLIB_LD_FLAGS} \${SHLIB_LD_LIBS}"
+	MAKE_SHARED_LIB="\${SHLIB_LD} -o \[$]@ \$(PKG_OBJECTS) \${SHLIB_LD_LIBS}"
 	MAKE_STUB_LIB="\${STLIB_LD} \[$]@ \$(PKG_STUB_OBJECTS)"
     fi
 
@@ -3019,7 +3023,6 @@ AC_DEFUN(TEA_MAKE_LIB, [
     # substituted. (@@@ Might not be necessary anymore)
     #--------------------------------------------------------------------
 
-    RANLIB_STUB="${RANLIB}"
     if test "${TEA_PLATFORM}" = "windows" ; then
 	if test "${SHARED_BUILD}" = "1" ; then
 	    # We force the unresolved linking of symbols that are really in
@@ -3029,13 +3032,16 @@ AC_DEFUN(TEA_MAKE_LIB, [
 		SHLIB_LD_LIBS="${SHLIB_LD_LIBS} \"`${CYGPATH} ${TK_BIN_DIR}/${TK_STUB_LIB_FILE}`\""
 	    fi
 	    eval eval "PKG_LIB_FILE=${PACKAGE_NAME}${SHARED_LIB_SUFFIX}"
-	    RANLIB=:
 	else
 	    eval eval "PKG_LIB_FILE=${PACKAGE_NAME}${UNSHARED_LIB_SUFFIX}"
 	fi
 	# Some packages build there own stubs libraries
 	eval eval "PKG_STUB_LIB_FILE=${PACKAGE_NAME}stub${UNSHARED_LIB_SUFFIX}"
+	# These aren't needed on Windows (either MSVC or gcc)
+	RANLIB=:
+	RANLIB_STUB=:
     else
+	RANLIB_STUB="${RANLIB}"
 	if test "${SHARED_BUILD}" = "1" ; then
 	    SHLIB_LD_LIBS="${SHLIB_LD_LIBS} ${TCL_STUB_LIB_SPEC}"
 	    if test x"${TK_BIN_DIR}" != x ; then
@@ -3432,13 +3438,12 @@ AC_DEFUN(TEA_PROG_TCLSH, [
 	AC_MSG_CHECKING([for tclsh])
 
 	AC_CACHE_VAL(ac_cv_path_tclsh, [
-	if test "${TEA_PLATFORM}" = "windows" -a "$do64bit_ok" = "yes" \
-		-o "$doWince" != "no" ; then
-	    # A Windows cross-compile build - restrict target tclsh
+	search_path=`echo ${PATH} | sed -e 's/:/ /g'`
+	if test "${TEA_PLATFORM}" != "windows" -o \
+		\( "$do64bit_ok" = "no" -a "$doWince" = "no" \) ; then
+	    # Do not allow target tclsh in known cross-compile builds,
 	    # as we need one we can run on this system
-	    search_path=`echo ${PATH} | sed -e 's/:/ /g'`
-	else
-	    search_path=`echo ${TCL_BIN_DIR}:${TCL_BIN_DIR}/../bin:${exec_prefix}/bin:${prefix}/bin:${PATH} | sed -e 's/:/ /g'`
+	    search_path="${TCL_BIN_DIR} ${TCL_BIN_DIR}/../bin ${exec_prefix}/bin ${prefix}/bin ${search_path}"
 	fi
 	for dir in $search_path ; do
 	    for j in `ls -r $dir/tclsh[[8-9]]*${EXEEXT} 2> /dev/null` \
@@ -3485,13 +3490,12 @@ AC_DEFUN(TEA_PROG_WISH, [
 	AC_MSG_CHECKING([for wish])
 
 	AC_CACHE_VAL(ac_cv_path_wish, [
-	if test "${TEA_PLATFORM}" = "windows" -a "$do64bit_ok" = "yes" \
-		-o "$doWince" != "no" ; then
-	    # A Windows cross-compile build - restrict target tclsh
+	search_path=`echo ${PATH} | sed -e 's/:/ /g'`
+	if test "${TEA_PLATFORM}" != "windows" -o \
+		\( "$do64bit_ok" = "no" -a "$doWince" = "no" \) ; then
+	    # Do not allow target wish in known cross-compile builds,
 	    # as we need one we can run on this system
-	    search_path=`echo ${PATH} | sed -e 's/:/ /g'`
-	else
-	    search_path=`echo ${TK_BIN_DIR}:${TK_BIN_DIR}/../bin:${TCL_BIN_DIR}:${TCL_BIN_DIR}/../bin:${exec_prefix}/bin:${prefix}/bin:${PATH} | sed -e 's/:/ /g'`
+	    search_path="${TK_BIN_DIR} ${TK_BIN_DIR}/../bin ${TCL_BIN_DIR} ${TCL_BIN_DIR}/../bin ${exec_prefix}/bin ${prefix}/bin ${search_path}"
 	fi
 	for dir in $search_path ; do
 	    for j in `ls -r $dir/wish[[8-9]]*${EXEEXT} 2> /dev/null` \

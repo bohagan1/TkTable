@@ -12,7 +12,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: Makefile.in,v 1.11 2003/12/10 23:02:19 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.12 2004/07/20 20:49:05 hobbs Exp $
 
 #========================================================================
 # Nothing of the variables below this line need to be changed.  Please
@@ -173,7 +173,7 @@ CONFIG_CLEAN_FILES = Makefile
 
 CPPFLAGS	= @CPPFLAGS@
 LIBS		= @PKG_LIBS@ @LIBS@
-AR		= ar
+AR		= @AR@
 CFLAGS		= @CFLAGS@
 COMPILE		= $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 
@@ -236,12 +236,15 @@ install-doc: doc
 	done
 
 html:
-	@cd $(srcdir)/doc; \
+	cd $(srcdir)/doc; \
 	list='$(PKG_MAN_PAGES)'; for p in $$list; do \
 		html=`basename $$p|sed -e 's/.[^.]*$$//'`.html; \
 		echo "Creating \"$$html\" from \"$$p\""; \
 		rm -f $$html; \
-		nroff -man $$p | rman -f HTML > $$html; \
+		nroff -man $$p \
+		| rman -f HTML \
+		| sed -e :a -e '/-$$/N; s/-\n//; ta' \
+			> $$html; \
 	done
 
 # Piping to cat is necessary on Windows to see the output, and
@@ -285,6 +288,7 @@ $(PKG_LIB_FILE): $(PKG_OBJECTS)
 # dependencies.
 #========================================================================
 
+# I added leading $(srcdir) because autoconf 2.53 strips it off
 VPATH = $(srcdir):$(srcdir)/generic:$(srcdir)/unix:$(srcdir)/win
 
 # I would prefer to use $< over $?, but FreeBSD's can't handle it, and
