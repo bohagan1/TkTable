@@ -2,14 +2,22 @@
 # the next line restarts using wish \
 exec wish "$0" ${1+"$@"}
 
+## basic.tcl
+##
+## This demo shows the basic use of the table widget
+##
+## jhobbs@cs.uoregon.edu
+
 array set table {
-  library	Tktable.so
+  library	Tktable
   rows		20
   cols		20
   table		.t
   array		t
 }
+append table(library) [info shared]
 
+## Ensure that the table library extension is loaded
 if {[string match {} [info commands table]] && \
     [catch {package require Tktable} err]} {
   if {[catch {load [file join [pwd] .. $table(library)]} err] && \
@@ -19,40 +27,33 @@ if {[string match {} [info commands table]] && \
 }
 
 proc fill { array x y } {
-    upvar $array f
-    for { set i -$x } { $i < $x } { incr i } {
-	for { set j -$y } { $j < $y } { incr j } {
-	  set f($i,$j) "r:$i,c:$j"
-	}
-    }
+  upvar $array f
+  for {set i -$x} {$i<$x} {incr i} {
+    for {set j -$y} {$j<$y} {incr j} { set f($i,$j) "r:$i,c:$j" }
+  }
 }
 
-#
-# Test out the use of a procedure to define tags on rows and columns
-#
-proc rowProc row {
-    if {$row <= 0}	{ return }
-    if [expr $row % 2]	{ return OddRow }
-}
-proc colProc col {
-    if {$col <= 0}	{ return }
-    if [expr $col % 2]	{ return OddCol }
-}
+## Test out the use of a procedure to define tags on rows and columns
+proc rowProc row { if {$row>0 && $row%2} { return OddRow } }
+proc colProc col { if {$col>0 && $col%2} { return OddCol } }
 
-pack [button .b -text "TkTable v0.6x Test"] -fill x
+pack [label .l -text "TkTable v1 Test"] -fill x
 
 fill $table(array) $table(rows) $table(cols)
 table $table(table) -rows $table(rows) -cols $table(cols) \
-    -variable $table(array) -titlerows 2 -titlecols 2 \
-    -yscrollcommand {.sv set} -xscrollcommand {.sh set} \
-    -roworigin -2 -colorigin -2 -maxwidth 350 -maxheight 300 \
+    -variable $table(array) \
+    -titlerows 2 -titlecols 2 \
+    -yscrollcommand {.sy set} -xscrollcommand {.sx set} \
+    -roworigin -2 -colorigin -2 \
+    -maxwidth 350 -maxheight 300 \
     -rowtagcommand rowProc -coltagcommand colProc \
-    -selectmode extended -rowstretch all -colstretch last \
+    -selectmode extended \
+    -rowstretch all -colstretch last \
     -flashmode on
-scrollbar .sv -command [list $table(table) bound top]
-scrollbar .sh -command [list $table(table) bound left] -orient horizontal
-pack .sh -side bottom -fill x
-pack .sv -side right -fill y
+scrollbar .sy -command [list $table(table) yview]
+scrollbar .sx -command [list $table(table) xview] -orient horizontal
+pack .sx -side bottom -fill x
+pack .sy -side right -fill y
 pack $table(table) -side left -fill both -expand on
 
 $table(table) tag config OddRow -bg orange -fg purple
@@ -60,7 +61,8 @@ $table(table) tag config OddCol -bg brown -fg pink
 
 update
 
-array set $table(array) { 1,0 "Flash me" 3,3 "Changed" }
+## This will show the use of the flash mode
+after 1000 [list array set $table(array) { 1,0 "Flash Me" 3,2 "And Me" }]
 
 puts [list Table is $table(table) with array [$table(table) cget -var]]
 

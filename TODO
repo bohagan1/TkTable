@@ -1,18 +1,32 @@
 ## TODO LIST
 ##
-## updated 19 Dec 1996, jhobbs@cs.uoregon.edu "Jeffrey Hobbs"
+## updated 13 Jan 1997, jhobbs@cs.uoregon.edu "Jeffrey Hobbs"
 ##
 
 Windows support
   Out-of-the-box.  This should be available by v1.5.
-  We have the code, but it needs to be exercised appropriately.
   We will probably distribute a precompiled DLL.
 
-Generic callback mechanism
-  This would enable you to specify a procedure to call when editing
-  a (set of) cell(s), for validation or whatever.
-
-Validation mechanism
-  Mutually exclusive with callback mechanism, this would allow you to
+Type specification mechanism (low priority)
+  Mutually exclusive with validation mechanism, this would allow you to
   be able to specify certain cells as a specific type (int, real, alpha)
 
+* Add ability to index by tagname
+
+* row/col resize by clicking on border (tcl solution)
+* separators in title areas for adjusting the width/height
+
+* improve cut/paste to delete/insert rows/cols
+
+* procedural interface for cells via -command (low priority)
+
+* To use the Tk-GC-Cache we must reserve our Tags-GC's
+	tablePtr->normalGC = TableGetGc(tablePtr,&tablePtr->defaultTag);
+  the Use-Count is ge 1 in TkGc. The Tag-Mixing is a problem but not
+  normally if we have preserved Gc's for normal/selected/title.
+
+* localize code for arrayVar/Trace/Configuration to one place, one
+  set of routines.
+
+* fix AdjustParams to use col/rowstretch properly when only a portion
+  of the table is visible (ie: when using scrollbars)

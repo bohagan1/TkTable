@@ -5,6 +5,100 @@
 	  ## Release dates between "****"s.		##
 	  ################################################
 
+**** v1.2 Jan 18 1997 **** (changes jhobbs@cs.uoregon.edu)
+
+Updated man page and HTML help page.
+
+Added TableCellSort to sort a row,col properly.
+
+Added arg for curvalue method to set the current active buffer.
+
+Added validation mechanism, validate method and -validate, -validatecommand
+options.  See docs for details.
+
+Added "active" key element to traced Tcl array for table.  This holds
+the activeBuf value of the table.
+
+Change arrayVar configuration in TableConfigure to only trigger if
+the arrayVar actually changed.
+
+Moved inserting/deleting in active cell to separate functions and
+bullet-proofed the code.
+
+Removed TableFlashConfigure.  Not used since "flash" became permanent tag.
+
+Changed TableSetCellValue to only set the variable if the value
+has changed.  This will prevent spurious flashing.
+
+Removed Roland King's COPYRIGHT, replaced with acknowledgements.
+This code represents a 90% rewrite of his original code.
+
+Added -O as default CFLAGS in Makefile.in, along with HP cc note.
+
+Fixed bug with cursor at position 0 for KANJI (appears to be a bug
+in TkWSTextExtents).
+
+Get/Set variable overhaul to ensure that everything works correctly
+for KANJI support (without compile warnings).
+
+Changed TableBufLengthen to a #define which uses ckrealloc.
+
+Removed -rowfirstmode and its use in code.  It actually didn't work for
+many functions and indices would be incorrectly returned.
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Fixed handling of arrayVar to accept vars with funny chars (including spaces).
+
+Added "see active" to tkTableMoveCell.
+
+Changed calculation of hidden cell to require at least 3/4 of
+the cell to be off the screen.
+
+Cleaned up, optimized lots of code.  Cleaned up some memory leaks.
+
+Removed undocumented "setlist" functionality - it was never used
+and I deemed it extraneous.
+
+Numerous name changes in tkTable.tcl (conforming to standards).  Also
+added full row/col selection capability && cut/copy/paste functionality.
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Changed ".table get ..." to return items in the same way as that
+of listbox (only affects handling of spaced values being returned).
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Changed Table_GetIndex to TableGetIndex (it was the only _ func).
+
+Optimized calling of TableAdjustParams in [xy]view and scan dragto
+as well as TAP code.
+
+Removed useless selectionOn C var and "select" index.
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Changed the [xy]scrollcmd to receive Tk4+ style args (2 doubles
+instead of 4 ints).
+
+Fixed problems with [xy]view and scan.  Might not be perfect yet.
+Removed boundary command as it reiterates [yx]view and index,
+added "bottomright" special index.  Change of code example:
+    .table bound bottom	=>	.table index bottomright row|col
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Fixed problem with cursor not disappearing on focus out.
+
+Added -browsecommand option for monitoring active cell movement.
+
+Added selection handler and -rowseparator, -colseparator,
+-selectioncommand, -exportselection options.
+
+Fixed problem with changing var to a simple variable.
+
+Fixed problems with compiling for KANJI, now seems to work again.
+
+Fixed highlight border bug. (bruecker)
+
+Fixed typo that prevented IMP from working.
+
 **** v1.1 Dec 30 1996 **** (changes jhobbs@cs.uoregon.edu)
 
 Updated code to handle Tk8 font mechanism.  Now works with Tk8.

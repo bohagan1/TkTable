@@ -1,5 +1,5 @@
 PACKAGE		= Tktable
-VERSION         = 1.1
+VERSION         = 1.2
 OBJS		= tkTable.o
 MANS		= tkTable.n
 
@@ -12,7 +12,8 @@ SHLIB_CFLAGS    = @TCL_SHLIB_CFLAGS@
 SHLIB_SUFFIX    = @TCL_SHLIB_SUFFIX@
 SHLIB_LD        = @TCL_SHLIB_LD@
 TCL_PREFIX      = @TCL_PREFIX@
-TCL_CFLAGS      = @TCL_CFLAGS@
+## HP cc sometimes requires -Aa for ansi compilation
+TCL_CFLAGS      = -O @TCL_CFLAGS@
 TCL_LIB_SPEC    = @TCL_LIB_SPEC@
 TCL_LIBS        = @TCL_LIBS@
 TCL_LD_FLAGS    = @TCL_LD_FLAGS@

@@ -28,7 +28,8 @@ METHOD CHANGES:
 
 * leftcol, toprow, bottomrow, rightcol
  [old]	.table leftcol|toprow|bottomrow|rightcol ?rowOrCol?
- [new]	.table boundary left|right|top|bottom ?rowOrCol?
+ [new]	.table index topleft|bottomright ?row|col?
+	.table [xy]view row|col ;# This will set the top|left cell
 
 * rindex, cindex
  [old]	.table [rc]index index

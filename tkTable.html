@@ -19,141 +19,171 @@ table - Create and manipulate tables
 <P>
 <P>
   -anchor<tt> </tt>&nbsp;<tt> </tt>&nbsp;-background<tt> </tt>&nbsp;<tt> </tt>&nbsp;-borderwidth<tt> </tt>&nbsp;<tt> </tt>&nbsp;-cursor<BR>
- -font<tt> </tt>&nbsp;<tt> </tt>&nbsp;-foreground<tt> </tt>&nbsp;<tt> </tt>&nbsp;-highlightbackground<tt> </tt>&nbsp;<tt> </tt>&nbsp;-highlightcolor<BR>
+ -exportselection<tt> </tt>&nbsp;<tt> </tt>&nbsp;-font<tt> </tt>&nbsp;<tt> </tt>&nbsp;-foreground<BR>
  
--highlightthickness<tt> </tt>&nbsp;<tt> </tt>&nbsp;-insertbackground<tt> </tt>&nbsp;<tt> </tt>&nbsp;-insertborderwidth<BR>
- -insertofftime<tt> </tt>&nbsp;<tt> </tt>&nbsp;-insertontime<tt> </tt>&nbsp;<tt> </tt>&nbsp;-insertwidth<tt> </tt>&nbsp;<tt> </tt>&nbsp;-relief<BR>
+-highlightbackground<tt> </tt>&nbsp;<tt> </tt>&nbsp;-highlightcolor<tt> </tt>&nbsp;<tt> </tt>&nbsp;-highlightthickness<BR>
+ -insertbackground<tt> </tt>&nbsp;<tt> </tt>&nbsp;-insertborderwidth<tt> </tt>&nbsp;<tt> </tt>&nbsp;-insertofftime<BR>
  
--takefocus<tt> </tt>&nbsp;<tt> </tt>&nbsp;-xscrollcommand<tt> </tt>&nbsp;<tt> </tt>&nbsp;-yscrollcommand<BR>
+-insertontime<tt> </tt>&nbsp;<tt> </tt>&nbsp;-insertwidth<tt> </tt>&nbsp;<tt> </tt>&nbsp;-relief<tt> </tt>&nbsp;<tt> </tt>&nbsp;-takefocus<BR>
+ -xscrollcommand<tt> </tt>&nbsp;<tt> </tt>&nbsp;-yscrollcommand<BR>
   <P>
-See the <B>options</B> manual entry for 
-details on the standard options.  <P>
+See 
+the <B>options</B> manual entry for details on the standard options.  <P>
  
-<H2><A NAME="sect3" HREF="#toc3">WIDGET-SPECIFIC OPTIONS</A></H2>
+<H2><A NAME="sect3" HREF="#toc3">WIDGET-SPECIFIC 
+OPTIONS</A></H2>
 <P>
 <P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-autoclear</B><BR>
- 
-Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>autoClear</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>autoClear</B><BR>
  Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>AutoClear</B><BR>
  
+
 <DL>
 
-<DT> A boolean value which 
-specifies whether the first keypress in a cell will </DT>
-<DD>delete whatever text 
-was previously there.  Defaults to 0. </DD>
+<DT> A boolean value which specifies whether the first keypress in a cell 
+will </DT>
+<DD>delete whatever text was previously there.  Defaults to 0. </DD>
 </DL>
 <P>
 <P>
-Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-batchmode</B><BR>
- Database 
-Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>batchMode</B><BR>
+Command-Line 
+Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-batchmode</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>batchMode</B><BR>
  Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>BatchMode</B><BR>
  
 <DL>
 
-<DT> If true, updates are not forced 
-out at any point, the widget waits for Tk to </DT>
-<DD>be idle before it repaints 
-the screen.  Otherwise flashes, variable updates and the cursor changes 
-are forced immediately to the screen.  Defaults to 0. </DD>
+<DT> If true, 
+updates are not forced out at any point, the widget waits for Tk to </DT>
+<DD>be 
+idle before it repaints the screen.  If false, flashes, variable updates 
+and the cursor changes are forced immediately to the screen. Defaults to 
+false. </DD>
+</DL>
+<P>
+<P>
+Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-browsecommand or -browsecmd</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>browseCommand</B><BR>
+ 
+Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>BrowseCommand</B><BR>
+ 
+<DL>
+
+<DT> Specifies a command which will be evaluated 
+anytime the active cell changes. </DT>
+<DD>It uses the %-substition model described 
+in COMMAND SUBSTITUTION below. </DD>
 </DL>
 <P>
 <P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-colorigin</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>colOrigin</B><BR>
  
-Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>colOrigin</B><BR>
- Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Origin</B><BR>
+Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Origin</B><BR>
  
 <DL>
 
-<DT> Column origin of top left 
-corner of screen into the array variable </DT>
-<DD>First column maps to array(x, 
-$colorigin).  Defaults to 0. </DD>
+<DT> Column origin of top left corner of screen into 
+the array variable </DT>
+<DD>First column maps to array(x,$colorigin).  Defaults 
+to 0. </DD>
 </DL>
 <P>
 <P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-cols</B><BR>
  Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>cols</B><BR>
- Database 
-Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Cols</B><BR>
+ Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Cols</B><BR>
  
 <DL>
 
-<DT> Number of cols in the table.  Defaults to 10. </DT>
+<DT> Number 
+of cols in the table.  Defaults to 10. </DT>
 <DD></DD>
 </DL>
 <P>
 <P>
-Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-colstretchmode</B><BR>
- 
-Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>colStretchMode</B><BR>
- Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>StretchMode</B><BR>
+Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-colseparator</B><BR>
+ Database 
+Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>colSeparator</B><BR>
+ Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Separator</B><BR>
  
 <DL>
 
-<DT> Specifies one 
-of the following stretch modes for columns to fill extra </DT>
-<DD>allocated window 
-space: <blockquote></DD>
+<DT> Specifies a separator character 
+that will be interpreted as the column </DT>
+<DD>separator when cutting or pasting 
+data in a table.  By default, columns are separated as elements of a tcl 
+list. </DD>
+</DL>
+<P>
+<P>
+Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-colstretchmode</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>colStretchMode</B><BR>
+ Database 
+Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>StretchMode</B><BR>
+ 
+<DL>
+
+<DT> Specifies one of the following stretch modes for columns 
+to fill extra </DT>
+<DD>allocated window space: <blockquote></DD>
 
 <DT><B>none</B> </DT>
-<DD>Columns will not stretch to fill the assigned window space. 
- If the columns are too narrow, there will be a  blank space at the right 
-of the table.  This is the default. </DD>
+<DD>Columns will not stretch to 
+fill the assigned window space.  If the columns are too narrow, there will 
+be a  blank space at the right of the table.  This is the default. </DD>
 
-<DT><B>unset</B> </DT>
-<DD>Only columns that do not have 
-a specific width set will be stretched. </DD>
+<DT><B>unset</B> 
+</DT>
+<DD>Only columns that do not have a specific width set will be stretched. </DD>
 
-<DT><B>all</B> </DT>
-<DD>All columns will be stretched 
-by the same number of pixels to fill the window space allocated to the 
-table. </DD>
+<DT><B>all</B> 
+</DT>
+<DD>All columns will be stretched by the same number of pixels to fill the 
+window space allocated to the table. </DD>
 
 <DT><B>last</B> </DT>
-<DD>The last column will be stretched  to fill the window space 
-allocated to the table. </DD>
+<DD>The last column will be stretched 
+ to fill the window space allocated to the table. </DD>
 
-<DT><B>fill</B> (only valid for rowstretch currently) </DT>
-<DD>The 
-table will get more or less columns according to the window space allocated 
-to the table. </DD>
+<DT><B>fill</B> (only valid for 
+rowstretch currently) </DT>
+<DD>The table will get more or less columns according 
+to the window space allocated to the table. </DD>
 </DL>
 </blockquote>
 <P>
 <P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-coltagcommand</B><BR>
- Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>colTagCommand</B><BR>
  
-Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>TagCommand</B><BR>
+Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>colTagCommand</B><BR>
+ Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>TagCommand</B><BR>
  
 <DL>
 
-<DT> Provides the name of a procedure that will 
-be evaluated by the widget to </DT>
-<DD>determine the tag to be used for a given 
-column.  When displaying a cell, the table widget will first check to see 
-if a tag has been defined using the <B>coltag</B> widget command.  If no tag is 
-found, it will evaluate the named procedure passing the column number 
-in question as the sole argument.  The procedure is expected to return 
-the name of a tag to use, or a null string. Errors occuring during the 
-evaluation of the procedure, or the return of an invalid tag name are 
-silently ignored. </DD>
+<DT> Provides the name 
+of a procedure that will be evaluated by the widget to </DT>
+<DD>determine the tag 
+to be used for a given column.  When displaying a cell, the table widget 
+will first check to see if a tag has been defined using the <B>coltag</B> widget 
+command.  If no tag is found, it will evaluate the named procedure passing 
+the column number in question as the sole argument.  The procedure is expected 
+to return the name of a tag to use, or a null string. Errors occuring during 
+the evaluation of the procedure, or the return of an invalid tag name 
+are silently ignored. </DD>
 </DL>
 <P>
 <P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-drawmode</B><BR>
  Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>drawMode</B><BR>
- Database 
-Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>DrawMode</B><BR>
+ 
+Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>DrawMode</B><BR>
  
 <DL>
 
-<DT> Sets the table drawing mode to one of the following options: 
-</DT>
+<DT> Sets the table drawing mode to one of the following 
+options: </DT>
 <DD><blockquote></DD>
 
 <DT><B>slow</B> </DT>
@@ -243,42 +273,43 @@ window will request.  Defaults to 1000. </DT>
 </DL>
 <P>
 <P>
-Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-rowfirstmode</B><BR>
+Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-roworigin</B><BR>
  Database 
-Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>rowFirstMode</B><BR>
- Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>RowFirstMode</B><BR>
- 
-<DL>
-
-<DT> If true, the index into 
-the array is (row,col) else it is (col,row). </DT>
-<DD>Defaults to true. </DD>
-</DL>
-<P>
-<P>
-Command-Line 
-Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-roworigin</B><BR>
- Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>rowOrigin</B><BR>
+Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>rowOrigin</B><BR>
  Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Origin</B><BR>
  
 <DL>
 
-<DT> Row origin 
-of top left corner of screen into the array variable. </DT>
-<DD>First row maps to 
-array(x, $roworigin).  Defaults to 0. </DD>
+<DT> Row origin of top left corner of 
+screen into the array variable. </DT>
+<DD>First row maps to array($roworigin,y).  
+Defaults to 0. </DD>
 </DL>
 <P>
 <P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-rows</B><BR>
  Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>rows</B><BR>
+ Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Rows</B><BR>
  
-Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Rows</B><BR>
- 
+
 <DL>
 
 <DT> Number of rows in the table.  Defaults to 10. </DT>
 <DD></DD>
+</DL>
+<P>
+<P>
+Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-rowseparator</B><BR>
+ 
+Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>rowSeparator</B><BR>
+ Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Separator</B><BR>
+ 
+<DL>
+
+<DT> Specifies a separator 
+character that will be interpreted as the row </DT>
+<DD>separator when cutting or 
+pasting data in a table.  By default, rows are separated as tcl lists. </DD>
 </DL>
 <P>
 <P>
@@ -328,44 +359,91 @@ for the Tk listbox, except expanded for 2 dimensions. </DD>
 </DL>
 <P>
 <P>
-Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-state</B><BR>
+Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-selectioncommand 
+or -selcmd</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>selectionCommand</B><BR>
+ Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>SelectionCommand</B><BR>
  
-Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>state</B><BR>
- Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>State</B><BR>
+
+<DL>
+
+<DT> Specifies a command to evaluate when the selection is retrieved from 
+a table </DT>
+<DD>via the selection mechanism (ie: evaluating "selection get").  
+The return value from this command will become the string passed on by 
+the selection mechanism.  It uses the %-substition model described in COMMAND 
+SUBSTITUTION below. </DD>
+</DL>
+<P>
+<P>
+Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-state</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>state</B><BR>
+ Database 
+Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>State</B><BR>
  
 <DL>
 
-<DT> Specifies one of two states 
-for the entry:  <B>normal</B> or <B>disabled</B>. </DT>
-<DD>If the table is disabled then the value 
-may not be changed using widget commands and no insertion cursor will 
-be displayed, even if the input focus is in the widget. </DD>
+<DT> Specifies one of two states for the entry:  <B>normal</B> or <B>disabled</B>. 
+</DT>
+<DD>If the table is disabled then the value may not be changed using widget 
+commands and no insertion cursor will be displayed, even if the input 
+focus is in the widget. </DD>
 </DL>
 <P>
 <P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-titlerows</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>titleRows</B><BR>
  
-Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>titleRows</B><BR>
- Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>TitleRows</B><BR>
+Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>TitleRows</B><BR>
  
 <DL>
 
-<DT> Number of rows to use 
-as a title area.  Defaults to 0. </DT>
+<DT> Number of rows to use as a title area.  Defaults 
+to 0. </DT>
 <DD></DD>
 </DL>
 <P>
 <P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-titlecols</B><BR>
  Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>titleCols</B><BR>
+ Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>TitleCols</B><BR>
  
-Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>TitleCols</B><BR>
+
+<DL>
+
+<DT> Number of columns to use as a title area.  Defaults to 0. </DT>
+<DD></DD>
+</DL>
+<P>
+<P>
+Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-validate</B><BR>
+ 
+Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>validate</B><BR>
+ Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Validate</B><BR>
  
 <DL>
 
-<DT> Number of columns to use as a title area.  Defaults 
-to 0. </DT>
-<DD></DD>
+<DT> A boolean specifying whether 
+validation should occur for the active buffer. </DT>
+<DD>Defaults to 0. </DD>
+</DL>
+<P>
+<P>
+Command-Line 
+Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-validatecommand or -vcmd</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>validateCommand</B><BR>
+ Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>ValidateCommand</B><BR>
+ 
+
+<DL>
+
+<DT> Specifies a command to execute when the active cell is edited.  This command 
+</DT>
+<DD>is expected to return a Tcl boolean.  If it returns true, then it is assumed 
+the new value is OK, otherwise the new value is rejected (the edition 
+will not take place).  Errors in this command are handled in the background. 
+ It uses the %-substition model described in COMMAND SUBSTITUTION below. 
+</DD>
 </DL>
 <P>
 <P>
@@ -376,164 +454,241 @@ Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-variable</B><BR>
 
 <DL>
 
-<DT> Tcl array variable to attach to the table's C array.  It will be created 
+<DT> Global Tcl array variable to attach to the table's C array.  It will be 
 </DT>
-<DD>if it doesn't already exist.  The table is effectively useless without an 
-attached array (no data will be stored). </DD>
+<DD>created if it doesn't already exist or is a simple variable.  The table 
+is effectively useless without an attached array (no data will be stored). 
+Keys used by the table in the array are of the form <I>row</I>,<I>col</I> for cells 
+and the special key <I>active</I> which contains the value of the active cell 
+buffer. </DD>
 </DL>
 <P>
 <P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-width</B><BR>
- Database 
-Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>width</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>width</B><BR>
  Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Width</B><BR>
  
+
 <DL>
 
-<DT> Default column width in characters in 
-the default font.  Defaults to 10. </DT>
-
+<DT> Default column width in characters in the default font.  Defaults to 10. 
+</DT>
+<DD>  <BR>
+ }<BR>
+ <BR>
+   <BR>
+ </DD>
 </DL>
 <P>
  
 <H2><A NAME="sect4" HREF="#toc4">DESCRIPTION</A></H2>
 <P>
-The <B>table</B> command 
-creates a 2-dimensional grid of cells which can used to display, or update 
-the contents of a Tcl array variable. The table can index into the array 
-on either a row-first or column-first basis.  The widget has a selected cell, 
-the contents of which can be edited (when the state is normal).  The widget 
-supports a default style for the cells and also multiple <I>tags</I>, which can 
-be used to change the <B>foreground</B>, <B>background</B>, <B>font</B>, <B>relief</B> and <B>anchor</B> 
-for a row, column or cell.  A cell <I>flash</I> can be set up so that newly changing 
-cells will change color for a specified amount of time. <P>
-In order to obtain 
-good performance, the Table widget supports three drawing modes, two of 
-which are fully Tk compatible. <P>
+The <B>table</B> command creates a 2-dimensional grid of 
+cells which can used to display or update the contents of a Tcl array 
+variable.  The widget has an active cell, the contents of which can be 
+edited (when the state is normal).  The widget supports a default style 
+for the cells and also multiple <I>tags</I>, which can be used to change the 
+<B>foreground</B>, <B>background</B>, <B>font</B>, <B>relief</B> and <B>anchor</B> for a row, column or cell. 
+ A cell <I>flash</I> can be set up so that newly changing cells will change color 
+for a specified amount of time. <P>
+One or more cells may be selected as described 
+below.  If a table is exporting its selection (see <B>exportSelection</B> option), 
+then it will observe the standard X11 protocols for handling the selection. 
+ See THE SELECTION below for details. <P>
+It is not necessary for all the cells 
+to be displayed in the table window at once; commands described below 
+may be used to change the view in the window. Tables allow scrolling in 
+both directions using the standard <B>xScrollCommand</B> and <B>yScrollCommand</B> options. 
+ They also support scanning, as described below. <P>
+In order to obtain good 
+performance, the table widget supports three drawing modes, two of which 
+are fully Tk compatible. <P>
  
 <H2><A NAME="sect5" HREF="#toc5">INDICES</A></H2>
 <P>
-Many of the widget commands for 
-tables take one or more indices as arguments. An index specifies a particular 
+Many of the widget commands for tables 
+take one or more indices as arguments. An index specifies a particular 
 cell of the table, in any of the following ways: 
 <DL>
 
 <DT><I>number,number</I> </DT>
 <DD>Specifies 
-the cell as a numerical index of row,col (or col,row if -rowfirstmode is 
-0), where -roworigin,-colorigin corresponds to the first cell in the table 
-(0,0 by default). </DD>
+the cell as a numerical index of row,col which corresponds to the index 
+of the associated Tcl array, where -roworigin,-colorigin corresponds to 
+the first cell in the table (0,0 by default). </DD>
 
 <DT><B>active</B> </DT>
-<DD>Indicates the cell that has the location cursor. 
-It is specified with the <B>activate</B> widget command. </DD>
+<DD>Indicates the cell 
+that has the location cursor. It is specified with the <B>activate</B> widget 
+command. </DD>
 
 <DT><B>anchor</B> </DT>
+<DD>Indicates the anchor point for the selection, which is 
+set with the <B>selection anchor</B> widget command. </DD>
+
+<DT><B>bottomright</B> </DT>
 <DD>Indicates the 
-anchor point for the selection, which is set with the <B>selection anchor</B> 
-widget command. </DD>
+bottom-rightmost cell visible in the table. </DD>
 
 <DT><B>end</B> </DT>
-<DD>Indicates the bottom right cell of the table. </DD>
+<DD>Indicates the bottom right 
+cell of the table. </DD>
 
-<DT><B>origin</B> 
-</DT>
-<DD>Indicates the top-leftmost editable cell of the table, not necessarily 
-in the display.  This takes into account the user specified origin and 
-title area. </DD>
+<DT><B>origin</B> </DT>
+<DD>Indicates the top-leftmost editable cell of the 
+table, not necessarily in the display.  This takes into account the user 
+specified origin and title area. </DD>
 
-<DT><B>select</B> </DT>
-<DD>Indicates the last selected cell of the table. </DD>
-
-<DT><B>topleft</B> 
-</DT>
-<DD>Indicates the top-leftmost editable cell visible in the table (this excludes 
-title cells). </DD>
+<DT><B>topleft</B> </DT>
+<DD>Indicates the top-leftmost editable 
+cell visible in the table (this excludes title cells). </DD>
 
 <DT><B>@<I>x<B>,<I>y</I></B></I></B> </DT>
-<DD>Indicates the cell that covers the point in the table 
-window specified by <I>x</I> and <I>y</I> (in pixel coordinates).  If no cell covers 
-that point, then the closest cell to that point is used. </DD>
+<DD>Indicates the 
+cell that covers the point in the table window specified by <I>x</I> and <I>y</I> (in 
+pixel coordinates).  If no cell covers that point, then the closest cell 
+to that point is used. </DD>
 </DL>
 <P>
-In the widget 
-command descriptions below, arguments named <I>index</I>, <I>first</I>, and <I>last</I> always 
-contain text indices in one of the above forms. <P>
+In the widget command descriptions below, arguments 
+named <I>index</I>, <I>first</I>, and <I>last</I> always contain text indices in one of the 
+above forms. <P>
  
 <H2><A NAME="sect6" HREF="#toc6">TAGS</A></H2>
 <P>
-A tag is a textual 
-string that is associated with zero or more rows, columns or cells in 
-a table.  Tags may contain arbitrary characters, but it is probably best 
-to avoid using names which look like indices.  There may be any number 
-of tags associated with rows, columns or cells in a table.  There are several 
-permanent tags in each table that can be configured by the user and will 
-determine the attributes for special cells: <blockquote>
+A tag is a textual string that is associated with zero 
+or more rows, columns or cells in a table.  Tags may contain arbitrary 
+characters, but it is probably best to avoid using names which look like 
+indices.  There may be any number of tags associated with rows, columns 
+or cells in a table.  There are several permanent tags in each table that 
+can be configured by the user and will determine the attributes for special 
+cells: <blockquote>
 <DL>
 
 <DT><B>active</B> </DT>
-<DD>This tag is given to 
-the <I>active</I> cell </DD>
+<DD>This tag is given to the <I>active</I> cell </DD>
 
 <DT><B>flash</B> </DT>
-<DD>If flash mode is on, this tag is given to any recently 
-edited cells. </DD>
+<DD>If flash mode 
+is on, this tag is given to any recently edited cells. </DD>
 
 <DT><B>sel</B> </DT>
-<DD>This tag is given to any selected cells. </DD>
+<DD>This tag is 
+given to any selected cells. </DD>
 
 <DT><B>title</B> </DT>
-<DD>This tag 
-is given to any cells in the title rows and columns. </DD>
+<DD>This tag is given to any cells in the 
+title rows and columns. </DD>
 </DL>
 </blockquote>
 <P>
-Tags control the way 
-cells are displayed on the screen. By default, cells are displayed as determined 
-by the <B>background</B>, <B>font</B>, and <B>foreground</B> options for the table widget. However, 
-display options may be associated with individual tags using the ``<I>pathName 
-<B>tag configure</B></I>'' widget command. If a cell has been tagged, then the display 
-options associated with the tag override the default display style. The 
-following options are currently supported for tags: <blockquote>
+Tags control the way cells are displayed on the 
+screen. By default, cells are displayed as determined by the <B>background</B>, 
+<B>font</B>, and <B>foreground</B> options for the table widget. However, display options 
+may be associated with individual tags using the ``<I>pathName <B>tag configure</B></I>'' 
+widget command. If a cell has been tagged, then the display options associated 
+with the tag override the default display style. The following options 
+are currently supported for tags: <blockquote>
 <DL>
 
 <DT><B>-anchor</B> </DT>
-<DD>anchoring in 
-the cell space </DD>
+<DD>anchoring in the cell space </DD>
 
-<DT><B>-background</B> or <B>-bg</B> </DT>
+<DT><B>-background</B> 
+or <B>-bg</B> </DT>
 <DD>background color of the cell </DD>
 
 <DT><B>-font</B> </DT>
-<DD>font 
-for the cell </DD>
+<DD>font for the cell </DD>
 
-<DT><B>-foreground</B> or <B>-fg</B> </DT>
+<DT><B>-foreground</B> or 
+<B>-fg</B> </DT>
 <DD>foreground color of the cell </DD>
 
 <DT><B>-relief</B> </DT>
 <DD></DD>
 </DL>
-the 
-relief for the cell </blockquote>
+the relief for the cell </blockquote>
 <P>
-A priority order is defined among tags, and this order 
-is used in implementing some of the tag-related functions described below. 
- When a cell is displayed, its properties are determined by the tags which 
-are assigned to it.  Including the special tags, this order is <B>active</B>, 
-<B>flash</B>, <B>sel</B>, <B>title</B>, <B>celltag</B>, <B>rowtag</B>, <B>coltag</B>, default. <P>
-If a cell has several 
-tags associated with it, and if their display options conflict, then the 
-options of the highest priority tag are used.  If a particular display 
-option hasn't been specified for a particular tag, or if it is specified 
-as an empty string, then that option will never be used; the next-highest-priority 
-tag's option will used instead.  If no tag specifies a particular display 
-option, then the default style for the widget will be used. <P>
+A priority 
+order is defined among tags, and this order is used in implementing some 
+of the tag-related functions described below.  When a cell is displayed, 
+its properties are determined by the tags which are assigned to it.  Including 
+the special tags, this order is <B>flash</B>, <B>active</B>, <B>sel</B>, <B>title</B>, <B>celltag</B>, <B>rowtag</B>, 
+<B>coltag</B>, default. <P>
+If a cell has several tags associated with it, and if 
+their display options conflict, then the options of the highest priority 
+tag are used.  If a particular display option hasn't been specified for 
+a particular tag, or if it is specified as an empty string, then that 
+option will never be used; the next-highest-priority tag's option will used 
+instead.  If no tag specifies a particular display option, then the default 
+style for the widget will be used. <P>
  
-<H2><A NAME="sect7" HREF="#toc7">WIDGET COMMAND</A></H2>
+<H2><A NAME="sect7" HREF="#toc7">THE SELECTION</A></H2>
 <P>
-The 
-<B>table</B> command creates a new Tcl command whose name is <I>pathName</I>.  This command 
+Table selections are available 
+as type STRING (or COMPOUND_TEXT with the Kanji patch).  By default, the 
+value of the selection will be the values of the selected cells in nested 
+Tcl list form where each row is a list and each column is an element of 
+a row list.  You can change the way this value is interpreted by setting 
+the <B>-rowseparator</B> and <B>-colseparator</B> options.  For example, default Excel 
+format would be to set <B>-rowseparator</B> to "\n" and <B>-colseparator</B> to "\t".  Changes 
+these values affects both how the table sends out the selection and reads 
+in pasted data, ensuring that the table should always be able to cut and 
+paste to itself.  It is possible to change how pastes are handled by editing 
+the table library procedure <B>tk_tablePasteHandler</B>.  This might be necessary 
+if <B>-selectioncommand</B> is set. <P>
+ 
+<H2><A NAME="sect8" HREF="#toc8">COMMAND SUBSTITUTION</A></H2>
+<P>
+<P>
+ The various option based 
+commands that the table supports all support the familiar Tk %-substitution 
+model (see <B>bind</B> for more details).  The following %-sequences are recognized 
+and substituted by the table widget: 
+<DL>
+
+<DT><B>%c</B> </DT>
+<DD>For <B>ValidateCommand</B>, it is the 
+column of the cell being validated. For <B>SelectionCommand</B>, it is the maximum 
+number of columns in any row in the selection. </DD>
+
+<DT><B>%C</B> </DT>
+<DD>Only valid for the <B>ValidateCommand</B>, 
+it is the <I>row</I>,<I>col</I> index of the cell being validated. </DD>
+
+<DT><B>%i</B> </DT>
+<DD>For <B>SelectionCommand</B>, 
+it is the total number of cells in the selection, otherwise it is the 
+current cursor position in the cell. </DD>
+
+<DT><B>%r</B> </DT>
+<DD>For <B>ValidateCommand</B>, it is the 
+row of the cell being validated. For <B>SelectionCommand</B>, it is the number 
+of rows in the selection. </DD>
+
+<DT><B>%s</B> </DT>
+<DD>For <B>ValidateCommand</B>, it is the current value 
+of the cell being validated. For <B>SelectionCommand</B>, it is the default value 
+of the selection. For <B>BrowseCommand</B>, it is the index of the last active 
+cell. </DD>
+
+<DT><B>%S</B> </DT>
+<DD>For <B>ValidateCommand</B>, it is the potential new value of the cell 
+being validated. For <B>SelectionCommand</B>, it is the default value of the selection. 
+For <B>BrowseCommand</B>, it is the index of the new active cell. </DD>
+
+<DT><B>%W</B> </DT>
+<DD>The pathname 
+to the window for which the command was generated. </DD>
+</DL>
+<P>
+<P>
+ 
+<H2><A NAME="sect9" HREF="#toc9">WIDGET COMMAND</A></H2>
+<P>
+The <B>table</B> 
+command creates a new Tcl command whose name is <I>pathName</I>.  This command 
 may be used to invoke various operations on the widget.  It has the following 
 general form: <blockquote><P>
  <I>pathName option </I>?<I>arg arg ...</I>?<BR>
@@ -552,12 +707,6 @@ one indicated by <I>index</I>. </DD>
 <DD>Gives the x, y, width and height 
 of the cell at the index in pixels, if it is visible in the display.  Otherwise 
 an empty string is returned. </DD>
-
-<DT><I>pathName <B>boundary</B></I> <I>top|left|bottom|right ?rowOrCol?</I> 
-</DT>
-<DD>If no argument is given, it prints the value of the rowOrCol that is displayed 
-at that edge of the displayed region.  For top|left, that rowOrCol can be 
-set with the extra argument. </DD>
 
 <DT><I>pathName <B>cget</B></I> <I>option</I> </DT>
 <DD>Returns the current value 
@@ -579,13 +728,14 @@ by the <B>table</B> command. </DD>
 
 <DT><I>pathName <B>curselection</B></I> ?<I>set value</I>? </DT>
 <DD>With no arguments, 
-it returns the indices of the currently selected cells. Otherwise it sets 
-all the selected cells to the given value.  The set has no effect if there 
-is no associated Tcl array or the state is disabled. </DD>
+it returns the sorted indices of the currently selected cells.  Otherwise 
+it sets all the selected cells to the given value.  The set has no effect 
+if there is no associated Tcl array or the state is disabled. </DD>
 
-<DT><I>pathName <B>curvalue</B></I> 
-</DT>
-<DD>Returns the value of the cell being edited (indexed by <B>active</B>). </DD>
+<DT><I>pathName 
+<B>curvalue</B></I> ?<I>value</I>? </DT>
+<DD>If no value is given, the value of the cell being edited 
+(indexed by <B>active</B>) is returned, else it is set to the given value. </DD>
 
 <DT><I>pathName 
 <B>delete</B></I> <I>option arg</I> ?<I>arg</I>? </DT>
@@ -632,100 +782,100 @@ end of the text. </DD>
 
 <DT><I>pathName <B>index</B></I> <I>index</I> ?<I>row|col</I>? </DT>
 <DD>Returns the integer cell 
-coordinate that corresponds to <I>index</I> in the form row,col (or col,row if 
--rowfirstmode is 0).  If <B>row</B> or <B>col</B> is specified, them only the row or col 
-index is returned. </DD>
+coordinate that corresponds to <I>index</I> in the form row,col.  If <B>row</B> or <B>col</B> 
+is specified, then only the row or column index is returned. </DD>
 
-<DT><I>pathName <B>insert</B></I> <I>option arg arg</I> </DT>
-<DD>This command is used 
-to into various things into a table.  It has several forms, depending on 
-the <I>option: <blockquote></DD>
+<DT><I>pathName <B>insert</B></I> 
+<I>option arg arg</I> </DT>
+<DD>This command is used to into various things into a table. 
+ It has several forms, depending on the <I>option: <blockquote></DD>
 
-<DT></I><I>pathName <B>insert active</B></I> <I>index value</I> </DT>
-<DD>The <I>value</I> is a text string 
-which is inserted at the <I>index</I> postion of the active cell.  The cursor 
-is then positioned after the new text. <I>index</I> can be a number, <B>insert</B> or 
-<B>end</B>. </DD>
+<DT></I><I>pathName <B>insert active</B></I> 
+<I>index value</I> </DT>
+<DD>The <I>value</I> is a text string which is inserted at the <I>index</I> 
+postion of the active cell.  The cursor is then positioned after the new 
+text. <I>index</I> can be a number, <B>insert</B> or <B>end</B>. </DD>
 
-<DT><I>pathName <B>insert cols</B></I> <I>col number</I> </DT>
+<DT><I>pathName <B>insert cols</B></I> <I>col number</I> 
+</DT>
 <DD>Currently unsupported. </DD>
 
-<DT><I>pathName <B>insert 
-rows</B></I> <I>row number</I> </DT>
-<DD>Currently unsupported. </DD>
+<DT><I>pathName <B>insert rows</B></I> <I>row number</I> </DT>
+<DD>Currently unsupported. 
+</DD>
 </DL>
 </blockquote>
 
 <DL>
 
 <DT><I>pathName <B>reread</B></I> </DT>
-<DD>Rereads the old 
-contents of the cell back into the editing buffer. Useful for a key binding 
-when &lt;esc&gt; is pressed to abort the edit. </DD>
+<DD>Rereads the old contents of the cell back into the editing 
+buffer.  Useful for a key binding when &lt;Escape&gt; is pressed to abort the edit 
+(a default binding). </DD>
 
 <DT><I>pathName <B>scan</B></I> <I>option args</I> </DT>
-<DD>This command 
-is used to implement scanning on tables.  It has two forms, depending on 
-<I>option: <blockquote></DD>
+<DD>This command is used to 
+implement scanning on tables.  It has two forms, depending on <I>option: <blockquote></DD>
 
-<DT></I><I>pathName <B>scan mark</B></I> <I>x y</I> </DT>
-<DD>Records <I>x</I> and <I>y</I> and the current view in 
-the table window;  used in conjunction with later <B>scan dragto</B> commands. 
-Typically this command is associated with a mouse button press in the 
-widget.  It returns an empty string. </DD>
+<DT></I><I>pathName 
+<B>scan mark</B></I> <I>x y</I> </DT>
+<DD>Records <I>x</I> and <I>y</I> and the current view in the table window; 
+ used in conjunction with later <B>scan dragto</B> commands. Typically this command 
+is associated with a mouse button press in the widget.  It returns an empty 
+string. </DD>
 
 <DT><I>pathName <B>scan dragto</B></I> <I>x y</I>. </DT>
-<DD>This command 
-computes the difference between its <I>x</I> and <I>y</I> arguments and the <I>x</I> and <I>y</I> 
-arguments to the last <B>scan mark</B> command for the widget. It then adjusts 
-the view by 5 times the difference in coordinates.  This command is typically 
-associated with mouse motion events in the widget, to produce the effect 
-of dragging the list at high speed through the window.  The return value 
-is an empty string. </DD>
+<DD>This command computes the difference between 
+its <I>x</I> and <I>y</I> arguments and the <I>x</I> and <I>y</I> arguments to the last <B>scan mark</B> 
+command for the widget.  It then adjusts the view by 5 times the difference 
+in coordinates.  This command is typically associated with mouse motion 
+events in the widget, to produce the effect of dragging the list at high 
+speed through the window.  The return value is an empty string. </DD>
 </DL>
 </blockquote>
 
 <DL>
-
-<DT><I>pathName <B>see</B></I> <I>index</I> </DT>
-<DD>Adjust the view in the table so 
-that the cell given by <I>index</I> is positioned as the cell one off from top 
-left (excluding title rows and columns) if the cell is not currently visible 
-on the screen.  The actual cell may be different to keep the screen full. 
-</DD>
-
-<DT><I>pathName <B>selection</B></I> <I>option arg</I> </DT>
-<DD>This command is used to adjust the selection 
-within a table.  It has several forms, depending on <I>option: <blockquote></DD>
-
-<DT></I><I>pathName <B>selection 
-anchor</B></I> <I>index</I> </DT>
-<DD>Sets the selection anchor to the cell given by <I>index</I>. The 
-selection anchor is the end of the selection that is fixed while dragging 
-out a selection with the mouse. The index <B>anchor</B> may be used to refer to 
-the anchor cell. </DD>
-
-<DT><I>pathName <B>selection clear</B></I> <I>first </I>?<I>last</I>? </DT>
-<DD>If any of the cells 
-between <I>first</I> and <I>last</I> (inclusive) are selected, they are deselected.  
-The selection state is not changed for cells outside this range.  <I>first</I> 
-may be specified as <B>all</B> to remove the selection from all cells. </DD>
 
 <DT><I>pathName 
-<B>selection includes</B></I> <I>index</I> </DT>
-<DD>Returns 1 if the cell indicated by <I>index</I> is currently 
-selected, 0 if it isn't. </DD>
+<B>see</B></I> <I>index</I> </DT>
+<DD>Adjust the view in the table so that the cell given by <I>index</I> 
+is positioned as the cell one off from top left (excluding title rows 
+and columns) if the cell is not currently visible on the screen.  The actual 
+cell may be different to keep the screen full. </DD>
+
+<DT><I>pathName <B>selection</B></I> <I>option 
+arg</I> </DT>
+<DD>This command is used to adjust the selection within a table.  It has 
+several forms, depending on <I>option: <blockquote></DD>
+
+<DT></I><I>pathName <B>selection anchor</B></I> <I>index</I> </DT>
+<DD>Sets 
+the selection anchor to the cell given by <I>index</I>. The selection anchor is 
+the end of the selection that is fixed while dragging out a selection 
+with the mouse. The index <B>anchor</B> may be used to refer to the anchor cell. 
+</DD>
+
+<DT><I>pathName <B>selection clear</B></I> <I>first </I>?<I>last</I>? </DT>
+<DD>If any of the cells between <I>first</I> 
+and <I>last</I> (inclusive) are selected, they are deselected.  The selection 
+state is not changed for cells outside this range.  <I>first</I> may be specified 
+as <B>all</B> to remove the selection from all cells. </DD>
+
+<DT><I>pathName <B>selection includes</B></I> 
+<I>index</I> </DT>
+<DD>Returns 1 if the cell indicated by <I>index</I> is currently selected, 
+0 if it isn't. </DD>
 
 <DT><I>pathName <B>selection set</B></I> <I>first</I> ?<I>last</I>? </DT>
-<DD>Selects all 
-of the cells in the range between <I>first</I> and <I>last</I>, inclusive, without affecting 
-the selection state of cells outside that range. </DD>
+<DD>Selects all of the cells 
+in the range between <I>first</I> and <I>last</I>, inclusive, without affecting the 
+selection state of cells outside that range. </DD>
 </DL>
 </blockquote>
 
 <DL>
 
-<DT><I>pathName <B>set</B></I> <I>index value</I> 
+<DT><I>pathName <B>set</B></I> <I>index</I> ?<I>value</I>? 
 ?<I>index value ...</I>? </DT>
 <DD>Sets the specified index to the associated value. </DD>
 
@@ -786,7 +936,7 @@ pattern to show only tags matching that pattern. </DD>
 <DT><I>pathName <B>tag rowtag</B></I> <I>tag 
 ?row ...?</I> </DT>
 <DD>With no arguments, prints out the list of rows that use the <I>tag</I>. 
- Otherwise it sets the specified rows to use the tag.  If tag is {}, the 
+Otherwise it sets the specified rows to use the tag.  If tag is {}, the 
 rows are reset to use the default tag.  Tags added during -rowtagcommand 
 evaluation do not register here. </DD>
 </DL>
@@ -794,111 +944,116 @@ evaluation do not register here. </DD>
 
 <DL>
 
-<DT><I>pathName <B>width</B></I> ?<I>col</I>? ?<I>value col value 
-...</I>? </DT>
-<DD>If no <I>col</I> is specified, returns a list describing all cols for which 
-a width has been set.  If <B>col</B> is specified with no value, it prints out 
-the width of that col in characters.  If one or more <I>col-value</I> pairs are 
-specified, then it sets each col to be that width in characters.  If <I>value</I> 
-is negative, then the col uses the default width. </DD>
+<DT><I>pathName <B>validate</B></I> <I>index</I> </DT>
+<DD>Explicitly validates 
+the specified index based on the current <B>-validatecommand</B> and returns 0 
+or 1 based on whether the cell was validated. </DD>
 
-<DT><I>pathName <B>xview <I>args</I></B></I> </DT>
-<DD>This 
-command is used to query and change the horizontal position of the information 
-in the widget's window.  It can take any of the following forms: <blockquote></DD>
+<DT><I>pathName <B>width</B></I> ?<I>col</I>? ?<I>value 
+col value ...</I>? </DT>
+<DD>If no <I>col</I> is specified, returns a list describing all cols 
+for which a width has been set.  If <B>col</B> is specified with no value, it 
+prints out the width of that col in characters.  If one or more <I>col-value</I> 
+pairs are specified, then it sets each col to be that width in characters. 
+ If <I>value</I> is negative, then the col uses the default width. </DD>
 
-<DT><I>pathName 
-<B>xview</B></I> </DT>
-<DD>Returns a list containing two elements. Each element is a real fraction 
-between 0 and 1;  together they describe the horizontal span that is visible 
-in the window. For example, if the first element is .2 and the second element 
-is .6, 20% of the table's text is off-screen to the left, the middle 40% 
-is visible in the window, and 40% of the text is off-screen to the right. 
-These are the same values passed to scrollbars via the <B>-xscrollcommand</B> 
-option. </DD>
+<DT><I>pathName <B>xview 
+<I>args</I></B></I> </DT>
+<DD>This command is used to query and change the horizontal position 
+of the information in the widget's window.  It can take any of the following 
+forms: <blockquote></DD>
+
+<DT><I>pathName <B>xview</B></I> </DT>
+<DD>Returns a list containing two elements. Each element 
+is a real fraction between 0 and 1;  together they describe the horizontal 
+span that is visible in the window. For example, if the first element is 
+.2 and the second element is .6, 20% of the table's text is off-screen to 
+the left, the middle 40% is visible in the window, and 40% of the text 
+is off-screen to the right. These are the same values passed to scrollbars 
+via the <B>-xscrollcommand</B> option. </DD>
 
 <DT><I>pathName <B>xview</B></I> <I>index</I> </DT>
-<DD>Adjusts the view in the window so that the 
-character position given by <I>index</I> is displayed at the left edge of the 
-window. Character positions are defined by the width of the character 0. 
-</DD>
+<DD>Adjusts the view in 
+the window so that the column given by <I>index</I> is displayed at the left 
+edge of the window. </DD>
 
 <DT><I>pathName <B>xview moveto<I> fraction</I></B></I> </DT>
-<DD>Adjusts the view in the window so that 
-<I>fraction</I> of the total width of the table text is off-screen to the left. 
-<I>fraction</I> must be a fraction between 0 and 1. </DD>
+<DD>Adjusts the view in 
+the window so that <I>fraction</I> of the total width of the table text is off-screen 
+to the left. <I>fraction</I> must be a fraction between 0 and 1. </DD>
 
-<DT><I>pathName <B>xview scroll <I>number 
-what</I></B></I> </DT>
-<DD>This command shifts the view in the window left or right according 
-to <I>number</I> and <I>what</I>. <I>Number</I> must be an integer. <I>What</I> must be either <B>units</B> 
-or <B>pages</B> or an abbreviation of one of these. If <I>what</I> is <B>units</B>, the view 
-adjusts left or right by <I>number</I> character units (the width of the 0 character) 
-on the display;  if it is <B>pages</B> then the view adjusts by <I>number</I> screenfuls. 
-If <I>number</I> is negative then characters farther to the left become visible; 
- if it is positive then characters farther to the right become visible. 
-</DD>
+<DT><I>pathName <B>xview 
+scroll <I>number what</I></B></I> </DT>
+<DD>This command shifts the view in the window left or 
+right according to <I>number</I> and <I>what</I>. <I>Number</I> must be an integer. <I>What</I> must 
+be either <B>units</B> or <B>pages</B> or an abbreviation of one of these. If <I>what</I> is 
+<B>units</B>, the view adjusts left or right by <I>number</I> character units (the width 
+of the 0 character) on the display;  if it is <B>pages</B> then the view adjusts 
+by <I>number</I> screenfuls. If <I>number</I> is negative then characters farther to 
+the left become visible;  if it is positive then characters farther to 
+the right become visible. </DD>
 </DL>
 </blockquote>
 
 <DL>
 
 <DT><I>pathName <B>yview <I>?args</I></B></I>? </DT>
-<DD>This command is used to query and change the vertical 
-position of the text in the widget's window. It can take any of the following 
-forms: <blockquote></DD>
+<DD>This command is used to 
+query and change the vertical position of the text in the widget's window. 
+ It can take any of the following forms: <blockquote></DD>
 
 <DT><I>pathName <B>yview</B></I> </DT>
-<DD>Returns a list containing two elements, both of 
-which are real fractions between 0 and 1. The first element gives the position 
-of the table element at the top of the window, relative to the table as 
-a whole (0.5 means it is halfway through the table, for example). The second 
-element gives the position of the table element just after the last one 
-in the window, relative to the table as a whole. These are the same values 
-passed to scrollbars via the <B>-yscrollcommand</B> option. </DD>
+<DD>Returns a list 
+containing two elements, both of which are real fractions between 0 and 
+1.  The first element gives the position of the table element at the top 
+of the window, relative to the table as a whole (0.5 means it is halfway 
+through the table, for example).  The second element gives the position 
+of the table element just after the last one in the window, relative to 
+the table as a whole.  These are the same values passed to scrollbars via 
+the <B>-yscrollcommand</B> option. </DD>
 
-<DT><I>pathName <B>yview</B></I> <I>index</I> 
-</DT>
-<DD>Adjusts the view in the window so that the element given by <I>index</I> is displayed 
-at the top of the window. </DD>
+<DT><I>pathName <B>yview</B></I> <I>index</I> </DT>
+<DD>Adjusts the view in the 
+window so that the row given by <I>index</I> is displayed at the top of the window. 
+</DD>
 
 <DT><I>pathName <B>yview moveto<I> fraction</I></B></I> </DT>
-<DD>Adjusts the view 
-in the window so that the element given by <I>fraction</I> appears at the top 
-of the window. <I>Fraction</I> is a fraction between 0 and 1;  0 indicates the 
-first element in the table, 0.33 indicates the element one-third the way 
-through the table, and so on. </DD>
+<DD>Adjusts the view in the window so that 
+the element given by <I>fraction</I> appears at the top of the window. <I>Fraction</I> 
+is a fraction between 0 and 1;  0 indicates the first element in the table, 
+0.33 indicates the element one-third the way through the table, and so on. 
+</DD>
 
 <DT><I>pathName <B>yview scroll <I>number what</I></B></I> </DT>
-<DD>This command 
-adjusts the view in the window up or down according to <I>number</I> and <I>what</I>. 
-<I>Number</I> must be an integer. <I>What</I> must be either <B>units</B> or <B>pages</B>. If <I>what</I> is 
-<B>units</B>, the view adjusts up or down by <I>number</I> lines;  if it is <B>pages</B> then 
-the view adjusts by <I>number</I> screenfuls. If <I>number</I> is negative then earlier 
-elements become visible;  if it is positive then later elements become 
-visible. </DD>
+<DD>This command adjusts the view in the 
+window up or down according to <I>number</I> and <I>what</I>.  <I>Number</I> must be an integer. 
+ <I>What</I> must be either <B>units</B> or <B>pages</B>.  If <I>what</I> is <B>units</B>, the view adjusts 
+up or down by <I>number</I> lines; if it is <B>pages</B> then the view adjusts by <I>number</I> 
+screenfuls.  If <I>number</I> is negative then earlier elements become visible; 
+if it is positive then later elements become visible. </DD>
 </DL>
 </blockquote>
 <P>
  
-<H2><A NAME="sect8" HREF="#toc8">DEFAULT BINDINGS</A></H2>
+<H2><A NAME="sect10" HREF="#toc10">DEFAULT BINDINGS</A></H2>
 <P>
-The initialization creates class bindings that 
-give the following default behaviour: 
+The 
+initialization creates class bindings that give the following default 
+behaviour: 
 <OL>
-<LI>Clicking the mouse button in a cell 
-activates that cell. </LI><LI>Moving the mouse while button 1 is pressed will stroke 
-out a selection area. Exiting while button 1 is pressed causing scanning 
-to occur on the table along with selection. </LI><LI>Moving the mouse while button 
-2 is pressed causes scanning to occur without any selection. </LI><LI>Home moves 
-the table to have the origin in view. </LI><LI>End moves the table to have the <B>end</B> 
-cell in view. </LI><LI>Control-Home moves the table to the origin and activates that 
-cell. </LI><LI>Control-End moves the table to the end and activates that cell. </LI><LI>Shift-Control-Home 
-extends the selection to the origin. </LI><LI>Shift-Control-End extends the selection 
-to the end. </LI><LI>The left, right, up and down arrows move the active cell. </LI><LI>Shift-&lt;arrow&gt; 
-extends the selection in that direction. </LI><LI>Control-leftarrow and Control-rightarrow 
-move the insertion cursor within the cell. </LI><LI>Control-slash selects all the 
-cells. </LI><LI>Control-backslash clears selection from all the cells. </LI><LI>Backspace deletes 
+<LI>Clicking the mouse button in a cell activates that cell. </LI><LI>Moving 
+the mouse while button 1 is pressed will stroke out a selection area. Exiting 
+while button 1 is pressed causing scanning to occur on the table along 
+with selection. </LI><LI>Moving the mouse while button 2 is pressed causes scanning 
+to occur without any selection. </LI><LI>Home moves the table to have the origin 
+in view. </LI><LI>End moves the table to have the <B>end</B> cell in view. </LI><LI>Control-Home moves 
+the table to the origin and activates that cell. </LI><LI>Control-End moves the table 
+to the end and activates that cell. </LI><LI>Shift-Control-Home extends the selection 
+to the origin. </LI><LI>Shift-Control-End extends the selection to the end. </LI><LI>The left, 
+right, up and down arrows move the active cell. </LI><LI>Shift-&lt;arrow&gt; extends the 
+selection in that direction. </LI><LI>Control-leftarrow and Control-rightarrow move 
+the insertion cursor within the cell. </LI><LI>Control-slash selects all the cells. 
+</LI><LI>Control-backslash clears selection from all the cells. </LI><LI>Backspace deletes 
 the character before the insertion cursor in the active cell. </LI><LI>Delete deletes 
 the character after the insertion cursor in the active cell. </LI><LI>Escape rereads 
 the value of the active cell from the array variable, discarding any edits 
@@ -921,7 +1076,7 @@ bindings for individual widgets or by redefining the class bindings.  The
 default bindings are either compiled in or read from a file expected to 
 correspond to: "[lindex $tcl_pkgPath 0]/Tktable/tkTable.tcl". <P>
  
-<H2><A NAME="sect9" HREF="#toc9">KEYWORDS</A></H2>
+<H2><A NAME="sect11" HREF="#toc11">KEYWORDS</A></H2>
 table, 
 widget, extension <P>
 
@@ -935,8 +1090,10 @@ widget, extension <P>
 <LI><A NAME="toc5" HREF="#sect5">DESCRIPTION</A></LI>
 <LI><A NAME="toc6" HREF="#sect6">INDICES</A></LI>
 <LI><A NAME="toc7" HREF="#sect7">TAGS</A></LI>
-<LI><A NAME="toc8" HREF="#sect8">WIDGET COMMAND</A></LI>
-<LI><A NAME="toc9" HREF="#sect9">DEFAULT BINDINGS</A></LI>
-<LI><A NAME="toc10" HREF="#sect10">KEYWORDS</A></LI>
+<LI><A NAME="toc8" HREF="#sect8">THE SELECTION</A></LI>
+<LI><A NAME="toc9" HREF="#sect9">COMMAND SUBSTITUTION</A></LI>
+<LI><A NAME="toc10" HREF="#sect10">WIDGET COMMAND</A></LI>
+<LI><A NAME="toc11" HREF="#sect11">DEFAULT BINDINGS</A></LI>
+<LI><A NAME="toc12" HREF="#sect12">KEYWORDS</A></LI>
 </UL>
 </BODY></HTML>

@@ -2,9 +2,19 @@
 # next line is a comment in tcl \
 exec wish "$0" ${1+"$@"}
 
-## If your Tk is dynamically loadable then you can use tclsh
-## instead of wish as the executable above
+## buttons.tcl
+##
+## demonstrates the simulation of a button array
+##
+## ellson@lucent.com
 
+array set table {
+  library	Tktable
+  rows		20
+  cols		20
+  table		.a.t
+}
+append table(library) [info shared]
 if {[string match {} [info commands table]] && \
     [catch {package require Tktable} err]} {
   if {[catch {load [file join [pwd] .. $table(library)]} err] && \
@@ -15,16 +25,13 @@ if {[string match {} [info commands table]] && \
 
 # scrollable table of buttons
 
-set rows 20
-set cols 20
-
 frame .a
 frame .b
 
 # create the table
 table .a.t \
-    -rows [expr $rows +1] \
-    -cols [expr $cols +1] \
+    -rows [expr $table(rows) +1] \
+    -cols [expr $table(cols) +1] \
     -titlerows 1 \
     -titlecols 1 \
     -roworigin -1 \
@@ -44,12 +51,12 @@ table .a.t \
 scrollbar .b.h \
     -orient horiz \
     -relief sunken \
-    -command ".a.t boundary left"
+    -command ".a.t xview"
 
 # vertical scrollbar
 scrollbar .a.v \
     -relief sunken \
-    -command ".a.t boundary top"
+    -command ".a.t yview"
 
 # create a filler for the lower right corner between the scrollbars
 frame .b.pad \
@@ -83,6 +90,7 @@ bind .a.t <Motion> {
 }
 
 # mousebutton 1 toggles the value of the cell
+# use of selection includes would work here
 bind .a.t <1> {
     set rc [%W cursel]
     if {$tab($rc) == "ON"} {
@@ -95,9 +103,9 @@ bind .a.t <1> {
 }
 
 # inititialize the array, titles, and celltags
-for {set i 0} {$i < $rows} {incr i} {
+for {set i 0} {$i < $table(rows)} {incr i} {
     set tab($i,-1) $i
-    for {set j 0} {$j < $cols} {incr j} {
+    for {set j 0} {$j < $table(cols)} {incr j} {
         if {! $i} {set tab(-1,$j) $j}
 	set tab($i,$j) "OFF"
         .a.t tag celltag OFF $i,$j

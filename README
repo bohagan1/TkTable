@@ -1,20 +1,19 @@
-/* 
- * Copyright (c) 1994 by Roland King (rols@lehman.com)
- * All rights reserved.
- * See the file COPYRIGHT for the copyright notes.
- */
-
 /*
+ * Based on Tk3 table widget by Roland King (rols@lehman.com)
+ * tkTable1.0+ represents a 90% rewrite of this code.
+ *
  * README updated for tkTable v0.55+ by ellson@lucent.com (John Ellson)
  * README updated for tkTable v1.0+  by jhobbs@cs.uoregon.edu (Jeffrey Hobbs)
  *
- *  tkTable v0.55+ includes additions contributed by:
+ * tkTable v0.55+ includes additions contributed by:
  *        tmoore@spatial.ca (Tom Moore)
  *        wangnick@orthogon.de (Sebastian Wangnick)
  *        paulf@lamont.ldgo.columbia.edu
  *        peter@bj-ig.de (Peter Brueckner)
  *        jhobbs@cs.uoregon.edu (Jeffrey Hobbs)
  *        ellson@lucent.com (John Ellson)
+ *
+ * see CHANGES file for details
  */
 
 		*************************************
@@ -26,17 +25,16 @@ INTRODUCTION
 This is the first release of a table/matrix widget as an extension
 to tk/tcl. The basic features of the widget are:
 
- * written entirely in C and X-lib
  * variable width columns / height rows
  * row and column titles
- * attaches to an array variable
+ * attaches to a Tcl array variable
  * supports standard TK reliefs, fonts, etc.
  * x/y scrollbar support
  * has 'tag' styles per row, column or cell to change
    colo(u)rs, font, relief or anchor position
  * in-cell editing - returns value back to array
- * different editing modes (or disabled)
- * can have a 'selected cell' or not
+ * support for disabled (read-only) tables
+ * multiple selection modes, with "active" cell
  * 3 drawing modes to get optimal performance for larger tables
    or slower machines.
  * optional 'flashes' when things update
@@ -56,9 +54,10 @@ BUILDING THE WIDGET
 2. Configure
 
         cd tkTable<version>
-	./configure --prefix=/usr/local
+	./configure --prefix=/usr/local --exec-prefix=/usr/local
 
-   tkTable uses information left in tkConfig.sh when you built tk.
+   tkTable uses information left in tkConfig.sh when you built tk.  This
+   file will be found in $exec_prefix/lib/.
 
 3. Make and Install
 
@@ -107,8 +106,8 @@ Editing
 
 COMMENTS, BUGS, etc.
 
-* Please can you send comments and bug reports to ellson@lucent.com or
-  jhobbs@cs.uoregon.edu and we'll do our best at addressing them.  This
+* Please can you send comments and bug reports to jhobbs@cs.uoregon.edu or
+  ellson@lucent.com and we'll do our best at addressing them.  This
   is not a primary project for any of the authors.
 
 * If you find a bug, a short piece of Tcl that exercises it would be very
