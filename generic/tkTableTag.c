@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableTag.c,v 1.6 2001/06/23 09:54:38 hobbs Exp $
+ * RCS: @(#) $Id: tkTableTag.c,v 1.7 2001/06/24 23:14:22 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -591,9 +591,9 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	    int objc, Tcl_Obj *CONST objv[])
 {
     register Table *tablePtr = (Table *)clientData;
-    int result = TCL_OK, cmdIndex, i, newEntry, value, len, refresh = 0;
-    int row, col;
-    TableTag *tagPtr;
+    int result = TCL_OK, cmdIndex, i, newEntry, value, len;
+    int row, col, tagPrio, refresh = 0;
+    TableTag *tagPtr, *tag2Ptr;
     Tcl_HashEntry *entryPtr, *scanPtr;
     Tcl_HashTable *hashTblPtr;
     Tcl_HashSearch search;
@@ -1004,16 +1004,20 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		    scanPtr = Tcl_FirstHashEntry(tablePtr->rowStyles, &search);
 		    for (; scanPtr != NULL;
 			 scanPtr = Tcl_NextHashEntry(&search)) {
-			if ((TableTag *)Tcl_GetHashValue(scanPtr) == tagPtr)
+			if ((TableTag *)Tcl_GetHashValue(scanPtr) == tagPtr) {
 			    Tcl_DeleteHashEntry(scanPtr);
+			    refresh = 1;
+			}
 		    }
 
 		    /* delete all references to this tag in cols */
 		    scanPtr = Tcl_FirstHashEntry(tablePtr->colStyles, &search);
 		    for (; scanPtr != NULL;
 			 scanPtr = Tcl_NextHashEntry(&search)) {
-			if ((TableTag *)Tcl_GetHashValue(scanPtr) == tagPtr)
+			if ((TableTag *)Tcl_GetHashValue(scanPtr) == tagPtr) {
 			    Tcl_DeleteHashEntry(scanPtr);
+			    refresh = 1;
+			}
 		    }
 
 		    /* delete all references to this tag in cells */
@@ -1021,8 +1025,10 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 			    &search);
 		    for (; scanPtr != NULL;
 			 scanPtr = Tcl_NextHashEntry(&search)) {
-			if ((TableTag *)Tcl_GetHashValue(scanPtr) == tagPtr)
+			if ((TableTag *)Tcl_GetHashValue(scanPtr) == tagPtr) {
 			    Tcl_DeleteHashEntry(scanPtr);
+			    refresh = 1;
+			}
 		    }
 
 		    /*
@@ -1049,7 +1055,9 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		}
 	    }
 	    /* since we deleted a tag, redraw the screen */
-	    TableInvalidateAll(tablePtr, 0);
+	    if (refresh) {
+		TableInvalidateAll(tablePtr, 0);
+	    }
 	    return result;
 
 	case TAG_EXISTS:
@@ -1115,66 +1123,6 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	    Tcl_SetObjResult(interp, Tcl_NewBooleanObj(result));
 	    return TCL_OK;
 
-	case TAG_LOWER: {
-	    int tagPrio, lowerPrio;
-	    TableTag *lowerPtr;
-	    /*
-	     * Lower out the named tag
-	     */
-	    if (objc != 4 && objc != 5) {
-		Tcl_WrongNumArgs(interp, 3, objv, "tagName ?belowThis?");
-		return TCL_ERROR;
-	    }
-	    tagname  = Tcl_GetString(objv[3]);
-	    /* check to see if the tag actually exists */
-	    entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
-	    if (entryPtr == NULL) {
-		goto invalidtag;
-	    }
-	    tagPtr  = (TableTag *) Tcl_GetHashValue(entryPtr);
-	    tagPrio = TableTagGetPriority(tablePtr, tagPtr);
-	    keybuf  = tablePtr->tagPrioNames[tagPrio];
-	    if (objc == 5) {
-		tagname  = Tcl_GetString(objv[4]);
-		entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
-		if (entryPtr == NULL) {
-		    goto invalidtag;
-		}
-		lowerPtr  = (TableTag *) Tcl_GetHashValue(entryPtr);
-		lowerPrio = TableTagGetPriority(tablePtr, lowerPtr);
-	    } else {
-		/*
-		 * Lower this tag's priority to the bottom.
-		 */
-		lowerPrio = tablePtr->tagPrioSize - 1;
-	    }
-	    if (lowerPrio < tagPrio) {
-		/*
-		 * Move tag up in priority.
-		 */
-		for (i = tagPrio; i > lowerPrio; i--) {
-		    tablePtr->tagPrioNames[i] = tablePtr->tagPrioNames[i-1];
-		    tablePtr->tagPrios[i]     = tablePtr->tagPrios[i-1];
-		}
-		i++;
-		tablePtr->tagPrioNames[i] = keybuf;
-		tablePtr->tagPrios[i]     = tagPtr;
-	    } else if (lowerPrio > tagPrio) {
-		/*
-		 * Move tag down in priority.
-		 */
-		for (i = tagPrio; i < lowerPrio; i++) {
-		    tablePtr->tagPrioNames[i] = tablePtr->tagPrioNames[i+1];
-		    tablePtr->tagPrios[i]     = tablePtr->tagPrios[i+1];
-		}
-		tablePtr->tagPrioNames[i] = keybuf;
-		tablePtr->tagPrios[i]     = tagPtr;
-	    }
-	    /* since we deleted a tag, redraw the screen */
-	    TableInvalidateAll(tablePtr, 0);
-	    return TCL_OK;
-	}
-
 	case TAG_NAMES:
 	    /*
 	     * Print out the tag names in priority order
@@ -1193,14 +1141,14 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	    }
 	    return TCL_OK;
 
-	case TAG_RAISE: {
-	    int tagPrio, raisePrio;
-	    TableTag *raisePtr;
+	case TAG_LOWER:
+	case TAG_RAISE:
 	    /*
-	     * Raise out the named tag
+	     * Change priority of the named tag
 	     */
 	    if (objc != 4 && objc != 5) {
-		Tcl_WrongNumArgs(interp, 3, objv, "tagName ?aboveThis?");
+		Tcl_WrongNumArgs(interp, 3, objv, (cmdIndex == TAG_LOWER) ?
+			"tagName ?belowThis?" : "tagName ?aboveThis?");
 		return TCL_ERROR;
 	    }
 	    tagname  = Tcl_GetString(objv[3]);
@@ -1218,40 +1166,55 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		if (entryPtr == NULL) {
 		    goto invalidtag;
 		}
-		raisePtr  = (TableTag *) Tcl_GetHashValue(entryPtr);
-		raisePrio = TableTagGetPriority(tablePtr, raisePtr) - 1;
+		tag2Ptr  = (TableTag *) Tcl_GetHashValue(entryPtr);
+		if (cmdIndex == TAG_LOWER) {
+		    value = TableTagGetPriority(tablePtr, tag2Ptr);
+		} else {
+		    value = TableTagGetPriority(tablePtr, tag2Ptr) - 1;
+		}
 	    } else {
-		/*
-		 * Raise this tag's priority to the bottom.
-		 */
-		raisePrio = -1;
+		if (cmdIndex == TAG_LOWER) {
+		    /*
+		     * Lower this tag's priority to the bottom.
+		     */
+		    value = tablePtr->tagPrioSize - 1;
+		} else {
+		    /*
+		     * Raise this tag's priority to the bottom.
+		     */
+		    value = -1;
+		}
 	    }
-	    if (raisePrio < tagPrio) {
+	    if (value < tagPrio) {
 		/*
 		 * Move tag up in priority.
 		 */
-		for (i = tagPrio; i > raisePrio; i--) {
+		for (i = tagPrio; i > value; i--) {
 		    tablePtr->tagPrioNames[i] = tablePtr->tagPrioNames[i-1];
 		    tablePtr->tagPrios[i]     = tablePtr->tagPrios[i-1];
 		}
 		i++;
 		tablePtr->tagPrioNames[i] = keybuf;
 		tablePtr->tagPrios[i]     = tagPtr;
-	    } else if (raisePrio > tagPrio) {
+		refresh = 1;
+	    } else if (value > tagPrio) {
 		/*
 		 * Move tag down in priority.
 		 */
-		for (i = tagPrio; i < raisePrio; i++) {
+		for (i = tagPrio; i < value; i++) {
 		    tablePtr->tagPrioNames[i] = tablePtr->tagPrioNames[i+1];
 		    tablePtr->tagPrios[i]     = tablePtr->tagPrios[i+1];
 		}
 		tablePtr->tagPrioNames[i] = keybuf;
 		tablePtr->tagPrios[i]     = tagPtr;
+		refresh = 1;
 	    }
 	    /* since we deleted a tag, redraw the screen */
-	    TableInvalidateAll(tablePtr, 0);
+	    if (refresh) {
+		TableInvalidateAll(tablePtr, 0);
+	    }
 	    return TCL_OK;
-	}
+
     }
     return TCL_OK;
 
