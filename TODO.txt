@@ -47,17 +47,6 @@ pathName  sort	-row	{the list of rows we want to sort | all}
 ==	B   B U   U G   G     S
 =	BBBB   UUU   GGGG  SSS
 
-MAJOR:
-
-Sol2.5.1/gcc 2.8.1 && WinNT/VC++5
-seg fault when you exit Tk without destroying or withdrawing
-the table first.  Dies trying to reference TableEventProc.
-Problem seems to be that TableEventProc gets unloaded before it can
-be called when not used in the primary interpreter, or used as a
-loadable library.  FIXED with hack that creates ExitHandler for each
-instance of table to make sure it is destroyed before Tcl exits.
-The finalization code is fixed in Tk8.1final and Tk8.0.5+.
-
 MINOR:
 
 Windows: With "-colstretchmode last", the scrollbar behaves oddly in
