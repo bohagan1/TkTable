@@ -1,5 +1,7 @@
 2001-06-30  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	2.7 RELEASE
+
 	* generic/tkTable.h: added STREQ #def to replace strcmp(a,b) == 0
 	* generic/tkTable.c:
 	* generic/tkTableTag.c: made use of STREQ #define.
@@ -290,7 +292,7 @@
 ##
 ##########################################################################
 
-**** v2.6 29 February 29 2000 ****
+**** v2.6alpha 29 February 2000 ****
 
 Fixed row/col insertion/deletion to correctly handle embedded windows.
 (fix in part by albrecht@DAnalyse.de)
