@@ -1,3 +1,23 @@
+2001-08-23  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/tkTable.tcl: added the ability to select borders with
+	button 1. (backe)  The user can turn off this ability by calling
+	[set ::tk::table::Priv(borderB1) 0] in their code.  button 3 is
+	still active for selecting borders as well.
+	fixed a couple references to work on Mac/Tk. (steffen)
+
+	* mac/mac_tkTable_prefix.h:
+	* mac/mac_tkTable.r: corrected Mac build. (steffen)
+
+	* doc/tkTable.html: regen'd
+	* doc/tkTable.n: Clarified that any <row>,<col> index
+	specification will always return a valid cell.  [Bug #450397]
+	Corrected what 'units' scrolls. [Bug #448837]
+
+	* mac/mac_tkTable.mcp: removed in favor of XML project file
+	* mac/mac_tkTable.mcp.xml: XML CodeWarrior project file for the
+	mac. (steffen)
+
 2001-07-18  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* generic/tkTable.c (TableDestroy): freed cached values in destroy.
