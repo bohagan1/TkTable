@@ -9,7 +9,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.13 2002/09/26 01:47:20 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.14 2002/10/16 07:31:48 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -227,6 +227,7 @@ typedef struct {
     int		multiline;	/* wrapping style of multiline text */
     int		wrap;		/* wrapping style of multiline text */
     int		showtext;	/* whether to display text over image */
+    char *	ellipsis;	/* ellipsis to display on clipped text */
 } TableTag;
 
 /*  The widget structure for the table Widget */

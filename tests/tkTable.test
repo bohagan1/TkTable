@@ -6,7 +6,7 @@
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tkTable.test,v 1.10 2002/10/16 07:32:22 hobbs Exp $
+# RCS: @(#) $Id: tkTable.test,v 1.11 2002/12/11 00:27:34 hobbs Exp $
 
 # deletes:
 # test 2 -5
@@ -82,6 +82,7 @@ foreach test {
     {-command {Some command} {Some command} {} {}}
     {-cursor arrow arrow badValue {bad cursor spec "badValue"}}
     {-drawmode slow slow badValue {bad option "badValue" must be fast, compatible, slow, single}}
+    {-ellipsis {...} {...} {} {}}
     {-exportselection yes 1 xyzzy {expected boolean value but got "xyzzy"}}
     {-fg #110022 #110022 bogus {unknown color name "bogus"}}
     {-flashmode yes 1 xyzzy {expected boolean value but got "xyzzy"}}
@@ -278,7 +279,7 @@ test table-6.4 {TableWidgetCmd procedure, "cget" option} {
 
 test table-7.1 {TableWidgetCmd procedure, "configure" option} {
     llength [.t configure]
-} {70}
+} {71}
 test table-7.2 {TableWidgetCmd procedure, "configure" option} {
     list [catch {.t configure -gorp} msg] $msg
 } {1 {unknown option "-gorp"}}
@@ -416,9 +417,9 @@ test table-25.2.4 {TableWidgetCmd procedure, "tag names" option} {
     .t tag configure foo
 } [expr {
     ([info tclversion] > 8.3) ?
-    {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
+    {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-ellipsis ellipsis Ellipsis {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
     :
-    {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {unknown relief}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
+    {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-ellipsis ellipsis Ellipsis {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {unknown relief}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
 }]
 test table-25.2.5 {TableWidgetCmd procedure, "tag names" option} {
     .t tag names

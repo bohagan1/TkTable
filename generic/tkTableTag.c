@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableTag.c,v 1.12 2002/03/20 03:03:16 hobbs Exp $
+ * RCS: @(#) $Id: tkTableTag.c,v 1.13 2002/10/16 07:31:23 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -65,6 +65,8 @@ static Tk_ConfigSpec tagConfig[] = {
   {TK_CONFIG_CUSTOM, "-borderwidth", "borderWidth", "BorderWidth", "",
    0 /* no offset */,
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK, &tagBdOpt },
+  {TK_CONFIG_STRING, "-ellipsis", "ellipsis", "Ellipsis", "",
+   Tk_Offset(TableTag, ellipsis), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_BORDER, "-foreground", "foreground", "Foreground", NULL,
    Tk_Offset(TableTag, fg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL, 0, 0},
@@ -97,7 +99,7 @@ typedef struct {
     TableTag	tag;		/* must be first */
     unsigned int magic;
     unsigned int pbg, pfg, pborders, prelief, ptkfont, panchor, pimage;
-    unsigned int pstate, pjustify, pmultiline, pwrap, pshowtext;
+    unsigned int pstate, pjustify, pmultiline, pwrap, pshowtext, pellipsis;
 } TableJoinTag;
 
 /* 
@@ -184,6 +186,7 @@ TableNewTag(Table *tablePtr)
 	jtagPtr->pmultiline	= -1;
 	jtagPtr->pwrap		= -1;
 	jtagPtr->pshowtext	= -1;
+	jtagPtr->pellipsis	= -1;
     }
 
     return (TableTag *) tagPtr;
@@ -234,6 +237,7 @@ TableResetTag(Table *tablePtr, TableTag *tagPtr)
     jtagPtr->pmultiline	= -1;
     jtagPtr->pwrap	= -1;
     jtagPtr->pshowtext	= -1;
+    jtagPtr->pellipsis	= -1;
 
     /*
      * Merge in the default tag.
@@ -286,6 +290,10 @@ TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag)
 	baseTag->fg		= addTag->fg;
 	jtagPtr->pfg		= prio;
     }
+    if ((addTag->ellipsis != NULL) && (prio < jtagPtr->pellipsis)) {
+	baseTag->ellipsis	= addTag->ellipsis;
+	jtagPtr->pellipsis	= prio;
+    }
     if ((addTag->tkfont != NULL) && (prio < jtagPtr->ptkfont)) {
 	baseTag->tkfont		= addTag->tkfont;
 	jtagPtr->ptkfont	= prio;
@@ -332,6 +340,7 @@ TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag)
     if (addTag->anchor != -1)	baseTag->anchor = addTag->anchor;
     if (addTag->bg != NULL)	baseTag->bg	= addTag->bg;
     if (addTag->fg != NULL)	baseTag->fg	= addTag->fg;
+    if (addTag->ellipsis != NULL) baseTag->ellipsis = addTag->ellipsis;
     if (addTag->tkfont != NULL)	baseTag->tkfont	= addTag->tkfont;
     if (addTag->imageStr != NULL) {
 	baseTag->imageStr	= addTag->imageStr;

@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.23 2002/10/16 07:32:22 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.24 2002/12/11 00:27:09 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -212,6 +212,8 @@ Tk_ConfigSpec tableSpecs[] = {
      Tk_Offset(Table, cursor), TK_CONFIG_NULL_OK },
     {TK_CONFIG_CUSTOM, "-drawmode", "drawMode", "DrawMode", "compatible",
      Tk_Offset(Table, drawMode), 0, &drawOpt },
+    {TK_CONFIG_STRING, "-ellipsis", "ellipsis", "Ellipsis", "",
+     Tk_Offset(Table, defaultTag.ellipsis), TK_CONFIG_NULL_OK},
     {TK_CONFIG_BOOLEAN, "-exportselection", "exportSelection",
      "ExportSelection", "1", Tk_Offset(Table, exportSelection), 0},
     {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL, 0, 0},
@@ -1643,7 +1645,11 @@ TableDisplay(ClientData clientdata)
     Drawable window;
 #ifdef NO_XSETCLIP
     Drawable clipWind;
-#elif !defined(WIN32)
+#elif defined(WIN32)
+    TkWinDrawable *twdPtr;
+    HDC dc;
+    HRGN clipR;
+#else
     XRectangle clipRect;
 #endif
     int rowFrom, rowTo, colFrom, colTo,
@@ -1663,6 +1669,10 @@ TableDisplay(ClientData clientdata)
     Tcl_HashTable *drawnCache = NULL;
     Tk_TextLayout textLayout = NULL;
     TableEmbWindow *ewPtr;
+    Tk_FontMetrics fm;
+    Tk_Font ellFont = NULL;
+    char *ellipsis = NULL;
+    int ellLen = 0, useEllLen = 0, ellEast = 0;
 
     tablePtr->flags &= ~REDRAW_PENDING;
     if ((tkwin == NULL) || !Tk_IsMapped(tkwin)) {
@@ -2034,6 +2044,9 @@ TableDisplay(ClientData clientdata)
 
 	    /* If there is a string, show it */
 	    if (activeCell || numBytes) {
+		register int x0 = x + bd[0] + padx;
+		register int y0 = y + bd[2] + pady;
+
 		/* get the dimensions of the string */
 		textLayout = Tk_ComputeTextLayout(tagPtr->tkfont,
 			string, numBytes,
@@ -2125,6 +2138,40 @@ TableDisplay(ClientData clientdata)
 		 */
 		if ((originX < 0) || (originY < 0) ||
 			(originX+itemW > width) || (originY+itemH > height)) {
+		    if (!activeCell
+			    && (tagPtr->ellipsis != NULL)
+			    && (tagPtr->wrap <= 0)
+			    && (tagPtr->multiline <= 0)
+			) {
+			/*
+			 * Check which side to draw ellipsis on
+			 */
+			switch (tagPtr->anchor) {
+			    case TK_ANCHOR_NE:
+			    case TK_ANCHOR_E:
+			    case TK_ANCHOR_SE:		/* eastern position */
+				ellEast = 0;
+				break;
+			    default:			/* western position */
+				ellEast = 1;
+			}
+			if ((ellipsis != tagPtr->ellipsis)
+				|| (ellFont != tagPtr->tkfont)) {
+			    /*
+			     * Different ellipsis from last cached
+			     */
+			    ellFont  = tagPtr->tkfont;
+			    ellipsis = tagPtr->ellipsis;
+			    ellLen = Tk_TextWidth(ellFont,
+				    ellipsis, (int) strlen(ellipsis));
+			    Tk_GetFontMetrics(tagPtr->tkfont, &fm);
+			}
+			useEllLen = MIN(ellLen, width);
+		    } else {
+			ellEast = 0;
+			useEllLen = 0;
+		    }
+
 		    /*
 		     * The text wants to overflow the boundaries of the
 		     * displayed cell, so we must clip in some way
@@ -2135,68 +2182,88 @@ TableDisplay(ClientData clientdata)
 		     * Copy the the current contents of the cell into the
 		     * clipped window area.  This keeps any fg/bg and image
 		     * data intact.
+		     * x0 - x == pad area
 		     */
-		    XCopyArea(display, window, clipWind, tagGc, x, y,
-			    width + bd[0] + bd[1] + (2 * padx),
-			    height + bd[2] + bd[3] + (2 * pady), 0, 0);
+		    XCopyArea(display, window, clipWind, tagGc, x0, y0,
+			    width - (x0 - x), height - (y0 - y), 0, 0);
 		    /*
 		     * Now draw into the cell space on the special window.
 		     * Don't use x,y base offset for clipWind.
 		     */
 		    Tk_DrawTextLayout(display, clipWind, tagGc, textLayout,
-			    0 + originX + bd[0] + padx,
-			    0 + originY + bd[2] + pady, 0, -1);
+			    x0 - x + originX, y0 - y + originY, 0, -1);
 		    /*
 		     * Now copy back only the area that we want the
 		     * text to be drawn on.
 		     */
+		    if (useEllLen) {
+			/*
+			 * Needs implementation for the Mac.  I would
+			 * copy on the area - ellipsis and then draw the
+			 * ellipsis and copy that (clipped).
+			 */
+		    }
 		    XCopyArea(display, clipWind, window, tagGc,
-			    bd[0] + padx, bd[2] + pady,
-			    width, height, x + bd[0] + padx, y + bd[2] + pady);
+			    x0 - x, y0 - y, width, height, x0, y0);
 #elif defined(WIN32)
 		    /*
 		     * This is evil, evil evil! but the XCopyArea
 		     * doesn't work in all cases - Michael Teske.
 		     * The general structure follows the comments below.
 		     */
-		    TkWinDrawable *twdPtr = (TkWinDrawable *) window;
-		    HDC dc = GetDC(twdPtr->window.handle);
-		    HRGN clipR;
+		    twdPtr = (TkWinDrawable *) window;
+		    dc     = GetDC(twdPtr->window.handle);
 
-		    clipR = CreateRectRgn(x + bd[0] + padx, y + bd[2] + pady,
-			    x + bd[0] + padx + width,
-			    y + bd[2] + pady + height);
+		    clipR = CreateRectRgn(x0 + (ellEast ? 0 : useEllLen), y0,
+			x0 + width - (ellEast ? useEllLen : 0), y0 + height);
 
 		    SelectClipRgn(dc, clipR);
+		    DeleteObject(clipR);
 		    OffsetClipRgn(dc, 0, 0);
 
 		    Tk_DrawTextLayout(display, window, tagGc, textLayout,
-			    x + originX + bd[0] + padx,
-			    y + originY + bd[2] + pady, 0, -1);
+			    x0 + originX, y0 + originY, 0, -1);
 
+		    if (useEllLen) {
+			clipR = CreateRectRgn(x0, y0, x0 + width, y0 + height);
+			SelectClipRgn(dc, clipR);
+			DeleteObject(clipR);
+			Tk_DrawChars(display, window, tagGc, ellFont,
+				ellipsis, (int) strlen(ellipsis),
+				x0 + (ellEast? width-useEllLen : 0),
+				y0 + originY + fm.ascent);
+		    }
 		    SelectClipRgn(dc, NULL);
-		    DeleteObject(clipR);
 #else
 		    /*
 		     * Use an X clipping rectangle.  The clipping is the
 		     * rectangle just for the actual text space (to allow
 		     * for empty padding space).
 		     */
-		    clipRect.x = x + bd[0] + padx;
-		    clipRect.y = y + bd[2] + pady;
-		    clipRect.width = width;
+		    clipRect.x      = x0 + (ellEast ? 0 : useEllLen);
+		    clipRect.y      = y0;
+		    clipRect.width  = width - (ellEast ? useEllLen : 0);
 		    clipRect.height = height;
 		    XSetClipRectangles(display, tagGc, 0, 0, &clipRect, 1,
 			    Unsorted);
 		    Tk_DrawTextLayout(display, window, tagGc, textLayout,
-			    x + originX + bd[0] + padx,
-			    y + originY + bd[2] + pady, 0, -1);
+			    x0 + originX,
+			    y0 + originY, 0, -1);
+		    if (useEllLen) {
+			clipRect.x     = x0;
+			clipRect.width = width;
+			XSetClipRectangles(display, tagGc, 0, 0, &clipRect, 1,
+				Unsorted);
+			Tk_DrawChars(display, window, tagGc, ellFont,
+				ellipsis, (int) strlen(ellipsis),
+				x0 + (ellEast? width-useEllLen : 0),
+				y0 + originY + fm.ascent);
+		    }
 		    XSetClipMask(display, tagGc, None);
 #endif
 		} else {
 		    Tk_DrawTextLayout(display, window, tagGc, textLayout,
-			    x + originX + bd[0] + padx,
-			    y + originY + bd[2] + pady, 0, -1);
+			    x0 + originX, y0 + originY, 0, -1);
 		}
 
 		/* if this is the active cell draw the cursor if it's on.
@@ -2209,8 +2276,7 @@ TableDisplay(ClientData clientdata)
 		    maxW = MAX(0, originY + cy + bd[2] + pady);
 		    maxH = MIN(ch, height - maxW + bd[2] + pady);
 		    Tk_Fill3DRectangle(tkwin, window, tablePtr->insertBg,
-			    x + originX + cx + bd[0] + padx
-			    - (tablePtr->insertWidth/2),
+			    x0 + originX + cx - (tablePtr->insertWidth/2),
 			    y + maxW, tablePtr->insertWidth,
 			    maxH, 0, TK_RELIEF_FLAT);
 		}

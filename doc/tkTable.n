@@ -2,7 +2,7 @@
 '\" The definitions below are for supplemental macros used in Tcl/Tk
 '\" manual entries.
 '\"
-'\" RCS: @(#) $Id: tkTable.n,v 1.6 2001/12/13 01:26:31 hobbs Exp $
+'\" RCS: @(#) $Id: tkTable.n,v 1.7 2002/10/16 07:32:22 hobbs Exp $
 '\"
 '\" .AP type name in/out ?indent?
 '\"	Start paragraph describing an argument to a library procedure.
@@ -357,6 +357,13 @@ Tk compatible on the border mode.
 The table is drawn to the screen as in fast mode, but only single pixel
 lines are drawn (not square borders).
 .RE
+.OP \-ellipsis ellipsis Ellipsis
+This specifies a string to display at the end of a line that would be
+clipped by its cell, like ``...''.  An ellipsis will be displayed only
+on non-wrapping, non-multiline cells that would be clipped.  The ellipsis
+will display on the left for east anchored cells, otherwise it displays
+on the right.
+Defaults to "" (no ellipsis).
 .OP \-flashmode flashMode FlashMode
 A boolean value which specifies whether cells should flash when their value
 changes.  The table tag \fBflash\fR will be applied to these cells for the
@@ -624,7 +631,7 @@ tag override the default display style.  The following options are
 currently supported for tags:
 .RS
 .TP
-\fB\-anchor \fIanchor\fR
+\fB\-anchor\fR \fIanchor\fR
 Anchor for item in the cell space.
 .TP
 \fB\-background\fR or \fB\-bg\fR \fIcolor\fR
@@ -634,35 +641,42 @@ Background color of the cell.
 Borderwidth of the cell, of the same format for the table, but may also
 be empty to inherit the default table borderwidth value (the default).
 .TP
-\fB\-font \fIfontName\fR
+\fB\-ellipsis\fR \fIstring\fR
+String to display at the end of a line that would be clipped by its cell,
+like ``...''.  An ellipsis will be displayed only
+on non-wrapping, non-multiline cells that would be clipped.  The ellipsis
+will display on the left for east anchored cells, otherwise it displays
+on the right.
+.TP
+\fB\-font\fR \fIfontName\fR
 Font for text in the cell.
 .TP
 \fB\-foreground\fR or \fB\-fg\fR \fIcolor\fR
 Foreground color of the cell.
 .TP
-\fB\-justify \fIjustify\fR
+\fB\-justify\fR \fIjustify\fR
 How to justify multi\-line text in a cell.
 It must be one of \fBleft\fR, \fBright\fR, or \fBcenter\fR.
 .TP
-\fB\-image \fIimageName\fR
+\fB\-image\fR \fIimageName\fR
 An image to display in the cell instead of text.
 .TP
-\fB\-multiline \fIboolean\fR
+\fB\-multiline\fR \fIboolean\fR
 Whether to display text with newlines on multiple lines.
 .TP
-\fB\-relief \fIrelief\fR
+\fB\-relief\fR \fIrelief\fR
 The relief for the cell.  May be the empty string to cause this tag to
 not disturb the value.
 .TP
-\fB\-showtext \fIboolean\fR
+\fB\-showtext\fR \fIboolean\fR
 Whether to show the text over an image.
 .TP
-\fB\-state \fIstate\fR
+\fB\-state\fR \fIstate\fR
 The state of the cell, to allow for certain cells to be disabled.
 This prevents the cell from being edited by the \fIinsert\fR or \fIdelete\fR
 methods, but a direct \fIset\fR will not be prevented.
 .TP
-\fB\-wrap \fIboolean\fR
+\fB\-wrap\fR \fIboolean\fR
 Whether characters should wrap in a cell that is not wide enough.
 .RE
 .PP
