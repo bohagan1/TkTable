@@ -117,7 +117,7 @@ Table_ActivateCmd(ClientData clientData, register Tcl_Interp *interp,
 
 		tablePtr->icursor = Tk_PointToChar(textLayout, x, y);
 		Tk_FreeTextLayout(textLayout);
-		TableConfigCursor(tablePtr);
+		TableRefresh(tablePtr, row, col, CELL|INV_FORCE);
 	    }
 	}
 	tablePtr->flags |= HAS_ACTIVE;
@@ -709,7 +709,7 @@ Table_CurvalueCmd(ClientData clientData, register Tcl_Interp *interp,
 	int len;
 
 	value = Tcl_GetStringFromObj(objv[2], &len);
-	if (strcmp(value, tablePtr->activeBuf) == 0) {
+	if (STREQ(value, tablePtr->activeBuf)) {
 	    Tcl_SetObjResult(interp, objv[2]);
 	    return TCL_OK;
 	}
@@ -927,7 +927,7 @@ Table_SelClearCmd(ClientData clientData, register Tcl_Interp *interp,
 	Tcl_WrongNumArgs(interp, 3, objv, "all|<first> ?<last>?");
 	return TCL_ERROR;
     }
-    if (strcmp(Tcl_GetString(objv[3]), "all") == 0) {
+    if (STREQ(Tcl_GetString(objv[3]), "all")) {
 	Tcl_HashSearch search;
 	for(entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
 	    entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
