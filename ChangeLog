@@ -1,5 +1,10 @@
 2004-07-20  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	**** 2.9 TAGGED FOR RELEASE ****
+
+	* generic/version.h, unix/tktable.spec:    updated for v2.9
+	* demos/loadtable.tcl, tests/tkTable.test:
+
 	* Makefile.in, configure.in, configure, tclconfig/tcl.m4: update
 	to TEA 3.1, use CFLAGS instead of EXTRA_CFLAGS and bump the
 	version number of Tktable to 2.9.

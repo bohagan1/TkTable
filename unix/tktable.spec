@@ -1,7 +1,7 @@
 # RPM specfile provided by Jean-Luc Fontaine
-# $Id: tktable.spec,v 1.14 2002/07/15 20:57:29 jfontain Exp $
+# $Id: tktable.spec,v 1.1 2002/10/09 21:23:48 hobbs Exp $
 
-%define	version	2.8
+%define	version	2.9
 %define	directory /usr
 
 Summary: table/matrix widget extension to Tcl/Tk.
@@ -38,7 +38,7 @@ make TBL_CFLAGS=-O2
 cd Tktable%{version}
 DIRECTORY=$RPM_BUILD_ROOT%{directory}/lib/%{name}%{version}
 install -d $DIRECTORY
-install libTktable2.8.so $DIRECTORY/
+install libTktable2.9.so $DIRECTORY/
 install -m 644 pkgIndex.tcl library/tkTable.tcl $DIRECTORY
 install -d $RPM_BUILD_ROOT%{directory}/man/mann
 install -m 644 doc/tkTable.n $RPM_BUILD_ROOT%{directory}/man/mann

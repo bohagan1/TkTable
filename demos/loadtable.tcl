@@ -33,7 +33,7 @@ if {[string equal "Windows CE" $::tcl_platform(os)]} {
     }
 }
 
-set ::VERSION 2.8
+set ::VERSION 2.9
 if {[string compare unix $tcl_platform(platform)]} {
     set table(library) Tktable$::VERSION[info sharedlibextension]
 } else {
