@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableCell.c,v 1.7 2001/06/23 08:50:14 hobbs Exp $
+ * RCS: @(#) $Id: tkTableCell.c,v 1.8 2002/03/13 20:15:20 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -401,17 +401,28 @@ TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col)
      * In that case, we have to decrement our border count.
      */
     if (tablePtr->spanAffTbl && !(tablePtr->flags & AVOID_SPANS) && borders) {
+	Tcl_HashEntry *entryPtr1, *entryPtr2 ;
 	char buf1[INDEX_BUFSIZE], buf2[INDEX_BUFSIZE];
+	char *val;
 
 	if (*row != -1) {
 	    TableMakeArrayIndex(brow+tablePtr->rowOffset,
 				bcol+tablePtr->colOffset+1, buf1);
 	    TableMakeArrayIndex(brow+tablePtr->rowOffset+1,
 				bcol+tablePtr->colOffset+1, buf2);
-	    if (Tcl_FindHashEntry(tablePtr->spanAffTbl, buf1) != NULL &&
-		Tcl_FindHashEntry(tablePtr->spanAffTbl, buf2) != NULL) {
-		borders--;
-		*row = -1;
+	    entryPtr1 = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf1);
+	    entryPtr2 = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf2);
+	    if (entryPtr1 != NULL && entryPtr2 != NULL) {
+		if ((val = (char *) Tcl_GetHashValue(entryPtr1)) != NULL) {
+		    strcpy(buf1, val);
+		}
+		if ((val = (char *) Tcl_GetHashValue(entryPtr2)) != NULL) {
+		    strcpy(buf2, val);
+		}
+		if (strcmp(buf1, buf2) == 0) {
+		    borders--;
+		    *row = -1;
+		}
 	    }
 	}
 	if (*col != -1) {
@@ -419,10 +430,19 @@ TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col)
 				bcol+tablePtr->colOffset, buf1);
 	    TableMakeArrayIndex(brow+tablePtr->rowOffset+1,
 				bcol+tablePtr->colOffset+1, buf2);
-	    if (Tcl_FindHashEntry(tablePtr->spanAffTbl, buf1) != NULL &&
-		Tcl_FindHashEntry(tablePtr->spanAffTbl, buf2) != NULL) {
-		borders--;
-		*col = -1;
+	    entryPtr1 = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf1);
+	    entryPtr2 = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf2);
+	    if (entryPtr1 != NULL && entryPtr2 != NULL) {
+		if ((val = (char *) Tcl_GetHashValue(entryPtr1)) != NULL) {
+		    strcpy(buf1, val);
+		}
+		if ((val = (char *) Tcl_GetHashValue(entryPtr2)) != NULL) {
+		    strcpy(buf2, val);
+		}
+		if (strcmp(buf1, buf2) == 0) {
+		    borders--;
+		    *col = -1;
+		}
 	    }
 	}
     }
