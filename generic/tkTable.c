@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.12 2001/06/22 23:23:12 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.13 2001/06/23 08:57:43 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -1026,16 +1026,19 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     Tcl_HashSearch search;
     int oldUse, oldCaching, oldExport, oldTitleRows, oldTitleCols;
     int result = TCL_OK;
-    char *oldVar, **argv;
+    char *oldVar = NULL, **argv;
     Tcl_DString error;
     Tk_FontMetrics fm;
 
     oldExport	= tablePtr->exportSelection;
     oldCaching	= tablePtr->caching;
     oldUse	= tablePtr->useCmd;
-    oldVar	= tablePtr->arrayVar;
     oldTitleRows	= tablePtr->titleRows;
     oldTitleCols	= tablePtr->titleCols;
+    if (tablePtr->arrayVar != NULL) {
+	oldVar = ckalloc(strlen(tablePtr->arrayVar) + 1);
+	strcpy(oldVar, tablePtr->arrayVar);
+    }
 
     /* Do the configuration */
     argv = StringifyObjects(objc, objv);
@@ -1106,6 +1109,10 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
 	    }
 	}
     }
+
+    /* Free oldVar if it was allocated */
+    if (oldVar != NULL) ckfree(oldVar);
+
     if ((tablePtr->command && tablePtr->useCmd && !oldUse) ||
 	(tablePtr->arrayVar && !(tablePtr->useCmd) && oldUse)) {
 	/*
@@ -3564,7 +3571,7 @@ TableValidateChange(tablePtr, r, c, old, new, index)
 {
     register Tcl_Interp *interp = tablePtr->interp;
     int code, bool;
-    Tk_RestrictProc *restrict;
+    Tk_RestrictProc *rstrct;
     ClientData cdata;
     Tcl_DString script;
     
@@ -3575,7 +3582,7 @@ TableValidateChange(tablePtr, r, c, old, new, index)
     /* Magic code to make this bit of code UI synchronous in the face of
      * possible new key events */
     XSync(tablePtr->display, False);
-    restrict = Tk_RestrictEvents(TableRestrictProc, (ClientData)
+    rstrct = Tk_RestrictEvents(TableRestrictProc, (ClientData)
 				 NextRequest(tablePtr->display), &cdata);
 
     /*
@@ -3626,7 +3633,7 @@ TableValidateChange(tablePtr, r, c, old, new, index)
 	tablePtr->validate = 0;
     }
 
-    Tk_RestrictEvents(restrict, cdata, &cdata);
+    Tk_RestrictEvents(rstrct, cdata, &cdata);
     tablePtr->flags &= ~VALIDATING;
 
     return code;

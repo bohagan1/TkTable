@@ -1,5 +1,9 @@
 2001-06-23  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* generic/tkTable.c (TableConfigure): corrected possible crash
+	during configure when switching array vars and changed name of
+	'restrict' var to something that is not a reserved word. (berggren)
+
 	* library/tkTable.tcl: support for future UTF8_STRING selection on
 	unix.
 
