@@ -31,7 +31,7 @@ TMP_DIR		= .
 !if "$(MACHINE)" == "IA64"
 
 # This assumes "-64" suffixes your Win64 build
-v3 = 834-64
+v3 = 84-64
 
 # IA64 support is based on the standard setup with v2 of the
 # Microsoft SDK for XP, RC1
@@ -62,8 +62,8 @@ include32	= -I"$(TOOLS32)/include"
 
 !endif
 
-DEST_DIR	= C:\Tcl\TclPro1501
-DEST_DIRU	= C:/Tcl/TclPro1501
+DEST_DIR	= C:\Tcl
+DEST_DIRU	= C:/Tcl
 
 WIN_DIR		= $(ROOT)\win
 GENERIC_DIR	= $(ROOT)\generic
@@ -74,8 +74,8 @@ VPATH		= $(GENERIC_DIR):$(WIN_DIR)
 
 # Set your version of Tcl
 
-TCL_VERSION	= 8.3
-TCL_VER		= 83
+TCL_VERSION	= 8.4
+TCL_VER		= 84
 
 INST_RUNTIME	= $(DEST_DIR)\lib\$(PROJECT)$(VERSION)
 INST_RUNTIMEU	= $(DEST_DIRU)/lib/$(PROJECT)$(VERSION)
@@ -104,12 +104,12 @@ WISH		= $(DEST_DIR)\bin\wish$(TCL_VER)
 WIN_LIBS	= gdi32.lib user32.lib
 LIBS		= $(DEST_DIR)\lib\tclstub$(TCL_VER).lib \
 		  $(DEST_DIR)\lib\tkstub$(TCL_VER).lib $(WIN_LIBS)
-LIBS		= C:\build\tcl834-64\tclstub$(TCL_VER).lib \
-		  C:\build\tk834-64\tkstub$(TCL_VER).lib $(WIN_LIBS)
+LIBS		= C:\build\tcl84-64\tclstub$(TCL_VER).lib \
+		  C:\build\tk84-64\tkstub$(TCL_VER).lib $(WIN_LIBS)
 INCLUDES	= -I"$(DEST_DIR)\include" -I. $(include32)
 
 DEFINES = -DDLL_BUILD -DBUILD_Tktable $(TBL_CFLAGS) \
-	  -DVERSION=\"$(VERSION)\" \
+	  -DPACKAGE_VERSION=\"$(VERSION)\" \
 	  -DTBL_COMMAND=\"$(TBL_COMMAND)\" \
 	  -DTBL_RUNTIME="\"$(TBL_RUNTIME)\"" \
 	  -DTBL_RUNTIME_DIR="\"$(INST_RUNTIMEU)\""
