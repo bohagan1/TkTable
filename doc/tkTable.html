@@ -1302,9 +1302,9 @@ Deletes <I>count</I> cols starting at (and including) col
 of the tables. If <I>count</I> is negative, it
 deletes cols to the left. Otherwise it deletes
 cols to the right. <I>count</I> defaults to 1 (meaning
-just the column specified). The selection will be
-cleared. At the moment, spans are not adjusted
-with this action. Optional switches are:
+just the column specified). At the moment, spans
+are not adjusted with this action. Optional
+switches are:
 <P>
 
 <DL>
@@ -1314,6 +1314,14 @@ with this action. Optional switches are:
 Causes the table cols to be unaffected by the
 deletion (empty cols may appear). By default
 the dimensions are adjusted by <B>count</B>.
+<P>
+</DD>
+
+<DT><B>-holdselection</B></DT></DT>
+<DD>
+Causes the selection to be maintained on the
+absolute cells values. Otherwise, the selection
+will be cleared..
 <P>
 </DD>
 
@@ -1482,8 +1490,6 @@ be different to keep the screen full.
 
 This command is used to adjust the selection within a
 table. It has several forms, depending on <I>option</I>:
-<P>
-<P>
 <I>pathName</I> <B>selection</B> <B>anchor</B> <I>index</I><BR>
 
 Sets the selection anchor to the cell given by
@@ -1546,8 +1552,6 @@ behavior of the command depends on the <I>option</I> argument
 that follows the <B>tag</B> argument. <I>cget</I>, <I>cell</I>, and <I>row</I>|<I>col</I>
 complain about unknown tag names. The following forms
 of the command are currently supported:
-<P>
-<P>
 <I>pathName</I> <B>tag</B> <B>cell</B> <I>tagName</I> ?<I>index</I> ...?
 With no arguments, prints out the list of cells
 that use the <I>tag</I>. Otherwise it sets the specified
@@ -1679,10 +1683,10 @@ list describing all of the available options for
 <I>index</I> (see <B>Tk_ConfigureInfo</B> for information on the
 format of this list). If <I>option</I> is specified with
 no <I>value</I>, then the command returns a list describing
-the one named option (this list will be
-identical to the corresponding sublist of the
-value returned if no <I>option</I> is specified). If one
-or more <I>option</I>-<I>value</I> pairs are specified, then the
+the one named option (this list will be identical
+to the corresponding sublist of the value
+returned if no <I>option</I> is specified). If one or
+more <I>option</I>-<I>value</I> pairs are specified, then the
 command modifies the given option(s) to have the
 given value(s) in <I>index</I>; in this case the command
 returns an empty string. See EMBEDDED WINDOWS
@@ -1938,8 +1942,9 @@ for each request of a cell value.
 <P>
 Set the topleft title area to be one spanning cell. This
 overestimates both row and column span by one, but the command
-does all the constraining for us.<BR>
-
+does all the constraining for us.
+<P>
+<P>
 $table span [$table cget -roworigin],[$table cget -colorigin] [$table cget -titlerows],[$table cget -titlecols]
 Force a table window refresh (useful for the slight chance
 that a bug in the table is not causing proper refresh):
