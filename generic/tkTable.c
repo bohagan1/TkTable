@@ -14,12 +14,12 @@
  * Tom Moore		tmoore@spatial.ca
  * Sebastian Wangnick	wangnick@orthogon.de
  *
- * Copyright (c) 1997-2001 Jeffrey Hobbs
+ * Copyright (c) 1997-2002 Jeffrey Hobbs
  *
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.16 2001/07/18 16:52:20 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.17 2002/01/16 22:34:52 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -65,7 +65,7 @@ static Tk_RestrictAction TableRestrictProc _ANSI_ARGS_((ClientData arg,
  * enumerated types used to dispatch the widget command.
  */
 
-static char *selCmdNames[] = {
+static CONST84 char *selCmdNames[] = {
     "anchor", "clear", "includes", "present", "set", (char *)NULL
 };
 enum selCommand {
@@ -73,7 +73,7 @@ enum selCommand {
     CMD_SEL_SET
 };
 
-static char *commandNames[] = {
+static CONST84 char *commandNames[] = {
     "activate", "bbox", "border", "cget", "clear", "configure",
     "curselection", "curvalue", "delete", "get", "height",
     "hidden", "icursor", "index", "insert",
@@ -328,7 +328,7 @@ Tk_ConfigSpec tableSpecs[] = {
  * Keep this in sync with the above values.
  */
 
-static char *updateOpts[] = {
+static CONST84 char *updateOpts[] = {
     "-anchor",		"-background",	"-bg",		"-bd",	
     "-borderwidth",	"-cache",	"-command",	"-colorigin",
     "-cols",		"-colstretchmode",		"-coltagcommand",
@@ -856,7 +856,7 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 		Tcl_WrongNumArgs(interp, 2, objv, NULL);
 		result = TCL_ERROR;
 	    } else {
-		Tcl_SetStringObj(Tcl_GetObjResult(interp), TBL_VERSION, -1);
+		Tcl_SetStringObj(Tcl_GetObjResult(interp), VERSION, -1);
 	    }
 	    break;
 
@@ -2656,7 +2656,7 @@ TableVarProc(clientData, interp, name, index, flags)
 	    update = 0;
 	} else {
 	    /* modified TableGetActiveBuf */
-	    char *data = "";
+	    CONST char *data = "";
 
 	    row = tablePtr->activeRow;
 	    col = tablePtr->activeCol;
@@ -2683,7 +2683,8 @@ TableVarProc(clientData, interp, name, index, flags)
 	}
 	if (tablePtr->caching) {
 	    Tcl_HashEntry *entryPtr;
-	    char *val, *data = NULL;
+	    char *val;
+	    CONST char *data = NULL;
 
 	    data = Tcl_GetVar2(interp, name, index, TCL_GLOBAL_ONLY);
 	    if (!data) data = "";
@@ -3378,7 +3379,7 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
     Tcl_HashSearch search;
     int length, count, lastrow=0, needcs=0, r, c, listArgc, rslen=0, cslen=0;
     int numcols, numrows;
-    char **listArgv;
+    CONST84 char **listArgv;
 
     /* if we are not exporting the selection ||
      * we have no data source, return */
@@ -3707,7 +3708,7 @@ ExpandPercents(tablePtr, before, r, c, old, new, index, dsPtr, cmdType)
 	string = before;
 #ifdef TCL_UTF_MAX
 	/* No need to convert '%', as it is in ascii range */
-	string = Tcl_UtfFindFirst(before, '%');
+	string = (char *) Tcl_UtfFindFirst(before, '%');
 #else
 	string = strchr(before, '%');
 #endif
@@ -3822,7 +3823,7 @@ Tktable_Init(interp)
 	== NULL) {
 	return TCL_ERROR;
     }
-    if (Tcl_PkgProvide(interp, "Tktable", TBL_VERSION) != TCL_OK) {
+    if (Tcl_PkgProvide(interp, "Tktable", VERSION) != TCL_OK) {
 	return TCL_ERROR;
     }
     Tcl_CreateObjCommand(interp, TBL_COMMAND, Tk_TableObjCmd,

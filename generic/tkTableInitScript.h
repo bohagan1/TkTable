@@ -30,7 +30,7 @@ static char tkTableInitScript[] = "if {[info proc tkTableInit]==\"\"} {\n\
     lappend dirs " TBL_RUNTIME_DIR "\n\
     if {[info exists tcl_pkgPath]} {\n\
 	foreach i $tcl_pkgPath {\n\
-	    lappend dirs [file join $i Tktable" TBL_VERSION "] \\\n\
+	    lappend dirs [file join $i Tktable" VERSION "] \\\n\
 		[file join $i Tktable] $i\n\
 	}\n\
     }\n\
