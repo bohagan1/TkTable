@@ -1,5 +1,10 @@
 2002-03-19  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* tests/tkTable.test: added tag configure tests
+
+	* generic/tkTableTag.c (Table_TagCmd): work-around for bug in
+	Tk_ConfigureValue that sets interp->result to NULL. [Bug #522882]
+
 	* generic/tkTable.c (TableDisplay): when building with threads on
 	WIN32, use NO_XSETCLIP instead of direct DC hacks because Tk
 	doesn't use CS_CLASSDC on threaded builds.
