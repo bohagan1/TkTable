@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.25 2003/01/30 21:01:34 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.26 2003/02/25 07:16:46 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -1616,7 +1616,7 @@ TableUndisplay(register Table *tablePtr)
     seen[3] = col;
 }
 
-#if defined(MAC_TCL) || (defined(WIN32) && defined(TCL_THREADS)) || defined(MAC_OSX_TK)
+#if defined(MAC_TCL) || defined(UNDER_CE) || (defined(WIN32) && defined(TCL_THREADS)) || defined(MAC_OSX_TK)
 #define NO_XSETCLIP
 #endif
 /*
@@ -2192,24 +2192,32 @@ TableDisplay(ClientData clientdata)
 		     * x0 - x == pad area
 		     */
 		    XCopyArea(display, window, clipWind, tagGc, x0, y0,
-			    width - (x0 - x), height - (y0 - y), 0, 0);
+			    width, height, x0 - x, y0 - y);
 		    /*
 		     * Now draw into the cell space on the special window.
 		     * Don't use x,y base offset for clipWind.
 		     */
 		    Tk_DrawTextLayout(display, clipWind, tagGc, textLayout,
 			    x0 - x + originX, y0 - y + originY, 0, -1);
+
+		    if (useEllLen) {
+			/*
+			 * Recopy area the ellipse covers (not efficient)
+			 */
+			XCopyArea(display, window, clipWind, tagGc,
+				x0 + (ellEast ? width - useEllLen : 0), y0,
+				useEllLen, height,
+				x0 - x + (ellEast ? width - useEllLen : 0),
+				y0 - y);
+			Tk_DrawChars(display, clipWind, tagGc, ellFont,
+				ellipsis, (int) strlen(ellipsis),
+				x0 - x + (ellEast ? width - useEllLen : 0),
+				y0 - y + originY + fm.ascent);
+		    }
 		    /*
 		     * Now copy back only the area that we want the
 		     * text to be drawn on.
 		     */
-		    if (useEllLen) {
-			/*
-			 * Needs implementation for the Mac.  I would
-			 * copy on the area - ellipsis and then draw the
-			 * ellipsis and copy that (clipped).
-			 */
-		    }
 		    XCopyArea(display, clipWind, window, tagGc,
 			    x0 - x, y0 - y, width, height, x0, y0);
 #elif defined(WIN32)
@@ -2226,7 +2234,7 @@ TableDisplay(ClientData clientdata)
 
 		    SelectClipRgn(dc, clipR);
 		    DeleteObject(clipR);
-		    OffsetClipRgn(dc, 0, 0);
+		    /* OffsetClipRgn(dc, 0, 0); */
 
 		    Tk_DrawTextLayout(display, window, tagGc, textLayout,
 			    x0 + originX, y0 + originY, 0, -1);
