@@ -33,6 +33,7 @@ OBJS		= tkTable.o \
 #OBJS		+= tkTablePs.o
 
 MANS		= tkTable.n
+HTML_MANS	= tkTable.html
 
 ## Define this if you want to use STUBS
 ## This only works for the dynamic library
@@ -50,17 +51,24 @@ WISH		= wish$(TK_VERSION)
 TCL_SRC_DIR 	= @TCL_SRC_DIR@
 TK_SRC_DIR 	= @TK_SRC_DIR@
 
+TCL_LIB_SPEC	= @TCL_LIB_SPEC@
+TK_LIB_SPEC	= @TK_LIB_SPEC@
+
+TCL_STUB_LIB_SPEC	= @TCL_STUB_LIB_SPEC@
+TK_STUB_LIB_SPEC	= @TK_STUB_LIB_SPEC@
+
+TCL_LIBS	= @TCL_LIBS@
+TK_LIBS		= @TK_LIBS@
+
+## The *_BUILD*_LIB_SPEC variables replace the non-BUILD ones when
+## compiling against an uninstalled version of Tcl (not the default).
 TCL_BUILD_LIB_SPEC	= @TCL_BUILD_LIB_SPEC@
 TK_BUILD_LIB_SPEC	= @TK_BUILD_LIB_SPEC@
 
 TCL_BUILD_STUB_LIB_SPEC	= @TCL_BUILD_STUB_LIB_SPEC@
 TK_BUILD_STUB_LIB_SPEC	= @TK_BUILD_STUB_LIB_SPEC@
 
-TCL_LIB_SPEC	= @TCL_LIB_SPEC@
-TK_LIB_SPEC	= @TK_LIB_SPEC@
-
-TCL_LIBS	= @TCL_LIBS@
-TK_LIBS		= @TK_LIBS@
+LIBS	= $(TK_LIB_SPEC) $(TK_LIBS)
 
 TBL_CFLAGS	= -O
 
@@ -99,6 +107,7 @@ RANLIB		= @TCL_RANLIB@
 SHLIB_CFLAGS	= @TCL_SHLIB_CFLAGS@
 SHLIB_SUFFIX	= @TCL_SHLIB_SUFFIX@
 SHLIB_LD	= @TCL_SHLIB_LD@
+SHLIB_LD_LIBS	= @TCL_SHLIB_LD_LIBS@
 TCL_PREFIX	= @TCL_PREFIX@
 ## HP cc sometimes requires -Aa for proper ansi compilation
 TCL_CFLAGS	= $(STUBS_FLAGS) $(TBL_CFLAGS) @TCL_DEFS@ @TCL_CFLAGS@
@@ -135,12 +144,14 @@ MAN_INSTALL_DIR = @mandir@/mann
 all: $(DLL) pkgIndex.tcl
 
 $(DLL): $(OBJS)
-	$(SHLIB_LD) -o $@ $(OBJS)
+	$(SHLIB_LD) -o $@ $(OBJS) $(SHLIB_CFLAGS) $(SHLIB_LD_LIBS)
 
+# The megawish builds may not work anymore - I don't use anything but
+# extensions nowadays.
 tablewish: tkAppInit.o $(OBJS)
 wish: tkAppInit.o $(OBJS)
 	$(CC) $(TK_LD_SEARCH_FLAGS) -o $(STATIC_EXEC) tkAppInit.o $(OBJS) \
-	  $(LIBS) $(TK_BUILD_LIB_SPEC) $(TK_LIB_SPEC) $(TCL_BUILD_LIB_SPEC) $(TCL_LIB_SPEC) $(TK_LIBS) $(TCL_LIBS)
+	  $(LIBS)
 
 static $(STATIC_LIB): $(OBJS) pkgIndex.tcl
 	$(RM) $(STATIC_LIB)
@@ -218,16 +229,41 @@ clean:
 distclean: clean
 	$(RM) Makefile config.cache config.log config.status $(DOC_DIR)/tkTable.html
 
-#COMPRESS	= tar cvf $(PKG_DIR).tar $(PKG_DIR); compress $(PKG_DIR).tar
-COMPRESS	= gtar zcvf $(PKG_DIR).tar.gz $(PKG_DIR)
+cleanall: bindist-clean dist-clean distclean
+
+COMPEXE		= @COMPEXE@
+COMPEXT		= @COMPEXT@
+COMPRESS	= tar cvf - $(PKG_DIR) | $(COMPEXE) > $(PKG_DIR).tar.$(COMPEXT)
+SYSID		= @SYSID@
 DIST_ROOT	= /tmp/dist
 DIST_DIR	= $(DIST_ROOT)/$(PKG_DIR)
+
+# A binary distribution varies from the regular install in that
+# everything goes in one directory.
+bindist:
+	if test ! -d "$(PKG_DIR)"; then mkdir "$(PKG_DIR)"; fi
+	$(INSTALL_PROGRAM) $(DLL) "$(PKG_DIR)/$(DLL).$(TBL_VERSION)"
+	$(INSTALL_DATA) pkgIndex.tcl "$(PKG_DIR)/pkgIndex.tcl"
+	$(INSTALL_DATA) $(LIB_DIR)/tkTable.tcl "$(PKG_DIR)/tkTable.tcl"
+	$(INSTALL_DATA) $(DOC_DIR)/$(HTML_MANS) $(PKG_DIR)/
+
+	(echo "TkTable $(TBL_VERSION)\n";\
+	echo "Install this directory next to lib/tcl8.x and lib/tk8.x";\
+	echo "You can then use TkTable with a simple:";\
+	echo "\tpackage require Tktable";\
+	) > $(PKG_DIR)/README.install
+
+	$(COMPRESS)
+	mv $(PKG_DIR).tar.$(COMPEXT) $(PKG_DIR)-$(SYSID).tar.$(COMPEXT)
+
+bindist-clean:
+	rm -rf $(PKG_DIR) $(PKG_DIR)-$(SYSID).tar.$(COMPEXT)
 
 $(UNIX_DIR)/configure: $(UNIX_DIR)/configure.in
 	autoconf $(UNIX_DIR)/configure.in > $(UNIX_DIR)/configure
 
 dist-clean:
-	rm -rf $(DIST_DIR) $(DIST_ROOT)/$(PKG_DIR).tar.*
+	rm -rf $(DIST_DIR) $(DIST_ROOT)/$(PKG_DIR).tar.$(COMPEXT)
 
 dist: dist-clean html $(UNIX_DIR)/configure
 	mkdir -p $(DIST_DIR)

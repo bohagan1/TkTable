@@ -1,5 +1,14 @@
 2000-08-02  Jeff Hobbs  <hobbs@scriptics.com>
 
+	* unix/Makefile.in: added bindist and cleanall targets, and
+	cleared up the use of some variables to allow for correct building
+	of the tktable library across platforms (including AIX).
+	The distclean target no longer removes the generated html doc.
+	* unix/configure:
+	* unix/configure.in: added check of available compression program
+	and SYSID for Unix make bindist target.  Also cleaned up the use
+	of some other variables.
+
 	* generic/tkTable.c (TableConfigCursor, TableCursorEvent)
 	(TableFlashEvent, TableEventProc):
 	* generic/tkTableEdit.c (TableDeleteChars, TableInsertChars):

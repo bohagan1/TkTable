@@ -642,7 +642,32 @@ file=${tcl_prefix}/tclConfig.sh
 file=${tk_prefix}/tkConfig.sh
 . $file
 
+if (gzip --version ; exit) 2>/dev/null; then
+    COMPEXE="gzip"
+    COMPEXT="gz"
+else
+    COMPEXE="compress"
+    COMPEXT="Z"
+fi
+echo "using '$COMPEXE' to compress archives"
+
+if test "`uname -s`" = "AIX" ; then
+    SYSID="AIX-`uname -v`-`uname -r`"
+    TK_LIBS="$TK_LIBS -lc"
+else
+    SYSID="`uname -s`-`uname -r`-`uname -p`"
+fi
+
 CC=$TCL_CC
+
+
+
+
+
+
+
+
+
 
 
 
@@ -828,10 +853,14 @@ s%@mandir@%$mandir%g
 s%@INSTALL_PROGRAM@%$INSTALL_PROGRAM%g
 s%@INSTALL_SCRIPT@%$INSTALL_SCRIPT%g
 s%@INSTALL_DATA@%$INSTALL_DATA%g
+s%@COMPEXE@%$COMPEXE%g
+s%@COMPEXT@%$COMPEXT%g
+s%@SYSID@%$SYSID%g
 s%@CC@%$CC%g
 s%@INSTALL@%$INSTALL%g
 s%@TCL_SHLIB_CFLAGS@%$TCL_SHLIB_CFLAGS%g
 s%@TCL_SHLIB_LD@%$TCL_SHLIB_LD%g
+s%@TCL_SHLIB_LD_LIBS@%$TCL_SHLIB_LD_LIBS%g
 s%@TCL_SHLIB_SUFFIX@%$TCL_SHLIB_SUFFIX%g
 s%@TCL_VERSION@%$TCL_VERSION%g
 s%@TCL_RANLIB@%$TCL_RANLIB%g
@@ -846,6 +875,7 @@ s%@TCL_LD_FLAGS@%$TCL_LD_FLAGS%g
 s%@TCL_COMPAT_OBJS@%$TCL_COMPAT_OBJS%g
 s%@TCL_LD_SEARCH_FLAGS@%$TCL_LD_SEARCH_FLAGS%g
 s%@TCL_SRC_DIR@%$TCL_SRC_DIR%g
+s%@TCL_STUB_LIB_SPEC@%$TCL_STUB_LIB_SPEC%g
 s%@TCL_BUILD_LIB_SPEC@%$TCL_BUILD_LIB_SPEC%g
 s%@TCL_BUILD_STUB_LIB_SPEC@%$TCL_BUILD_STUB_LIB_SPEC%g
 s%@TK_VERSION@%$TK_VERSION%g
@@ -857,6 +887,7 @@ s%@TK_LIBS@%$TK_LIBS%g
 s%@TK_LIB_SPEC@%$TK_LIB_SPEC%g
 s%@TK_LD_SEARCH_FLAGS@%$TK_LD_SEARCH_FLAGS%g
 s%@TK_SRC_DIR@%$TK_SRC_DIR%g
+s%@TK_STUB_LIB_SPEC@%$TK_STUB_LIB_SPEC%g
 s%@TK_BUILD_LIB_SPEC@%$TK_BUILD_LIB_SPEC%g
 s%@TK_BUILD_STUB_LIB_SPEC@%$TK_BUILD_STUB_LIB_SPEC%g
 
