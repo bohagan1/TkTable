@@ -11,7 +11,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: Makefile.in,v 1.6 2002/04/04 07:59:05 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.7 2002/09/26 01:47:20 hobbs Exp $
 
 #========================================================================
 # Edit the following few lines when writing a new extension
@@ -317,8 +317,10 @@ $($(PACKAGE)_LIB_FILE): $($(PACKAGE)_OBJECTS)
 
 VPATH = $(srcdir)/generic:$(srcdir)/unix:$(srcdir)/win
 
+# I would prefer to use $< over $?, but FreeBSD's can't handle it, and
+# with only one prereq, $? is sufficient
 tkTable.tcl.h: $(srcdir)/library/tkTable.tcl
-	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' < `@CYGPATH@ $<` > '$@' || { rm -f $@; exit 1; }
+	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' < `@CYGPATH@ $?` > '$@' || { rm -f $@; exit 1; }
 
 .SUFFIXES: .c .$(OBJEXT)
 

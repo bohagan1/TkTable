@@ -1,3 +1,8 @@
+2002-09-27  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: correct tkTable.tcl.h target to work with FreeBSD's
+	default make.
+
 2002-09-25  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* generic/tkTable.c: 
