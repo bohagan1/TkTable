@@ -6,24 +6,29 @@
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tkTable.test,v 1.4 2001/06/23 08:57:16 hobbs Exp $
+# RCS: @(#) $Id: tkTable.test,v 1.5 2001/07/01 01:25:52 hobbs Exp $
 
 # deletes:
 # test 2 -5
 # test 4 -2
 # test 0 -1 (== 0 1)
 
-set table(library) Tktable[info sharedlibextension]
+set ::VERSION 2.8
+if {[string compare unix $tcl_platform(platform)]} {
+    set table(library) Tktable$::VERSION[info sharedlibextension]
+} else {
+    set table(library) libTktable$::VERSION[info sharedlibextension]
+}
 if {
     [string match {} [info commands table]]
-    && [catch {package require Tktable 2.7} err]
+    && [catch {package require Tktable $::VERSION} err]
     && [catch {load [file join [pwd] $table(library)]} err]
     && [catch {load [file join [pwd] .. unix $table(library)]} err]
     && [catch {load [file join [pwd] .. win $table(library)]} err]
 } {
     error $err
 }
-package require Tktable 2.7
+package require Tktable $::VERSION
 
 package require tcltest
 namespace import -force ::tcltest::*
@@ -365,7 +370,12 @@ test table-25.2.3 {TableWidgetCmd procedure, "tag names" option} {
 } {flash}
 test table-25.2.4 {TableWidgetCmd procedure, "tag names" option} {
     .t tag configure foo
-} {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {unknown relief}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
+} [expr {
+    ([info tclversion] > 8.3) ?
+    {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
+    :
+    {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {unknown relief}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
+}]
 test table-25.2.5 {TableWidgetCmd procedure, "tag names" option} {
     .t tag names
 } {flash active sel title foo}
@@ -426,7 +436,7 @@ test table-27.1 {TableWidgetCmd procedure, "version" option} {
 } {1 {wrong # args: should be ".t version"}}
 test table-.1 {TableWidgetCmd procedure, "version" option} {
     .t version
-} {2.7}
+} $::VERSION
 
 test table-28.1 {TableWidgetCmd procedure, "window" option} {
     list [catch {.t window} msg] $msg
