@@ -113,8 +113,7 @@ Tcl_AppInit(interp)
     if (Tktable_Init(interp) == TCL_ERROR) {
         return TCL_ERROR;
     }
-    Tcl_StaticPackage(interp, "Tktable", Tktable_Init,
-		      (Tcl_PackageInitProc *) NULL);
+    Tcl_StaticPackage(interp, "Tktable", Tktable_Init, Tktable_SafeInit);
 
     /*
      * Call Tcl_CreateCommand for application-specific commands, if

@@ -11,12 +11,12 @@ fi
 AC_PROG_INSTALL
 
 AC_ARG_WITH(tcl,
-    [  --with-tcl=<directory>         directory containing tclConfig.sh],
+    [  --with-tcl=<directory>  directory containing tclConfig.sh],
     [tcl_prefix=$withval],
     [tcl_prefix=${exec_prefix}/lib])
 
 AC_ARG_WITH(tk,
-    [  --with-tk=<directory>         directory containing tkConfig.sh],
+    [  --with-tk=<directory>   directory containing tkConfig.sh],
     [tk_prefix=$withval],
     [tk_prefix=${exec_prefix}/lib])
 
@@ -33,8 +33,8 @@ AC_SUBST(INSTALL)
 AC_SUBST(INSTALL_PROGRAM)
 AC_SUBST(INSTALL_DATA)
 AC_SUBST(TCL_SHLIB_CFLAGS)
-AC_SUBST(TCL_SHLIB_SUFFIX)
 AC_SUBST(TCL_SHLIB_LD)
+AC_SUBST(TCL_SHLIB_SUFFIX)
 AC_SUBST(TCL_VERSION)
 AC_SUBST(TCL_RANLIB)
 AC_SUBST(TCL_XINCLUDES)

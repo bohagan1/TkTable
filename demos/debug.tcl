@@ -11,8 +11,8 @@ exec wish "$0" ${1+"$@"}
 source [file join [file dirname [info script]] loadtable.tcl]
 
 array set table {
-    rows	9
-    cols	8
+    rows	25
+    cols	20
     table	.t
     array	t
 }
@@ -35,7 +35,7 @@ table $table(table) \
 	-variable $table(array) \
 	-width 6 -height 8 \
 	-titlerows 1 -titlecols 2 \
-	-roworigin -1 -colorigin -2 \
+	-roworigin -5 -colorigin -2 \
 	-yscrollcommand {.sy set} \
 	-xscrollcommand {.sx set} \
 	-coltagcommand colProc \
@@ -82,16 +82,29 @@ $table(table) set \
 	2,2 "null\0byte"
 
 set i -1
-foreach sticky {n s w e nsw nse news} {; # could include: ews new
-    set l [label $table(table).$sticky \
-	    -text "stick $sticky" -fg black -bg yellow]
-    $table(table) window config 5,$i -sticky $sticky -window $l
-    if {$i%2} { $table(table) window config 5,$i -relief raised }
-    incr i
-}
-set l [label [winfo parent $table(table)].l -bg orange]
-$l config -text $l
+
+# This is in the row span
+set l [label $table(table).s -text "Window s" -bg yellow]
+$table(table) window config 6,0 -sticky s -window $l
+
+# This is in the row titles
+set l [label $table(table).ne -text "Window ne" -bg yellow]
+$table(table) window config 4,-1 -sticky ne -window $l
+
+# This will get swallowed by a span
+set l [label $table(table).ew -text "Window ew" -bg yellow]
+$table(table) window config 5,3 -sticky ew -window $l
+
+# This is in the col titles
+set l [label $table(table).news -text "Window news" -bg yellow]
+$table(table) window config -5,1 -sticky news -window $l
+
+set l [label [winfo parent $table(table)].l -text "Sibling l" -bg orange]
 $table(table) window config 5,1 -sticky news -window $l
+
+if {![catch {$table(table) span}]} {
+    $table(table) span -1,-2 0,3 1,2 0,5 3,2 2,2 6,0 4,0
+}
 
 puts [list Table is $table(table) with array [$table(table) cget -var]]
 

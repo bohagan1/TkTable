@@ -15,8 +15,139 @@
 # *        peter@bj-ig.de (Peter Brueckner)
 # *        jeff.hobbs@acm.org (Jeffrey Hobbs)
 # *        ellson@lucent.com (John Ellson)
-# *
+##
+## Mac support provided by Chuck Houpt (choupt@als.com). (v2.3+)
+##
 ##########################################################################
+
+**** v2.4 10 December 1998 ****
+
+Changed exit handler to not be used (unless -DEXIT_HANDLER is specified).
+
+Changed distribution directory name to go with new 'make distrib'.
+
+Changed TableUndisplay to properly handle unmapping embedded windows
+in title areas.  Added TableTrueCell for this.
+
+Changed EmbWinUnmapNow to always call Tk_UnmapWindow.
+
+Changed cell border drawing so that any 1-pixel border would use the
+fast drawing mode (except for when single drawmode is set).
+
+Changed borderWidth to be a tag-definable value.
+
+Removed used of borderWidth in border resize cmd calculations.
+
+Modified various C and Tcl procs to support spanning cells.
+
+Changed ckfree(value) to Tcl_Free(value) in TableFetchSelection.
+
+Streamlined use of NO_XSETCLIP, improved boundary checking for
+determining whether the cell needs clipping at all.
+
+Fixed bug in drawing with NO_XSETCLIP to copy the area from the source
+window to the clip window, draw on it, then copy it back.  Before the
+clip window was drawn on clean, losing what might be important stuff in
+the source (like an image).
+
+Added row/col spanning.  This involved a lot of code changes, mostly
+in tkTableCell.c, mostly #ifndef'ed with NO_SPANS.  See docs for behavior.
+Added 'spans' and 'hidden' command.
+
+Fixed bug in TableAtBorder that was messing up certain border cases.
+
+Added delta error of 1 pixel to the B1-Motion routine, so that the mouse
+must move more than a pixel for the tkTableMotion routine to kick in.
+
+Fixed tkTableBeginToggle to handle Control-B1 properly. (rickm@vsl.com)
+
+Fixed seg fault in Table_BorderCmd when called with too few args
+(reported by rbansal@ltcm.com).
+
+Added TableGeometryRequest to TableModifyRC to update a table's
+geometry according to the new row/col size.
+
+Fixed EmbWinDelete to clean up properly (it wouldn't clean up if there
+wasn't a window associated with the tag).
+
+Removed unused type arg from TableModifyRCaux.
+
+Fixed EmbWinRemove to actually remove all info about the window from
+the table (as advertised).
+	*** BEHAVIORAL CHANGE ***
+
+Fixed "window delete ..." to actually delete the window entry.
+
+Fixed flashing so that it will flash if any valid data source is
+being used (before only the Tcl array source caused flashes).
+
+Removed deprecated 'flush' command.  [.t flush ...] is equivalent
+to [.t clear cache ...].
+
+Improved TableUndisplay to really work within the proper seen
+constraints. (rickm@vsl.com)
+
+Removed dependency on source for Windows (only for the XSync call).
+Should now be able to compile against a binary installed version of wish.
+
+Use of EXTERN and EXPORT reworked to follow 8.0.3 guidelines.  EXPORT
+was dropped, meaning that compiling for older versions of the Borland
+compiler is not possible.
+
+Changed use of "$*.h" in Makefile.in to "$@" - some makes seemed to
+choke on the proper interpretation of $* (notably HP-UX).
+
+Added "-fg SELECT_FG" to the default sel tag definition.
+
+Swapped proto define of Tcl_DStringAppendAll with actual header.
+
+Fixed #endif SPANS syntax error in Makefile.
+
+Changed #define CELL from (ROW|COL) to it's own significant bit (this
+is used by TableRefresh).
+
+Added -sparsearray option to allow the user to choose whether the
+table treats associated arrays as "sparse", deleting the empty
+elements (default), or whether every element set is kept.
+
+Fixed demos/spreadsheet.tcl to start column labeling with "A".
+
+Changed Tcl_StaticPackage call in tkAppInit.c to include
+SafeInit function.
+
+Added "empty" bindings to tkTable.tcl to prevent the magic Alt-"menu"
+bindings from inserting chars into the table as well.
+
+**** v2.3 23 July 1998 ****
+
+Moved the 'set' command into tkTableCell.c and extended it to
+understand full row/col setting with Tcl lists.
+
+Created tkTableInitScript.h to mirror the spirit of tclInitScript.h.
+The user can now define a tkTableInit to be eval'ed at load time
+that finds the appropriate tkTable.tcl file.  Also added env support
+for these locations.
+
+Changed version.in to version.h, a file that is both readable in C
+(for the Mac build) and by make (for Unix/Windows).
+
+Changed TableDisplay #ifdef's to be more specific (NO_XSETCLIP).
+Expecting XSetClipRectangles to be available in Tk8.0.3 for Win,
+and maybe also in the future for Mac.
+
+Attempted row/col spanning with limited success.  Half functional
+code left in for reference, delimited by #ifdef SPANS/#endif.
+
+Changed TableCellCoords to no longer do bounds checking on row/col.
+
+Changed several more instances of TableCellCoords/TableInvalidate
+to TableRefresh.
+
+Fixed bug in table insertion/deletion concerning the calculation of
+the minkey (minimum valid row/col to insert/delete) when titles were
+allowed to be moved.
+
+Mac support courtesy Chuck Houpt (choupt@als.com).
 
 **** v2.2 10 July 1998 ****
 

@@ -14,6 +14,8 @@
  */
 
 #include "tkTable.h"
+
+/* This is for Tcl_DStringAppendAll */
 #if defined(__STDC__) || defined(HAS_STDARG)
 #include <stdarg.h>
 #else
@@ -390,7 +392,7 @@ static int	TextToPostscript _ANSI_ARGS_((Tcl_Interp *interp,
  * the full text of each line
  */
 void
-Tcl_DStringAppendAll _ANSI_ARGS_(TCL_VARARGS(Tcl_DString *, arg1))
+Tcl_DStringAppendAll TCL_VARARGS_DEF(Tcl_DString *, arg1)
 {
     va_list argList;
     Tcl_DString *dstringPtr;
@@ -406,7 +408,7 @@ Tcl_DStringAppendAll _ANSI_ARGS_(TCL_VARARGS(Tcl_DString *, arg1))
 /*
  *--------------------------------------------------------------
  *
- * TkTablePostscriptCmd --
+ * Table_PostscriptCmd --
  *
  *	This procedure is invoked to process the "postscript" options
  *	of the widget command for table widgets. See the user
@@ -423,8 +425,8 @@ Tcl_DStringAppendAll _ANSI_ARGS_(TCL_VARARGS(Tcl_DString *, arg1))
 
     /* ARGSUSED */
 int
-TablePostscriptCmd(tablePtr, interp, argc, argv)
-     Table *tablePtr;		/* Information about table widget. */
+Table_PostscriptCmd(clientData, interp, argc, argv)
+     ClientData clientData;	/* Information about table widget. */
      Tcl_Interp *interp;	/* Current interpreter. */
      int argc;			/* Number of arguments. */
      char **argv;		/* Argument strings.  Caller has
@@ -432,6 +434,7 @@ TablePostscriptCmd(tablePtr, interp, argc, argv)
 				 * to know that argv[1] is
 				 * "postscript". */
 {
+  register Table *tablePtr = (Table *) clientData;
   TkPostscriptInfo psInfo, *oldInfoPtr;
   int result;
   int row, col, firstRow, firstCol, lastRow, lastCol;
@@ -442,13 +445,12 @@ TablePostscriptCmd(tablePtr, interp, argc, argv)
   char string[STRING_LENGTH+1], *p;
   time_t now;
   size_t length;
-  int deltaX = 0, deltaY = 0;		/* Offset of lower-left corner of
-					 * area to be marked up, measured
-					 * in table units from the positioning
-					 * point on the page (reflects
-					 * anchor position).  Initial values
-					 * needed only to stop compiler
-					 * warnings. */
+  int deltaX = 0, deltaY = 0;	/* Offset of lower-left corner of area to
+				 * be marked up, measured in table units
+				 * from the positioning point on the page
+				 * (reflects anchor position).  Initial
+				 * values needed only to stop compiler
+				 * warnings. */
   Tcl_HashSearch search;
   Tcl_HashEntry *hPtr;
   CONST char * CONST *chunk;
@@ -457,6 +459,12 @@ TablePostscriptCmd(tablePtr, interp, argc, argv)
   int rowHeight, total, *colWidths, iW, iH;
   TableTag *tagPtr, *colPtr, *rowPtr, *titlePtr;
   Tcl_DString postscript, buffer;
+
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
+		     " postscript ?option value ...?\"", (char *)NULL);
+    return TCL_ERROR;
+  }
 
   /*
    *----------------------------------------------------------------
@@ -857,17 +865,17 @@ TablePostscriptCmd(tablePtr, interp, argc, argv)
     }
     sprintf(string, "/row%d %d def\n", row, tablePtr->psInfoPtr->y2 - total);
     Tcl_DStringAppend(&postscript, string, -1);
-    total += rowHeight + 2*tablePtr->borderWidth;
+    total += rowHeight + 2*tablePtr->defaultTag.bd;
   }
   Tcl_DStringAppend(&buffer, "grestore\n", -1);
   sprintf(string, "/row%d %d def\n", row, tablePtr->psInfoPtr->y2 - total);
   Tcl_DStringAppend(&postscript, string, -1);
 
-  total = tablePtr->borderWidth;
+  total = tablePtr->defaultTag.bd;
   for (col = firstCol; col <= lastCol; col++) {
     sprintf(string, "/col%d %d def\n", col, total);
     Tcl_DStringAppend(&postscript, string, -1);
-    total += colWidths[col-firstCol] + 2*tablePtr->borderWidth;
+    total += colWidths[col-firstCol] + 2*tablePtr->defaultTag.bd;
   }
   sprintf(string, "/col%d %d def\n", col, total);
   Tcl_DStringAppend(&postscript, string, -1);

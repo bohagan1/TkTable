@@ -1,5 +1,5 @@
 /* 
- * tkTable.c --
+ * cmd.c --
  *
  *	This module implements command structure lookups.
  *
@@ -10,8 +10,9 @@
  *
  */
 
-#include "cmd.h"
+#include "mm.h"
 
+#ifndef TCL_ONLY
 /*
  * Functions for handling custom options that use Cmd_Structs
  */
@@ -66,6 +67,7 @@ Cmd_BitGet(ClientData clientData, Tk_Window unused,
 {
   return (*((int*)(widgRec+offset)) & (int) clientData)?"1":"0";
 }
+#endif /* TCL_ONLY */
 
 /*
  * simple Cmd_Struct lookup functions
@@ -83,9 +85,9 @@ Cmd_GetName(const Cmd_Struct *cmds, int val)
 int
 Cmd_GetValue(const Cmd_Struct *cmds, const char *arg)
 {
-  int len=strlen(arg);
+  unsigned int len = strlen(arg);
   for(;cmds->name && cmds->name[0];cmds++) {
-    if (!strncmp(cmds->name,arg,len)) return cmds->value;
+    if (!strncmp(cmds->name, arg, len)) return cmds->value;
   }
   return 0;
 }
@@ -109,14 +111,15 @@ Cmd_GetError(Tcl_Interp *interp, const Cmd_Struct *cmds, const char *arg)
  */
 
 int
-Cmd_Parse (Tcl_Interp *interp, Cmd_Struct *cmds, const char *arg)
+Cmd_Parse(Tcl_Interp *interp, Cmd_Struct *cmds, const char *arg)
 {
-  int len = (int)strlen(arg);
+  unsigned int len = strlen(arg);
   Cmd_Struct *matched = (Cmd_Struct *) 0;
   int err = 0;
   Cmd_Struct *next = cmds;
+
   while (*(next->name)) {
-    if (strncmp (next->name, arg, len) == 0) {
+    if (strncmp(next->name, arg, len) == 0) {
       /* have we already matched this one if so make up an error message */
       if (matched) {
 	if (!err) {
@@ -129,8 +132,9 @@ Cmd_Parse (Tcl_Interp *interp, Cmd_Struct *cmds, const char *arg)
       } else {
 	matched = next;
 	/* return on an exact match */
-	if (len == (int)strlen(next->name))
+	if (len == (int)strlen(next->name)) {
 	  return matched->value;
+	}
       }
     }
     next++;

@@ -33,7 +33,7 @@ proc fill {array {r 10} {c 10}} {
 	    } elseif {$i} {
 		set ary($i,$j) "$i"
 	    } elseif {$j} {
-		set ary($i,$j) [format %c [expr 65+$j]]
+		set ary($i,$j) [format %c [expr 64+$j]]
 	    }
 	}
     }
@@ -110,6 +110,13 @@ grid rowconfig . 2 -weight 1
 grid config $t -sticky news
 
 bind .active <Return> [list tkTableMoveCell $t 1 0]
+
+menu .menu
+menu .menu.file
+. config -menu .menu
+.menu add cascade -label "File" -underline 0 -menu .menu.file
+.menu.file add command -label "Fill Array" -command { fill $table(page) }
+.menu.file add command -label "Quit" -command exit
 
 puts [list Table is $table(table) with array [$table(table) cget -var]]
 

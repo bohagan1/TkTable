@@ -2,9 +2,6 @@
  * Based on Tk3 table widget by Roland King (rols@lehman.com)
  * tkTable2.0+ represents a 96% rewrite of this code.
  *
- * README updated for v0.55+ by ellson@lucent.com (John Ellson)
- * README updated for v1.0+  by jeff.hobbs@acm.org (Jeffrey Hobbs)
- *
  * see CHANGES file for details
  *
  * current maintainer: jeff.hobbs@acm.org
@@ -33,14 +30,13 @@ The basic features of the widget are:
  * multiple drawing modes to get optimal performance for larger tables
  * optional 'flashes' when things update
  * cell validation support
- * Windows support
+ * Works everywhere Tk does (including Windows and Mac!)
  * Unicode support (Tk8.1+)
 
 FINDING THE WIDGET
 
 0. The newest version is most likely found at:
-	http://www.cs.uoregon.edu/research/tcl/capp/
-	ftp://ftp.cs.uoregon.edu/pub/tcl/tkTable/
+	http://oprs.mchh.siemens.de/tcl/capp/
 
 BUILDING AND INSTALLING THE WIDGET
 
@@ -53,6 +49,9 @@ BUILDING AND INSTALLING THE WIDGET
    ON WINDOWS:
 	use something like WinZip to unpack the archive.
 
+   ON MACINTOSH:
+	use StuffIt Expander to unstuff the archive.
+    
    This will create a subdirectory tkTable<version> with all the files in it.
 
 2. Configure
@@ -60,10 +59,12 @@ BUILDING AND INSTALLING THE WIDGET
    ON UNIX:
         cd tkTable<version>
 	cd src/
-	./configure --prefix=/usr/local --exec-prefix=/usr/local
+	./configure
 
    tkTable uses information left in tkConfig.sh when you built tk.  This
-   file will be found in $exec_prefix/lib/.
+   file will be found in $exec_prefix/lib/.  You might set the --prefix and
+   --exec-prefix options of configure if you don't want the default
+   (/usr/local).
 
    ON WINDOWS:
 
@@ -71,16 +72,27 @@ BUILDING AND INSTALLING THE WIDGET
    wish from a path with a space in it, but the DLL builds just fine.
    A DLL should be available where you found this archive.
 
+   ON MACINTOSH:
+   
+   Hack the CodeWarrior project mac_tkTable.mcp until it works and compile.
+   The access path to the Tcl/Tk source tree will probably need adjusting.
+   A DLL should be available where you found this archive.
+
 3. Make and Install
 
    ON UNIX:
 	make
+	make test (OPTIONAL)
 	make install
 
    ON WINDOWS:
 	nmake -f makefile.vc
 	nmake -f makefile.vc test (OPTIONAL)
 	nmake -f makefile.vc install
+
+   ON MACINTOSH:
+	Make the tkTable Fat target
+	Place tkTable.shlb in the Tool Command Language folder
 
    tkTable is built to comply to the latest tcl package conventions.
    There is also a specific "make static" for those who need it.

@@ -61,36 +61,32 @@ static Tk_ConfigSpec tagConfig[] = {
   {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor", "center",
    Tk_Offset(TableTag, anchor), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_BORDER, "-background", "background", "Background", NULL,
-   Tk_Offset(TableTag, bg),
-   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
-  {TK_CONFIG_SYNONYM, "-bg", "background", (char *) NULL,
-   (char *) NULL, 0, 0 },
+   Tk_Offset(TableTag, bg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+  {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 0},
+  {TK_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 0, 0},
+  {TK_CONFIG_PIXELS, "-borderwidth", "borderWidth", "BorderWidth", "-1",
+   Tk_Offset(TableTag, bd), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_BORDER, "-foreground", "foreground", "Foreground", NULL,
-   Tk_Offset(TableTag, fg),
-   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
-  {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *) NULL,
-   (char *) NULL, 0, 0 },
+   Tk_Offset(TableTag, fg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+  {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_FONT, "-font", "font", "Font", NULL,
-   Tk_Offset(TableTag, tkfont),
-   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+   Tk_Offset(TableTag, tkfont), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_STRING, "-image", "image", "Image", NULL,
    Tk_Offset(TableTag, imageStr),
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_JUSTIFY, "-justify", "justify", "Justify", "left",
    Tk_Offset(TableTag, justify), TK_CONFIG_DONT_SET_DEFAULT },
-  {TK_CONFIG_INT, "-multiline", "multiline", "Multiline", "1",
+  {TK_CONFIG_INT, "-multiline", "multiline", "Multiline", "-1",
    Tk_Offset(TableTag, multiline), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_RELIEF, "-relief", "relief", "Relief", "flat",
-   Tk_Offset(TableTag, relief),
-   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
-  {TK_CONFIG_INT, "-showtext", "showText", "ShowText", "0",
+   Tk_Offset(TableTag, relief), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+  {TK_CONFIG_INT, "-showtext", "showText", "ShowText", "-1",
    Tk_Offset(TableTag, showtext), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_CUSTOM, "-state", "state", "State", "unknown",
    Tk_Offset(TableTag, state), TK_CONFIG_DONT_SET_DEFAULT, &tagStateOpt },
-  {TK_CONFIG_INT, "-wrap", "wrap", "Wrap", "0",
+  {TK_CONFIG_INT, "-wrap", "wrap", "Wrap", "-1",
    Tk_Offset(TableTag, wrap), TK_CONFIG_DONT_SET_DEFAULT },
-  {TK_CONFIG_END, (char *) NULL, (char *) NULL, (char *) NULL,
-   (char *) NULL, 0, 0 }
+  {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, 0, 0}
 };
 
 /* 
@@ -104,7 +100,8 @@ static Tk_ConfigSpec tagConfig[] = {
  *
  * Side effects:
  *	Invalidates the whole table.
- *	FIX - should only invalidate affected cells.
+ *	This should only invalidate affected cells, but that info
+ *	is not managed...
  *
  *----------------------------------------------------------------------
  */
@@ -134,6 +131,7 @@ TableNewTag(void)
 {
   TableTag *tagPtr = (TableTag *) ckalloc(sizeof(TableTag));
   tagPtr->anchor	= (Tk_Anchor)-1;
+  tagPtr->bd		= -1;
   tagPtr->bg		= NULL;
   tagPtr->fg		= NULL;
   tagPtr->tkfont	= NULL;
@@ -168,6 +166,7 @@ void
 TableMergeTag(TableTag *baseTag, TableTag *addTag)
 {
   if (addTag->anchor != (Tk_Anchor)-1)	baseTag->anchor = addTag->anchor;
+  if (addTag->bd >= 0)			baseTag->bd = addTag->bd;
   if (addTag->bg != NULL)		baseTag->bg = addTag->bg;
   if (addTag->fg != NULL)		baseTag->fg = addTag->fg;
   if (addTag->tkfont != NULL)		baseTag->tkfont = addTag->tkfont;
@@ -252,9 +251,10 @@ void
 TableInitTags(Table *tablePtr)
 {
   static char *activeArgs[]	= {"-bg", ACTIVE_BG, "-relief", "flat" };
-  static char *selArgs[]	= {"-bg", SELECT_BG, "-relief", "sunken" };
-  static char *titleArgs[]	= {"-bg", DISABLED,  "-relief", "flat",
-				   "-fg", "white", "-state", "disabled" };
+  static char *selArgs[]	= {"-bg", SELECT_BG, "-fg", SELECT_FG,
+				   "-relief", "sunken" };
+  static char *titleArgs[]	= {"-bg", DISABLED, "-fg", "white",
+				   "-relief", "flat", "-state", "disabled" };
   static char *flashArgs[]	= {"-bg", "red" };
   CreateTagEntry(tablePtr, "active", ARSIZE(activeArgs), activeArgs);
   CreateTagEntry(tablePtr, "sel", ARSIZE(selArgs), selArgs);
@@ -331,7 +331,7 @@ TableCleanupTag(Table *tablePtr, TableTag *tagPtr)
 /*
  *--------------------------------------------------------------
  *
- * TableTagCmd --
+ * Table_TagCmd --
  *	This procedure is invoked to process the tag method
  *	that corresponds to a widget managed by this module.
  *	See the user documentation for details on what it does.
@@ -345,9 +345,10 @@ TableCleanupTag(Table *tablePtr, TableTag *tagPtr)
  *--------------------------------------------------------------
  */
 int
-TableTagCmd(Table * tablePtr, register Tcl_Interp *interp,
-	    int argc, char *argv[])
+Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
+	    int argc, char **argv)
 {
+  register Table *tablePtr = (Table *)clientData;
   int result = TCL_OK, retval, i, newEntry, value;
   int row, col;
   TableTag *tagPtr;
@@ -356,6 +357,12 @@ TableTagCmd(Table * tablePtr, register Tcl_Interp *interp,
   Tcl_HashSearch search;
   Tk_Image image;
   char buf[INDEX_BUFSIZE], *keybuf, *yes = "1", *no = "0";
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
+		     " tag option ?arg arg ...?\"", (char *) NULL);
+    return TCL_ERROR;
+  }
 
   /* parse the next argument */
   retval = Cmd_Parse(interp, tag_cmds, argv[2]);
@@ -455,7 +462,7 @@ TableTagCmd(Table * tablePtr, register Tcl_Interp *interp,
 					   &newEntry);
 
 	/* and set it to point to the Tag structure */
-	Tcl_SetHashValue (newEntryPtr, (ClientData) tagPtr);
+	Tcl_SetHashValue(newEntryPtr, (ClientData) tagPtr);
       }
       /* now invalidate the area */
       TableRefresh(tablePtr, row-tablePtr->rowOffset,

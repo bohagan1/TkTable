@@ -1,6 +1,6 @@
 ## TODO LIST
 ##
-## updated 8 July 1998, jeff.hobbs@acm.org
+## updated 3 December 1998, jeff.hobbs@acm.org
 ##
 
 These are recommendations, not all of the same priority, and not
@@ -9,6 +9,8 @@ feel is important, email me and say so.  Very democratic.
 
 * Tcl8 object model will be supported when it is supported in Tk
   (or somewhere else that has good examples for widgets)
+
+* anchor title areas in different parts of the screen
 
 * -rowstretchmode fill ignores initial # of rows, or config requests for more.
 * interpret 0 rows/cols to be FILL
@@ -25,8 +27,8 @@ feel is important, email me and say so.  Very democratic.
   priority)
 
 * add internal sort procedures
-pathName  sort	-row	{the list of raw we want to sort | all}
-		-col	{the list of col we use for sorting}
+pathName  sort	-row	{the list of rows we want to sort | all}
+		-col	{the list of cols we use for sorting}
 		-master row,col
 		-command _command_to_use_
 		-type	{for each column specifies the type of sort:
@@ -34,20 +36,13 @@ pathName  sort	-row	{the list of raw we want to sort | all}
 		-order	{for each column specify the order of sort:
 			increasing | decreasing | none }
 
-* row/column swap
+* row/column swap (maybe only in terms of visual remapping)
 
-* use init script in Tcl style, with no more embedding of tkTable.tcl
-  in binary
-
-NOT BEING CONSIDERED:
-
-row/col spanning cells, an oft-requested feature, will not be implemented.
-There are several issues that would need to be overcome that resulted in
-my decision to avoid this feature.  Primarily, speed would be significantly
-affected.  The reconiciliation of how to characterize "hidden" cells also
-presents numerous issues.
-
-**** BUGS *****
+=	BBB  U  U  GGS  SSS
+==	B  B U  U G    S  
+==-	B B  U  U G GG  SS
+==	B  B U  U G  G    S
+=	BBB   UU   GGG SSS
 
 MAJOR:
 
@@ -67,3 +62,6 @@ Windows: With "-colstretchmode last", the scrollbar behaves oddly in
 	that even though the scrollbar receives the "set 0.6xxx 1",
 	the scrollbar immediately jumps back to what the mouse says,
 	although this isn't a problem in X...
+
+Windows: when moving windows in "Show Window While Dragging" mode,
+	the column titles don't refresh properly.

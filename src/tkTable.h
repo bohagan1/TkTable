@@ -17,73 +17,92 @@
 #include <string.h>
 #include <stdlib.h>
 #include <tk.h>
-#include <X11/Xatom.h>
+#ifdef MAC_TCL
+# include <Xatom.h>
+#else
+# include <X11/Xatom.h>
+#endif /* MAC_TCL */
 
-#include "cmd.h"
+/* This EXTERN declaration is needed for Tcl < 8.0.3 */
+#ifndef EXTERN
+# ifdef __cplusplus
+#  define EXTERN extern "C"
+# else
+#  define EXTERN extern
+# endif
+#endif
+
+#ifdef TCL_STORAGE_CLASS
+# undef TCL_STORAGE_CLASS
+#endif
+#ifdef BUILD_tkTable
+# define TCL_STORAGE_CLASS DLLEXPORT
+#else
+# define TCL_STORAGE_CLASS DLLIMPORT
+#endif
+
+#include "mm.h"
 
 #ifdef WIN32
 #   define WIN32_LEAN_AND_MEAN
 #   include <windows.h>
 #   undef WIN32_LEAN_AND_MEAN
-
-/*
- * VC++ has an alternate entry point called DllMain, so we need to rename
- * our entry point.
- */
-
+/* VC++ has an entry point called DllMain instead of DllEntryPoint */
 #   if defined(_MSC_VER)
-#	define EXPORT(a,b) __declspec(dllexport) a b
 #	define DllEntryPoint DllMain
-#   else
-#	if defined(__BORLANDC__)
-#	    define EXPORT(a,b) a _export b
-#	else
-#	    define EXPORT(a,b) a b
-#	endif
 #   endif
+#endif
 
-/* Necessary to get XSync call defined */
-#   include <tkInt.h>
-
-#else	/* ! WIN32 */
-#   define EXPORT(a,b) a b
-#endif	/* WIN32 */
+#if defined(WIN32) || defined(MAC_TCL)
+/* XSync call defined in the internals for some reason */
+#   ifndef XSync
+#	define XSync(display, bool) {display->request++;}
+#   endif
+#endif /* defn of XSync */
 
 #ifdef INLINE
-#undef INLINE
+#   undef INLINE
 #endif
 #ifdef __GNUC__
-#    define INLINE inline
+#   define INLINE inline
+#elif defined(_MSC_VER)
+#   define INLINE __inline
 #else
-#    if defined(_MSC_VER)
-#	define INLINE __inline
-#    else
-#	define INLINE
-#    endif
-#endif
+#   define INLINE
+#endif /* INLINE defn */
 
 #ifndef NORMAL_BG
-#	ifdef WIN32
-#		define NORMAL_BG	"SystemButtonFace"
-#		define ACTIVE_BG	NORMAL_BG
-#		define SELECT_BG	"SystemHighlight"
-#		define DISABLED		"SystemDisabledText"
-#		define HIGHLIGHT	"SystemWindowFrame"
-#		define DEF_TABLE_FONT	"{MS Sans Serif} 8"
-#	else
-#		define NORMAL_BG	"#d9d9d9"
-#		define ACTIVE_BG	"#fcfcfc"
-#		define SELECT_BG	"#c3c3c3"
-#		define DISABLED		"#a3a3a3"
-#		define HIGHLIGHT	"Black"
-#		define DEF_TABLE_FONT	"Helvetica -12"
-#	endif
-#endif
+#   ifdef WIN32
+#	define NORMAL_BG	"SystemButtonFace"
+#	define ACTIVE_BG	NORMAL_BG
+#	define SELECT_BG	"SystemHighlight"
+#	define SELECT_FG	"SystemHighlightText"
+#	define DISABLED		"SystemDisabledText"
+#	define HIGHLIGHT	"SystemWindowFrame"
+#	define DEF_TABLE_FONT	"{MS Sans Serif} 8"
+#   elif defined(MAC_TCL)
+#	define NORMAL_BG	"systemWindowBody"
+#	define ACTIVE_BG	"#ececec"
+#	define SELECT_BG	"systemHighlight"
+#	define SELECT_FG	"systemHighlightText"
+#	define DISABLED		"#a3a3a3"
+#	define HIGHLIGHT	"Black"
+#	define DEF_TABLE_FONT	"Helvetica 12"
+#   else
+#	define NORMAL_BG	"#d9d9d9"
+#	define ACTIVE_BG	"#fcfcfc"
+#	define SELECT_BG	"#c3c3c3"
+#	define SELECT_FG	"Black"
+#	define DISABLED		"#a3a3a3"
+#	define HIGHLIGHT	"Black"
+#	define DEF_TABLE_FONT	"Helvetica -12"
+#   endif
+#endif /* NORMAL_BG */
 
 #define MAX(A,B)	(((A)>(B))?(A):(B))
 #define MIN(A,B)	(((A)>(B))?(B):(A))
 #define ARSIZE(A)	(sizeof(A)/sizeof(*A))
-#define INDEX_BUFSIZE	64		/* max size of buffer for indices */
+#define INDEX_BUFSIZE	32		/* max size of buffer for indices */
 #define TEST_KEY	"#TEST KEY#"	/* index for testing array existence */
 
 /*
@@ -107,6 +126,7 @@
  * ACTIVE_DISABLED:	Non-zero means the active cell is -state disabled
  * OVER_BORDER:		Non-zero means we are over a table cell border
  * REDRAW_ON_MAP:	Forces a redraw on the unmap
+ * NO_SPANS:		prevent cell spans from being used
  *
  * FIX - consider adding UPDATE_SCROLLBAR a la entry
  */
@@ -123,15 +143,36 @@
 #define ACTIVE_DISABLED		(1L<<10)
 #define OVER_BORDER		(1L<<11)
 #define REDRAW_ON_MAP		(1L<<12)
+#ifndef NO_SPANS
+#define AVOID_SPANS		(1L<<13)
+#endif
 
 /* Flags for TableInvalidate && TableRedraw */
 #define ROW		(1L<<0)
 #define COL		(1L<<1)
-#define CELL		(ROW|COL)
+#define CELL		(1L<<2)
+
+#define CELL_BAD	(1<<0)
+#define CELL_OK		(1<<1)
+#define CELL_SPAN	(1<<2)
+#define CELL_HIDDEN	(1<<3)
+#define CELL_VIEWABLE	(CELL_OK|CELL_SPAN)
+
 #define INV_FILL	(1L<<3)	/* use for Redraw when the affected
 				 * row/col will affect neighbors */
 #define INV_FORCE	(1L<<4)
 #define INV_HIGHLIGHT	(1L<<5)
+
+/* These alter how the selection set/clear commands behave */
+#define SEL_ROW		(1<<0)
+#define SEL_COL		(1<<1)
+#define SEL_BOTH	(1<<2)
+#define SEL_CELL	(1<<3)
+#define SEL_NONE	(1<<4)
+
+#define CLEAR_TAGS	(1<<0)
+#define CLEAR_SIZES	(1<<1)
+#define CLEAR_CACHE	(1<<2)
 
 /*
  * Definitions for tablePtr->dataSource, by bit
@@ -151,6 +192,7 @@ typedef enum {
 typedef struct {
   Tk_3DBorder	bg;		/* background color */
   Tk_3DBorder	fg;		/* foreground color */
+  int		bd;		/* cell border width */
   int		relief;		/* relief type */
   Tk_Font	tkfont;		/* Information about text font, or NULL. */
   Tk_Anchor	anchor;		/* default anchor point */
@@ -190,7 +232,6 @@ typedef struct {
 				 * rows when getting selection */
   char *colSep;			/* separator string to place between
 				 * cols when getting selection */
-  int borderWidth;		/* internal borderwidth */
   TableTag defaultTag;		/* the default tag colors/fonts etc */
   char *yScrollCmd;		/* the y-scroll command */
   char *xScrollCmd;		/* the x-scroll command */
@@ -233,6 +274,8 @@ typedef struct {
   int flashTime;		/* The number of ms to flash a cell for */
   int resize;			/* -resizeborders option for interactive
 				 * resizing of borders */
+  int sparse;			/* Whether to use "sparse" arrays by
+				 * deleting empty array elements (default) */
   char *rowTagCmd, *colTagCmd;	/* script to eval for getting row/tag cmd */
   int highlightWidth;		/* Width in pixels of highlight to draw
 				 * around widget when it has the focus.
@@ -265,8 +308,7 @@ typedef struct {
 				 * DATA_{NONE,CACHE,ARRAY,COMMAND} */
   int maxWidth, maxHeight;	/* max width|height required in pixels */
   int charWidth, charHeight;	/* size of a character in the default font */
-  int *colPixels;		/* Array of the pixel width of each column */
-  int *rowPixels;		/* Array of the pixel height of each row */
+  int *colPixels, *rowPixels;	/* Array of the pixel widths/heights */
   int *colStarts, *rowStarts;	/* Array of start pixels for rows|columns */
   int scanMarkX, scanMarkY;	/* Used by "scan" and "border" to mark */
   int scanMarkRow, scanMarkCol;	/* necessary information for dragto */
@@ -276,6 +318,10 @@ typedef struct {
      by the appropriate *Offset factor */
   Tcl_HashTable *colWidths;	/* hash table of non default column widths */
   Tcl_HashTable *rowHeights;	/* hash table of non default row heights */
+#ifndef NO_SPANS
+  Tcl_HashTable *spanTbl;	/* table for spans */
+  Tcl_HashTable *spanAffTbl;	/* table for cells affected by spans */
+#endif
   Tcl_HashTable *tagTable;	/* table for style tags */
   Tcl_HashTable *winTable;	/* table for embedded windows */
   Tcl_HashTable *rowStyles;	/* table for row styles */
@@ -289,9 +335,20 @@ typedef struct {
 				   for editing the active cell */
   TableTag *activeTagPtr;	/* cache of active composite tag */
   int activeX, activeY;		/* cache offset of active layout in cell */
+
+#ifdef PROCS
+  Tcl_HashTable *inProc;	/* cells where proc is being evaled */
+  int showProcs;		/* whether to show embedded proc (1) or
+				 * its calculated value (0) */
+  int hasProcs;			/* whether table has embedded procs or not */
+#endif
+
   /* The invalid rectangle if there is an update pending */
   int invalidX, invalidY, invalidWidth, invalidHeight;
   int seen[4];			/* see TableUndisplay */
+  /* Pointer to information used for generating Postscript for the canvas.
+   * NULL means no Postscript is currently being generated. */
+  struct TkPostscriptInfo *psInfoPtr;
 } Table;
 
 /*
@@ -314,6 +371,7 @@ typedef struct TableEmbWindow {
   char *create;			/* Script to create window on-demand.
 				 * NULL means no such script.
 				 * Malloc-ed. */
+  int bd;			/* border width for cell around window */
   int relief;			/* relief type */
   int sticky;			/* How to align window in space */
   int padX, padY;		/* Padding to leave around each side
@@ -323,19 +381,86 @@ typedef struct TableEmbWindow {
 				 * recently. */
 } TableEmbWindow;
 
-extern void	EmbWinDisplay _ANSI_ARGS_((Table *tablePtr, Drawable window,
-					   TableEmbWindow *ewPtr,
-					   TableTag *tagPtr, int x, int y,
-					   int width, int height));
-extern void	EmbWinUnmap _ANSI_ARGS_((register Table *tablePtr,
-					 int rlo, int rhi,
-					 int clo, int chi));
-extern void	EmbWinDelete _ANSI_ARGS_((register Table *tablePtr,
-					   TableEmbWindow *ewPtr));
-extern int	TableWindowCmd _ANSI_ARGS_((Table *tablePtr,
-					    Tcl_Interp *interp,
-					    int argc, char *argv[]));
+extern Tk_ConfigSpec tableSpecs[];
 
+extern void	EmbWinDisplay _ANSI_ARGS_((Table *tablePtr, Drawable window,
+			TableEmbWindow *ewPtr, TableTag *tagPtr,
+			int x, int y, int width, int height));
+extern void	EmbWinUnmap _ANSI_ARGS_((register Table *tablePtr,
+			int rlo, int rhi, int clo, int chi));
+extern void	EmbWinDelete _ANSI_ARGS_((register Table *tablePtr,
+					  TableEmbWindow *ewPtr));
+extern int	Table_WindowCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	TableValidateChange _ANSI_ARGS_((Table *tablePtr, int r,
+			int c, char *old, char *new, int index));
+extern void	TableLostSelection _ANSI_ARGS_((ClientData clientData));
+extern void	TableSetActiveIndex _ANSI_ARGS_((register Table *tablePtr));
+
+/*
+ * HEADERS IN TKTABLECMDS
+ */
+
+extern int	Table_ActivateCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_AdjustCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_BboxCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_BorderCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_CgetCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_ConfigureCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_ClearCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_CurselectionCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_CurvalueCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_EditCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_GetCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_IcursorCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_IndexCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_RereadCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_ScanCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_SeeCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_SelAnchorCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_SelClearCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_SelIncludesCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_SelSetCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_ValidateCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_VersionCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_ViewCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+extern int	Table_Cmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char *argv[]));
+
+/*
+ * HEADERS IN tkTableEdit
+ */
+
+extern void	TableDeleteChars _ANSI_ARGS_((register Table *tablePtr,
+					      int index, int count));
+extern void	TableInsertChars _ANSI_ARGS_((register Table *tablePtr,
+					      int index, char *string));
+extern int	TableModifyRC _ANSI_ARGS_((register Table *tablePtr,
+			Tcl_Interp *interp, int type, int which,
+			int argc, char **argv));
 /*
  * HEADERS IN TKTABLETAG
  */
@@ -349,14 +474,16 @@ extern TableTag *FindRowColTag _ANSI_ARGS_((Table *tablePtr,
 					     int cell, int type));
 extern void	TableCleanupTag _ANSI_ARGS_((Table *tablePtr,
 					     TableTag *tagPtr));
-extern int	TableTagCmd _ANSI_ARGS_((Table *tablePtr, Tcl_Interp *interp,
-					 int argc, char *argv[]));
+extern int	Table_TagCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char **argv));
 
 /*
  * HEADERS IN TKTABLECELL
  */
 
-extern void	TableCellCoords _ANSI_ARGS_((Table *tablePtr, int row,
+extern int	TableTrueCell _ANSI_ARGS_((Table *tablePtr, int row, int col,
+					   int *trow, int *tcol));
+extern int	TableCellCoords _ANSI_ARGS_((Table *tablePtr, int row,
 					     int col, int *rx, int *ry,
 					     int *rw, int *rh));
 extern int	TableCellVCoords _ANSI_ARGS_((Table *tablePtr, int row,
@@ -374,13 +501,35 @@ extern int	TableGetIcursor _ANSI_ARGS_((Table *tablePtr, char *arg,
 					     int *posn));
 extern int	TableGetIndex _ANSI_ARGS_((register Table *tablePtr, char *str,
 					   int *row_p, int *col_p));
+extern int	Table_SetCmd _ANSI_ARGS_((ClientData clientData,
+					 Tcl_Interp *interp,
+					 int argc, char **argv));
+#ifndef NO_SPANS
+extern int	Table_HiddenCmd _ANSI_ARGS_((ClientData clientData,
+					     Tcl_Interp *interp,
+					     int argc, char **argv));
+extern int	Table_SpanCmd _ANSI_ARGS_((ClientData clientData,
+					  Tcl_Interp *interp,
+					  int argc, char **argv));
+extern void	TableSpanSanCheck _ANSI_ARGS_((register Table *tablePtr));
+#endif
+
+/*
+ * HEADERS IN TKTABLEPS
+ */
+
+extern int	Table_PostscriptCmd _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, int argc, char **argv));
+extern void	Tcl_DStringAppendAll _ANSI_ARGS_(TCL_VARARGS(Tcl_DString *, arg1));
 
 /*
  * HEADERS IN TKTABLE
  */
 
-EXTERN EXPORT(int,Example_Init) _ANSI_ARGS_((Tcl_Interp *interp));
+EXTERN int Tktable_Init		_ANSI_ARGS_((Tcl_Interp *interp));
+EXTERN int Tktable_SafeInit	_ANSI_ARGS_((Tcl_Interp *interp));
 
+extern void	TableGetActiveBuf _ANSI_ARGS_((register Table *tablePtr));
 extern void	ExpandPercents _ANSI_ARGS_((Table *tablePtr, char *before,
 			int r, int c, char *old, char *new, int index,
 			Tcl_DString *dsPtr, int cmdType));
@@ -389,6 +538,15 @@ extern void	TableInvalidate _ANSI_ARGS_((Table *tablePtr, int x, int y,
 					     int force));
 extern void	TableRefresh _ANSI_ARGS_((register Table *tablePtr,
 					  int arg1, int arg2, int mode));
+ int	TableClear _ANSI_ARGS_((register Table *tablePtr, int mode,
+					char *first, char *last));
+void	TableGeometryRequest _ANSI_ARGS_((Table *tablePtr));
+void	TableAdjustActive _ANSI_ARGS_((register Table *tablePtr));
+void	TableAdjustParams _ANSI_ARGS_((register Table *tablePtr));
+void	TableConfigCursor _ANSI_ARGS_((register Table *tablePtr));
+ int	TableConfigure _ANSI_ARGS_((Tcl_Interp *interp,
+			Table *tablePtr, int argc, char **argv,
+			int flags, int forceUpdate));
 
 #define TableInvalidateAll(tablePtr, flags)	\
 	TableInvalidate((tablePtr), 0, 0, Tk_Width((tablePtr)->tkwin),\
@@ -413,6 +571,13 @@ extern void	TableRefresh _ANSI_ARGS_((register Table *tablePtr,
 		      Tk_Width((tablePtr)->tkwin)-(tablePtr)->highlightWidth-1,\
 		      Tk_Height((tablePtr)->tkwin)-(tablePtr)->highlightWidth-1,\
 		      (rowPtr), (colPtr))
+
+/*
+ * end of header
+ * reset TCL_STORAGE_CLASS to DLLIMPORT.
+ */
+#undef TCL_STORAGE_CLASS
+#define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKTABLE_H_ */
 

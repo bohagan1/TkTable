@@ -35,8 +35,8 @@ table $table(table) -rows $table(rows) -cols $table(cols) \
 	-variable $table(array) \
 	-width 6 -height 6 \
 	-titlerows 1 -titlecols 2 \
-	-yscrollcommand {.sy set} -xscrollcommand {.sx set} \
 	-roworigin -1 -colorigin -2 \
+	-yscrollcommand {.sy set} -xscrollcommand {.sx set} \
 	-rowtagcommand rowProc -coltagcommand colProc \
 	-colstretchmode last -rowstretchmode last \
 	-selectmode extended

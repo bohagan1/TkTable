@@ -21,12 +21,15 @@ METHOD CHANGES:
 
 MISC CHANGES:
 
-* No more explicit Kanji or incr Tcl support.  Kanji support will come
-with using the new core UTF support, and incr Tcl for Tcl8 will just
-be another loadable library.
+* No more explicit Kanji or incr Tcl support.  Kanji support comes
+  with using the new core Unicode support, and incr Tcl v3.0 for Tcl8
+  is just another loadable library.
 
 * -rowheight now supports line and pixel sizes, but positive
-numbers now mean size in lines instead of pixels.
+  numbers now mean size in lines instead of pixels.
 
 * <Return> binding now puts a \n into the cell instead of moving
-to the next cell
+  to the next cell
+
+* -batchmode no longer supported.  It's purpose was regularly
+  misconstrued.  User probably wants "-drawmode slow" instead.
