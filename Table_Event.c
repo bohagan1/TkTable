@@ -33,6 +33,8 @@ void  TableEventProc(ClientData clientdata, XEvent *eventPtr)
 			Tk_CancelIdleCall(TableDisplay, (ClientData)tablePtr);
 		if(tablePtr->cursorTimer!=NULL)
 			Tk_DeleteTimerHandler(tablePtr->cursorTimer);
+		if(tablePtr->flashTimer!=NULL)
+			Tk_DeleteTimerHandler(tablePtr->flashTimer);
 
 		/* delete the variable trace */
 		if(tablePtr->arrayVar!=NULL)
@@ -91,7 +93,6 @@ TableInvalidate(Table *tablePtr, int x, int y, int width, int height, int force)
 	/* is this rectangle even on the screen */
 	if((x>Tk_Width(tablePtr->tkwin))||(y>Tk_Height(tablePtr->tkwin)))
 		return;
-
 
 	/* 
 	** if no pending updates then 
@@ -192,6 +193,18 @@ void TableDestroy(ClientData clientdata)
 		free(tablePtr->flashCells);
 	}
 
+	if (tablePtr->gcCache!=NULL)
+	{
+		entryPtr=Tcl_FirstHashEntry(tablePtr->gcCache, &search);
+		while(entryPtr!=NULL)
+		{
+			Tk_FreeGC(tablePtr->display, (GC)Tcl_GetHashValue(entryPtr));
+			entryPtr=Tcl_NextHashEntry(&search);
+		}
+		Tcl_DeleteHashTable(tablePtr->gcCache);
+		free(tablePtr->gcCache);
+	}
+
 	/* Now free up all the tag information */
 	if(tablePtr->tagTable!=NULL)
 	{
@@ -240,8 +253,8 @@ TableVarProc(	ClientData clientdata, Tcl_Interp *interp,
 		*/
 		if((flags & TCL_TRACE_DESTROYED) && !( flags & TCL_INTERP_DESTROYED))
 		{
-			Tcl_SetVar2(interp, tablePtr->arrayVar,  "0,0", "", TCL_GLOBAL_ONLY);
-			Tcl_UnsetVar2(interp, tablePtr->arrayVar, "0,0", TCL_GLOBAL_ONLY);
+			Tcl_SetVar2(interp, tablePtr->arrayVar,  "XXXXX", "", TCL_GLOBAL_ONLY);
+			Tcl_UnsetVar2(interp, tablePtr->arrayVar, "XXXXX", TCL_GLOBAL_ONLY);
 			Tcl_ResetResult(interp);
 			
 			/* clear the selection buffer */

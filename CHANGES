@@ -1,0 +1,21 @@
+version 0.1 --> version 0.2
+---------------------------
+
+Changed the tag code to apply the effects of multiple tags
+to a cell. 
+
+Fixed a bug with the flash code which forgot to delete the 
+flash when a table was deleted
+
+Fixed a bug which meant that row, column and cell tag changes
+didn't update to the screen immediately when there was a row
+or column offset.
+
+Fixed the anchor code which was adding/subtracting a pixel
+from the string in certain circumstances
+
+Fixed a cursor movement bug which caused the same cell to
+appear twice when the cursor was moved
+
+Thanks particularly to Lou Salkind for pointing out some of the 
+above and suggesting fixes.

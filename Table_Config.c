@@ -16,7 +16,7 @@ Tk_ConfigSpec TableConfig[]=
 {
 	{ 	TK_CONFIG_BORDER, "-background", "background",
 		"Background", "BISQUE1",
-		Tk_Offset(Table, defaultTag.configBgBorder), 0, (Tk_CustomOption *)NULL
+		Tk_Offset(Table, defaultTag.bgBorder), 0, (Tk_CustomOption *)NULL
 	},
 	{ 	TK_CONFIG_SYNONYM, "-bg", "background",
 		(char *)NULL, (char *)NULL,
@@ -24,7 +24,7 @@ Tk_ConfigSpec TableConfig[]=
 	},
 	{ 	TK_CONFIG_COLOR, "-foreground", "foreground",
 		"Foreground", "BLACK",
-		Tk_Offset(Table, defaultTag.configForeground), 0, (Tk_CustomOption *)NULL
+		Tk_Offset(Table, defaultTag.foreground), 0, (Tk_CustomOption *)NULL
 	},
 	{ 	TK_CONFIG_SYNONYM, "-fg", "foreground",
 		(char *)NULL, (char *)NULL,
@@ -84,15 +84,15 @@ Tk_ConfigSpec TableConfig[]=
 	},
 	{ 	TK_CONFIG_RELIEF, "-relief", "relief",
 		"Relief", "sunken",
-		Tk_Offset(Table, defaultTag.configRelief), 0, (Tk_CustomOption *)NULL
+		Tk_Offset(Table, defaultTag.relief), 0, (Tk_CustomOption *)NULL
 	},
 	{	TK_CONFIG_FONT, "-font", "font", 
 		"Font",  "-Adobe-Helvetica-Bold-R-Normal--*-120-*" ,
-		Tk_Offset(Table, defaultTag.configFontPtr), 0, (Tk_CustomOption *)NULL
+		Tk_Offset(Table, defaultTag.fontPtr), 0, (Tk_CustomOption *)NULL
 	},
 	{	TK_CONFIG_ANCHOR, "-anchor", "anchor", 
 		"Anchor",  "center" ,
-		Tk_Offset(Table, defaultTag.configAnchor), 0, (Tk_CustomOption *)NULL
+		Tk_Offset(Table, defaultTag.anchor), 0, (Tk_CustomOption *)NULL
 	},	
 	{	TK_CONFIG_STRING, "-yscrollcmd", "yscrollcmd", 
 		"Yscrollcmd",  NULL ,
@@ -125,7 +125,7 @@ Tk_ConfigSpec tagConfig[] =
 {
 	{ 	TK_CONFIG_BORDER, "-background", "background",
 		"Background", NULL,
-		Tk_Offset(tagStruct, configBgBorder), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
+		Tk_Offset(tagStruct, bgBorder), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
 	},
 	{ 	TK_CONFIG_SYNONYM, "-bg", "background",
 		(char *)NULL, (char *)NULL,
@@ -133,7 +133,7 @@ Tk_ConfigSpec tagConfig[] =
 	},
 	{ 	TK_CONFIG_COLOR, "-foreground", "foreground",
 		"Foreground", NULL,
-		Tk_Offset(tagStruct, configForeground), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
+		Tk_Offset(tagStruct, foreground), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
 	},
 	{ 	TK_CONFIG_SYNONYM, "-fg", "foreground",
 		(char *)NULL, (char *)NULL,
@@ -141,15 +141,15 @@ Tk_ConfigSpec tagConfig[] =
 	},
 	{	TK_CONFIG_FONT, "-font", "font", 
 		"Font",  NULL ,
-		Tk_Offset(tagStruct, configFontPtr), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
+		Tk_Offset(tagStruct, fontPtr), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
 	},
 	{	TK_CONFIG_ANCHOR, "-anchor", "anchor", 
 		"Anchor",  NULL ,
-		Tk_Offset(tagStruct, configAnchor), 0, (Tk_CustomOption *)NULL
+		Tk_Offset(tagStruct, anchor), 0, (Tk_CustomOption *)NULL
 	},	
 	{ 	TK_CONFIG_RELIEF, "-relief", "relief",
 		"Relief", NULL,
-		Tk_Offset(tagStruct, configRelief), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
+		Tk_Offset(tagStruct, relief), TK_CONFIG_NULL_OK, (Tk_CustomOption *)NULL
 	},
 	{	TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL,
 		(char *)NULL, 0, 0
@@ -196,8 +196,8 @@ int TableConfigure(	Tcl_Interp *interp, Table *tablePtr,
 		if(Tcl_Eval(interp, buf)!=TCL_OK)
 		{
 			/* if not, create it but leave it blank */
-			Tcl_SetVar2(interp, tablePtr->arrayVar,  "0,0", "", TCL_GLOBAL_ONLY);
-			Tcl_UnsetVar2(interp, tablePtr->arrayVar, "0,0", TCL_GLOBAL_ONLY);
+			Tcl_SetVar2(interp, tablePtr->arrayVar,  "XXXXX", "", TCL_GLOBAL_ONLY);
+			Tcl_UnsetVar2(interp, tablePtr->arrayVar, "XXXXX", TCL_GLOBAL_ONLY);
 		}
 
 		/* remove the effect of the evaluation */	
@@ -227,6 +227,28 @@ int TableConfigure(	Tcl_Interp *interp, Table *tablePtr,
 		tablePtr->rowHeights=(Tcl_HashTable *)malloc(sizeof(Tcl_HashTable));
 		Tcl_InitHashTable(tablePtr->rowHeights, TCL_ONE_WORD_KEYS);
 	}
+
+	/*
+	** Make the Graphics context cache if it
+	** doesnt already exist. If it does exist,
+	** release all the GCs in it 
+	*/
+	if (tablePtr->gcCache==NULL)
+	{
+		tablePtr->gcCache=(Tcl_HashTable *)malloc(sizeof(Tcl_HashTable));
+		Tcl_InitHashTable(tablePtr->gcCache, sizeof(tableGcInfo)/sizeof(int));
+	}
+	else
+	{
+		entryPtr=Tcl_FirstHashEntry(tablePtr->gcCache, &search);
+		while(entryPtr!=NULL)
+		{
+			Tk_FreeGC(tablePtr->display, (GC)Tcl_GetHashValue(entryPtr));
+			Tcl_DeleteHashEntry(entryPtr);
+			entryPtr=Tcl_NextHashEntry(&search);
+		}
+	}
+
 	/* 
 	** set up the hash tables for style tags 
 	** if it doesn't exist and put the Title
@@ -277,24 +299,6 @@ int TableConfigure(	Tcl_Interp *interp, Table *tablePtr,
 		tablePtr->flashCells=(Tcl_HashTable *)malloc(sizeof(Tcl_HashTable));
 		Tcl_InitHashTable(tablePtr->flashCells, TCL_STRING_KEYS);
 	}
-
-	/* Set up the default Tag */
-	TableTagConfig(tablePtr, &(tablePtr->defaultTag));
-
-	/*
-	** reset all the other tags too so that 
-	** unspecified options will be set to
-	** the new 'default' ones
-	*/	
-	entryPtr=Tcl_FirstHashEntry(tablePtr->tagTable, &search);
-	for(; entryPtr!=NULL; entryPtr=Tcl_NextHashEntry(&search))	
-		{	
-			char *tagName;
-
-			tagName=Tcl_GetHashKey(tablePtr->tagTable, entryPtr);
-			tagPtr=(tagStruct *)Tcl_GetHashValue(entryPtr);
-			TableTagConfig(tablePtr, tagPtr); 
-		}
 
 	/* set up the default column width and row height */	
 	tablePtr->charWidth=XTextWidth(tablePtr->defaultTag.fontPtr, "0", 1);
@@ -658,12 +662,6 @@ TableAdjustParams(Table *tablePtr)
 	{
 		int x, y, width, height; 
 		char buf[100];
-		TableCellCoords(tablePtr, tablePtr->oldSelRow, tablePtr->oldSelCol,
-				&x, &y, &width, &height);
-		TableInvalidate(tablePtr, x, y, width, height,1);
-		TableCellCoords(tablePtr, tablePtr->selRow, tablePtr->selCol,
-				&x, &y, &width, &height);
-		TableInvalidate(tablePtr, x, y, width, height,1);
 
 		/* put the value back in the cell */
 		if(tablePtr->arrayVar!=NULL && (tablePtr->tableFlags & TBL_EDIT_ALLOWED))
@@ -690,10 +688,18 @@ TableAdjustParams(Table *tablePtr)
 				Tcl_SetVar2(tablePtr->interp, tablePtr->arrayVar, buf, tablePtr->selectBuf, TCL_GLOBAL_ONLY);
 		}
 	
-
-
 		/* get the selection */
 		TableGetSelection(tablePtr);
+
+		/* Invalidate the cells */
+		TableCellCoords(tablePtr, tablePtr->oldSelRow, tablePtr->oldSelCol,
+				&x, &y, &width, &height);
+		TableInvalidate(tablePtr, x, y, width, height,1);
+		TableCellCoords(tablePtr, tablePtr->selRow, tablePtr->selCol,
+				&x, &y, &width, &height);
+		TableInvalidate(tablePtr, x, y, width, height,1);
+
+
 	}
 
 	/* how about the rest of the table */
@@ -722,68 +728,15 @@ TableNewTag( Table *tablePtr )
 	tagStruct *tagPtr;
 
 	tagPtr=(tagStruct *)malloc(sizeof(tagStruct));
-	tagPtr->configBgBorder=NULL;
-	tagPtr->configForeground=NULL;
-	tagPtr->configRelief=0;
-	tagPtr->configFontPtr=NULL;
-	tagPtr->configAnchor=-1;
-	tagPtr->copyGc=None;
+	tagPtr->bgBorder=NULL;
+	tagPtr->foreground=NULL;
+	tagPtr->relief=0;
+	tagPtr->fontPtr=NULL;
+	tagPtr->anchor=-1;
 	
 	return tagPtr;
 }
 
-
-
-/*
-** This nasty piece of code sets up the GCs,
-** colours, fonts etc.
-** required for the tagStruct structure 
-** for the window in the tablePtr
-*/
-void 
-TableTagConfig(Table *tablePtr, tagStruct *tagPtr)
-{
-	XGCValues	gcValues;
-	GC		newGC;
-
-	XColor		*foreground;
-	Tk_3DBorder	bgBorder;
-
-	/* 
-	** If we are configuring a tag, some of the
-	** fields may be NULL, replace them with
-	** the default stuff for the table
-	** In this way all tags that 'don't care'
-	** will adjust when the main table adjusts
-	*/
-	foreground=		(tagPtr->configForeground==NULL) ? 
-				tablePtr->defaultTag.configForeground : tagPtr->configForeground;
-	tagPtr->bgBorder=	bgBorder=(tagPtr->configBgBorder==NULL) ? 
-				tablePtr->defaultTag.configBgBorder : tagPtr->configBgBorder;
-	tagPtr->relief=		(tagPtr->configRelief==0) ? 
-				tablePtr->defaultTag.configRelief : tagPtr->configRelief;
-	tagPtr->fontPtr=	(tagPtr->configFontPtr==NULL) ? 
-				tablePtr->defaultTag.configFontPtr : tagPtr->configFontPtr;
-	tagPtr->anchor=		(tagPtr->configAnchor==-1) ? 
-				tablePtr->defaultTag.configAnchor : tagPtr->configAnchor;
-	/* 
-	** set up the graphics context for
-	** copying the pixmap onto the window
-	*/
-	gcValues.foreground		=foreground->pixel;
-	gcValues.background		=Tk_3DBorderColor(bgBorder)->pixel;
-	gcValues.font			=tagPtr->fontPtr->fid;
-
-	/* No exposures - this is from a pixmap */
-	gcValues.graphics_exposures	=False;		
-
-	/* get the GC */
-	newGC=Tk_GetGC(	tablePtr->tkwin, GCForeground|GCBackground|GCFont|GCGraphicsExposures, 
-			&gcValues);
-	if(tagPtr->copyGc != None)
-	   	Tk_FreeGC(tablePtr->display, tagPtr->copyGc);
-	tagPtr->copyGc=newGC;
-}
 
 
 /* 
@@ -793,10 +746,6 @@ TableTagConfig(Table *tablePtr, tagStruct *tagPtr)
 void
 TableCleanupTag(Table *tablePtr, tagStruct *tagPtr)
 {
-	/* free the graphics contexts */
- 	if(tagPtr->copyGc!=None)
-		Tk_FreeGC(tablePtr->display, tagPtr->copyGc);
-
 	/* free the options in the widget */
 	Tk_FreeOptions(tagConfig, (char *)tagPtr, tablePtr->display, 0);
 }

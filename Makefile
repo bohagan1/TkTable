@@ -2,7 +2,7 @@
 # your favourite C compiler here
 CC=/usr/local/lang/acc
 
-VERS=0.1
+VERS=0.2
 
 TABLE_OBJS=	Table_Init.o Table_Event.o Table_Cmd.o\
 		Table_Display.o Table_Config.o

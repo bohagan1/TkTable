@@ -891,8 +891,6 @@ TableTagCommand(Table *tablePtr, int argc, char *argv[])
 			if(result==TCL_ERROR)
 				return TCL_ERROR;
 
-			/* and create the graphics contexts etc. */
-			TableTagConfig( tablePtr, tagPtr);		
 		}
 		/*
 		** pointer wasn't null, do a reconfig if we 
@@ -911,8 +909,6 @@ TableTagCommand(Table *tablePtr, int argc, char *argv[])
 								argc-4, argv+4, (char*)tagPtr, TK_CONFIG_ARGV_ONLY);
 				if(result==TCL_ERROR)
 					return TCL_ERROR;
-				/* and re-create the graphics contexts etc. */
-				TableTagConfig( tablePtr, tagPtr);		
 			}
 		}
 		/* 
@@ -1006,7 +1002,7 @@ TableTagCommand(Table *tablePtr, int argc, char *argv[])
 			if(retval==TAG_ROWTAG)
 			{
 				/* get the position of the leftmost cell in the row */
-				TableCellCoords(tablePtr, value, 0, &x, &y, &width, &height);
+				TableCellCoords(tablePtr, value-tablePtr->rowOffset, 0, &x, &y, &width, &height);
 				
 				/* Invalidate the row */
 				TableInvalidate(tablePtr, 0, y, Tk_Width(tablePtr->tkwin), height,0);
@@ -1014,7 +1010,7 @@ TableTagCommand(Table *tablePtr, int argc, char *argv[])
 			else
 			{
 				/* get the position of the topmost cell on the column */
-				TableCellCoords(tablePtr, 0, value, &x, &y, &width, &height);
+				TableCellCoords(tablePtr, 0, value-tablePtr->colOffset, &x, &y, &width, &height);
 				
 				/* Invalidate the column */
 				TableInvalidate(tablePtr, x, 0, width, Tk_Height(tablePtr->tkwin),0);
@@ -1091,7 +1087,7 @@ TableTagCommand(Table *tablePtr, int argc, char *argv[])
 				Tcl_SetHashValue(newEntryPtr, (ClientData)tagPtr);
 			}
 			/* now invalidate the area */
-			TableCellCoords(tablePtr, row, col, &x, &y, &width, &height);
+			TableCellCoords(tablePtr, row-tablePtr->rowOffset, col-tablePtr->colOffset, &x, &y, &width, &height);
 			TableInvalidate(tablePtr, x, y, width, height,0);
 		}
 		return TCL_OK;

@@ -60,31 +60,20 @@ typedef struct {
 
 /* The tag structure */
 typedef struct {
-	/*
-	** These are the requested values for
-	** the tag, except in the default tag
-	** they can be null, in which case values
-	** from the default will be used
-	*/
-
-	Tk_3DBorder	configBgBorder;		/* border colour structure */
-	XColor		*configForeground;	/* foreground colour */
-	int		configRelief;		/* relief type */
-	XFontStruct	*configFontPtr;		/* default font pointer */
-	Tk_Anchor	configAnchor;		/* default anchor point */
-
-	/* 
-	** the rest is a cache of the actual values to
-	** use for some of the parameters. These are set
-	** either from the above values, or from the
-	** default tag values 
-	*/
 	Tk_3DBorder	bgBorder;
+	XColor		*foreground;	/* foreground colour */
 	int		relief;		/* relief type */
 	XFontStruct	*fontPtr;	/* default font pointer */
 	Tk_Anchor	anchor;		/* default anchor point */
-	GC		copyGc;		/* used to copy stuff */
 } tagStruct ;
+
+/* structure for the GC cache */
+typedef struct {
+	Tk_3DBorder	bgBorder;
+	XColor		*foreground;
+	XFontStruct	*fontPtr;
+	int		pad;		/* to make the structure long */
+} tableGcInfo ;
 
 /* 
 ** The widget structure for the table Widget
@@ -152,6 +141,7 @@ typedef struct {
 	Tcl_HashTable	*colStyles;	/* the table for col styles */
 	Tcl_HashTable	*cellStyles;	/* the table for cell styles */
 	Tcl_HashTable	*flashCells;	/* the table full of flashing cells */
+	Tcl_HashTable	*gcCache;	/* the Graphic context cache */
 	Tk_TimerToken	cursorTimer;	/* the timer token for the cursor blinking */
 	Tk_TimerToken	flashTimer;	/* the timer token for the cell flashing */
 	char 		*selectBuf;	/* the buffer where the selection is kept for editing */
@@ -205,6 +195,8 @@ void TableConfigCursor(Table *tablePtr);
 void TableFlashConfigure(Table *, int );
 void TableFlashEvent(ClientData);
 void TableAddFlash(Table *, int , int );
+void TableMergeTag(tagStruct *, tagStruct *);
+GC TableGetGc(Table *, tagStruct *);
 
 
 extern Tk_ConfigSpec tagConfig[];

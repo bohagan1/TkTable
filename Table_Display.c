@@ -31,7 +31,7 @@ void TableDisplay(ClientData clientdata)
 	int offsetX, offsetY;
 	XCharStruct bbox, bbox2;
 	XRectangle  clipRect;
-	GC topGc, bottomGc;
+	GC topGc, bottomGc, copyGc;
 	char *value, buf[150];
 	tagStruct *tagPtr;
 	tagStruct *titlePtr;
@@ -46,7 +46,7 @@ void TableDisplay(ClientData clientdata)
 	invalidHeight=tablePtr->invalidHeight;
 
 	/* 
-	** if we are using the slow draing mode with a pixmap 
+	** if we are using the slow drawing mode with a pixmap 
 	** create the pixmap and set up offsetX and Y 
 	*/
 	if(tablePtr->drawMode==DRAW_MODE_SLOW)
@@ -69,7 +69,7 @@ void TableDisplay(ClientData clientdata)
 	/* find the tag type for the selection */
 	entryPtr=Tcl_FindHashEntry(tablePtr->tagTable, "sel");
 	selPtr=(tagStruct *)Tcl_GetHashValue(entryPtr);
-			
+
 
 	/* find out the cells represented by the invalid region */
 	TableWhatCell(tablePtr, invalidX, invalidY, &rowFrom, &colFrom);
@@ -100,29 +100,37 @@ void TableDisplay(ClientData clientdata)
 			TableMakeArrayIndex(tablePtr, i+tablePtr->rowOffset, j+tablePtr->colOffset,buf);
 
 			/* get the tag structure for the cell */
+
+			/* 
+			** first clear out a new tag structure 
+			** that we will build in 
+			*/
+			tagPtr=TableNewTag(tablePtr);
+
 			/* If there is a selected cell, is this it */
 			if(selectedCell=((tablePtr->selectionOn) && 
 					 i==tablePtr->selRow && j==tablePtr->selCol))
-				tagPtr=selPtr;
+				TableMergeTag(tagPtr, selPtr);
 			/* if flash mode is on, is this cell flashing */
-			else if(	(tablePtr->tableFlags&TBL_FLASH_ENABLED)&&
+			if(	(tablePtr->tableFlags&TBL_FLASH_ENABLED)&&
 					(entryPtr=Tcl_FindHashEntry(tablePtr->flashCells, buf))!=NULL)
-				tagPtr=tablePtr->flashTag;
+				TableMergeTag(tagPtr, tablePtr->flashTag);
 			/* Am I in the titles */
-			else if(i<tablePtr->topRow || j<tablePtr->leftCol)
-				tagPtr=titlePtr;
+			if(i<tablePtr->topRow || j<tablePtr->leftCol)
+				TableMergeTag(tagPtr, titlePtr);
 			/* check the individual cell reference */
-			else if((entryPtr=Tcl_FindHashEntry(tablePtr->cellStyles, buf))!=NULL)
-				tagPtr=Tcl_GetHashValue(entryPtr);
+			if((entryPtr=Tcl_FindHashEntry(tablePtr->cellStyles, buf))!=NULL)
+				TableMergeTag(tagPtr, (tagStruct *)Tcl_GetHashValue(entryPtr));
 			/* then try the rows */
-			else if((entryPtr=Tcl_FindHashEntry(tablePtr->rowStyles, (char *)i+tablePtr->rowOffset))!=NULL)
-				tagPtr=Tcl_GetHashValue(entryPtr);
+			if((entryPtr=Tcl_FindHashEntry(tablePtr->rowStyles, (char *)i+tablePtr->rowOffset))!=NULL)
+				TableMergeTag(tagPtr, (tagStruct *)Tcl_GetHashValue(entryPtr));
 			/* then the columns */
-			else if((entryPtr=Tcl_FindHashEntry(tablePtr->colStyles, (char *)j+tablePtr->colOffset))!=NULL)
-				tagPtr=Tcl_GetHashValue(entryPtr);
-			/* it must be the default type then ! */
-			else
-				tagPtr=&(tablePtr->defaultTag);
+			if((entryPtr=Tcl_FindHashEntry(tablePtr->colStyles, (char *)j+tablePtr->colOffset))!=NULL)
+				TableMergeTag(tagPtr, (tagStruct *)Tcl_GetHashValue(entryPtr));
+			/* then merge in the default type */
+			TableMergeTag(tagPtr, &(tablePtr->defaultTag));
+
+			copyGc=TableGetGc(tablePtr, tagPtr);
 
 			/* get the coordinates for the cell */
 			TableCellCoords(tablePtr, i, j, &x, &y, &width, &height);
@@ -169,13 +177,13 @@ void TableDisplay(ClientData clientdata)
 				switch (tagPtr->anchor)
 				{
 				case TK_ANCHOR_NE: case TK_ANCHOR_E: case TK_ANCHOR_SE:
-					originX=width-(bbox.rbearing-bbox.lbearing)-2*bd;
+					originX=width-bbox.rbearing-2*bd;
 					break;
 				case TK_ANCHOR_N: case TK_ANCHOR_S: case TK_ANCHOR_CENTER:
 					originX=(width-(bbox.rbearing-bbox.lbearing))/2-bd;
 					break;
 				default:
-					originX=0;
+					originX=-bbox.lbearing;
 				}
 
 				/* then set the Y origin */
@@ -215,10 +223,10 @@ void TableDisplay(ClientData clientdata)
 					/* set the clipping rectangle */
 					clipRect.x=x-offsetX; clipRect.y=y-offsetY;
 					clipRect.width=width; clipRect.height=height;
-					XSetClipRectangles(display, tagPtr->copyGc, 0, 0, &clipRect, 1, Unsorted); 
+					XSetClipRectangles(display, copyGc, 0, 0, &clipRect, 1, Unsorted); 
 				}
 
-				XDrawString(	display, window, tagPtr->copyGc, 
+				XDrawString(	display, window, copyGc, 
 						x-offsetX+originX+bd, y-offsetY+originY-descent+bd,
 						value, strlen(value));
 
@@ -232,7 +240,7 @@ void TableDisplay(ClientData clientdata)
 				}
 				/* reset the clip mask */
 				if(clipRectSet)
-					XSetClipMask(display, tagPtr->copyGc, None); 
+					XSetClipMask(display, copyGc, None); 
 			}
 			/* Draw the 3d border on the pixmap correctly offset */
 			switch(tablePtr->drawMode)
@@ -269,6 +277,9 @@ void TableDisplay(ClientData clientdata)
 				XDrawLines( display, window, bottomGc, rect+3, 3, CoordModePrevious);  
 				XDrawLines( display, window, topGc, rect, 3, CoordModePrevious);  
 			}
+
+			/* delete the tag structure */
+			free(tagPtr);
 		}
 
 	/* clear the top left corner */
@@ -306,12 +317,17 @@ void TableDisplay(ClientData clientdata)
 	/* copy on and delete the pixmap if we are in slow mode */
 	if(tablePtr->drawMode==DRAW_MODE_SLOW)
 	{
+		/* Get a default GC */
+		copyGc=TableGetGc(tablePtr, &(tablePtr->defaultTag));
+			
 		XCopyArea(	display, window, Tk_WindowId(tkwin), 
-				tablePtr->defaultTag.copyGc, 0, 0, 
+				copyGc, 0, 0, 
 				invalidWidth, invalidHeight, 
 				invalidX, invalidY);
 		XFreePixmap(Tk_Display(tkwin), window);
 	}
+
+
 }
 
 
@@ -371,3 +387,73 @@ for(i=1;y>=(tablePtr->rowStarts)[i];i++); *row=i-1;
 }
 
 
+
+/* 
+** This routine merges two tags by adding 
+** any fields from the addTag that are 
+** unset in the base Tag
+*/
+
+void
+TableMergeTag(tagStruct *baseTag, tagStruct *addTag)
+{
+	if(baseTag->foreground==NULL)
+		baseTag->foreground=addTag->foreground;
+	if(baseTag->bgBorder==NULL)
+		baseTag->bgBorder=addTag->bgBorder;
+	if(baseTag->relief==0)
+		baseTag->relief=addTag->relief;
+	if(baseTag->fontPtr==NULL)
+		baseTag->fontPtr=addTag->fontPtr;
+	if(baseTag->anchor==-1)
+		baseTag->anchor=addTag->anchor;
+
+}
+
+
+/* Gets a GC correponding to the tag structure passed */
+
+GC
+TableGetGc(Table *tablePtr, tagStruct *tagPtr)
+{
+
+	XGCValues gcValues;
+	GC newGc;
+	tableGcInfo	requiredGc;
+	Tcl_HashEntry	*entryPtr;
+	ClientData	test;
+	int new, i;
+
+	/* 
+	** first memset the required Gc to zero so that
+	** any padding is irrelevant in the search
+	*/
+	memset((char *)&requiredGc, (char)0, sizeof(tableGcInfo));
+
+	/* then set up the attributes */
+	requiredGc.foreground		=tagPtr->foreground;
+	requiredGc.bgBorder		=tagPtr->bgBorder;
+	requiredGc.fontPtr		=tagPtr->fontPtr;
+
+	/* Now look and see if we already have this GC */
+	entryPtr=Tcl_FindHashEntry(tablePtr->gcCache, (char *)&requiredGc);
+
+	/* if we do, return it */
+	if(entryPtr!=NULL)
+		return (GC)Tcl_GetHashValue(entryPtr);
+
+	/* else get the graphics context */
+	gcValues.foreground		=(requiredGc.foreground)->pixel;
+	gcValues.background		=Tk_3DBorderColor(requiredGc.bgBorder)->pixel;
+	gcValues.font			=(requiredGc.fontPtr)->fid;
+	gcValues.graphics_exposures	= False;
+
+	newGc=Tk_GetGC(tablePtr->tkwin, GCForeground|GCBackground|GCFont|GCGraphicsExposures, 
+					&gcValues);
+
+	/* and cache it in the table for later */
+	entryPtr=Tcl_CreateHashEntry(tablePtr->gcCache, (char *)&requiredGc, &new);
+
+	Tcl_SetHashValue(entryPtr, (ClientData)newGc);
+	return newGc;
+}
