@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableWin.c,v 1.4 2002/03/13 20:15:20 hobbs Exp $
+ * RCS: @(#) $Id: tkTableWin.c,v 1.5 2002/10/16 07:31:48 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -303,7 +303,7 @@ EmbWinDisplay(Table *tablePtr, Drawable window, TableEmbWindow *ewPtr,
      * If we fall below a specific minimum width/height requirement,
      * we just unmap the window
      */
-    if (width < 4 || height < 4) {
+    if (width < 2 || height < 2) {
 	if (ewPtr->displayed) {
 	    EmbWinUnmapNow(ewTkwin, tkwin);
 	}
