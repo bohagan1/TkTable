@@ -19,12 +19,11 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.6 2000/08/18 03:34:11 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.7 2000/08/18 23:03:17 hobbs Exp $
  */
 
 #include "tkTable.h"
 
-#define DEBUG
 #ifdef DEBUG
 #include "dprint.h"
 #endif
@@ -250,9 +249,9 @@ Tk_ConfigSpec tableSpecs[] = {
      Tk_Offset(Table, insertWidth), 0},
     {TK_CONFIG_BOOLEAN, "-invertselected", "invertSelected", "InvertSelected",
      "0", Tk_Offset(Table, invertSelected), 0},
-    {TK_CONFIG_PIXELS, "-ipadx", "ipadX", "Pad", "2",
+    {TK_CONFIG_PIXELS, "-ipadx", "ipadX", "Pad", "0",
      Tk_Offset(Table, ipadX), 0},
-    {TK_CONFIG_PIXELS, "-ipady", "ipadY", "Pad", "1",
+    {TK_CONFIG_PIXELS, "-ipady", "ipadY", "Pad", "0",
      Tk_Offset(Table, ipadY), 0},
     {TK_CONFIG_PIXELS, "-maxheight", "maxHeight", "MaxHeight", "600",
      Tk_Offset(Table, maxReqHeight), 0},
@@ -260,10 +259,8 @@ Tk_ConfigSpec tableSpecs[] = {
      Tk_Offset(Table, maxReqWidth), 0},
     {TK_CONFIG_BOOLEAN, "-multiline", "multiline", "Multiline", "1",
      Tk_Offset(Table, defaultTag.multiline), 0},
-    {TK_CONFIG_PIXELS, "-padx", "padX", "Pad", "0",
-     Tk_Offset(Table, padX), 0},
-    {TK_CONFIG_PIXELS, "-pady", "padY", "Pad", "0",
-     Tk_Offset(Table, padY), 0},
+    {TK_CONFIG_PIXELS, "-padx", "padX", "Pad", "0", Tk_Offset(Table, padX), 0},
+    {TK_CONFIG_PIXELS, "-pady", "padY", "Pad", "0", Tk_Offset(Table, padY), 0},
     {TK_CONFIG_RELIEF, "-relief", "relief", "Relief", "sunken",
      Tk_Offset(Table, defaultTag.relief), 0},
     {TK_CONFIG_CUSTOM, "-resizeborders", "resizeBorders", "ResizeBorders",
