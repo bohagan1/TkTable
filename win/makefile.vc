@@ -167,7 +167,7 @@ tkTable.tcl.h: $(TBL_LIB_DIR)\tkTable.tcl
 	$(cc32) $(cdebug) $(cflags) $(cvarsdll) \
 		$(INCLUDES) $(DEFINES) -Fo$(TMP_DIR)\ $<
 
-install: $(DLL)
+install: pkgIndex.tcl $(DLL)
 	if not exist "$(INST_RUNTIME)\" mkdir "$(INST_RUNTIME)"
 	copy "$(TBL_LIB_DIR)\tkTable.tcl" "$(INST_RUNTIME)"
 	copy "$(DLL)" "$(INST_RUNTIME)"
