@@ -1,5 +1,20 @@
 2000-08-01  Jeff Hobbs  <hobbs@scriptics.com>
 
+	* library/tkTable.tcl: rewritten to use ::tk::table namespace
+
+	* generic/tkTable.h: added CONSTRAIN and BETWEEN macros to simply
+	some MIN/MAX cases.
+	* generic/tkTable.c:
+	* generic/tkTableCell.c:
+	* generic/tkTableCmds.c: updated to use CONSTRAIN/BETWEEN instead
+	of MIN(MAX()).
+
+	* generic/tkTable.c (TableRefresh): changed to not do anything
+	when coords < 0 are passed in (like asking to refresh non-existent
+	active cell).
+	(TableEventProc): added (likely redundant) check for xexpose.count
+	== 0 before redisplaying in Expose case. (Halpin)
+
 	* generic/tkTable.c (XFillRectangle): added compat XFillRectangle
 	to make up for lack of one in Tk8.1.  (Nijtmans)
 	(TableAdjustParams): Made -padx and -pady actually work as
