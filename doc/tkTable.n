@@ -1,7 +1,8 @@
+'\"
 '\" The definitions below are for supplemental macros used in Tcl/Tk
 '\" manual entries.
 '\"
-'\" RCS: @(#) $Id: tkTable.n,v 1.4 2001/08/23 19:33:44 hobbs Exp $
+'\" RCS: @(#) $Id: tkTable.n,v 1.5 2001/08/23 19:37:58 hobbs Exp $
 '\"
 '\" .AP type name in/out ?indent?
 '\"	Start paragraph describing an argument to a library procedure.
