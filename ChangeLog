@@ -1,7 +1,3 @@
-2001-07-18  Jeff Hobbs  <jeffh@ActiveState.com>
-
-	* generic/tkTable.c (TableDestroy): freed cached values in destroy.
-
 2001-06-30  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	2.7 RELEASE
