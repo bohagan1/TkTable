@@ -1,3 +1,14 @@
+2004-06-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableWin.c (EmbWinDisplay): make min window displayed
+	have width/height 1 pixel min (was 3px)
+
+	* generic/tkTable.c (TableDisplay): Don't draw when we don't have
+	the space for it. [Bug 747038]
+
+	* doc/tkTable.html, doc/tkTable.n: improve docs to note
+	requirement of specifying a data source. [Bug 963204]
+
 2004-02-17  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* generic/tkTableCmds.c (Table_ActivateCmd): test implementation
