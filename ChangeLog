@@ -1,3 +1,8 @@
+2001-03-28  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.h: change 'char *new' -> 'char *newVal' to not
+	stump C++ compilers
+
 2000-10-19  Jeff Hobbs  <jeff.hobbs@acm.org>
 
 	* tests/all.tcl: new file

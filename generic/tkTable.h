@@ -9,7 +9,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.5 2000/08/31 02:09:17 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.6 2000/10/19 18:26:48 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -426,7 +426,7 @@ extern int	Table_WinDelete _ANSI_ARGS_((register Table *tablePtr,
 extern int	Table_WindowCmd _ANSI_ARGS_((ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern int	TableValidateChange _ANSI_ARGS_((Table *tablePtr, int r,
-			int c, char *old, char *new, int index));
+			int c, char *oldVal, char *newVal, int idx));
 extern void	TableLostSelection _ANSI_ARGS_((ClientData clientData));
 extern void	TableSetActiveIndex _ANSI_ARGS_((register Table *tablePtr));
 
@@ -472,9 +472,9 @@ extern int	Table_ViewCmd _ANSI_ARGS_((ClientData clientData,
 extern int	Table_EditCmd _ANSI_ARGS_((ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 extern void	TableDeleteChars _ANSI_ARGS_((register Table *tablePtr,
-			int index, int count));
+			int idx, int count));
 extern void	TableInsertChars _ANSI_ARGS_((register Table *tablePtr,
-			int index, char *string));
+			int idx, char *string));
 
 /*
  * HEADERS IN tkTableTag.c
@@ -583,7 +583,7 @@ EXTERN int Tktable_SafeInit	_ANSI_ARGS_((Tcl_Interp *interp));
 
 extern void	TableGetActiveBuf _ANSI_ARGS_((register Table *tablePtr));
 extern void	ExpandPercents _ANSI_ARGS_((Table *tablePtr, char *before,
-			int r, int c, char *old, char *new, int index,
+			int r, int c, char *oldVal, char *newVal, int idx,
 			Tcl_DString *dsPtr, int cmdType));
 extern void	TableInvalidate _ANSI_ARGS_((Table *tablePtr, int x, int y,
 			int width, int height, int force));
