@@ -11,7 +11,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: Makefile.in,v 1.2 2002/03/13 21:15:51 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.3 2002/03/20 02:09:29 hobbs Exp $
 
 #========================================================================
 # Edit the following few lines when writing a new extension
@@ -134,24 +134,37 @@ SHLIB_LD	= @SHLIB_LD@
 SHLIB_LDFLAGS	= @SHLIB_LDFLAGS@
 SHLIB_LD_LIBS	= @SHLIB_LD_LIBS@
 STLIB_LD	= @STLIB_LD@
-TCL_BIN_DIR	= @TCL_BIN_DIR@
 TCL_DEFS	= @TCL_DEFS@
-TCL_EXTRA_CFLAGS = @TCL_EXTRA_CFLAGS@
-TCL_LD_FLAGS	= @TCL_LD_FLAGS@
-TCL_LIBS	= @TCL_LIBS@
-TCL_SHLIB_LD_LIBS = @TCL_SHLIB_LD_LIBS@
 TCL_SRC_DIR	= @TCL_SRC_DIR@
-TCL_DBGX	= @TCL_DBGX@
-TCL_STUB_LIB_FILE = @TCL_STUB_LIB_FILE@
-TCL_STUB_LIB_SPEC = @TCL_STUB_LIB_SPEC@
-SHARED_BUILD	= @SHARED_BUILD@
+TCL_BIN_DIR	= @TCL_BIN_DIR@
 TK_SRC_DIR	= @TK_SRC_DIR@
-TCLSH_PROG	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` @TCLSH_PROG@
-WISH_PROG	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` \
-		  TK_LIBRARY=`@CYGPATH@ $(TK_SRC_DIR)/library` @WISH_PROG@
+TK_BIN_DIR	= @TK_BIN_DIR@
 
-INCLUDES	= @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@ \
-		  -I. -I$(srcdir)/generic
+# Not used by sample, but retained for reference of what Tcl required
+TCL_LIBS	= @TCL_LIBS@
+TK_LIBS		= @TK_LIBS@
+
+EXTRA_PATH	= $(top_builddir):$(TCL_BIN_DIR):$(TK_BIN_DIR)
+TCLSH_PROG	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` \
+		  LD_LIBRARY_PATH="$(EXTRA_PATH):$(LD_LIBRARY_PATH)" \
+		  LIBPATH="$(EXTRA_PATH):${LIBPATH}" \
+		  SHLIB_PATH="$(EXTRA_PATH):${SHLIB_PATH}" \
+		  TCLLIBPATH="$(top_builddir)" \
+		  PATH="$(EXTRA_PATH):$(PATH)" \
+		  @TCLSH_PROG@
+WISH_PROG	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` \
+		  TK_LIBRARY=`@CYGPATH@ $(TK_SRC_DIR)/library` \
+		  LD_LIBRARY_PATH="$(EXTRA_PATH):$(LD_LIBRARY_PATH)" \
+		  LIBPATH="$(EXTRA_PATH):${LIBPATH}" \
+		  SHLIB_PATH="$(EXTRA_PATH):${SHLIB_PATH}" \
+		  TCLLIBPATH="$(top_builddir)" \
+		  PATH="$(EXTRA_PATH):$(PATH)" \
+		  @WISH_PROG@
+
+# The local includes must come first, because the TK_XINCLUDES can be
+# just a comment
+INCLUDES	= -I. -I$(srcdir)/generic \
+		  @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@
 
 ## NO_EMBEDDED_RUNTIME means that the tkTable.tcl file will not be embedded
 ## into the executable, thus the default tkTable.tcl library file will not
@@ -256,11 +269,6 @@ html:
 # Piping to cat is necessary on Windows to see the output, and
 # harmless on Unix
 test: binaries libraries
-	LD_LIBRARY_PATH="$(top_builddir):$(TCL_BIN_DIR):$(LD_LIBRARY_PATH)" \
-	LIBPATH="$(top_builddir):$(TCL_BIN_DIR):${LIBPATH}" \
-	SHLIB_PATH="$(top_builddir):$(TCL_BIN_DIR):${SHLIB_PATH}" \
-	TCLLIBPATH=. \
-	PATH="$(top_builddir):$(TCL_BIN_DIR):$(PATH)" \
 	$(WISH_PROG) `@CYGPATH@ $(srcdir)/tests/all.tcl` \
 		-exedir `@CYGPATH@ $(bindir)` $(TESTFLAGS) | cat
 
@@ -302,7 +310,7 @@ $($(PACKAGE)_LIB_FILE): $($(PACKAGE)_OBJECTS)
 VPATH = $(srcdir):$(srcdir)/generic:$(srcdir)/unix:$(srcdir)/win
 
 tkTable.tcl.h: $(srcdir)/library/tkTable.tcl
-	sed -e '/^$\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' < "$<" > "$@" || { rm -f $@; exit 1; }
+	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' < `@CYGPATH@ $<` > '$@' || { rm -f $@; exit 1; }
 
 .SUFFIXES: .c .$(OBJEXT)
 
