@@ -1,7 +1,7 @@
 #include <Types.r>
 #include <SysTypes.r>
 
-#include "../generic/version.h"
+#include "version.h"
 
 resource 'vers' (1) {
 	TBL_MAJOR_VERSION, TBL_MINOR_VERSION,
@@ -15,7 +15,7 @@ resource 'vers' (2) {
 	TBL_MAJOR_VERSION, TBL_MINOR_VERSION,
 	final, 0x00, verUS,
 	TBL_VERSION,
-	"tkTable " TBL_VERSION " © 1997-2000"
+	"tkTable " TBL_VERSION " © 1997-2001"
 };
 
 /*
@@ -28,8 +28,8 @@ resource 'vers' (2) {
 resource 'STR ' (-16397, purgeable) {
 	"tkTable Library\n\n"
 	"This library provides the ability to create tables "
-	" from Tcl/Tk programs.  To work properly, it "
-	"should be placed in the ÔTool Command LanguageÕ folder "
+	"from Tcl/Tk programs.  To work properly, it "
+	"should be placed in the Tool Command Language¹ folder "
 	"within the Extensions folder."
 };
 
@@ -40,6 +40,8 @@ read 'TEXT' (3000, "tkTable", purgeable, preload) "tkTable.tcl";
  */
 
 data 'TEXT' (4000, "pkgIndex", purgeable, preload) {
+	"if {[catch {package require Tcl 8.2}]} return\n"
 	"package ifneeded Tktable " TBL_VERSION " "
-	"\"package require Tk; [list load [file join $dir Tktable.shlb] Tktable]\""
++	"\"package require Tk 8.2; "
++	"[list load [file join $dir Tktable[info sharedlibextension]] Tktable]\""
 };
