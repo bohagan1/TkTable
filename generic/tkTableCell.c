@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableCell.c,v 1.4 2000/10/19 18:25:32 hobbs Exp $
+ * RCS: @(#) $Id: tkTableCell.c,v 1.5 2001/06/22 23:15:43 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -1161,7 +1161,7 @@ Table_SpanSet(register Table *tablePtr, int urow, int ucol, int rs, int cs)
 	for (j = ucol; j <= ucol+cs; j++) {
 	    TableMakeArrayIndex(i, j, buf);
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->spanAffTbl, buf, &new);
-	    if (!(i == row && j == col)) {
+	    if (!(i == urow && j == ucol)) {
 		Tcl_SetHashValue(entryPtr, (char *) dbuf);
 	    }
 	}
