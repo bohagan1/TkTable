@@ -2,7 +2,7 @@
 '\" The definitions below are for supplemental macros used in Tcl/Tk
 '\" manual entries.
 '\"
-'\" RCS: @(#) $Id: tkTable.n,v 1.9 2003/07/16 20:50:56 hobbs Exp $
+'\" RCS: @(#) $Id: tkTable.n,v 1.10 2004/06/11 00:23:57 hobbs Exp $
 '\"
 '\" .AP type name in/out ?indent?
 '\"	Start paragraph describing an argument to a library procedure.
@@ -442,7 +442,7 @@ return a tag name or null string.  This operates in a similar manner as
 \fB\-coltagcommand\fR, except that it applies to row tags.
 .OP "\-selectioncommand or \-selcmd" selectionCommand SelectionCommand
 Specifies a command to evaluate when the selection is retrieved from a
-table via the selection mechanism (ie: evaluating "\fBselection get\fR").
+table via the selection mechanism (ie: evaluating ``\fBselection get\fR'').
 The return value from this command will become the string passed on by the
 selection mechanism.  It uses the %\-substition model described in COMMAND
 SUBSTITUTION below.  If an error occurs, a Tcl background error is
