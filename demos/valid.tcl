@@ -1,144 +1,101 @@
 #!/bin/sh
 # the next line restarts using wish \
-exec wish "$0" ${1+"$@"}
+	exec wish "$0" ${1+"$@"}
 
 ## valid.tcl
 ##
 ## This demos shows the use of the validation mechanism of the table
+## and uses the table's cache (no -command or -variable)
 ##
-## jhobbs@cs.uoregon.edu
+## jeff.hobbs@acm.org
 
 array set table {
-  library	Tktable
-  rows		10
-  cols		10
-  page		AA
-  table		.b.ss
+    library	Tktable
+    rows	10
+    cols	10
+    table	.table
 }
 append table(library) [info sharedlibext]
 
 if {[string match {} [info commands table]] && \
-    [catch {package require Tktable} err]} {
-  if {[catch {load [file join [pwd] .. $table(library)]} err] && \
-      [catch {load [file join [pwd] $table(library)]} err]} {
-    error $err
-  }
+	[catch {package require Tktable} err]} {
+    if {[catch {load [file join [pwd] .. $table(library)]} err] && \
+	    [catch {load [file join [pwd] $table(library)]} err]} {
+	error $err
+    }
 }
 
 proc colorize num {
-  if {$num>0 && $num%2} { return colored }
+    if {$num>0 && $num%2} { return colored }
 }
 
-proc fill {array {r 10} {c 10}} {
-  upvar \#0 $array ary
-  for {set i 0} {$i < $r} {incr i} {
-    for {set j 0} {$j < $c} {incr j} {
-      if {$j && $i} {
-	continue
-      } elseif {$i} {
-	set ary($i,$j) "$i"
-      } elseif {$j%3==1} {
-	set ary($i,$j) AlphaNum
-      } elseif {$j%2==1} {
-	set ary($i,$j) Alpha
-      } elseif {$j} {
-	set ary($i,$j) Real
-      }
+proc fill_headers {w {r 10} {c 10}} {
+    for {set i 1} {$i < $r} {incr i} {
+	$w set $i,0 "$i"
     }
-  }
+    for {set j 1} {$j < $c} {incr j} {
+	if {$j%3==1} {
+	    $w set 0,$j AlphaNum
+	} elseif {$j%2==1} {
+	    $w set 0,$j Alpha
+	} elseif {$j} {
+	    $w set 0,$j Real
+	}
+    }
 }
 
 proc validate {c val} {
-  if {$c%3==1} {
-    ## Alphanum
-    set expr {^[A-Za-z0-9 ]*$}
-  } elseif {$c%2==1} {
-    ## Alpha
-    set expr {^[A-Za-z ]*$}
-  } elseif {$c} {
-    ## Real
-    set expr {^[-+]?[0-9]*\.?[0-9]*([0-9]\.?e[-+]?[0-9]*)?$}
-  }
-  if [regexp $expr $val] {
-    return 1
-  } else {
-    bell
-    return 0
-  }
+    if {$c%3==1} {
+	## Alphanum
+	set expr {^[A-Za-z0-9 ]*$}
+    } elseif {$c%2==1} {
+	## Alpha
+	set expr {^[A-Za-z ]*$}
+    } elseif {$c} {
+	## Real
+	set expr {^[-+]?[0-9]*\.?[0-9]*([0-9]\.?e[-+]?[0-9]*)?$}
+    }
+    if {[regexp $expr $val]} {
+	return 1
+    } else {
+	bell
+	return 0
+    }
 }
 
-pack [label .l -text "TkTable v1 Validated Table Example"] -fill x
-pack [frame .b] -fill both -expand 1
-
-fill $table(page)
+label .example -text "TkTable v1 Validated Table Example"
 
 set t $table(table)
-set sy .b.sy
-set sx .b.sx
-
 table $t \
-    -rows $table(rows) \
-    -cols $table(cols) \
-    -variable $table(page) \
-    -titlerows 1 \
-    -titlecols 1 \
-    -yscrollcommand "$sy set" \
-    -xscrollcommand "$sx set" \
-    -maxwidth 320 \
-    -maxheight 240 \
-    -coltagcommand colorize \
-    -flashmode on \
-    -selectmode extended \
-    -colstretch all \
-    -rowstretch all \
-    -batchmode 1 \
-    -validate yes \
-    -vcmd {validate %c %S}
+	-rows $table(rows) \
+	-cols $table(cols) \
+	-cache 1 \
+	-titlerows 1 \
+	-titlecols 1 \
+	-yscrollcommand { .tsy set } \
+	-xscrollcommand { .tsx set } \
+	-width 5 -height 5 \
+	-coltagcommand colorize \
+	-flashmode on \
+	-selectmode extended \
+	-colstretch unset \
+	-rowstretch unset \
+	-batchmode 1 \
+	-validate yes \
+	-vcmd {if {![%W tag includes title %C]} { validate %c %S } }
 
+fill_headers $t
 $t tag config colored -bg lightblue
 $t tag config title -fg red
 $t width 0 3
 
-scrollbar $sy -command [list $t yview]
-scrollbar $sx -command [list $t xview] -orient horizontal
-pack $sx -side bottom -fill x
-pack $sy -side right -fill y
-pack $t -side left -fill both -expand on
+scrollbar .tsy -command [list $t yview]
+scrollbar .tsx -command [list $t xview] -orient horizontal
+grid .example -     -sticky ew
+grid $t       .tsy   -sticky news
+grid .tsx            -sticky ew
+grid columnconfig . 0 -weight 1
+grid rowconfig . 1 -weight 1
 
-puts [list Table is $table(table) with array [$table(table) cget -var]]
+puts [list Table is $table(table)]
 
-##
-## Allow interactive prompt for testing
-##
-
-if !$tcl_interactive {
-  if ![info exists tcl_prompt1] {
-    set tcl_prompt1 {puts -nonewline "[history nextid] % "}
-  }
-  proc read_stdin {} {
-    global eventLoop tcl_prompt1
-    set l [gets stdin]
-    if {[eof stdin]} {
-      set eventLoop "done"     ;# terminate the vwait (eventloop)
-    } else {
-      if [string comp {} $l] {
-	if [catch {uplevel \#0 history add [list $l] exec} err] {
-	  puts stderr $err
-	} elseif {[string comp {} $err]} {
-	  puts $err
-	}
-      }
-      catch $tcl_prompt1
-      flush stdout
-    }
-  }
- 
-  # set up our keyboard read event handler:
-  #   Vector stdin data to the socket
-  fileevent stdin readable read_stdin
- 
-  catch $tcl_prompt1
-  flush stdout
-  # wait for and handle or stdin events...
-  vwait eventLoop
-}

@@ -1,14 +1,14 @@
-# Makefile.bc
+# Makefile.vc
 #
-# This makefile builds Tktable.dll.  This makefile is suitable for use with
-# Microsoft Visual C++ 2.x and 4.0.
-#
-# This is a hack based of Sun's example Makefile.vc.  I have included a
-# precompiled DLL because this requires heavy modification of paths to
-# work properly.  The DLL is built against Tk8.0a2.
+# This makefile builds Tktable.dll, a table widget as a dynamically
+# loadable Tk extension.  This makefile is suitable for use with
+# Microsoft Visual C++ 4.0.
+# TkTable requires access to the Tcl/Tk sources to build on Windows
+# because of a few internal items that are in Tk
 #
 
 PROJECT	= Tktable
+TBL_VERSION = 1.82
 
 #
 # Project directories -- these may need to be customized for your site
@@ -16,16 +16,32 @@ PROJECT	= Tktable
 # ROOT --	location of the example files.
 # TMPDIR --	location for .obj files.
 # TOOLS32 --	location of VC++ compiler installation.
-# TCL --	location where Tcl is installed.
+# DESTDIR --	location of Tcl/Tk installation hierarchy
+# DESTDIRU --	same as above with "/" as path separator
 #
 
-ROOT	= .
-TMPDIR	= .
-TOOLS32	= c:\msdev
-TVERS	= 8.0a2
-TCL	= C:\Program Files\Tcl
-PTCL	= C:\jhobbs\src\tcl$(TVERS)
-TK	= C:\jhobbs\src\tk$(TVERS)
+ROOT		= .
+TMPDIR		= .
+TOOLS32		= c:\Programme\DevStudio\Vc
+DESTDIR		= C:\Programme\Tcl
+DESTDIRU	= C:/Programme/Tcl
+
+# Set your version of Tcl
+# Set SRC_DIR to point to a directory that has Tcl/Tk SOURCES
+
+SRC_DIR		= ..
+TCL_VERSION	= 8.1
+TK_VERSION	= 8.1
+TCL_LIB_V	= 81
+TK_LIB_V	= 81
+
+TCL_DIR		= $(SRC_DIR)\tcl8.1a2
+TK_DIR		= $(SRC_DIR)\tk8.1a2
+INST_RUNTIME	= $(DESTDIR)\$(TCL_LIB_V)\lib\tkTable$(TBL_VERSION)
+INST_RUNTIMEU	= $(DESTDIRU)/$(TCL_LIB_V)/lib/tkTable$(TBL_VERSION)
+
+TCLSH		= $(DESTDIR)\bin\tclsh$(TCL_LIB_V)
+WISH		= $(DESTDIR)\bin\wish$(TK_LIB_V)
 
 # comment the following line to compile with symbols
 NODEBUG=1
@@ -36,14 +52,16 @@ NODEBUG=1
 
 PATH=$(TOOLS32)\bin;$(PATH)
 
-cc32	= $(TOOLS32)\bin\cl -I$(TOOLS32)\include
+cc32	= "$(TOOLS32)\bin\cl" -I"$(TOOLS32)\include"
 CP      = copy
 RM      = del
 
-INCLUDES = -I$(TOOLS32)\include -I"$(TCL)\include" \
-	-I"$(TK)\generic" -I"$(TK)\win"
-DEFINES = -nologo $(DEBUGDEFINES) -DVERSION=\"1.3\"
-LIBS	=  ..\tcl$(TVERS)\win\tcl80.lib ..\tk$(TVERS)\win\tk80.lib
+INCLUDES = -I"$(TOOLS32)\include" -I"$(TCL_DIR)\generic" \
+	-I"$(TK_DIR)\generic" -I"$(TK_DIR)\win" -I"$(TK_DIR)\xlib"
+DEFINES = -nologo $(DEBUGDEFINES) -DTBL_VERSION=\"$(TBL_VERSION)\"\
+	  -DITCL_RUNTIME="\"$(INST_RUNTIMEU)/tkTable.itcl\""\
+	  -DTCL_RUNTIME="\"$(INST_RUNTIMEU)/tkTable.tcl\""
+LIBS	= $(DESTDIR)\lib\tcl$(TCL_LIB_V)vc.lib $(DESTDIR)\lib\tk$(TK_LIB_V)vc.lib
 
 !include <ntwin32.mak>
 
@@ -51,34 +69,74 @@ LIBS	=  ..\tcl$(TVERS)\win\tcl80.lib ..\tk$(TVERS)\win\tk80.lib
 # Global makefile settings
 #
 
-DLLOBJS = \
-	$(TMPDIR)\$(PROJECT).obj
+DLLOBJS = $(TMPDIR)\$(PROJECT).obj
+DLL=$(PROJECT).dll
 
 # Targets
 
 all: pkgIndex.tcl
 
+#	set TCL_LIBRARY=$(TCL_DIR)\library
+#	set TK_LIBRARY=$(TK_DIR)\library
+#	set PATH=$(TCL_DIR)\win;$(TK_DIR)\win;%PATH%
 test: pkgIndex.tcl
-	@"$(TCL)\bin\wish80" <<
-		lappend auto_path $(ROOT)
-		package require $(PROJECT)
-		if ![catch {$(PROJECT)}] {
-		    puts "Test passed."
-		    exit 0
-		} else {
-		    puts "$(PROJECT) failed to load and run"
-		    exit 1
-		}
+	@"$(WISH)" <<
+	    lappend auto_path $(ROOT)
+	    set ok [catch {
+		    package require $(PROJECT)
+		    pack [table .t]
+		} msg]
+	    if {$ok != 0} {
+		tk_messageBox\
+		    -message "$(PROJECT) failed to load and run: $msg"\
+		    -type ok
+	    }
+	    exit $ok
 <<
 
-pkgIndex.tcl: $(PROJECT).dll
-	"$(TCL)\bin\wish80" <<
-		pkg_mkIndex $(ROOT) $(PROJECT).dll
+#	set TCL_LIBRARY=$(TCL_DIR)\library
+#	set TK_LIBRARY=$(TK_DIR)\library
+#	set PATH=$(TCL_DIR)\win;$(TK_DIR)\win;%PATH%
+pkgIndex.tcl: $(DLL)
+	"$(WISH)" << pkgIndex.tcl
+	set out [open [lindex $$argv 0] w]
+	puts $$out {if {[catch {package require Tcl $(TCL_VERSION)}]} return}
+	puts -nonewline $$out {package ifneeded $(PROJECT) $(TBL_VERSION) }
+	puts -nonewline $$out {"package require Tk $(TK_VERSION); }
+	puts $$out {[list load [file join $$dir $(DLL)] $(PROJECT)]"}
+	close $$out
+	destroy .
 <<
 
-$(PROJECT).dll: $(DLLOBJS)
+$(DLLOBJS): tkTabletcl.h tkTableitcl.h
+
+$(DLL): $(DLLOBJS)
 	$(link) $(linkdebug) $(dlllflags) $(LIBS) \
-		$(guilibsdll) -out:$(PROJECT).dll $(DLLOBJS)
+		$(guilibsdll) -out:$(DLL) $(DLLOBJS)
+
+#	set TCL_LIBRARY=$(TCL_DIR)\library
+tkTabletcl.h: tkTable.tcl
+	"$(TCLSH)" << tkTable.tcl >tkTabletcl.h
+	set in [open [lindex $$argv 0] r]
+	while {[gets $$in line] != -1} {
+	    switch -regexp -- $$line "^$$" - {^#} continue
+	    regsub -all {\\} $$line {\\\\} line
+	    regsub -all {"} $$line {\"} line
+	    puts "\"$$line\\n\""	
+	}
+<<
+
+#	set TCL_LIBRARY=$(TCL_DIR)\library
+tkTableitcl.h: tkTable.itcl
+	"$(TCLSH)" << tkTable.itcl >tkTableitcl.h
+	set in [open [lindex $$argv 0] r]
+	while {[gets $$in line] != -1} {
+	    switch -regexp -- $$line "^$$" - {^#} continue
+	    regsub -all {\\} $$line {\\\\} line
+	    regsub -all {"} $$line {\"} line
+	    puts "\"$$line\\n\""	
+	}
+<<
 
 # Implicit Targets
 
@@ -86,9 +144,19 @@ $(PROJECT).dll: $(DLLOBJS)
 	$(cc32) $(cdebug) $(cflags) $(cvarsdll) $(INCLUDES) \
 		$(DEFINES) -Fo$(TMPDIR)\ $<
 
+install:
+	@if not exist "$(INST_RUNTIME)\nul" mkdir "$(INST_RUNTIME)"
+	copy "$(ROOT)\tkTable.tcl" "$(INST_RUNTIME)"
+	copy "$(ROOT)\tkTable.itcl" "$(INST_RUNTIME)"
+	copy "$(DLL)" "$(INST_RUNTIME)"
+	copy pkgIndex.tcl "$(INST_RUNTIME)"
+
+
 clean:
-	-$(RM) $(TMPDIR)\*.obj
-	-$(RM) $(PROJECT).dll
-	-$(RM) $(PROJECT).lib
-	-$(RM) $(PROJECT).exp
-	-$(RM) pkgIndex.tcl
+	-$(RM) $(TMPDIR)\*.obj 2>nul
+	-$(RM) $(DLL) 2>nul
+	-$(RM) $(PROJECT).lib 2>nul
+	-$(RM) $(PROJECT).exp 2>nul
+	-$(RM) pkgIndex.tcl 2>nul
+	-$(RM) tkTabletcl.h 2>nul
+	-$(RM) tkTableitcl.h 2>nul

@@ -2,18 +2,20 @@
  * Based on Tk3 table widget by Roland King (rols@lehman.com)
  * tkTable1.0+ represents a 90% rewrite of this code.
  *
- * README updated for tkTable v0.55+ by ellson@lucent.com (John Ellson)
- * README updated for tkTable v1.0+  by jhobbs@cs.uoregon.edu (Jeffrey Hobbs)
+ * README updated for v0.55+ by ellson@lucent.com (John Ellson)
+ * README updated for v1.0+  by jeff.hobbs@acm.org (Jeffrey Hobbs)
  *
  * tkTable v0.55+ includes additions contributed by:
  *        tmoore@spatial.ca (Tom Moore)
  *        wangnick@orthogon.de (Sebastian Wangnick)
  *        paulf@lamont.ldgo.columbia.edu
  *        peter@bj-ig.de (Peter Brueckner)
- *        jhobbs@cs.uoregon.edu (Jeffrey Hobbs)
+ *        jeff.hobbs@acm.org (Jeffrey Hobbs)
  *        ellson@lucent.com (John Ellson)
  *
  * see CHANGES file for details
+ *
+ * current maintainer: jeff.hobbs@acm.org
  */
 
 		*************************************
@@ -22,26 +24,25 @@
 
 INTRODUCTION
 
-This is the first release of a table/matrix widget as an extension
-to tk/tcl. The basic features of the widget are:
+TkTable is a table/matrix widget extension to tk/tcl.
+The basic features of the widget are:
 
- * variable width columns / height rows
+ * variable width columns / height rows (interactively resizable)
  * row and column titles
- * attaches to a Tcl array variable
- * supports standard TK reliefs, fonts, etc.
+ * multiple data sources ((Tcl array || Tcl command) &| internal caching)
+ * supports standard Tk reliefs, fonts, etc.
  * x/y scrollbar support
- * has 'tag' styles per row, column or cell to change
-   colo(u)rs, font, relief or anchor position
+ * 'tag' styles per row, column or cell to change
+   colors, font, relief, image or anchor position
  * in-cell editing - returns value back to array
- * support for disabled (read-only) tables
+ * support for disabled (read-only) tables or cells (via tags)
  * multiple selection modes, with "active" cell
  * 3 drawing modes to get optimal performance for larger tables
-   or slower machines.
  * optional 'flashes' when things update
- * can be configured to 'stretch' rows and columns to fill an
-   enclosing widget
+ * cell validation support
  * support for Tk Kanji patch
  * Windows support
+ * support for [incr Tcl] (see README.itcl)
 
 BUILDING THE WIDGET
 
@@ -51,8 +52,8 @@ BUILDING THE WIDGET
 	tar -xf tkTable<version>.tar
 
    This will create a subdirectory tkTable<version> with all the files in it.
-   There is a precompiled DLL built on Win95/VC4/Tk8.0a2.  Everyone else will
-   have to configure and compile.
+   For the newest version, the most likely place to find current release is:
+	ftp://ftp.cs.uoregon.edu/pub/tcl/tkTable/
 
 2. Configure
 
@@ -63,7 +64,7 @@ BUILDING THE WIDGET
    file will be found in $exec_prefix/lib/.  For Win95/NT, hack up
    makefile.vc until it works and compile.  It never worked 100% because
    I couldn't execute wish80 from a path with a space in it, but the DLL
-   builds just fine.
+   builds just fine.  A DLL should be available where you picked this up.
 
 3. Make and Install
 
@@ -101,7 +102,7 @@ Packing
 
 Array   
   The array elements for the table are of the form array(2,3) etc.  Make
-  sure there are no spaces around the ','.  You may have negative indices
+  sure there are no spaces around the ','.  You may have negative indices.
 
 Editing
   If you can't edit, remember that the focus model in tk is explicit, so
@@ -112,9 +113,8 @@ Editing
 
 COMMENTS, BUGS, etc.
 
-* Please can you send comments and bug reports to jhobbs@cs.uoregon.edu or
-  ellson@lucent.com and we'll do our best at addressing them.  This
-  is not a primary project for any of the authors.
+* Please can you send comments and bug reports to the current maintainer
+  and their best will be done to address them.
 
 * If you find a bug, a short piece of Tcl that exercises it would be very
   useful, or even better, compile with debugging and specify where it

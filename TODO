@@ -1,19 +1,37 @@
 ## TODO LIST
 ##
-## updated 29 Jan 1997, jhobbs@cs.uoregon.edu "Jeffrey Hobbs"
+## updated 2 April 1998, jeff.hobbs@acm.org
 ##
 
-* Add ability to index by tagname
+These are recommendations, not all of the same priority, and not
+all necessarily will be implemented.  If you see something you
+feel is important, email me and say so.  Very democratic.
+Aside from here, see header of tkTable.c for other stuff, especially BUGS.
 
-* improve cut/paste to delete/insert rows/cols
+*** Tcl8 object model will be supported when it is supported in Tk
+    (or somewhere else that has good examples for widgets)
 
-* To use the Tk-GC-Cache we must reserve our Tags-GC's
-	tablePtr->normalGC = TableGetGc(tablePtr,&tablePtr->defaultTag);
-  the Use-Count is ge 1 in TkGc. The Tag-Mixing is a problem but not
-  normally if we have preserved Gc's for normal/selected/title.
+* match entry width with cell width (off by PADX PADY)
 
-* localize code for arrayVar/Trace/Configuration to one place, one
-  set of routines.
+* -rowstretchmode fill ignores initial # of rows, or config requests for more.
+
+* add -colstretchmode fill
+
+* scratch -fill in favor of -dynamic which would monitor the max
+  extent of row/col (difficult)
+
+* fix selection routines to properly handle title area movement
+
+* multi-line support (newlines are only handled effectively in Tk8)
+
+* support smooth scrolling of rows/cols
+
+* possible -fill option for tags/cells (col/rowspan idea)
+ 
+* add ability to index by tagname
 
 * fix AdjustParams to use col/rowstretch properly when only a portion
   of the table is visible (ie: when using scrollbars)
+
+* overhaul tag mechanism (include way to query for tags on a cell, add
+  priority, allow indices like 2,*)

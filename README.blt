@@ -4,7 +4,7 @@ conflicts to be aware of.
 BLT also has a table.n man page.  TkTable's man page will still be
 available as tkTable.n.
 
-BLT has also has a "table" command.  The table command of the last
+BLT also has a "table" command.  The table command of the last
 extension loaded will be in effect.  If you need to use both table
 commands then eval "rename table blttable" after loading blt and
 before loading tkTable, or perhaps "rename table tkTable" if you

@@ -1,73 +1,102 @@
+SRCDIR		= @srcdir@
+
 PACKAGE		= Tktable
-VERSION         = 1.4
+TBL_VERSION	= 1.82
 OBJS		= tkTable.o
-MANS		= tkTable.n
+MANS		= $(SRCDIR)/tkTable.n
 
 #-------------------------------------------------
-INSTALL         = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_DATA    = @INSTALL_DATA@
-CC              = @CC@
-SHLIB_CFLAGS    = @TCL_SHLIB_CFLAGS@
-SHLIB_SUFFIX    = @TCL_SHLIB_SUFFIX@
-SHLIB_LD        = @TCL_SHLIB_LD@
-TCL_PREFIX      = @TCL_PREFIX@
-## HP cc sometimes requires -Aa for ansi compilation
-TCL_CFLAGS      = -O @TCL_CFLAGS@
-TCL_LIB_SPEC    = @TCL_LIB_SPEC@
-TCL_LIBS        = @TCL_LIBS@
-TCL_LD_FLAGS    = @TCL_LD_FLAGS@
-TCL_LD_SEARCH_FLAGS = @TCL_LD_SEARCH_FLAGS@
-TK_XINCLUDES    = @TK_XINCLUDES@
-TK_LIB_SPEC     = @TK_LIB_SPEC@
-TK_LIBS         = @TK_LIBS@
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
 
-exec_prefix     = @exec_prefix@
+TCL_VERSION	= @TCL_VERSION@
+TK_VERSION	= @TK_VERSION@
 
-LIB_RUNTIME_DIR = $(exec_prefix)/lib
+TCL_SRC_DIR 	= @TCL_SRC_DIR@
+TK_SRC_DIR 	= @TK_SRC_DIR@
 
-INCLUDES        = -I$(TCL_PREFIX)/include $(TK_XINCLUDES)
+TCL_BUILD_LIB_SPEC	= @TCL_BUILD_LIB_SPEC@
+TK_BUILD_LIB_SPEC	= @TK_BUILD_LIB_SPEC@
 
-DLL             = $(PACKAGE)$(SHLIB_SUFFIX)
-PACKAGEDIR	= $(TCL_PREFIX)/lib/$(PACKAGE)
+TCL_LIB_SPEC	= @TCL_LIB_SPEC@
+TK_LIB_SPEC	= @TK_LIB_SPEC@
 
-CFLAGS          = $(TCL_CFLAGS) $(SHLIB_CFLAGS) $(INCLUDES) \
-		  -DVERSION=\"$(VERSION)\"
+TCL_LIBS	= @TCL_LIBS@
+TK_LIBS		= @TK_LIBS@
 
-MAN_INSTALL_DIR = $(TCL_PREFIX)/man/mann
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+CC		= @CC@
+SHLIB_CFLAGS	= @TCL_SHLIB_CFLAGS@
+SHLIB_SUFFIX	= @TCL_SHLIB_SUFFIX@
+SHLIB_LD	= @TCL_SHLIB_LD@
+TCL_PREFIX	= @TCL_PREFIX@
+## HP cc sometimes requires -Aa for proper ansi compilation
+TCL_CFLAGS	= -O @TCL_DEFS@ @TCL_CFLAGS@
+TCL_LD_FLAGS	= @TCL_LD_FLAGS@
+TK_LD_SEARCH_FLAGS = @TK_LD_SEARCH_FLAGS@
+TK_XINCLUDES	= @TK_XINCLUDES@
+
+LIB_RUNTIME_DIR = @libdir@
+
+INCLUDES	= -I@includedir@ $(TK_XINCLUDES)\
+		  -I$(TCL_SRC_DIR)/generic\
+		  -I$(TK_SRC_DIR)/generic
+
+DLL		= $(PACKAGE)$(SHLIB_SUFFIX)
+PACKAGEDIR	= $(PACKAGE)$(TBL_VERSION)
+DLLDIR		= ${exec_prefix}/lib/$(PACKAGEDIR)
+RTDIR		= ${prefix}/lib/$(PACKAGEDIR)
+
+CFLAGS		= -I. -I$(SRCDIR) $(TCL_CFLAGS) $(SHLIB_CFLAGS) $(INCLUDES) \
+		  -DTBL_VERSION=\"$(TBL_VERSION)\"\
+		  -DITCL_RUNTIME=\"$(RTDIR)/tkTable.itcl\"\
+		  -DTCL_RUNTIME=\"$(RTDIR)/tkTable.tcl\"
+
+MAN_INSTALL_DIR = @mandir@/mann
 
 all: $(DLL) pkgIndex.tcl
 
 $(DLL): $(OBJS)
 	$(SHLIB_LD) -o $@ $(OBJS)
 
-tkTable.o: tkTabletcl.h tkTable.h
+tkTable.o: tkTabletcl.h $(SRCDIR)/tkTable.h $(SRCDIR)/tkTable.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o tkTable.o $(SRCDIR)/tkTable.c
+
+tkAppInit.o: $(SRCDIR)/tkTable.h $(SRCDIR)/tkAppInit.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o tkAppInit.o $(SRCDIR)/tkAppInit.c
 
 pkgIndex.tcl:
-	(if test -f $(PACKAGEDIR)/pkgIndex.tcl; \
-	    then grep -v $(VERSION) $(PACKAGEDIR)/pkgIndex.tcl; \
-	else true; fi;) | \
-      echo 'package ifneeded $(PACKAGE) $(VERSION) "package require Tk; [list load [file join $$dir $(DLL).$(VERSION)] $(PACKAGE)]"' > pkgIndex.tcl
+	(\
+	echo 'if {[catch {package require Tcl $(TCL_VERSION)}]} return';\
+	echo 'package ifneeded $(PACKAGE) $(TBL_VERSION)\
+	    "package require Tk $(TK_VERSION);\
+	     [list load [file join $$dir $(DLL).$(TBL_VERSION)] $(PACKAGE)]"'\
+	) > pkgIndex.tcl
 
 install: all
-	if test ! -d $(PACKAGEDIR); then mkdir $(PACKAGEDIR); fi
-	$(INSTALL_PROGRAM) $(DLL) $(PACKAGEDIR)/$(DLL).$(VERSION)
-	$(INSTALL_DATA) pkgIndex.tcl $(PACKAGEDIR)/pkgIndex.tcl
-	$(INSTALL_DATA) tkTable.tcl $(PACKAGEDIR)/tkTable.tcl
+	if test ! -d "$(DLLDIR)"; then mkdir "$(DLLDIR)"; fi
+	if test ! -d "$(RTDIR)"; then mkdir "$(RTDIR)"; fi
+	$(INSTALL_PROGRAM) $(DLL) "$(DLLDIR)/$(DLL).$(TBL_VERSION)"
+	$(INSTALL_DATA) pkgIndex.tcl "$(DLLDIR)/pkgIndex.tcl"
+	$(INSTALL_DATA) $(SRCDIR)/tkTable.tcl "$(RTDIR)/tkTable.tcl"
+	$(INSTALL_DATA) $(SRCDIR)/tkTable.itcl "$(RTDIR)/tkTable.itcl"
 	$(INSTALL_DATA) $(MANS) $(MAN_INSTALL_DIR)/
 
 test: all
 	true
 
 clean: 
-	rm -f *.o *$(SHLIB_SUFFIX) core pkgIndex.tcl tkTabletcl.h tablewish
+	rm -f *.o *$(SHLIB_SUFFIX) core pkgIndex.tcl tkTabletcl.h tkTableitcl.h tablewish
 
 distclean: clean
 	rm -f Makefile config.cache config.log config.status
 
-tkTabletcl.h: tkTable.tcl
-	sed -e '/^$\#/d' -e '/^$$/d' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' <tkTable.tcl >tkTabletcl.h || rm tkTabletcl.h
+tkTabletcl.h: $(SRCDIR)/tkTable.tcl $(SRCDIR)/tkTable.itcl
+	sed -e '/^$\#/d' -e '/^$$/d' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' <$(SRCDIR)/tkTable.tcl >tkTabletcl.h || rm tkTabletcl.h
+	sed -e '/^$\#/d' -e '/^$$/d' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' <$(SRCDIR)/tkTable.itcl >tkTableitcl.h || rm tkTableitcl.h
 
 tablewish: tkAppInit.o $(OBJS)
-	$(CC) $(TCL_LD_SEARCH_FLAGS) -o $@ tkAppInit.o $(OBJS) \
-	  $(LIBS) $(TK_LIB_SPEC) $(TCL_LIB_SPEC) $(TK_LIBS) $(TCL_LIBS) 
+	$(CC) $(TK_LD_SEARCH_FLAGS) -o $@ tkAppInit.o $(OBJS) \
+	  $(LIBS) $(TK_BUILD_LIB_SPEC) $(TK_LIB_SPEC) $(TCL_BUILD_LIB_SPEC) $(TCL_LIB_SPEC) $(TK_LIBS) $(TCL_LIBS) 

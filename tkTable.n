@@ -232,7 +232,7 @@ Database Class:	\\fB\\$3\\fR
 .de UL
 \\$1\l'|0\(ul'\\$2
 ..
-.TH table n 1.4 Tk "Tk Table Extension"
+.TH table n 1.82 Tk "Tk Table Extension"
 .HS table tk
 .BS
 .SH NAME
@@ -244,8 +244,9 @@ table \- Create and manipulate tables
 \-exportselection	\-font	\-foreground
 \-highlightbackground	\-highlightcolor	\-highlightthickness
 \-insertbackground	\-insertborderwidth	\-insertofftime
-\-insertontime	\-insertwidth	\-relief	\-takefocus
-\-xscrollcommand	\-yscrollcommand
+\-insertontime	\-insertwidth	\-invertselected	\-padx
+\-pady	\-relief	\-takefocus	\-xscrollcommand
+\-yscrollcommand
 .SE
 
 .SH "WIDGET-SPECIFIC OPTIONS"
@@ -257,12 +258,23 @@ If true, updates are not forced out at any point, the widget waits for Tk to
 be idle before it repaints the screen.  If false, flashes, variable updates
 and the cursor changes are forced immediately to the screen.
 Defaults to false.
+.OP \-bordercursor borderCursor Cursor
+Specifies the name of the cursor to show when over borders, a visual
+indication that interactive resizing is allowed (it is thus affect by
+the value of \-resizeborders).  Defaults to \fIcrosshair\fR.
 .OP "\-browsecommand or \-browsecmd" browseCommand BrowseCommand
 Specifies a command which will be evaluated anytime the active cell changes.
-It uses the %-substition model described in COMMAND SUBSTITUTION below.
+It uses the %\-substition model described in COMMAND SUBSTITUTION below.
+.OP \-cache cache Cache
+A boolean value that specifies whether an internal cache of the table
+contents should be kept.  This greatly enhances speed performance when used
+with \fB\-command\fR but uses extra memory.  Can maintain state when both
+\fB\-command\fR and \fB\-variable\fR are empty.  The cache is automatically
+flushed whenever the value of \fB\-cache\fR or \fB\-variable\fR changes,
+otherwise you have to explicitly \fBflush\fR it.  Defaults to false.
 .OP \-colorigin colOrigin Origin
-Column origin of top left corner of screen into the array variable
-First column maps to array(x,$colorigin).  Defaults to 0.
+Specifies what column index to interpret as the leftmost column in the table.
+This value is used for user indices in the table.  Defaults to 0.
 .OP \-cols cols Cols
 Number of cols in the table.  Defaults to 10.
 .OP \-colseparator colSeparator Separator
@@ -275,16 +287,17 @@ allocated window space:
 .RS
 .TP
 \fBnone\fR
-Columns will not stretch to fill the assigned window
-space.  If the columns are too narrow, there will be a 
-blank space at the right of the table.  This is the default.
+Columns will not stretch to fill the assigned window space.  If the columns
+are too narrow, there will be a blank space at the right of the table.  This
+is the default.
 .TP
 \fBunset\fR
 Only columns that do not have a specific width set will be stretched.
 .TP
 \fBall\fR
-All columns will be stretched by the same number of pixels
-to fill the window space allocated to the table.
+All columns will be stretched by the same number of pixels to fill the
+window space allocated to the table.  This mode can interfere with
+interactive border resizing which tries to force column width.
 .TP
 \fBlast\fR
 The last column will be stretched 
@@ -292,22 +305,27 @@ to fill the window space allocated to the table.
 .TP
 \fBfill\fR (only valid for rowstretch currently)
 The table will get more or less columns according to the window
-space allocated to the table.
+space allocated to the table.  This mode has numerous quirks and
+may disappear in the future.
 .RE
 .OP \-coltagcommand colTagCommand TagCommand
 Provides the name of a procedure that will be evaluated by the widget to
 determine the tag to be used for a given column.  When displaying a cell,
 the table widget will first check to see if a tag has been defined using the
-\fBcoltag\fR widget command.  If no tag is found, it will evaluate the named
+\fBtag col\fR widget method.  If no tag is found, it will evaluate the named
 procedure passing the column number in question as the sole argument.  The
 procedure is expected to return the name of a tag to use, or a null string.
 Errors occuring during the evaluation of the procedure, or the return of an
 invalid tag name are silently ignored.
+.OP \-colwidth colWidth ColWidth
+Default column width in characters in the default font.  Defaults to 10.
+If the number is negative, it is interpreted as an exact pixel value instead.
 .OP \-command command Command
 Specified a command to use as a procedural interface to cell values.
 If \fB\-usecommand\fR is true, this command will be used instead of any
-reference to the \fB\-variable\fR array.
-It uses the %-substition model described in COMMAND SUBSTITUTION below.
+reference to the \fB\-variable\fR array.  When retrieving cell values,
+the return value of the command is used as the value for the cell.
+It uses the %\-substition model described in COMMAND SUBSTITUTION below.
 .OP \-drawmode drawMode DrawMode
 Sets the table drawing mode to one of the following options:
 .RS
@@ -330,19 +348,31 @@ compatible on the border mode.
 .OP \-flashmode flashMode FlashMode
 A boolean value which specifies whether cells should flash when their value
 changes.  The table tag \fBflash\fR will be applied to these cells for the
-duration specified by \-flashtime.  Defaults to 0.
+duration specified by \fB\-flashtime\fR.  Defaults to 0.
 .OP \-flashtime flashTime FlashTime
 The amount of time, in 1/4 second increments, for which a cell should flash
-when it is edited.  \-flashmode must be on.  Defaults to 2.
+when it is edited.  \fB\-flashmode\fR must be on.  Defaults to 2.
 .OP \-height height Height
-Height of default row in pixels (-1, the default, means set to font height).
+Specifies the desired height for the window, in rows.
+If zero or less, then the desired height for the window is made just
+large enough to hold all the rows in the table.  The height can be
+further limited by \fB\-maxheight\fR.
+.OP \-invertselected invertSelected InvertSelected
+Specifies whether the foreground and background of an item should simply
+have their values swapped instead of merging the \fIsel\fR tag options
+when the cell is selected.  Defaults to 0 (merge).
 .OP \-maxheight maxHeight MaxHeight
-The max height in pixels that the window will request.  Defaults to 800.
+The max height in pixels that the window will request.  Defaults to 600.
 .OP \-maxwidth maxWidth MaxWidth
-The max width in pixels that the window will request.  Defaults to 1000.
+The max width in pixels that the window will request.  Defaults to 800.
+.OP \-resizeborders resizeBorders ResizeBorders
+Specifies what kind of interactive border resizing to allow, must be one of
+row, col, both (default) or none.
+.OP \-rowheight rowHeight RowHeight
+Height of default row in pixels (0, the default, means set to font height).
 .OP \-roworigin rowOrigin Origin
-Row origin of top left corner of screen into the array variable.
-First row maps to array($roworigin,y).  Defaults to 0.
+Specifies what row index to interpret as the topmost row in the table.
+This value is used for user indices in the table.  Defaults to 0.
 .OP \-rows rows Rows
 Number of rows in the table.  Defaults to 10.
 .OP \-rowseparator rowSeparator Separator
@@ -351,37 +381,44 @@ separator when cutting or pasting data in a table.  By default, rows
 are separated as tcl lists.
 .OP \-rowstretchmode rowStretchMode StretchMode
 Specifies the stretch modes for rows to fill extra
-allocated window space.  See \-colstretchmode for valid options.
+allocated window space.  See \fB\-colstretchmode\fR for valid options.
 .OP \-rowtagcommand rowTagCommand TagCommand
 Provides the name of a procedure that can evaluated by the widget to
 determine the tag to be used for a given row.  The procedure must be
 defined by the user to accept a single argument (the row number), and
 return a tag name or null string.  This operates in a similar manner as
-'-coltagcommand', except that it applies to row tags.
-.OP \-selectmode selectMode SelectMode
-Specifies one of several styles for manipulating the selection.
-The value of the option may be arbitrary, but the default bindings
-expect it to be either \fBsingle\fR, \fBbrowse\fR, \fBmultiple\fR,
-or \fBextended\fR;  the default value is \fBsingle\fR.  These styles
-are like those for the Tk listbox, except expanded for 2 dimensions.
+\fB\-coltagcommand\fR, except that it applies to row tags.
 .OP "\-selectioncommand or \-selcmd" selectionCommand SelectionCommand
 Specifies a command to evaluate when the selection is retrieved from a table
 via the selection mechanism (ie: evaluating "selection get").  The return
 value from this command will become the string passed on by the selection
-mechanism.  It uses the %-substition model described in COMMAND SUBSTITUTION
+mechanism.  It uses the %\-substition model described in COMMAND SUBSTITUTION
 below.
+.OP \-selectmode selectMode SelectMode
+Specifies one of several styles for manipulating the selection.  The value
+of the option may be arbitrary, but the default bindings expect it to be
+either \fBsingle\fR, \fBbrowse\fR, \fBmultiple\fR, or \fBextended\fR; the
+default value is \fBbrowse\fR.  These styles are like those for the Tk
+listbox, except expanded for 2 dimensions.
+.OP \-selecttype selectType SelectType
+Specifies one of several types of selection for the table.  The value of the
+option may be one of \fBrow\fR, \fBcol\fR, \fBcell\fR, or \fBboth\fR
+(meaning \fBrow && col\fR); the default value is \fBcell\fR.  These types
+define whether an entire row/col is affected when a cell's selection is
+changed (set or clear).
 .OP \-state state State
 Specifies one of two states for the entry:  \fBnormal\fR or \fBdisabled\fR.
 If the table is disabled then the value may not be changed using widget
 commands and no insertion cursor will be displayed, even if the input focus
-is in the widget.
-.OP \-titlerows titleRows TitleRows
-Number of rows to use as a title area.  Defaults to 0.
+is in the widget.  Defaults to \fBnormal\fR.
 .OP \-titlecols titleCols TitleCols
 Number of columns to use as a title area.  Defaults to 0.
+.OP \-titlerows titleRows TitleRows
+Number of rows to use as a title area.  Defaults to 0.
 .OP \-usecommand useCommand UseCommand
 A boolean value which specifies whether to use the \fBcommand\fR option.
 This value sets itself to zero if \fBcommand\fR is used and returns an error.
+Defaults to 1 (will use \fBcommand\fR if specified).
 .OP \-validate validate Validate
 A boolean specifying whether validation should occur for the active buffer.
 Defaults to 0.
@@ -390,21 +427,26 @@ Specifies a command to execute when the active cell is edited.  This command
 is expected to return a Tcl boolean.  If it returns true, then it is assumed
 the new value is OK, otherwise the new value is rejected (the edition will
 not take place).  Errors in this command are handled in the background.  It
-uses the %-substition model described in COMMAND SUBSTITUTION below.
+uses the %\-substition model described in COMMAND SUBSTITUTION below.
 .OP \-variable variable Variable
 Global Tcl array variable to attach to the table's C array.  It will be
-created if it doesn't already exist or is a simple variable.  The table is
-effectively useless without an attached array (no data will be stored).
-Keys used by the table in the array are of the form \fIrow\fR,\fIcol\fR for
-cells and the special key \fIactive\fR which contains the value of the
-active cell buffer.
+created if it doesn't already exist or is a simple variable.  Keys used by
+the table in the array are of the form \fIrow\fR,\fIcol\fR for cells and
+the special key \fIactive\fR which contains the value of the active cell
+buffer.  The Tcl array is managed as a sparse array (the table doesn't
+require all valid indices have values).  No stored value for an index is
+equivalent to the empty string, and clearing a cell will remove that index
+from the Tcl array.
 .OP \-width width Width
-Default column width in characters in the default font.  Defaults to 10.
+Specifies the desired width for the window, in columns.
+If zero or less, then the desired width for the window is made just
+large enough to hold all the columns in the table.  The width can be
+further limited by \fB\-maxwidth\fR.
 .BE
 
 .SH DESCRIPTION
 .PP
-The \fBtable\fR command creates a 2-dimensional grid of cells which can used
+The \fBtable\fR command creates a 2\-dimensional grid of cells which can used
 to display or update the contents of a Tcl array variable.  The widget has
 an active cell, the contents of which can be edited (when the state is
 normal).  The widget supports a default style for the cells and also
@@ -435,7 +477,7 @@ the following ways:
 .TP 12
 \fInumber,number\fR
 Specifies the cell as a numerical index of row,col which corresponds to the
-index of the associated Tcl array, where \-roworigin,\-colorigin
+index of the associated Tcl array, where \fB\-roworigin,\-colorigin\fR
 corresponds to the first cell in the table (0,0 by default).
 .TP 12
 \fBactive\fR
@@ -447,18 +489,18 @@ Indicates the anchor point for the selection, which is set with the
 \fBselection anchor\fR widget command.
 .TP 12
 \fBbottomright\fR
-Indicates the bottom-rightmost cell visible in the table.
+Indicates the bottom\-rightmost cell visible in the table.
 .TP 12
 \fBend\fR
 Indicates the bottom right cell of the table.
 .TP 12
 \fBorigin\fR
-Indicates the top-leftmost editable cell of the table, not necessarily
+Indicates the top\-leftmost editable cell of the table, not necessarily
 in the display.  This takes into account the user specified origin and
 title area.
 .TP 12
 \fBtopleft\fR
-Indicates the top-leftmost editable cell visible in the table (this
+Indicates the top\-leftmost editable cell visible in the table (this
 excludes title cells).
 .TP 12
 \fB@\fIx\fB,\fIy\fR
@@ -492,7 +534,8 @@ edited cells.
 This tag is given to any selected cells.
 .TP 10
 \fBtitle\fR
-This tag is given to any cells in the title rows and columns.
+This tag is given to any cells in the title rows and columns.  This
+tag has \fB-state\fR \fIdisabled\fR by default.
 .RE
 .PP
 Tags control the way cells are displayed on the screen.
@@ -506,23 +549,28 @@ with the tag override the default display style.
 The following options are currently supported for tags:
 .RS
 .TP
-\fB-anchor\fR
+\fB\-anchor\fR
 anchoring in the cell space
 .TP
-\fB-background\fR or \fB-bg\fR
+\fB\-background\fR or \fB-bg\fR
 background color of the cell
 .TP
-\fB-font\fR
+\fB\-font\fR
 font for the cell
 .TP
-\fB-foreground\fR or \fB-fg\fR
+\fB\-foreground\fR or \fB-fg\fR
 foreground color of the cell
 .TP
-\fB-image\fR
+\fB\-image\fR
 an image to display in the cell instead of text
 .TP
-\fB-relief\fR
+\fB\-relief\fR
 the relief for the cell
+.TP
+\fB\-state\fR
+the state of the cell, to allow for certain cells to be disabled.
+This prevents the cell from being edited by the \fIinsert\fR or \fIdelete\fr
+methods, but a direct \fIset\fR will not be prevented.
 .RE
 .PP
 A priority order is defined among tags, and this order is used in
@@ -571,8 +619,7 @@ For \fBSelectionCommand\fR, it is the maximum number of columns in any
 row in the selection.  Otherwise it is the column of the triggered cell.
 .TP 5
 \fB%C\fR
-Only valid for the \fBValidateCommand\fR, it is the \fIrow\fR,\fIcol\fR
-index of the cell being validated.
+A convenience substitution for \fI%r\fR,\fI%c\fR.
 .TP 5
 \fB%i\fR
 For \fBSelectionCommand\fR, it is the total number of cells in the selection.
@@ -587,7 +634,8 @@ Otherwise it is the row of the triggered cell.
 For \fBValidateCommand\fR, it is the current value of the cell being validated.
 For \fBSelectionCommand\fR, it is the default value of the selection.
 For \fBBrowseCommand\fR, it is the index of the last active cell.
-For \fBCommand\fR, it is "r" for a read (get) and "w" for a write (set).
+For \fBCommand\fR, it is empty for reads (get) and the current value of the
+cell for writes (set).
 .TP 5
 \fB%S\fR
 For \fBValidateCommand\fR, it is the potential new value of the cell
@@ -618,6 +666,28 @@ Sets the active cell to the one indicated by \fIindex\fR.
 It returns the bounding box for the specified cell (range) as a 4-tuple of
 x, y, width and height in pixels.  It clips the box to the visible portion,
 if any, otherwise an empty string is returned.
+.TP
+\fIpathName \fBborder\fR \fIoption args\fR
+This command is a voodoo hack to implement border sizing for tables.  Its
+options may change in the future.
+.RS
+.TP
+\fIpathName \fBborder mark\fR \fIx y\fR ?\fIrow|col\fR?
+Records \fIx\fR and \fIy\fR and the row and/or column border under that
+point in the table window, if any; used in conjunction with later \fBborder
+dragto\fR commands.  Typically this command is associated with a mouse
+button press in the widget.  If \fIrow\fR or \fIcol\fR is not specified, it
+returns a tuple of both border indices (an empty item means no border).
+Otherwise, just the specified item is returned.
+.TP
+\fIpathName \fBborder dragto\fR \fIx y\fR.
+This command computes the difference between its \fIx\fR and \fIy\fR
+arguments and the \fIx\fR and \fIy\fR arguments to the last \fBborder
+mark\fR command for the widget.  It then adjusts the previously marked
+border by the difference.  This command is typically associated with mouse
+motion events in the widget, to produce the effect of interactive border
+resizing.
+.RE
 .TP
 \fIpathName \fBcget\fR \fIoption\fR
 Returns the current value of the configuration option given
@@ -658,12 +728,52 @@ Deletes text from the active cell.  If only one index is given, it deletes
 the character after that index, otherwise it deletes from the first index to
 the second.  \fIindex\fR can be a number, \fBinsert\fR or \fBend\fR.
 .TP
-\fIpathName \fBdelete cols\fR \fIfirst\fR ?\fIlast\fR?
-Currently unsupported.
+\fIpathName \fBdelete cols\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
+Deletes \fBcount\fR cols starting at (and including) col \fBindex\fR.  If
+\fBcount\fR is negative, it deletes cols to the left.  Otherwise it deletes
+cols to the right.  The selection will be cleared.  The optional switches
+are:
+.RS
 .TP
-\fIpathName \fBdelete rows\fR \fIfirst\fR ?\fIlast\fR?
-Currently unsupported.
+\fB\-cols\fR
+Sets an artificial maximum column boundary to use when collapsing the rest
+of the columns.  By default it uses the value of the \fB\-cols\fR widget
+option.  This can cause interesting side-effects when used in conjunction
+with the other options.
+.TP
+\fB\-holddimensions\fR
+Causes the table cols to be unaffected by the deletion (empty cols may
+appear).  By default the dimensions are adjusted by \fBcount\fR.
+.TP
+\fB\-holdtags\fR
+Causes the tags specified by the \fItag\fR method to not collapse along
+with the data.  Also prevents specific widths set by the \fIwidth\fR method
+from being adjusted.  By default, these tags are properly adjusted.
+.TP
+\fB\-keeptitles\fR
+Prevents title area cell contents from being moved.  Otherwise they are
+treated just like regular cells and will move as specified.
+.TP
+\fB\-rows\fR
+Sets an artificial maximum row boundary to use when collapsing the rest of
+the rows.  By default it uses the value of the \fB\-rows\fR widget option.
+This can cause interesting side-effects when used in conjunction with the
+other options.
+.TP
+\fB\--\fR
+Signifies the end of the switches.
 .RE
+.TP
+\fIpathName \fBdelete rows\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
+Deletes \fBcount\fR rows starting at (and including) row \fBindex\fR.  If
+\fBcount\fR is negative, it deletes rows going up.  Otherwise it deletes
+rows going down.  The selection will be cleared.  The switches are the same
+as those for column deletion.
+.RE
+.TP
+\fIpathName \fBflush\fR ?\fIfirst\fR? ?\fIlast\fR?
+Forces the table cache to be flushed from \fIfirst\fR to \fIlast\fR.  If
+neither are specified, it flushes the entire cache.
 .TP
 \fIpathName \fBget\fR \fIfirst\fR ?\fIlast\fR?
 Returns the value of the cells specified by the table indices \fIfirst\fR
@@ -673,8 +783,8 @@ and (optionally) \fIlast\fR in a list.
 If no \fIrow\fR is specified, returns a list describing all rows for which a
 height has been set.  If \fBrow\fR is specified with no value, it prints out
 the height of that row in pixels.  If one or more \fIrow\-value\fR pairs are
-specified, then it sets each row to be that height in pixels.  If \fIvalue\fR
-is negative, then the row uses the default height.
+specified, then it sets each row to be that height in pixels.  If
+\fIvalue\fR is \fIdefault\fR, then the row uses the default height.
 .TP
 \fIpathName \fBicursor\fR ?\fIarg\fR?
 With no arguments, prints out the location of the insertion cursor in the
@@ -697,17 +807,23 @@ The \fIvalue\fR is a text string which is inserted at the \fIindex\fR
 postion of the active cell.  The cursor is then positioned after the
 new text. \fIindex\fR can be a number, \fBinsert\fR or \fBend\fR.
 .TP
-\fIpathName \fBinsert cols\fR \fIfirst\fR ?\fIlast\fR?
-Currently unsupported.
+\fIpathName \fBinsert cols\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
+Inserts \fBcount\fR cols starting at col \fBindex\fR.  If \fBcount\fR is
+negative, it inserts before the specified col.  Otherwise it inserts after
+the specified col.  The selection will be cleared.  The switches are the
+same as those for column deletion.
 .TP
-\fIpathName \fBinsert rows\fR \fIfirst\fR ?\fIlast\fR?
-Currently unsupported.
+\fIpathName \fBinsert rows\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
+Inserts \fBcount\fR rows starting at row \fBindex\fR.  If \fBcount\fR is
+negative, it inserts before the specified row.  Otherwise it inserts after
+the specified row.  The selection will be cleared.  The switches are the
+same as those for column deletion.
 .RE
 .TP
 \fIpathName \fBreread\fR
-Rereads the old contents of the cell back into the
-editing buffer.  Useful for a key binding when <Escape>
-is pressed to abort the edit (a default binding).
+Rereads the old contents of the cell back into the editing buffer.  Useful
+for a key binding when <Escape> is pressed to abort the edit (a default
+binding).
 .TP
 \fIpathName \fBscan\fR \fIoption args\fR
 This command is used to implement scanning on tables.  It has
@@ -741,11 +857,10 @@ has several forms, depending on \fIoption\fR:
 .RS
 .TP
 \fIpathName \fBselection anchor\fR \fIindex\fR
-Sets the selection anchor to the cell given by \fIindex\fR.
-The selection anchor is the end of the selection that is fixed
-while dragging out a selection with the mouse.
-The index \fBanchor\fR may be used to refer to the anchor
-cell.
+Sets the selection anchor to the cell given by \fIindex\fR.  The selection
+anchor is the end of the selection that is fixed while dragging out a
+selection with the mouse.  The index \fBanchor\fR may be used to refer to
+the anchor cell.
 .TP
 \fIpathName \fBselection clear\fR \fIfirst \fR?\fIlast\fR?
 If any of the cells between \fIfirst\fR and \fIlast\fR (inclusive) are
@@ -758,40 +873,38 @@ Returns 1 if the cell indicated by \fIindex\fR is currently
 selected, 0 if it isn't.
 .TP
 \fIpathName \fBselection set\fR \fIfirst\fR ?\fIlast\fR?
-Selects all of the cells in the range between
-\fIfirst\fR and \fIlast\fR, inclusive, without affecting
-the selection state of cells outside that range.
+Selects all of the cells in the range between \fIfirst\fR and \fIlast\fR,
+inclusive, without affecting the selection state of cells outside that
+range.
 .RE
 .TP
 \fIpathName \fBset\fR \fIindex\fR ?\fIvalue\fR? ?\fIindex value ...\fR?
-Sets the specified index to the associated value.
+Sets the specified index to the associated value.  Table validation will not
+be triggered via this method.
 .TP
 \fIpathName \fBtag\fR option ?\fIarg arg ...\fR?
-This command is used to manipulate tags.  The exact behavior of the
-command depends on the \fIoption\fR argument that follows the
-\fBtag\fR argument.  The following forms of the command are currently
-supported:
+This command is used to manipulate tags.  The exact behavior of the command
+depends on the \fIoption\fR argument that follows the \fBtag\fR argument.
+Only \fIcget\fR complains about unknown tag names.
+The following forms of the command are currently supported:
 .RS
 .TP
 \fIpathName \fBtag cell\fR \fItagName ?index ... ?\fR
-With no arguments, prints out the list of cells
-that use the \fItag\fR.  Otherwise it sets the specified
-cells to use the \fItag\fR.  If \fItag\fR is {},
-the cells are reset to the default \fItag\fR.  Tags added
-during \-*tagcommand evaluation do not register here.
+With no arguments, prints out the list of cells that use the \fItag\fR.
+Otherwise it sets the specified cells to use the \fItag\fR.  If \fItag\fR is
+{}, the cells are reset to the default \fItag\fR.  Tags added during
+\-*tagcommand evaluation do not register here.
 .TP
 \fIpathName \fBtag cget\fR \fItagName option\fR
 This command returns the current value of the option named \fIoption\fR
-associated with the tag given by \fItagName\fR.
-\fIOption\fR may have any of the values accepted by the \fBtag configure\fR
-widget command.
+associated with the tag given by \fItagName\fR.  \fIOption\fR may have any
+of the values accepted by the \fBtag configure\fR widget command.
 .TP
 \fIpathName \fBtag col\fR \fItagName ?col ... ?\fR
-With no arguments, prints out the list of cols
-that use the \fItag\fR.  Otherwise it sets the specified
-cols to use the \fItag\fR.  If \fItag\fR is {},
-the cols are reset to the default \fItag\fR.  Tags added
-during \-coltagcommand evaluation do not register here.
+With no arguments, prints out the list of cols that use the \fItag\fR.
+Otherwise it sets the specified cols to use the \fItag\fR.  If \fItag\fR is
+{}, the cols are reset to the default \fItag\fR.  Tags added during
+\-coltagcommand evaluation do not register here.
 .TP
 \fIpathName \fBtag configure \fItagName\fR ?\fIoption\fR? ?\fIvalue\fR? ?\fIoption value ...\fR?
 This command is similar to the \fBconfigure\fR widget command except
@@ -815,6 +928,9 @@ Deletes a tag.  No error if the tag does not exist.
 \fIpathName \fBtag exists\fR \fItagName\fR
 Returns 1 if the named tag exists, 0 otherwise.
 .TP
+\fIpathName \fBtag includes\fR \fItagName index\fR
+Returns 1 if the specified index has the named tag, 0 otherwise.
+.TP
 \fIpathName \fBtag names\fR ?\fIpattern\fR?
 If no pattern is specified, shows the names of all defined tags.
 Otherwise the \fIpattern\fR is used as a glob pattern to show only
@@ -833,11 +949,13 @@ Explicitly validates the specified index based on the current
 validated.
 .TP
 \fIpathName \fBwidth\fR ?\fIcol\fR? ?\fIvalue col value ...\fR?
-If no \fIcol\fR is specified, returns a list describing all cols for which a
-width has been set.  If \fBcol\fR is specified with no value, it prints out
-the width of that col in characters.  If one or more \fIcol\-value\fR pairs
-are specified, then it sets each col to be that width in characters.  If
-\fIvalue\fR is negative, then the col uses the default width.
+If no \fIcol\fR is specified, returns a list describing all cols for which
+a width has been set.  If \fBcol\fR is specified with no value, it prints
+out the width of that col in characters (positive number) or pixels
+(negative number).  If one or more \fIcol\-value\fR pairs are specified,
+then it sets each col to be that width in characters (positive number) or
+pixels (negative number).  If \fIvalue\fR is \fIdefault\fR, then the col
+uses the default width.
 .TP
 \fIpathName \fBxview \fIargs\fR
 This command is used to query and change the horizontal position of the

@@ -601,40 +601,13 @@ test -z "$INSTALL_PROGRAM" && INSTALL_PROGRAM='${INSTALL}'
 
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
-
-file=${exec_prefix}/lib/tclConfig.sh
+eval library=$libdir
+file=${library}/tclConfig.sh
 . $file
-file=${exec_prefix}/lib/tkConfig.sh
+file=${library}/tkConfig.sh
 . $file
 
 CC=$TCL_CC
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 trap '' 1 2 15
@@ -785,6 +758,8 @@ s%@TCL_LIBS@%$TCL_LIBS%g
 s%@TCL_LD_FLAGS@%$TCL_LD_FLAGS%g
 s%@TCL_COMPAT_OBJS@%$TCL_COMPAT_OBJS%g
 s%@TCL_LD_SEARCH_FLAGS@%$TCL_LD_SEARCH_FLAGS%g
+s%@TCL_SRC_DIR@%$TCL_SRC_DIR%g
+s%@TCL_BUILD_LIB_SPEC@%$TCL_BUILD_LIB_SPEC%g
 s%@TK_VERSION@%$TK_VERSION%g
 s%@TK_XINCLUDES@%$TK_XINCLUDES%g
 s%@TK_PREFIX@%$TK_PREFIX%g
@@ -792,6 +767,9 @@ s%@TK_EXEC_PREFIX@%$TK_EXEC_PREFIX%g
 s%@TK_DEFS@%$TK_DEFS%g
 s%@TK_LIBS@%$TK_LIBS%g
 s%@TK_LIB_SPEC@%$TK_LIB_SPEC%g
+s%@TK_LD_SEARCH_FLAGS@%$TK_LD_SEARCH_FLAGS%g
+s%@TK_SRC_DIR@%$TK_SRC_DIR%g
+s%@TK_BUILD_LIB_SPEC@%$TK_BUILD_LIB_SPEC%g
 
 CEOF
 EOF
@@ -889,7 +867,6 @@ s%@INSTALL@%$INSTALL%g
 " $ac_given_srcdir/$ac_file_in | eval "$ac_sed_cmds" > $ac_file
 fi; done
 rm -f conftest.s*
-
 
 
 exit 0

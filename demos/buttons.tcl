@@ -1,99 +1,81 @@
 #!/bin/sh
 # next line is a comment in tcl \
-exec wish "$0" ${1+"$@"}
+	exec wish "$0" ${1+"$@"}
 
 ## buttons.tcl
 ##
 ## demonstrates the simulation of a button array
 ##
 ## ellson@lucent.com
+## modifications made by jeff.hobbs@acm.org
 
 array set table {
-  library	Tktable
-  rows		20
-  cols		20
-  table		.a.t
+    library	Tktable
+    rows	20
+    cols	20
+    table	.table
 }
 append table(library) [info shared]
 if {[string match {} [info commands table]] && \
-    [catch {package require Tktable} err]} {
-  if {[catch {load [file join [pwd] .. $table(library)]} err] && \
-      [catch {load [file join [pwd] $table(library)]} err]} {
-    error $err
-  }
+	[catch {package require Tktable} err]} {
+    if {[catch {load [file join [pwd] .. $table(library)]} err] && \
+	    [catch {load [file join [pwd] $table(library)]} err]} {
+	error $err
+    }
 }
 
-# scrollable table of buttons
-
-frame .a
-frame .b
-
 # create the table
-table .a.t \
-    -rows [expr $table(rows) +1] \
-    -cols [expr $table(cols) +1] \
-    -titlerows 1 \
-    -titlecols 1 \
-    -roworigin -1 \
-    -colorigin -1 \
-    -maxheight 250 \
-    -maxwidth 400 \
-    -width 5 \
-    -variable tab \
-    -flashmode off \
-    -cursor top_left_arrow \
-    -borderwidth 2 \
-    -state disabled \
-    -xscrollcommand ".b.h set" \
-    -yscrollcommand ".a.v set"
+set t .table
+table $t \
+	-rows [expr $table(rows) +1] \
+	-cols [expr $table(cols) +1] \
+	-titlerows 1 \
+	-titlecols 1 \
+	-roworigin -1 \
+	-colorigin -1 \
+	-colwidth 4 \
+	-width 8 \
+	-height 8 \
+	-variable tab \
+	-flashmode off \
+	-cursor top_left_arrow \
+	-borderwidth 2 \
+	-state disabled \
+	-xscrollcommand ".sx set" \
+	-yscrollcommand ".sy set"
 
-# horizontal scrollbar
-scrollbar .b.h \
-    -orient horiz \
-    -relief sunken \
-    -command ".a.t xview"
+scrollbar .sx -orient h -command "$t xview"
+scrollbar .sy -orient v -command "$t yview"
 
-# vertical scrollbar
-scrollbar .a.v \
-    -relief sunken \
-    -command ".a.t yview"
-
-# create a filler for the lower right corner between the scrollbars
-frame .b.pad \
-    -width [expr [.a.v cget -width] + \
-        [.a.v cget -bd]*2 + [.a.v cget -highlightthickness]*2 ] \
-    -height [expr [.b.h cget -width] + \
-        [.b.h cget -bd]*2 + [.b.h cget -highlightthickness]*2 ]
-
-# pack the various widgets.  getting the packing order right is tricky
-pack .a.v -side right -fill y
-pack .a.t -side left -fill both -expand true
-pack .b.h -side left -fill x -expand true
-pack .b.pad -side right
-pack .b -side bottom -fill x
-pack .a -side top -fill both -expand true
+grid $t .sy -sticky nsew
+grid .sx -sticky ew
+grid columnconfig . 0 -weight 1
+grid rowconfig . 0 -weight 1
 
 # set up tags for the various states of the buttons
-.a.t tag configure OFF -bg red -relief raised
-.a.t tag configure ON -bg green -relief sunken
-.a.t tag configure sel -bg gray75 -relief flat
+$t tag configure OFF -bg red -relief raised
+$t tag configure ON  -bg green -relief sunken
+$t tag configure sel -bg gray75 -relief flat
 
 # clean up if mouse leaves the widget
-bind .a.t <Leave> {
+bind $t <Leave> {
     %W selection clear all
 }
 
 # highlight the cell under the mouse
-bind .a.t <Motion> {
+bind $t <Motion> {
+    if {[%W selection includes @%x,%y]} break
     %W selection clear all
     %W selection set @%x,%y
+    break
+    ## "break" prevents the call to tkTableCheckBorder
 }
 
 # mousebutton 1 toggles the value of the cell
-# use of selection includes would work here
-bind .a.t <1> {
+# use of "selection includes" would work here
+bind $t <1> {
     set rc [%W cursel]
-    if {$tab($rc) == "ON"} {
+    if {[string match ON $tab($rc)]} {
 	set tab($rc) OFF
         %W tag celltag OFF $rc
     } {
@@ -108,6 +90,6 @@ for {set i 0} {$i < $table(rows)} {incr i} {
     for {set j 0} {$j < $table(cols)} {incr j} {
         if {! $i} {set tab(-1,$j) $j}
 	set tab($i,$j) "OFF"
-        .a.t tag celltag OFF $i,$j
+        $t tag celltag OFF $i,$j
     }
 }

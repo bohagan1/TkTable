@@ -1,7 +1,7 @@
 ##
 ## UPGRADING
 ##
-## Jeffrey Hobbs, jhobbs@cs.uoregon.edu
+## Jeffrey Hobbs, jeff.hobbs@acm.org
 ## 19 December 1996
 ##
 
@@ -37,9 +37,8 @@ METHOD CHANGES:
 
 * setcell
  [old]	.table setcell
- [new]	.table curselection OR .table index select
-## The "index select" is there for 100% compatibility, but curselection is
-## what should be used to properly represent all selected cells.
+ [new]	.table curselection
+## This returns _all_ selected cells, like the listbox method.
 ## The "active" index represents the active cell (that which is currently
 ## being edited).
 
@@ -60,7 +59,7 @@ METHOD CHANGES:
  [old]	.table flash on|off
  [new]	.table configure -flashmode on|off
  [old]	.table flash tag tagName
- [new]	"flash" is a permanent tag style, not configurable
+ [new]	"flash" is a permanent tag configurable style
  [old]	.table flash timeout arg
  [new]	.table configure -flashtime arg
 
@@ -77,6 +76,8 @@ METHOD CHANGES:
 * insert
  [old]	.table insert index value
  [new]	.table insert active index value
+## insert && delete where changed to allow the addition of the
+## row/col insert/delete routines
 
 * delete
  [old]	.table delete index ?index?
