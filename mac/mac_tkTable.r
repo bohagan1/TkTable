@@ -6,16 +6,16 @@
 resource 'vers' (1) {
 	TBL_MAJOR_VERSION, TBL_MINOR_VERSION,
 	final, 0x00, verUS,
-	VERSION,
-	"tkTable " VERSION " by Jeffrey Hobbs\n"
+	PACKAGE_VERSION,
+	"tkTable " PACKAGE_VERSION " by Jeffrey Hobbs\n"
 	"Macintosh Port by Chuck Houpt"
 };
 
 resource 'vers' (2) {
 	TBL_MAJOR_VERSION, TBL_MINOR_VERSION,
 	final, 0x00, verUS,
-	VERSION,
-	"tkTable " VERSION " © 1997-2002"
+	PACKAGE_VERSION,
+	"tkTable " PACKAGE_VERSION " © 1997-2002"
 };
 
 /*
@@ -41,7 +41,7 @@ read 'TEXT' (3000, "tkTable", purgeable, preload) "tkTable.tcl";
 
 data 'TEXT' (4000, "pkgIndex", purgeable, preload) {
 	"if {[catch {package require Tcl 8.2}]} return\n"
-	"package ifneeded Tktable " VERSION " "
+	"package ifneeded Tktable " PACKAGE_VERSION " "
 +	"\"package require Tk 8.2; "
 +	"[list load [file join $dir Tktable[info sharedlibextension]] Tktable]\""
 };

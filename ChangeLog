@@ -1,3 +1,23 @@
+2003-12-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: updated to TEA3 spec
+	* configure:
+	* configure.in:
+	* generic/tkTable.c:
+	* generic/tkTableInitScript.h:
+	* generic/version.h:
+	* mac/mac_tkTable.r:
+	* tclconfig/tcl.m4:
+
+	* win/makefile.vc: minor updates, probably still out of date
+
+	* tclconfig/ChangeLog (removed): not necessary
+
+	* generic/tkTable.c: added Tk_ClassProcs and TableWorldChanged
+	proc if built against 8.4
+
+	* generic/tkTable.h: add 8.4 ifdef, remove ANSI_ARGS usage
+
 2003-07-16  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* doc/tkTable.n: add note about -window "" behavior

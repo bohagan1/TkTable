@@ -1,61 +1,32 @@
 #! /bin/bash -norc
 #
-# RCS: @(#) $Id: configure.in,v 1.9 2002/10/15 17:37:13 andreas_kupries Exp $
+# RCS: @(#) $Id: configure.in,v 1.10 2002/10/15 18:47:37 hobbs Exp $
 #
 #--------------------------------------------------------------------
 # Sample configure.in for Tcl Extensions.  The only places you should
 # need to modify this file are marked by the string __CHANGE__
 #--------------------------------------------------------------------
 
-#--------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # __CHANGE__
-# This very first macro is used to verify that the configure script can 
-# find the sources.  The argument to AC_INIT should be a unique filename
-# for this package, and can be a relative path, such as:
+# Set your package name and version numbers here.
 #
-# AC_INIT(../generic/tcl.h)
-#--------------------------------------------------------------------
+# This initializes the environment with PACKAGE_NAME and PACKAGE_VERSION
+# set as provided.  These will also be added as -D defs in your Makefile
+# so you can encode the package version directly into the source files.
+#-----------------------------------------------------------------------
 
-AC_INIT(generic/tkTable.c)
-
-AC_CONFIG_AUX_DIR(tclconfig)
-CONFIGDIR=${srcdir}/tclconfig
-AC_SUBST(CONFIGDIR)
-
-#--------------------------------------------------------------------
-# __CHANGE__
-# Set your package name and version numbers here.  The NODOT_VERSION is
-# required for constructing the library name on systems that don't like
-# dots in library names (Windows).  The VERSION variable is used on the
-# other systems.
-#--------------------------------------------------------------------
-
-PACKAGE=Tktable
-
-MAJOR_VERSION=2
-MINOR_VERSION=8
-PATCHLEVEL=
-
-VERSION=${MAJOR_VERSION}.${MINOR_VERSION}${PATCHLEVEL}
-NODOT_VERSION=${MAJOR_VERSION}${MINOR_VERSION}
-
-AC_SUBST(PACKAGE)
-AC_SUBST(VERSION)
-AC_SUBST(Tktable_LIB_FILE)
-
-#--------------------------------------------------------------------
-# We put this here so that you can compile with -DVERSION="1.2" to
-# encode the package version directly into the source files.
-#--------------------------------------------------------------------
-
-eval AC_DEFINE_UNQUOTED(VERSION, "${VERSION}")
+AC_INIT([Tktable], [2.8])
 
 #--------------------------------------------------------------------
 # Call TEA_INIT as the first TEA_ macro to set up initial vars.
-# This will define a ${TEA_PLATFORM} variable == "unix" or "windows".
+# This will define a ${TEA_PLATFORM} variable == "unix" or "windows"
+# as well as PKG_LIB_FILE and PKG_STUB_LIB_FILE.
 #--------------------------------------------------------------------
 
-TEA_INIT
+TEA_INIT([3.0])
+
+AC_CONFIG_AUX_DIR(tclconfig)
 
 #--------------------------------------------------------------------
 # Load the tclConfig.sh file
@@ -87,6 +58,27 @@ TEA_PREFIX
 
 TEA_SETUP_COMPILER
 
+#-----------------------------------------------------------------------
+# __CHANGE__
+# Specify the C source files to compile in TEA_ADD_SOURCES,
+# public headers that need to be installed in TEA_ADD_HEADERS,
+# stub library C source files to compile in TEA_ADD_STUB_SOURCES,
+# and runtime Tcl library files in TEA_ADD_TCL_SOURCES.
+# This defines PKG(_STUB)_SOURCES, PKG(_STUB)_OBJECTS, PKG_HEADERS
+# and PKG_TCL_SOURCES.
+#-----------------------------------------------------------------------
+
+TEA_ADD_SOURCES([tkTable.c tkTableWin.c tkTableTag.c tkTableEdit.c
+		 tkTableCell.c tkTableCellSort.c tkTableCmds.c tkTableUtil.c])
+# PostScript is on the drawing board
+#TEA_ADD_SOURCES([tkTablePs.c])
+# This header isn't really meant for distribution
+#TEA_ADD_HEADERS([generic/tkTable.h])
+TEA_ADD_INCLUDES([-I. -I\"`${CYGPATH} ${srcdir}/generic`\"])
+TEA_ADD_CFLAGS([])
+TEA_ADD_STUB_SOURCES([])
+TEA_ADD_TCL_SOURCES([library/tkTable.tcl])
+
 #--------------------------------------------------------------------
 # __CHANGE__
 # Choose which headers you need.  Extension authors should try very
@@ -102,32 +94,32 @@ TEA_PUBLIC_TK_HEADERS
 #TEA_PRIVATE_TK_HEADERS
 
 #--------------------------------------------------------------------
+# For Unix/Tk builds, make sure that the X libraries/headers are found.
+#--------------------------------------------------------------------
+
+TEA_PATH_X
+
+#--------------------------------------------------------------------
 # __CHANGE__
 # A few miscellaneous platform-specific items:
 #
-# Define a special symbol for Windows (BUILD_vu in this case) so
-# that we create the export library with the dll.  See sha1.h on how
-# to use this.
+# Define a special symbol for Windows (BUILD_Tktable in this case) so
+# that we create the export library with the dll.
 #
 # Windows creates a few extra files that need to be cleaned up.
 # You can add more files to clean if your extension creates any extra
 # files.
 #
-# Define any extra compiler flags in the PACKAGE_CFLAGS variable.
-# These will be appended to the current set of compiler flags for
-# your system.
+# TEA_ADD any extra compiler/build info here.
 #--------------------------------------------------------------------
 
 if test "${TEA_PLATFORM}" = "windows" ; then
     AC_DEFINE_UNQUOTED(BUILD_Tktable)
     CLEANFILES="pkgIndex.tcl tkTable.tcl.h *.lib *.dll *.exp *.ilk *.pdb *.pch"
-    EXTRA_SOURCES='$(WIN_SOURCES)'
+    TEA_ADD_LIBS([gdi32.lib user32.lib])
 else
     CLEANFILES="pkgIndex.tcl tkTable.tcl.h"
-    EXTRA_SOURCES='$(UNIX_SOURCES)'
 fi
-
-AC_SUBST(EXTRA_SOURCES)
 AC_SUBST(CLEANFILES)
 
 #--------------------------------------------------------------------
@@ -160,13 +152,6 @@ TEA_CONFIG_CFLAGS
 TEA_ENABLE_SYMBOLS
 
 #--------------------------------------------------------------------
-# For Unix/Tk builds, make sure that the X libraries/headers are found.
-# This must be called after TEA_CONFIG_CFLAGS as it adjusts LIBS.
-#--------------------------------------------------------------------
-
-TEA_PATH_X
-
-#--------------------------------------------------------------------
 # Everyone should be linking against the Tcl stub library.  If you
 # can't for some reason, remove this definition.  If you aren't using
 # stubs, you also need to modify the SHLIB_LD_LIBS setting below to
@@ -183,15 +168,6 @@ AC_DEFINE(USE_TK_STUBS)
 #--------------------------------------------------------------------
 
 TEA_MAKE_LIB
-
-#--------------------------------------------------------------------
-# __CHANGE__
-# Add platform libs to LIBS or SHLIB_LD_LIBS as necessary.
-#--------------------------------------------------------------------
-
-if test "${TEA_PLATFORM}" = "windows" ; then
-    LIBS="${LIBS} gdi32.lib user32.lib"
-fi
 
 #--------------------------------------------------------------------
 # Find tclsh so that we can run pkg_mkIndex to generate the pkgIndex.tcl

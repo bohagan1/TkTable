@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.27 2003/04/10 02:18:16 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.28 2003/12/10 20:07:35 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -593,6 +593,9 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
      * Handle class name and selection handlers
      */
     offset = 2 + Tk_ClassOptionObjCmd(tkwin, "Table", objc, objv);
+#ifdef HAVE_TCL84
+    Tk_SetClassProcs(tkwin, &tableClass, (ClientData) tablePtr);
+#endif
     Tk_CreateEventHandler(tablePtr->tkwin,
 	    PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask,
 	    TableEventProc, (ClientData) tablePtr);
@@ -877,7 +880,7 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 		Tcl_WrongNumArgs(interp, 2, objv, NULL);
 		result = TCL_ERROR;
 	    } else {
-		Tcl_SetStringObj(Tcl_GetObjResult(interp), VERSION, -1);
+		Tcl_SetStringObj(Tcl_GetObjResult(interp), PACKAGE_VERSION, -1);
 	    }
 	    break;
 
@@ -2100,7 +2103,7 @@ TableDisplay(ClientData clientdata)
 	     * at the first \x00 unicode char it finds (!= '\0'),
 	     * although there can be more to the string than that
 	     */
-	    numBytes = Tcl_NumUtfChars(string, strlen(string));
+	    numBytes = Tcl_NumUtfChars(string, (int) strlen(string));
 #else
 	    numBytes = strlen(string);
 #endif
@@ -2475,7 +2478,8 @@ TableDisplay(ClientData clientdata)
 	/* Get a default valued GC */
 	TableGetGc(display, window, &(tablePtr->defaultTag), &tagGc);
 	XCopyArea(display, window, Tk_WindowId(tkwin), tagGc, 0, 0,
-		invalidWidth, invalidHeight, invalidX, invalidY);
+		(unsigned) invalidWidth, (unsigned) invalidHeight,
+		invalidX, invalidY);
 	Tk_FreePixmap(display, window);
 	window = Tk_WindowId(tkwin);
     }
@@ -2499,16 +2503,16 @@ TableDisplay(ClientData clientdata)
      */
     if (x+width < invalidX+invalidWidth) {
 	XFillRectangle(display, window,
-		Tk_3DBorderGC(tkwin, tablePtr->defaultTag.bg,
-			TK_3D_FLAT_GC), x+width, invalidY,
-		invalidX+invalidWidth-x-width, invalidHeight);
+		Tk_3DBorderGC(tkwin, tablePtr->defaultTag.bg, TK_3D_FLAT_GC),
+		x+width, invalidY, (unsigned) invalidX+invalidWidth-x-width,
+		(unsigned) invalidHeight);
     }
 
     if (y+height < invalidY+invalidHeight) {
 	XFillRectangle(display, window,
-		Tk_3DBorderGC(tkwin, tablePtr->defaultTag.bg,
-			TK_3D_FLAT_GC), invalidX, y+height,
-		invalidWidth, invalidY+invalidHeight-y-height);
+		Tk_3DBorderGC(tkwin, tablePtr->defaultTag.bg, TK_3D_FLAT_GC),
+		invalidX, y+height, (unsigned) invalidWidth,
+		(unsigned) invalidY+invalidHeight-y-height);
     }
 
     if (tagGc != NULL) {
@@ -4004,7 +4008,7 @@ Tktable_Init(interp)
 	== NULL) {
 	return TCL_ERROR;
     }
-    if (Tcl_PkgProvide(interp, "Tktable", VERSION) != TCL_OK) {
+    if (Tcl_PkgProvide(interp, "Tktable", PACKAGE_VERSION) != TCL_OK) {
 	return TCL_ERROR;
     }
     Tcl_CreateObjCommand(interp, TBL_COMMAND, Tk_TableObjCmd,
