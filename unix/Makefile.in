@@ -2,7 +2,7 @@
 # If you change this, then the demos won't work, but it might be necessary
 # for those with another built-in "table" command
 #
-# RCS: @(#) $Id: Makefile.in,v 1.8 2000/08/31 02:05:49 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.9 2001/06/22 22:58:32 hobbs Exp $
 #
 
 TBL_COMMAND	= table
@@ -247,15 +247,17 @@ DIST_DIR	= $(DIST_ROOT)/$(PKG_DIR)
 # everything goes in one directory.
 bindist:
 	if test ! -d "$(PKG_DIR)"; then mkdir "$(PKG_DIR)"; fi
+	if test ! -d "$(PKG_DIR)/demos"; then mkdir "$(PKG_DIR)/demos"; fi
 	$(INSTALL_PROGRAM) $(DLL) "$(PKG_DIR)/$(DLL).$(TBL_VERSION)"
 	$(INSTALL_DATA) pkgIndex.tcl "$(PKG_DIR)/pkgIndex.tcl"
 	$(INSTALL_DATA) $(LIB_DIR)/tkTable.tcl "$(PKG_DIR)/tkTable.tcl"
 	$(INSTALL_DATA) $(DOC_DIR)/$(HTML_MANS) $(PKG_DIR)/
+	$(INSTALL_DATA) $(DEMO_DIR)/*.tcl $(DEMO_DIR)/*.gif $(PKG_DIR)/demos/
 
-	(echo "TkTable $(TBL_VERSION)\n";\
+	(echo "TkTable $(TBL_VERSION)";\
 	echo "Install this directory next to lib/tcl8.x and lib/tk8.x";\
 	echo "You can then use TkTable with a simple:";\
-	echo "\tpackage require Tktable";\
+	echo "	package require Tktable";\
 	) > $(PKG_DIR)/README.install
 
 	$(COMPRESS)
@@ -276,22 +278,22 @@ dist: dist-clean html $(UNIX_DIR)/configure
 		$(DIST_DIR)
 
 	mkdir $(DIST_DIR)/demos
-	cp -p $(DEMO_DIR)/*.tcl $(DEMO_DIR)/*.gif $(DIST_DIR)/demos
+	cp -p $(DEMO_DIR)/*.{tcl,gif} $(DIST_DIR)/demos
 
 	mkdir $(DIST_DIR)/doc
-	cp -p $(DOC_DIR)/*.n $(DOC_DIR)/*.html $(DIST_DIR)/doc
+	cp -p $(DOC_DIR)/*.{n,html} $(DIST_DIR)/doc
 
 	mkdir $(DIST_DIR)/generic
-	cp -p $(GENERIC_DIR)/*.c $(GENERIC_DIR)/*.h $(DIST_DIR)/generic
+	cp -p $(GENERIC_DIR)/*.[ch] $(DIST_DIR)/generic
 
 	mkdir $(DIST_DIR)/library
 	cp -p $(LIB_DIR)/*.tcl $(DIST_DIR)/library
 
 	mkdir $(DIST_DIR)/mac
-	cp -p $(MAC_DIR)/*.mcp $(MAC_DIR)/*.h $(MAC_DIR)/*.r \
-		$(DIST_DIR)/mac
+	cp -p $(MAC_DIR)/*.{mcp,h,r} $(DIST_DIR)/mac
 
 	mkdir $(DIST_DIR)/tests
+	cp -p $(TEST_DIR)/*.{tcl,test} $(DIST_DIR)/tests
 
 	mkdir $(DIST_DIR)/unix
 	cp $(UNIX_DIR)/Makefile.in $(UNIX_DIR)/install-sh \
