@@ -11,7 +11,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: Makefile.in,v 1.8 2002/09/28 00:15:36 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.9 2002/10/16 07:40:33 hobbs Exp $
 
 #========================================================================
 # Edit the following few lines when writing a new extension
@@ -84,7 +84,7 @@ PKG_EXTRA_FILES = license.txt README.txt
 # library that we are building.
 #========================================================================
 
-lib_BINARIES	= $($(PACKAGE)_LIB_FILE)
+lib_BINARIES	= $(Tktable_LIB_FILE)
 BINARIES	= tkTable.tcl.h $(lib_BINARIES)
 
 SHELL		= @SHELL@
@@ -195,7 +195,7 @@ INCLUDES	= -I. -I"`@CYGPATH@ $(srcdir)/generic`" \
 
 EXTRA_CFLAGS	= $(MEM_DEBUG_FLAGS) $(TBL_CFLAGS) @EXTRA_CFLAGS@
 
-DEFS		= $(TCL_DEFS) @DEFS@ $(EXTRA_CFLAGS) \
+DEFS		= @DEFS@ $(EXTRA_CFLAGS) \
 		  -DTBL_COMMAND=\"table\" \
 		  -DTBL_RUNTIME=\"tkTable.tcl\" \
 		  -DTBL_RUNTIME_DIR=\"$(pkglibdir)\"
@@ -293,10 +293,10 @@ depend:
 # source files above.
 #========================================================================
 
-$($(PACKAGE)_LIB_FILE): $($(PACKAGE)_OBJECTS)
-	-rm -f $($(PACKAGE)_LIB_FILE)
+$(Tktable_LIB_FILE): $(Tktable_OBJECTS)
+	-rm -f $(Tktable_LIB_FILE)
 	${MAKE_LIB}
-	$(RANLIB) $($(PACKAGE)_LIB_FILE)
+	$(RANLIB) $(Tktable_LIB_FILE)
 
 #========================================================================
 # We need to enumerate the list of .c to .o lines here.
@@ -331,7 +331,7 @@ pkgIndex.tcl:
 	(\
 	echo 'if {[catch {package require Tcl 8.2}]} return';\
 	echo 'package ifneeded $(PACKAGE) $(VERSION) \
-	    [list load [file join $$dir $($(PACKAGE)_LIB_FILE)] $(PACKAGE)]'\
+	    [list load [file join $$dir $(Tktable_LIB_FILE)] $(PACKAGE)]'\
 	) > pkgIndex.tcl
 
 #========================================================================
