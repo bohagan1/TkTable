@@ -4,7 +4,7 @@
 # This file defines the default bindings for Tk table widgets
 # and provides procedures that help in implementing those bindings.
 #
-# RCS: @(#) $Id: tkTable.tcl,v 1.7 2001/08/24 01:08:14 hobbs Exp $
+# RCS: @(#) $Id: tkTable.tcl,v 1.8 2002/03/13 20:14:58 hobbs Exp $
 
 #--------------------------------------------------------------------------
 # ::tk::table::Priv elements used in this file:
@@ -99,9 +99,9 @@ bind Table <ButtonRelease-2> {
 bind Table <<Table_Commit>> {
     catch {%W activate active}
 }
-# Remove this if you don't want cell commit to occur on every
-# Leave of the table.  Another possible choice is <FocusOut>.
-event add <<Table_Commit>> <Leave>
+# Remove this if you don't want cell commit to occur on every Leave for
+# the table (via mouse) or FocusOut (loss of focus by table).
+event add <<Table_Commit>> <Leave> <FocusOut>
 
 bind Table <Shift-Up>		{::tk::table::ExtendSelect %W -1  0}
 bind Table <Shift-Down>		{::tk::table::ExtendSelect %W  1  0}
@@ -423,6 +423,8 @@ proc ::tk::table::Motion {w el} {
 	    set Priv(tablePrev) $el
 	}
 	extended {
+	    # avoid tables that have no anchor index yet.
+	    if {[catch {$w index anchor}]} { return }
 	    scan $Priv(tablePrev) %d,%d r c
 	    scan $el %d,%d elr elc
 	    if {[$w tag includes title $el]} {
