@@ -6,32 +6,18 @@
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tkTable.test,v 1.5 2001/07/01 01:25:52 hobbs Exp $
+# RCS: @(#) $Id: tkTable.test,v 1.6 2002/03/13 20:42:21 hobbs Exp $
 
 # deletes:
 # test 2 -5
 # test 4 -2
 # test 0 -1 (== 0 1)
 
-set ::VERSION 2.8
-if {[string compare unix $tcl_platform(platform)]} {
-    set table(library) Tktable$::VERSION[info sharedlibextension]
-} else {
-    set table(library) libTktable$::VERSION[info sharedlibextension]
-}
-if {
-    [string match {} [info commands table]]
-    && [catch {package require Tktable $::VERSION} err]
-    && [catch {load [file join [pwd] $table(library)]} err]
-    && [catch {load [file join [pwd] .. unix $table(library)]} err]
-    && [catch {load [file join [pwd] .. win $table(library)]} err]
-} {
-    error $err
-}
-package require Tktable $::VERSION
-
 package require tcltest
 namespace import -force ::tcltest::*
+
+set ::VERSION 2.8
+package require Tktable $::VERSION
 
 eval destroy [winfo children .]
 wm geometry . {}
@@ -159,6 +145,39 @@ foreach test {
 	} [list 1 [lindex $test 4]]
     }
     .t configure $name [lindex [.t configure $name] 3]
+    incr i
+}
+
+foreach test {
+    {-anchor n n left {bad anchor position "left": must be n, ne, e, se, s, sw, w, nw, or center}}
+    {-background #ff0000 #ff0000 non-existent
+	    {unknown color name "non-existent"}}
+    {-bd "4 2" "4 2" badValue {bad screen distance "badValue"}}
+    {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
+    {-borderwidth 1 1 badValue {bad screen distance "badValue"}}
+    {-fg #110022 #110022 bogus {unknown color name "bogus"}}
+    {-font {Helvetica 12} {Helvetica 12} {} {font "" doesn't exist}}
+    {-foreground #110022 #110022 bogus {unknown color name "bogus"}}
+    {-image {} {} {} {}}
+    {-justify left left bogus {bad justification "bogus": must be left, right, or center}}
+    {-multiline 1 1 xyzzy {expected integer but got "xyzzy"}}
+    {-relief groove groove 1.5 {bad relief type "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
+    {-showtext 1 1 xyzzy {expected integer but got "xyzzy"}}
+    {-state disabled disabled foo {bad option "foo" must be unknown, normal, disabled}}
+    {-wrap 1 1 xyzzy {expected integer but got "xyzzy"}}
+} {
+    set name [lindex $test 0]
+    test table-1.$i "tag configuration options, $name" {
+	.t tag configure title $name [lindex $test 1]
+	list [lindex [.t tag configure title $name] 4] [.t tag cget title $name]
+    } [list [lindex $test 2] [lindex $test 2]]
+    incr i
+    if {[lindex $test 3] != ""} {
+	test table-1.$i "tag configuration options, $name" {
+	    list [catch {.t tag configure title $name [lindex $test 3]} msg] $msg
+	} [list 1 [lindex $test 4]]
+    }
+    .t tag configure title $name [lindex [.t tag configure title $name] 3]
     incr i
 }
 
