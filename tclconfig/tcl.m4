@@ -470,10 +470,15 @@ AC_DEFUN(TEA_ENABLE_THREADS, [
 		    fi
 		fi
 	    fi
-	    
+
 	    # Does the pthread-implementation provide
 	    # 'pthread_attr_setstacksize' ?
+
+	    ac_saved_libs=$LIBS
+	    LIBS="$LIBS $THREADS_LIBS"
 	    AC_CHECK_FUNCS(pthread_attr_setstacksize)
+	    LIBS=$ac_saved_libs
+	    AC_CHECK_FUNCS(readdir_r)
 	fi
     else
 	TCL_THREADS=0
@@ -1010,8 +1015,13 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 		    esac
 		else
 		    do64bit_ok=yes
-		    EXTRA_CFLAGS="+DA2.0W"
-		    LDFLAGS="+DA2.0W $LDFLAGS"
+		    if test "`uname -m`" = "ia64" ; then
+			EXTRA_CFLAGS="+DD64"
+			LDFLAGS="+DD64 $LDFLAGS"
+		    else
+			EXTRA_CFLAGS="+DA2.0W"
+			LDFLAGS="+DA2.0W $LDFLAGS"
+		    fi
 		fi
 	    fi
 	    ;;
@@ -2424,6 +2434,9 @@ The PACKAGE variable must be defined by your TEA configure.in])
 	    ;;
     esac
 
+    # Check if exec_prefix is set. If not use fall back to prefix
+    if test x$exec_prefix = xNONE ; then exec_prefix=$prefix ; fi
+
     AC_SUBST(EXEEXT)
     AC_SUBST(CYGPATH)
 ])
@@ -2518,6 +2531,18 @@ AC_DEFUN(TEA_SETUP_COMPILER, [
 
     AC_OBJEXT
     AC_EXEEXT
+
+    #--------------------------------------------------------------------
+    # Common compiler flag setup
+    #--------------------------------------------------------------------
+
+    TEA_TCL_EARLY_FLAGS
+    TEA_TCL_64BIT_FLAGS
+    #TEA_C_BIGENDIAN
+    if test "${TEA_PLATFORM}" = "unix" ; then
+	TEA_MISSING_POSIX_HEADERS
+	TEA_BUGGY_STRTOD
+    fi
 ])
 
 #------------------------------------------------------------------------
