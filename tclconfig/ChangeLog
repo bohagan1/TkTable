@@ -1,3 +1,66 @@
+2002-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: Enabled COFF as well as CV style debug info with
+	--enable-symbols to allow Dr. Watson users to see function info.
+	More info on debugging levels can be obtained at:
+	http://msdn.microsoft.com/library/en-us/dnvc60/html/gendepdebug.asp
+
+2002-04-03  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: change all SC_* macros to TEA_*.  The SC_ was for
+	Scriptics, which is no more.  TEA represents a better, independent
+	prefix that won't need changing.
+	Added preliminary mingw gcc support. [Patch #538772]
+	Added TEA_PREFIX macro that handles defaulting the prefix and
+	exec_prefix vars to those used by Tcl if none were specified.
+	Added TEA_SETUP_COMPILER macro that encompasses the AC_PROG_CC
+	check and several other basic AC_PROG checks needed for making
+	executables.  This greatly simplifies user's configure.in files.
+	Collapsed AIX-5 defines into AIX-* with extra checks for doing the
+	ELF stuff on AIX-5-ia64.
+	Updated TEA_ENABLE_THREADS to take an optional arg to allow
+	switching it on by default (for Thread) and add sanity checking to
+	warn the user if configuring threads incompatibly.
+
+2002-03-29  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: made sure that SHLIB_LDFLAGS was set to LDFLAGS_DEFAULT.
+	Removed --enable-64bit support for AIX-4 because it wasn't correct.
+	Added -MT or -MD Windows linker switches to properly support
+	symbols-enabled builds.
+
+2002-03-28  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: called AC_MSG_ERROR when SC_TEA_INIT wasn't called first
+	instead of calling it as that inlines it each time in shell code.
+	Changed Windows CFLAGS_OPTIMIZE to use -O2 instead of -Oti.
+	Noted TCL_LIB_VERSIONS_OK=nodots for Windows builds.
+	A few changes to support itcl (and perhaps others):
+	Added support for making your own stub libraries to SC_MAKE_LIB.
+	New SC_PATH_CONFIG and SC_LOAD_CONFIG that take a package name arg
+	and find that ${pkg}Config.sh file.  itk uses this for itcl.
+
+2002-03-27  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: made SC_LOAD_TKCONFIG recognize when working with a Tk
+	build dir setup.
+	Added EXTRA_CFLAGS and SHLIB_LD_LIBS substs to SC_CONFIG_CFLAGS.
+	Added XLIBSW onto LIBS when it is defined.
+	Remove TCL_LIBS from MAKE_LIB and correctly use SHLIB_LD_LIBS
+	instead to not rely as much on tclConfig.sh cached info.
+	Add TK_BIN_DIR to paths to find wish in SC_PROG_WISH.
+	These move towards making TEA much more independent of *Config.sh.
+
+2002-03-19  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: corrected forgotten (UN)SHARED_LIB_SUFFIX and
+	SHLIB_SUFFIX defines for Win.
+	(SC_PATH_X): made this only do the check on unix platforms. 
+
+2002-03-12  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* README.txt: updated to reflect fewer files
+
 2002-03-06  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* config.guess (removed):
