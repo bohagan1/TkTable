@@ -4,6 +4,8 @@
  * see ChangeLog file for details
  *
  * current maintainer: jeff.hobbs@acm.org
+ *
+ * Copyright 1997-2001, Jeffrey Hobbs (jeff.hobbs@acm.org)
  */
 
 		*************************************
@@ -36,11 +38,8 @@ The basic features of the widget are:
 FINDING THE WIDGET
 
 0. The newest version is most likely found at:
+	http://tktable.sourceforge.net/
 	http://www.purl.org/net/hobbs/tcl/capp/
-	http://www.hobbs.wservice.com/tcl/capp/
-
-0a. Neosoft might not have the newest, but it should have something:
-	http://www.neosoft.com/tcl/	
 
 BUILDING AND INSTALLING THE WIDGET
 
@@ -138,8 +137,10 @@ Editing
 COMMENTS, BUGS, etc.
 
 * Please can you send comments and bug reports to the current maintainer
-  and their best will be done to address them.
+  and their best will be done to address them.  A mailing list for
+  tktable discussion is tktable-users@lists.sourceforge.net.
 
 * If you find a bug, a short piece of Tcl that exercises it would be very
   useful, or even better, compile with debugging and specify where it
-  crashed in that short piece of Tcl.
+  crashed in that short piece of Tcl.  Use the SourceForge site to check
+  for known bugs or submit new ones.
