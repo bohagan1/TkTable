@@ -41,11 +41,11 @@ table - Create and manipulate tables
 
 <DT><B>-insertbackground</B> </DT></DT>
 <DD>             <B>-insertborderwidth-insertofftime</B>
-<B>-insertontime</B> <B>-insertwidth</B> <B>-invertselected</B> <B>-padx</B>
+<B>-insertontime</B> <B>-insertwidth</B> <B>-invertselected</B>
 </DD>
 
-<DT><B>-pady</B> </DT></DT>
-<DD>          <B>-relief</B>        <B>-takefocus</B>      <B>-xscrollcommand</B>
+<DT><B>-relief</B> </DT></DT>
+<DD>        <B>-takefocus</B>     <B>-xscrollcommand</B>
 <B>-yscrollcommand</B>
 <P>
 </DD>
@@ -90,13 +90,19 @@ Database Name: <B>borderWidth</B><BR>
 Database Class: <B>BorderWidth</B>
 <P>
 <P>
-Specifies a non-negative value indicating the width of
-the 3-D border to draw on interior table cells (if such
-a border is being drawn; the <B>relief</B> option typically
-determines this). This can be overridden by the a
-tag's borderwidth option. It can also be affected by
-the defined <B>-drawmode</B> for the table. The value may
-have any of the forms acceptable to <B>Tk_GetPixels</B>.
+Specifies a non-negative pixel value or list of values
+indicating the width of the 3-D border to draw on interior
+table cells (if such a border is being drawn; the
+<B>relief</B> option typically determines this). If one value
+is specified, a rectangle of this width will be drawn.
+If two values are specified, then only the left and
+right edges of the cell will have borders. If four
+values are specified, then the values correspond to the
+{left right top bottom} edges. This can be overridden
+by the a tag's borderwidth option. It can also be
+affected by the defined <B>-drawmode</B> for the table. Each
+value in the list must have one of the forms acceptable
+to <B>Tk_GetPixels</B>.
 <P>
 <P>
 Command-Line Name:-<B>browsecommand</B> <B>or</B> -<B>browsecmd</B>
@@ -124,7 +130,7 @@ but uses extra memory. Can maintain state when
 both <B>-command</B> and <B>-variable</B> are empty. The cache is
 automatically flushed whenever the value of <B>-cache</B> or
 <B>-variable</B> changes, otherwise you have to explicitly
-<B>flush</B> it. Defaults to false.
+call <B>clear</B> on it. Defaults to off.
 <P>
 <P>
 Command-Line Name:-<B>colorigin</B><BR>
@@ -173,12 +179,10 @@ Specifies one of the following stretch modes for
 columns to fill extra allocated window space:
 <P>
 <P>
-<B>none</B> Columns will not stretch to fill the assigned
-<P>
-<P>
-window space. If the columns are too narrow,
-there will be a blank space at the right of the
-table. This is the default.
+<B>none</B> Columns will not stretch to fill the assigned window
+space. If the columns are too narrow, there
+will be a blank space at the right of the table.
+This is the default.
 <P>
 <P>
 <B>unset</B><BR>
@@ -344,6 +348,36 @@ merging the <I>sel</I> tag options when the cell is selected.
 Defaults to 0 (merge).
 <P>
 <P>
+Command-Line Name:-<B>ipadx</B><BR>
+
+Database Name: <B>ipadX</B><BR>
+
+Database Class: <B>Pad</B>
+<P>
+<P>
+A pixel value specifying the internal offset X padding
+for text in a cell. This value does not grow the size
+of the cell, it just causes the text to be drawn
+further from the cell border. It only affects one side
+(depending on anchor). Defaults to 0. See <B>-padx</B> for
+an alternate padding style.
+<P>
+<P>
+Command-Line Name:-<B>ipady</B><BR>
+
+Database Name: <B>ipadY</B><BR>
+
+Database Class: <B>Pad</B>
+<P>
+<P>
+A pixel value specifying the internal offset Y padding
+for text in a cell. This value does not grow the size
+of the cell, it just causes the text to be drawn
+further from the cell border. It only affects one side
+(depending on anchor). Defaults to 0. See <B>-pady</B> for
+an alternate padding style.
+<P>
+<P>
 Command-Line Name:-<B>maxheight</B><BR>
 
 Database Name: <B>maxHeight</B><BR>
@@ -377,6 +411,40 @@ Specifies the default setting for the multiline tag
 option. Defaults to 1.
 <P>
 <P>
+Command-Line Name:-<B>padx</B><BR>
+
+Database Name: <B>padX</B><BR>
+
+Database Class: <B>Pad</B>
+<P>
+<P>
+A pixel value specifying the offset X padding for a
+cell. This value causes the default size of the cell
+to increase by two times the value (one for each side),
+unless a specific pixel size is chosen for the cell
+with the <B>width</B> command. This will force an empty area
+on the left and right of each cell edge. This padding
+affects all types of data in the cell. Defaults to 0.
+See <B>-ipadx</B> for an alternate padding style.
+<P>
+<P>
+Command-Line Name:-<B>pady</B><BR>
+
+Database Name: <B>padY</B><BR>
+
+Database Class: <B>Pad</B>
+<P>
+<P>
+A pixel value specifying the offset Y padding for a
+cell. This value causes the default size of the cell
+to increase by two times the value (one for each side),
+unless a specific pixel size is chosen for the cell
+with the <B>height</B> command. This will force an empty area
+on the top and bottom of each cell edge. This padding
+affects all types of data in the cell. Defaults to 0.
+See <B>-ipadx</B> for an alternate padding style.
+<P>
+<P>
 Command-Line Name:-<B>resizeborders</B><BR>
 
 Database Name: <B>resizeBorders</B><BR>
@@ -390,8 +458,9 @@ allow, must be one of row, col, both (default) or none.
 <P>
 Command-Line Name:-<B>rowheight</B><BR>
 
-Database Name: <B>rowHeight</B><BR>
-
+Database Name: <B>rowHeight</B>
+<P>
+<P>
 Database Class: <B>RowHeight</B>
 <P>
 <P>
@@ -853,9 +922,11 @@ Background color of the cell.
 
 <DL>
 
-<DT><B>-borderwidth</B> or <B>-bd</B> <I>pixels</I></DT></DT>
+<DT><B>-borderwidth</B> or <B>-bd</B> <I>pixelList</I></DT></DT>
 <DD>
-Borderwidth of the cell.
+Borderwidth of the cell, of the same format for
+the table, but may also be empty to inherit the
+default table borderwidth value (the default).
 <P>
 </DD>
 
@@ -899,10 +970,7 @@ The relief for the cell.
 
 <DT><B>-showtext</B> <I>boolean</I></DT></DT>
 <DD>
-Whether to show the text over an image. This does
-not currently work on Windows or Mac for all cases
-due to the lack of clipping support in Tk's X emulation
-(patch submitted).
+Whether to show the text over an image.
 <P>
 </DD>
 
@@ -998,15 +1066,18 @@ next time the cell is displayed.
 
 <DT><B>-background</B> or <B>-bg</B> <I>color</I></DT></DT>
 <DD>
-<P>
-</DD>
-</DL>
-<P>
 Background color of the cell. If not specified,
 it uses the table's default background.
 <P>
+</DD>
 
-<DL>
+<DT><B>-borderwidth</B> or <B>-bd</B> <I>pixelList</I></DT></DT>
+<DD>
+Borderwidth of the cell, of the same format for
+the table, but may also be empty to inherit the
+default table borderwidth value (the default).
+<P>
+</DD>
 
 <DT><B>-padx</B> <I>pixels</I></DT></DT>
 <DD>
@@ -1213,9 +1284,8 @@ given by <I>option</I>. <I>Option</I> may have any of the values
 accepted by the <B>table</B> command.
 <P>
 <P>
-<I>pathName</I> <B>clear</B> <I>option</I> ?<I>first</I>? ?<I>last</I>?
-<P>
-<P>
+<I>pathName</I> <B>clear</B> <I>option</I> ?<I>first</I>? ?<I>last</I>?<BR>
+
 This command is a convenience routine to clear certain
 state information managed by the table. <I>first</I> and <I>last</I>
 represent valid table indices. If neither are specified,
@@ -1281,9 +1351,8 @@ edited (indexed by <B>active</B>) is returned, else it is set
 to the given value.
 <P>
 <P>
-<I>pathName</I> <B>delete</B> <I>option</I> <I>arg</I> ?<I>arg</I>?
-<P>
-<P>
+<I>pathName</I> <B>delete</B> <I>option</I> <I>arg</I> ?<I>arg</I>?<BR>
+
 This command is used to delete various things in a
 table. It has several forms, depending on the <I>option</I>:
 <P>
@@ -1490,6 +1559,8 @@ be different to keep the screen full.
 
 This command is used to adjust the selection within a
 table. It has several forms, depending on <I>option</I>:
+<P>
+<P>
 <I>pathName</I> <B>selection</B> <B>anchor</B> <I>index</I><BR>
 
 Sets the selection anchor to the cell given by
@@ -1552,6 +1623,8 @@ behavior of the command depends on the <I>option</I> argument
 that follows the <B>tag</B> argument. <I>cget</I>, <I>cell</I>, and <I>row</I>|<I>col</I>
 complain about unknown tag names. The following forms
 of the command are currently supported:
+<P>
+<P>
 <I>pathName</I> <B>tag</B> <B>cell</B> <I>tagName</I> ?<I>index</I> ...?
 With no arguments, prints out the list of cells
 that use the <I>tag</I>. Otherwise it sets the specified
@@ -1607,8 +1680,9 @@ Deletes a tag. No error if the tag does not
 exist.
 <P>
 <P>
-<I>pathName</I> <B>tag</B> <B>exists</B> <I>tagName</I><BR>
-
+<I>pathName</I> <B>tag</B> <B>exists</B> <I>tagName</I>
+<P>
+<P>
 Returns 1 if the named tag exists, 0 otherwise.
 <P>
 <P>
@@ -1870,8 +1944,6 @@ insertion cursor within the cell.
 <P>
 <P>
 [14] Control-backslash clears selection from all the cells.
-<P>
-<P>
 [15] Backspace deletes the character before the insertion
 cursor in the active cell.
 <P>
@@ -1942,9 +2014,8 @@ for each request of a cell value.
 <P>
 Set the topleft title area to be one spanning cell. This
 overestimates both row and column span by one, but the command
-does all the constraining for us.
-<P>
-<P>
+does all the constraining for us.<BR>
+
 $table span [$table cget -roworigin],[$table cget -colorigin] [$table cget -titlerows],[$table cget -titlecols]
 Force a table window refresh (useful for the slight chance
 that a bug in the table is not causing proper refresh):

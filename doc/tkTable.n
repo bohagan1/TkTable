@@ -1,6 +1,8 @@
 '\" The definitions below are for supplemental macros used in Tcl/Tk
 '\" manual entries.
 '\"
+'\" RCS: @(#) $Id:  $
+'\"
 '\" .AP type name in/out ?indent?
 '\"	Start paragraph describing an argument to a library procedure.
 '\"	type is type of argument (int, etc.), in/out is either "in", "out",
@@ -57,27 +59,25 @@
 '\" .UL arg1 arg2
 '\"	Print arg1 underlined, then print arg2 normally.
 '\"
-'\" SCCS: @(#) man.macros 1.8 96/02/15 20:02:24
-'\"
 '\"	# Set up traps and other miscellaneous stuff for Tcl/Tk man pages.
 .if t .wh -1.3i ^B
 .nr ^l \n(.l
 .ad b
 '\"	# Start an argument description
 .de AP
-.ie !"\\$4"" .TP \\$4
+.ie !'\\$4'' .TP \\$4
 .el \{\
-.   ie !"\\$2"" .TP \\n()Cu
+.   ie !'\\$2'' .TP \\n()Cu
 .   el          .TP 15
 .\}
-.ie !"\\$3"" \{\
+.ie !'\\$3'' \{\
 .ta \\n()Au \\n()Bu
 \&\\$1	\\fI\\$2\\fP	(\\$3)
 .\".b
 .\}
 .el \{\
 .br
-.ie !"\\$2"" \{\
+.ie !'\\$2'' \{\
 \&\\$1	\\fI\\$2\\fP
 .\}
 .el \{\
@@ -88,10 +88,10 @@
 '\"	# define tabbing values for .AP
 .de AS
 .nr )A 10n
-.if !"\\$1"" .nr )A \\w'\\$1'u+3n
+.if !'\\$1'' .nr )A \\w'\\$1'u+3n
 .nr )B \\n()Au+15n
 .\"
-.if !"\\$2"" .nr )B \\w'\\$2'u+\\n()Au+3n
+.if !'\\$2'' .nr )B \\w'\\$2'u+\\n()Au+3n
 .nr )C \\n()Bu+\\w'(in/out)'u+2n
 ..
 .AS Tcl_Interp Tcl_CreateInterp in/out
@@ -131,7 +131,7 @@
 '\"	# ^Y = starting y location
 '\"	# ^v = 1 (for troff;  for nroff this doesn't matter)
 .de VS
-.if !"\\$1"" .br
+.if !'\\$1'' .br
 .mk ^Y
 .ie n 'mc \s12\(br\s0
 .el .nr ^v 1u
@@ -232,7 +232,7 @@ Database Class:	\\fB\\$3\\fR
 .de UL
 \\$1\l'|0\(ul'\\$2
 ..
-.TH table n 2.6 Tk "Tk Table Extension"
+.TH table n 2.7 Tk "Tk Table Extension"
 .HS table tk
 .BS
 .SH NAME
@@ -244,8 +244,8 @@ table \- Create and manipulate tables
 \-exportselection	\-font	\-foreground
 \-highlightbackground	\-highlightcolor	\-highlightthickness
 \-insertbackground	\-insertborderwidth	\-insertofftime
-\-insertontime	\-insertwidth	\-invertselected	\-padx
-\-pady	\-relief	\-takefocus	\-xscrollcommand
+\-insertontime	\-insertwidth	\-invertselected
+\-relief	\-takefocus	\-xscrollcommand
 \-yscrollcommand
 .SE
 
@@ -258,12 +258,16 @@ Specifies the name of the cursor to show when over borders, a visual
 indication that interactive resizing is allowed (it is thus affect by
 the value of \-resizeborders).  Defaults to \fIcrosshair\fR.
 .OP "\-borderwidth or \-bd" borderWidth BorderWidth
-Specifies a non-negative value indicating the width of the 3-D border to
-draw on interior table cells (if such a border is being drawn; the
-\fBrelief\fR option typically determines this).  This can be overridden by
-the a tag's borderwidth option.  It can also be affected by the defined
-\fB\-drawmode\fR for the table.  The value may have any of the forms
-acceptable to \fBTk_GetPixels\fR.
+Specifies a non-negative pixel value or list of values indicating the width
+of the 3-D border to draw on interior table cells (if such a border is
+being drawn; the \fBrelief\fR option typically determines this).  If one
+value is specified, a rectangle of this width will be drawn.  If two values
+are specified, then only the left and right edges of the cell will have
+borders.  If four values are specified, then the values correspond to the
+{left right top bottom} edges.  This can be overridden by the a tag's
+borderwidth option.  It can also be affected by the defined
+\fB\-drawmode\fR for the table.  Each value in the list must have one of
+the forms acceptable to \fBTk_GetPixels\fR.
 .OP "\-browsecommand or \-browsecmd" browseCommand BrowseCommand
 Specifies a command which will be evaluated anytime the active cell changes.
 It uses the %\-substition model described in COMMAND SUBSTITUTION below.
@@ -273,7 +277,7 @@ contents should be kept.  This greatly enhances speed performance when used
 with \fB\-command\fR but uses extra memory.  Can maintain state when both
 \fB\-command\fR and \fB\-variable\fR are empty.  The cache is automatically
 flushed whenever the value of \fB\-cache\fR or \fB\-variable\fR changes,
-otherwise you have to explicitly \fBflush\fR it.  Defaults to false.
+otherwise you have to explicitly call \fBclear\fR on it.  Defaults to off.
 .OP \-colorigin colOrigin Origin
 Specifies what column index to interpret as the leftmost column in the table.
 This value is used for user indices in the table.  Defaults to 0.
@@ -368,12 +372,38 @@ further limited by \fB\-maxheight\fR.
 Specifies whether the foreground and background of an item should simply
 have their values swapped instead of merging the \fIsel\fR tag options
 when the cell is selected.  Defaults to 0 (merge).
+.OP \-ipadx ipadX Pad
+A pixel value specifying the internal offset X padding for text in a cell.
+This value does not grow the size of the cell, it just causes the text to
+be drawn further from the cell border.  It only affects one side (depending
+on anchor).  Defaults to 0.  See \fB\-padx\fR for an alternate padding
+style.
+.OP \-ipady ipadY Pad
+A pixel value specifying the internal offset Y padding for text in a cell.
+This value does not grow the size of the cell, it just causes the text to
+be drawn further from the cell border.  It only affects one side (depending
+on anchor).  Defaults to 0.  See \fB\-pady\fR for an alternate padding
+style.
 .OP \-maxheight maxHeight MaxHeight
 The max height in pixels that the window will request.  Defaults to 600.
 .OP \-maxwidth maxWidth MaxWidth
 The max width in pixels that the window will request.  Defaults to 800.
 .OP \-multiline multiline Multiline
 Specifies the default setting for the multiline tag option.  Defaults to 1.
+.OP \-padx padX Pad
+A pixel value specifying the offset X padding for a cell.  This value
+causes the default size of the cell to increase by two times the value (one
+for each side), unless a specific pixel size is chosen for the cell with
+the \fBwidth\fR command.  This will force an empty area on the left and
+right of each cell edge.  This padding affects all types of data in the
+cell.  Defaults to 0.  See \fB\-ipadx\fR for an alternate padding style.
+.OP \-pady padY Pad
+A pixel value specifying the offset Y padding for a cell.  This value
+causes the default size of the cell to increase by two times the value (one
+for each side), unless a specific pixel size is chosen for the cell with
+the \fBheight\fR command.  This will force an empty area on the top and
+bottom of each cell edge.  This padding affects all types of data in the
+cell.  Defaults to 0.  See \fB\-ipadx\fR for an alternate padding style.
 .OP \-resizeborders resizeBorders ResizeBorders
 Specifies what kind of interactive border resizing to allow, must be one of
 row, col, both (default) or none.
@@ -592,8 +622,9 @@ Anchor for item in the cell space.
 \fB\-background\fR or \fB\-bg\fR \fIcolor\fR
 Background color of the cell.
 .TP
-\fB\-borderwidth\fR or \fB\-bd\fR \fIpixels\fR
-Borderwidth of the cell.
+\fB\-borderwidth\fR or \fB\-bd\fR \fIpixelList\fR
+Borderwidth of the cell, of the same format for the table, but may also
+be empty to inherit the default table borderwidth value (the default).
 .TP
 \fB\-font \fIfontName\fR
 Font for text in the cell.
@@ -615,9 +646,7 @@ Whether to display text with newlines on multiple lines.
 The relief for the cell.
 .TP
 \fB\-showtext \fIboolean\fR
-Whether to show the text over an image.  This does not currently work
-on Windows or Mac for all cases due to the lack of clipping support in
-Tk's X emulation (patch submitted).
+Whether to show the text over an image.
 .TP
 \fB\-state \fIstate\fR
 The state of the cell, to allow for certain cells to be disabled.
@@ -683,6 +712,10 @@ again the next time the cell is displayed.
 \fB\-background\fR or \fB\-bg\fR \fIcolor\fR
 Background color of the cell.  If not
 specified, it uses the table's default background.
+.TP
+\fB\-borderwidth\fR or \fB\-bd\fR \fIpixelList\fR
+Borderwidth of the cell, of the same format for the table, but may also
+be empty to inherit the default table borderwidth value (the default).
 .TP
 \fB\-padx \fIpixels\fR
 As defined in the Tk options man page.

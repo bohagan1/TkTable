@@ -1,4 +1,73 @@
+2000-08-18  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* doc/tkTable.html:
+	* doc/tkTable.n: updated docs to reflect new -(i)pad* definitions
+	and enhanced -bd behavior.
+
+	* generic/tkTable.c (TableCursorEvent, TableConfigCursor): reduced
+	unnecessary redraws when the cursor was in a non-editable cell.
+
+2000-08-17  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* generic/tkTable.c: enhanced -borderwidth option to support
+	per-edge configuration of borderwith.  -bd now takes a list of
+	pixel sizes, 1, 2 or 4 in length.  1 is traditional, 2 specifies
+	just the left and right border sizes (to emulate a multicolumn
+	listbox), and 4 specifies {left right top bottom} for ultimate
+	control.  Tags may override the default.
+	Also redid the handling of -(i)pad[xy].  Swapped the basic meaning
+	(-pad* from v2.5 should now be -ipad* in 2.7).  -pad* now enforces
+	absolute empty padding for cells, expanding the default size.
+	Embedded windows can override the -pad* value.  See docs for more.
+
+	* generic/tkTable.h: removed use of INLINE, added new border style
+	support to structures.
+
+	* generic/tkTableCell.c (TableAtBorder): made it aware of the new
+	configurable border style.  It bases its calculations off the
+	default border width(s).  Also did lots of comment cleanup.
+
+	* generic/tkTableWin.c (EmbWinDisplay): changed interpretation of
+	-pad* for windows to be per side (instead of overall).  This is
+	more intuitive.  Added support of new border styles.
+
+	* generic/tkTableTag.c: Added new border style control per tag.
+	New TableGetTagBorders function to determine border values based
+	on input.  Lots of comment/code cleanup.
+
+	* generic/tkTableEdit.c (Table_EditCmd): corrected code to ensure
+	that when rows where deleted, rows/cols would not fall below 1,
+	the minimum dimension size (otherwise "bad things" happen).
+	(Table_EditCmd): corrected problem when specifying a negative
+	count deleting more rows than exist before the specified index.
+
+	* unix/Makefile.in ($(DLL)): corrected ld build line to not use
+	SHLIB_CFLAGS, instead adding TK_LD_SEARCH_FLAGS. (virden)
+
+2000-08-10  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* unix/Makefile.in: cleaned up Makefile to correctly use the right
+	flags for building with stubs support.
+
+	* generic/version.h: bumped version to 2.7
+
+	* generic/tkTable.h: added ipadX, ipadY to table struct.
+	* generic/tkTable.c (TableConfigure): removed code setting
+	forceUpdate to 1 for any configure options.
+	(TableAdjustParams): added -ipdax/-ipday, giving them the meaning
+	that -pad* was extended to use in 2.6.  -pad* are as they were in
+	2.5, and -ipad* does the extended cell padding for 2.7+.  See docs
+	for details.
+	(TableEventProc): removed xexpose.count check that would delay
+	necessary invalidate calls. (Wangnick)
+
+	* library/tkTable.tcl: added ::tk::table::BackSpace proc instead
+	of inlined event binding, taking out \ at eol that confused the
+	tcl2c converter when inlining the tkTable.tcl.h runtime.
+
 2000-08-02  Jeff Hobbs  <hobbs@scriptics.com>
+
+	2.6 RELEASE
 
 	* unix/Makefile.in: added bindist and cleanall targets, and
 	cleared up the use of some variables to allow for correct building
