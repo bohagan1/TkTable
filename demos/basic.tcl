@@ -1,7 +1,6 @@
 #!/bin/sh
 # the next line restarts using wish \
-exec wish "$0" "$@"
-# need this line for make test
+exec wish "$0" ${1+"$@"}
 
 array set table {
   library	Tktable.so

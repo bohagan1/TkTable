@@ -58,7 +58,7 @@ BUILDING THE WIDGET
         cd tkTable<version>
 	./configure --prefix=/usr/local
 
-   tkTable uses information left in tkConfigure.sh when you built tk.
+   tkTable uses information left in tkConfig.sh when you built tk.
 
 3. Make and Install
 
@@ -69,13 +69,13 @@ BUILDING THE WIDGET
 
 4. Use it
 
-   Start a regular wish interpreter, load the library,  and use the table.
-   Or use the "tablewish" interpreter that has tktable built in.
-   There is a very short test script called test.tcl which you can source.
-   This will create a table, fill an array and attach it to the table. It will
-   start pretty small to demonstrate the scrollbars and the fixed titles.
-   One of the cells will change a few moments later and you will see the 
-   cell flash.
+   Start a regular wish interpreter, load the library, and use the table.
+   Or use the "tablewish" interpreter that has tktable built in.  There
+   are a few test scripts in the demos directory which you can source.
+   The one called basic.tcl will create a table, fill an array
+   and attach it to the table.  It also demonstrates the use scrollbars
+   and fixed titles.  One of the cells will change a few moments later
+   and you will see the cell flash.
 
    This widget is not compatible with versions below 0.60.  Please see
    the notes in UPGRADING if you used a previous release of tkTable.

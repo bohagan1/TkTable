@@ -13,45 +13,21 @@
  * SCCS: @(#) tkAppInit.c 1.21 96/03/26 16:47:07
  */
 
-#include "tcl.h"
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-extern int		Tk_Init _ANSI_ARGS_((Tcl_Interp *interp));
-extern int		Tk_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+#include "tk.h"
 
 /*
  * The following variable is a special hack that is needed in order for
  * Sun shared libraries to be used for Tcl.
  */
 
-extern int matherr _ANSI_ARGS_((void));
-int (*tkDummyMathPtr) _ANSI_ARGS_((void)) = matherr;
+extern int matherr();
+int *tclDummyMathPtr = (int *) matherr;
 
+EXTERN int		Tktable_Init _ANSI_ARGS_((Tcl_Interp *interp));
 #ifdef TK_TEST
-extern int		Tktest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+EXTERN int		Tktest_Init _ANSI_ARGS_((Tcl_Interp *interp));
 #endif /* TK_TEST */
-
-#ifdef	__cplusplus
-}
-#endif
-
 
-#if (TCL_MAJOR_VERSION == 7) && (TCL_MINOR_VERSION < 4)
-/*
- * The following variable is a special hack that allows applications
- * to be linked using the procedure "main" from the Tcl7.3 library.  The
- * variable generates a reference to "main", which causes main to
- * be brought in from the library (and all of Tcl with it).
- */
-
-extern int main _ANSI_ARGS_((int argc, char **argv));
-int (*tkDummyMainPtr) _ANSI_ARGS_((int argc, char **argv)) = main;
-
-#else
-
 /*
  *----------------------------------------------------------------------
  *
@@ -70,19 +46,13 @@ int (*tkDummyMainPtr) _ANSI_ARGS_((int argc, char **argv)) = main;
  */
 
 int
-#ifdef _USING_PROTOTYPES_
-main (int    argc,		/* Number of command-line arguments. */
-     char **argv)		/* Values of command-line arguments. */
-#else
 main(argc, argv)
     int argc;			/* Number of command-line arguments. */
     char **argv;		/* Values of command-line arguments. */
-#endif
 {
     Tk_Main(argc, argv, Tcl_AppInit);
     return 0;			/* Needed only to prevent compiler warning. */
 }
-#endif
 
 /*
  *----------------------------------------------------------------------
@@ -104,32 +74,24 @@ main(argc, argv)
  */
 
 int
-#ifdef _USING_PROTOTYPES_
-Tcl_AppInit (Tcl_Interp *interp)	/* Interpreter for application. */
-#else
 Tcl_AppInit(interp)
     Tcl_Interp *interp;		/* Interpreter for application. */
-#endif
 {
-#if (TCL_MAJOR_VERSION > 7) || (TCL_MINOR_VERSION > 4)
-    Tcl_StaticPackage(interp, "Tk", Tk_Init, Tk_SafeInit);
-#ifdef TK_TEST
-    Tcl_StaticPackage(interp, "Tktest", Tktest_Init,
-            (Tcl_PackageInitProc *) NULL);
-#endif /* TK_TEST */
-#endif
-
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
     if (Tk_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
+    Tcl_StaticPackage(interp, "Tk", Tk_Init, (Tcl_PackageInitProc *) NULL);
 #ifdef TK_TEST
     if (Tktest_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
+    Tcl_StaticPackage(interp, "Tktest", Tktest_Init,
+            (Tcl_PackageInitProc *) NULL);
 #endif /* TK_TEST */
+
 
     /*
      * Call the init procedures for included packages.  Each call should
@@ -141,10 +103,9 @@ Tcl_AppInit(interp)
      *
      * where "Mod" is the name of the module.
      */
-    if (Tktable_Init(interp) != TCL_OK) {
+    if (Tktable_Init(interp) == TCL_ERROR) {
         return TCL_ERROR;
     }
-
 
     /*
      * Call Tcl_CreateCommand for application-specific commands, if
@@ -158,10 +119,6 @@ Tcl_AppInit(interp)
      * then no user-specific startup file will be run under any conditions.
      */
 
-#if (TCL_MAJOR_VERSION > 7) || (TCL_MINOR_VERSION > 4)
     Tcl_SetVar(interp, "tcl_rcFileName", "~/.wishrc", TCL_GLOBAL_ONLY);
-#else
-    tcl_RcFileName = "~/.wishrc";
-#endif
     return TCL_OK;
 }

@@ -5,8 +5,13 @@ exec wish "$0" ${1+"$@"}
 ## If your Tk is dynamically loadable then you can use tclsh
 ## instead of wish as the executable above
 
-#package require Tk
-package require Tktable
+if {[string match {} [info commands table]] && \
+    [catch {package require Tktable} err]} {
+  if {[catch {load [file join [pwd] .. $table(library)]} err] && \
+      [catch {load [file join [pwd] $table(library)]} err]} {
+    error $err
+  }
+}
 
 # scrollable table of buttons
 
@@ -26,7 +31,6 @@ table .a.t \
     -colorigin -1 \
     -maxheight 250 \
     -maxwidth 400 \
-    -drawmode compatible \
     -width 5 \
     -variable tab \
     -flashmode off \

@@ -5,6 +5,28 @@
 	  ## Release dates between "****"s.		##
 	  ################################################
 
+**** v1.1 Dec 30 1996 **** (changes jhobbs@cs.uoregon.edu)
+
+Updated code to handle Tk8 font mechanism.  Now works with Tk8.
+
+Added Tktable_SafeInit procedure so it could be loaded into a safe
+interpreter.
+
+Integrated Bruecker's (peter@bj-ig.de) changes to 0.63:
+  - Moved IMP-Code to one place, needs testing.
+  - Some changes to TableCreate and TableDestroy:
+      Hashtables ever needed are created in Create 
+      so no tests in configure and later needed.
+  - Removed GcCache (will be placed in TableDisplay)
+  - Repaired Focus-Code little bug remains in the right
+    and bottom of HL-Frame.
+  
+Updated README to reflect file name changes.
+
+Changed tkAppInit.c to reflect tk4.2 appinit.
+
+Changed Makefile.in to support get X_INCLUDES right.
+
 **** v1.0 Dec 19 1996 **** (changes jhobbs@cs.uoregon.edu)
 
 BUMPED VERSION TO 1.0 for initial (re)release.
