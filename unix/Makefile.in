@@ -296,6 +296,6 @@ dist: dist-clean html $(UNIX_DIR)/configure
 	chmod +x $(DIST_DIR)/unix/install-sh
 
 	mkdir $(DIST_DIR)/win
-	cp -p $(WIN_DIR)/Makefile $(DIST_DIR)/win
+	cp -p $(WIN_DIR)/makefile.vc $(DIST_DIR)/win
 
 	(cd $(DIST_ROOT); $(COMPRESS);)
