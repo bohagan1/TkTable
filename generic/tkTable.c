@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.21 2002/03/21 20:15:03 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.22 2002/09/26 01:47:20 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -253,6 +253,8 @@ Tk_ConfigSpec tableSpecs[] = {
      Tk_Offset(Table, ipadX), 0},
     {TK_CONFIG_PIXELS, "-ipady", "ipadY", "Pad", "0",
      Tk_Offset(Table, ipadY), 0},
+    {TK_CONFIG_JUSTIFY, "-justify", "justify", "Justify", "left",
+     Tk_Offset(Table, defaultTag.justify), 0 },
     {TK_CONFIG_PIXELS, "-maxheight", "maxHeight", "MaxHeight", "600",
      Tk_Offset(Table, maxReqHeight), 0},
     {TK_CONFIG_PIXELS, "-maxwidth", "maxWidth", "MaxWidth", "800",

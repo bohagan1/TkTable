@@ -2,7 +2,7 @@
 '\" The definitions below are for supplemental macros used in Tcl/Tk
 '\" manual entries.
 '\"
-'\" RCS: @(#) $Id: tkTable.n,v 1.5 2001/08/23 19:37:58 hobbs Exp $
+'\" RCS: @(#) $Id: tkTable.n,v 1.6 2001/12/13 01:26:31 hobbs Exp $
 '\"
 '\" .AP type name in/out ?indent?
 '\"	Start paragraph describing an argument to a library procedure.
@@ -385,6 +385,10 @@ This value does not grow the size of the cell, it just causes the text to
 be drawn further from the cell border.  It only affects one side (depending
 on anchor).  Defaults to 0.  See \fB\-pady\fR for an alternate padding
 style.
+.OP \-justify justify Justify
+How to justify multi\-line text in a cell.
+It must be one of \fBleft\fR, \fBright\fR, or \fBcenter\fR.
+Defaults to left.
 .OP \-maxheight maxHeight MaxHeight
 The max height in pixels that the window will request.  Defaults to 600.
 .OP \-maxwidth maxWidth MaxWidth
@@ -647,7 +651,8 @@ An image to display in the cell instead of text.
 Whether to display text with newlines on multiple lines.
 .TP
 \fB\-relief \fIrelief\fR
-The relief for the cell.
+The relief for the cell.  May be the empty string to cause this tag to
+not disturb the value.
 .TP
 \fB\-showtext \fIboolean\fR
 Whether to show the text over an image.

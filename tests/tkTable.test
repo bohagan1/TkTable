@@ -6,7 +6,7 @@
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tkTable.test,v 1.8 2002/03/21 20:15:03 hobbs Exp $
+# RCS: @(#) $Id: tkTable.test,v 1.9 2002/06/21 18:15:43 hobbs Exp $
 
 # deletes:
 # test 2 -5
@@ -101,6 +101,7 @@ foreach test {
     {-invertselected yes 1 xyzzy {expected boolean value but got "xyzzy"}}
     {-ipadx 1.3 1 2.6x {bad screen distance "2.6x"}}
     {-ipady 1.3 1 2.6x {bad screen distance "2.6x"}}
+    {-justify left left wrong {bad justification "wrong": must be left, right, or center}}
     {-maxheight 300 300 2.6x {bad screen distance "2.6x"}}
     {-maxwidth 300 300 2.6x {bad screen distance "2.6x"}}
     {-multiline yes 1 xyzzy {expected boolean value but got "xyzzy"}}
@@ -277,7 +278,7 @@ test table-6.4 {TableWidgetCmd procedure, "cget" option} {
 
 test table-7.1 {TableWidgetCmd procedure, "configure" option} {
     llength [.t configure]
-} {69}
+} {70}
 test table-7.2 {TableWidgetCmd procedure, "configure" option} {
     list [catch {.t configure -gorp} msg] $msg
 } {1 {unknown option "-gorp"}}

@@ -333,6 +333,16 @@ to be drawn further from the cell border. It only
 affects one side (depending on anchor). Defaults
 to 0. See <B>-pady</B> for an alternate padding style.
 <P>
+Command-Line Name:<B>-justify</B><BR>
+
+Database Name: <B>justify</B><BR>
+
+Database Class: <B>Justify</B>
+<P>
+How to justify multi-line text in a cell. It must
+be one of <B>left</B>, <B>right</B>, or <B>center</B>. Defaults to
+left.
+<P>
 Command-Line Name:<B>-maxheight</B><BR>
 
 Database Name: <B>maxHeight</B><BR>
@@ -402,8 +412,8 @@ Specifies what kind of interactive border resizing
 to allow, must be one of row, col, both (default)
 or none.
 <P>
-Command-Line Name:<B>-rowheight</B><BR>
-
+Command-Line Name:<B>-rowheight</B>
+<P>
 Database Name: <B>rowHeight</B><BR>
 
 Database Class: <B>RowHeight</B>
@@ -854,7 +864,9 @@ multiple lines.
 
 <DT><B>-relief</B> <I>relief</I></DT></DT>
 <DD>
-The relief for the cell.
+The relief for the cell. May be the empty
+string to cause this tag to not disturb the
+value.
 </DD>
 
 <DT><B>-showtext</B> <I>boolean</I></DT></DT>
@@ -1217,6 +1229,7 @@ set to the given value.
 This command is used to delete various things in a
 table. It has several forms, depending on the
 <I>option</I>:
+<P>
 <I>pathName</I> <B>delete</B> <B>active</B> <I>index</I> ?<I>index</I>?
 Deletes text from the active cell. If only
 one index is given, it deletes the character
@@ -1285,12 +1298,12 @@ move as specified.
 </DL>
 <P>
 <I>pathName</I> <B>delete</B> <B>rows</B> ?<I>switches</I>? <I>index</I> ?<I>count</I>?
-Deletes <B>count</B> rows starting at (and
-including) row <B>index</B>. If <B>count</B> is negative,
-it deletes rows going up. Otherwise it
-deletes rows going down. The selection will
-be cleared. The switches are the same as
-those for column deletion.
+Deletes <B>count</B> rows starting at (and including)
+row <B>index</B>. If <B>count</B> is negative, it
+deletes rows going up. Otherwise it deletes
+rows going down. The selection will be
+cleared. The switches are the same as those
+for column deletion.
 <P>
 <I>pathName</I> <B>get</B> <I>first</I> ?<I>last</I>?<BR>
 
@@ -1459,10 +1472,10 @@ returned as a list of tuples of the form {index
 span}. When called with only the <I>index</I>, the span
 for that <I>index</I> only is returned, if any. Otherwise
 an even number of <I>index</I> <I>rows,cols</I> pairs are used to
-set spans. A span starts at the <I>index</I> and
-continues for the specified number of rows and
-cols. Negative spans are not supported. A span of
-0,0 unsets any span on that cell. See EXAMPLES for
+set spans. A span starts at the <I>index</I> and continues
+for the specified number of rows and cols.
+Negative spans are not supported. A span of 0,0
+unsets any span on that cell. See EXAMPLES for
 more info.
 <P>
 <I>pathName</I> <B>tag</B> option ?<I>arg</I> <I>arg</I> <I>...</I>?<BR>
@@ -1723,9 +1736,9 @@ of the window.
 Adjusts the view in the window so that the
 element given by <I>fraction</I> appears at the top
 of the window. <I>Fraction</I> is a fraction
-between 0 and 1; 0 indicates the first element
-in the table, 0.33 indicates the element
-one-third the way through the table,
+between 0 and 1; 0 indicates the first
+element in the table, 0.33 indicates the
+element one-third the way through the table,
 and so on.
 <P>
 <I>pathName</I> <B>yview</B> <B>scroll</B> <I>number</I> <I>what</I>
@@ -1749,14 +1762,10 @@ following default behaviour:
 
 <DT>[1] </DT></DT>
 <DD>   Clicking Button-1 in a cell activates that cell.
-</DD>
-</DL>
-<P>
 Clicking into an already active cell moves the
 insertion cursor to the character nearest the
 mouse.
-
-<DL>
+</DD>
 
 <DT>[2] </DT></DT>
 <DD>   Moving the mouse while Button-1 is pressed will
@@ -1804,7 +1813,6 @@ cell.
 </DL>
 <P>
 [11] Shift-&lt;arrow&gt; extends the selection in that direction.
-<P>
 [12] Control-leftarrow and Control-rightarrow move the
 insertion cursor within the cell.
 
