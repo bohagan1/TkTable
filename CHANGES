@@ -1,33 +1,233 @@
-version 0.1 --> version 0.2
----------------------------
-Changed the tag code to apply the effects of multiple tags
-to a cell. 
+	  ################################################
+	  ## TkTable CHANGES				##
+	  ################################################
+	  ## Newest changes at the top of the file.	##
+	  ## Release dates between "****"s.		##
+	  ################################################
 
-Fixed a bug with the flash code which forgot to delete the 
-flash when a table was deleted
+**** v1.0 Dec 19 1996 **** (changes jhobbs@cs.uoregon.edu)
 
-Fixed a bug which meant that row, column and cell tag changes
-didn't update to the screen immediately when there was a row
-or column offset.
+BUMPED VERSION TO 1.0 for initial (re)release.
 
-Fixed the anchor code which was adding/subtracting a pixel
-from the string in certain circumstances
+Updated man pages, in particular documenting bindings.
 
-Fixed a cursor movement bug which caused the same cell to
-appear twice when the cursor was moved
+Updated tkTable.tcl to use origin where appropriate.
 
-Thanks particularly to Lou Salkind for pointing out some of the 
-above and suggesting fixes.
+Added origin index.
 
+Added extra arg to insert/delete to specify what is really being
+inserted/deleted to/from.
 
-version 0.2 --> version 0.3
----------------------------
-Upgraded to tk4.0 (Paul Friberg)
+Corrected insert/delete/icursor to not do edit the active cell if
+it has not been set yet.
 
+Fixed TableScanTo.
+
+Enabled the display of the topleft title cells.
+
+Fixed cursor constraint for oversized fonts in a row.
+
+**** v0.63 Dec 18 96 **** (changes jhobbs@cs.uoregon.edu)
+
+Removed TableSetCell from tkTable.tcl, rearranged bindings as well.
+
+Rewrote checkTagCmd, fixed spurious return values.
+
+Reordered trigger path for Table_GetIndex.
+
+Fixed see to not be forceful, but to only move if necessary, and to
+use the +1,+1 offset from topleft (more like centering).
+
+Added topleft index.
+
+ellson patch:
+	Fixed package require in Makefile.in and demo files
+	Moved Table_GetIndex to avoid implicit declaration warning.
+
+Changed how "anchor" was indexed internally.
+
+Fixed cursor showing in an active cell of width 0.
+
+Removed check for bounds in SEL_CLEAR (SEL_SET did it for us).
+
+**** v0.62 Dec 18 96 **** (changes jhobbs@cs.uoregon.edu)
+
+Updated man pages.
+
+Removed "#ifdef KANJI0" code (it was useless).
+
+Added in use of the active tag (it was previously ignored).
+
+Removed restriction on see method that kept the active cell in the view.
+
+Changed xview/yview/scan methods to not adjust selRow/Col.
+
+Changed code to use active cell as active, rather then sel cell.
+
+Made "flash" tag have higher display priority than "sel".
+
+Added pattern match support for "tag names".
+
+Added "tag exists" and "tag cget" submethods.
+
+Changed "tag celltag" to use Table_GetIndex instead of sscanf
+
+**** v0.61 patch Dec 14 96 **** (ellson@lucent.com)
+
+Change "tag celltag" to use index form of cell address,"x,y" instead of list
+form "{x y}"
+
+Add back support for zero width columns and zero height rows.
+
+Added installation of tkTable.tcl in 
+   [lindex $tcl_pkgPath 0]/Tktable/tkTable.tcl
+(0.61 was using the built-in copy of tkTable.tcl so the lack of
+installation wasn't noticed.   Perhaps we don't need the built-in
+version???)  I put the runtime script in this directory to make it 
+trivial to generate binary distributions of the widget consisting of 
+a single Tktable directory that is just dropped into lib/.
+
+Added a make target for tablewish (not normally needed with dynamic loading
+but sometimes handy for debugging)
+
+Corrected package name (Wasn't loading from tkcon Interp->Packages menu.
+Package name should start with capital letter to match Init entry point.)
+
+Added configure code to automatically discover --prefix from existing
+tclsh installation.  Installation is now simply:
+      ./configure
+      make install
+
+**** v0.61 Dec 13 96 **** (all changes jhobbs except noted)
+
+Updated, corrected, expanded man pages.
+
+Updated internal code comments, fixed result strings.
+
+Fixed see problem (reported by Jean-Paul).
+
+Removed getwidth && getheight and rewrote width && height to be more
+flexible and subsume the previous methods.
+
+Changed flashtime to really be a number representing 1/4 sec and
+changed the default to 3 (750ms).  Added "flash" as a permanent tag
+(like "title", "active", and "sel").  Added options:
+	-flashmode
+	-flashtime
+
+Changed "Title" tag to "title".  Why cap it?
+
+Reformatted most code to fit in 80 cols.
+
+Fixed activate index offset bug.
+
+Changed -*title options to -title*.  The original version was too
+misleading as to its purpose.
+
+Added fixes from ellson@lucent.com.
+	test.tcl updates
+	SIGSEV bug from improper argc count
+
+Added some changes from peter@bj-ig.de.
+	New stretch modes LAST && FILL
+	Highlight/Focus fixes
+	More options instead of methods
+
+Improved curselection code.
+
+added the following options:
+	-autoclear	replaces editmode method
+	-state		replaces editmode method
+	-insert*	from Tk entry, manipulate cursor style
+	-batchmode	replaces batch method
+
+Changed the dynamic load path for tkTable.tcl from
+"$tk_library/tkTable/tkTable.tcl" to "$tk_library/tkTable.tcl".
+
+**** v0.60 Dec 10 96 **** (all changes jhobbs)
+OPTIONS:
+ 
+Altered man pages to properly reflect what options are handled (there
+were numerous extra, plus many missing).
+ 
+changed -procrowtag => -rowtagcommand
+changed -proccoltag => -coltagcommand
+ 
+Added -bd synonym
+ 
+Fixed all internal coding for readability, concise representation
+ 
+changed -cursorbg => -insertbackground
+ 
+METHODS:
+
+Fixed lack of break in CMD_*STRETCH
+ 
+removed whatcell:  code change:
+        .table whatcell x y     => .table index @x,y
+ 
+removed whereis, changed to bbox:  code change:
+        .table whereis row col  => .table bbox <index>
+This needs to be improved to take multiple indices.
+ 
+removed toprow && leftcol, added boundary:  code change:
+        .table leftcol|toprow|bottomrow|rightcol ?rowOrCol?
+        =>
+        .table boundary left|right|top|bottom ?rowOrCol?
+rowOrCol can only be specified for top|left, as appropriate (though
+a bug in the code didn't check properly).
+ 
+removed [rc]index: code change:
+        .table [rc]index <index>        => .table index <index> row|col
+ 
+changed get so (1) it works and (2) it returns values more like the
+listbox command
+ 
+removed setcell.  This has been subsumed by the improved selection method.
+code likeness:
+        .table setcell          => .table index select
+        OR                      => .table curselection
+        .table setcell 4 2      => .table selection set 4,2
+The "index select" is there for 100% compatibility, but curselection is
+what should be used to properly represent all selected cells.
+ 
+MISC:
+ 
+fixed parse_command to handle full non-ambiguous method names
+ 
+updated man pages to include all methods/options in Tk4 style.
+
+reordered a lot of code to be in "alphabetical" order.
+
+**** v0.56 Nov 96 ****
+   - merged changes from tkSpread from Jeffrey Hobbs <jhobbs@cs.uoregon.edu>
+	- added support for Japanization patch
+	- added multi-node select support
+	- removed -underline option for tags
+   - included default bindings in loadable library	
+
+**** v0.5 Oct 96 ****
+   - merged changes from Peter Brueckner <peter@peter.bj-ig.de>
+	- takefocus
+	- highlight border
+	- "gcc -Wall -pedantic" cleanup
+   - updated for tcl7.6/tk4.2
+   - autoconf
+   - only one c-file
+
+**** v0.4p8 ****
+   - added patch from wangnick@orthogon.de to make tkTable accept -rows 0
+   - added patch from tmoore@pnfi.forestry.ca for handling of bad
+     array indexes
+   - added patch from tmoore@pnfi.forestry.ca to add rowTagProc and
+     colTagProc
+   - added patch from ellson@lucent.com to support cget so that
+     tkTable can be used with the dragdrop extension by
+     fellowsd@cs.man.ac.uk (Donal K. Fellows).
 
 version 0.3 --> version 0.4
 ---------------------------
-tk4.1 and tk4.0 compatability  (John.Ellson@att.com)
+tk4.1 and tk4.0 compatability  (ellson@lucent.com)
    - dynamically loadable library (SunOS 4.1.3 only so far)
    - changed BISQUE to GRAY
    - statically included TableInit.tcl into dynamic library
@@ -38,12 +238,27 @@ tk4.1 and tk4.0 compatability  (John.Ellson@att.com)
 			  entry point:  Tktable_Init
 		        extended wish:  tablewish
 
-version 0.4p8
-   - added patch from wangnick@orthogon.de to make tkTable accept -rows 0
-   - added patch from tmoore@pnfi.forestry.ca for handling of bad
-     array indexes
-   - added patch from tmoore@pnfi.forestry.ca to add rowTagProc and
-     colTagProc
-   - added patch from ellson@lucent.com to support cget so that
-     tkTable can be used with the dragdrop extension by
-     fellowsd@cs.man.ac.uk (Donal K. Fellows).
+version 0.2 --> version 0.3
+---------------------------
+Upgraded to tk4.0 (Paul Friberg)
+
+version 0.1 --> version 0.2
+---------------------------
+Changed the tag code to apply the effects of multiple tags to a cell. 
+
+Fixed a bug with the flash code which forgot to delete the flash when
+a table was deleted
+
+Fixed a bug which meant that row, column and cell tag changes didn't
+update to the screen immediately when there was a row or column offset.
+
+Fixed the anchor code which was adding/subtracting a pixel from the
+string in certain circumstances
+
+Fixed a cursor movement bug which caused the same cell to appear twice
+when the cursor was moved
+
+Thanks particularly to Lou Salkind for pointing out some of the above
+and suggesting fixes.
+
+

@@ -1,1 +1,18 @@
-DONE - Add support for "-configure cursor" so that dragdrop works
+## TODO LIST
+##
+## updated 19 Dec 1996, jhobbs@cs.uoregon.edu "Jeffrey Hobbs"
+##
+
+Windows support
+  Out-of-the-box.  This should be available by v1.5.
+  We have the code, but it needs to be exercised appropriately.
+  We will probably distribute a precompiled DLL.
+
+Generic callback mechanism
+  This would enable you to specify a procedure to call when editing
+  a (set of) cell(s), for validation or whatever.
+
+Validation mechanism
+  Mutually exclusive with callback mechanism, this would allow you to
+  be able to specify certain cells as a specific type (int, real, alpha)
+

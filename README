@@ -1,84 +1,71 @@
 /* 
- *
- * Copyright (c) 1994 by Roland King
+ * Copyright (c) 1994 by Roland King (rols@lehman.com)
  * All rights reserved.
  * See the file COPYRIGHT for the copyright notes.
- *
  */
 
 /*
- * README updated for tkTable.0.4 by ellson@lucent.com (John Ellson)
+ * README updated for tkTable v0.55+ by ellson@lucent.com (John Ellson)
+ * README updated for tkTable v1.0+  by jhobbs@cs.uoregon.edu (Jeffrey Hobbs)
  *
- *  tkTable.0.4p8 includes patches contributed by:
- *        tmoore@pnfi.forestry.ca (Tom Moore)
+ *  tkTable v0.55+ includes additions contributed by:
+ *        tmoore@spatial.ca (Tom Moore)
  *        wangnick@orthogon.de (Sebastian Wangnick)
  *        paulf@lamont.ldgo.columbia.edu
- *        ellson@lucent.com
+ *        peter@bj-ig.de (Peter Brueckner)
+ *        jhobbs@cs.uoregon.edu (Jeffrey Hobbs)
+ *        ellson@lucent.com (John Ellson)
  */
 
-*******************************
-The Tk Table Widget Version 0.4p8
-*******************************
+		*************************************
+		  The Tk Table Widget Version 1.0+
+		*************************************
 
-Introduction
+INTRODUCTION
 
 This is the first release of a table/matrix widget as an extension
-to tk/tcl. The basic features of the widget are:-
+to tk/tcl. The basic features of the widget are:
 
- - written entirely in C and X-lib
- - variable width columns/ height rows
- - row and column titles
- - attaches to an array variable
- - supports standard TK reliefs/ fonts etc.
- - scrollbars supported
- - has 'tag' styles per row, column or cell to change
-   colours, font, relief or anchor position
- - in-cell editing - returns value back to array
- - different editing modes (or disabled)
- - can have a 'selected cell' or not
- - 3 drawing modes to get optimal performance for larger tables
+ * written entirely in C and X-lib
+ * variable width columns / height rows
+ * row and column titles
+ * attaches to an array variable
+ * supports standard TK reliefs, fonts, etc.
+ * x/y scrollbar support
+ * has 'tag' styles per row, column or cell to change
+   colo(u)rs, font, relief or anchor position
+ * in-cell editing - returns value back to array
+ * different editing modes (or disabled)
+ * can have a 'selected cell' or not
+ * 3 drawing modes to get optimal performance for larger tables
    or slower machines.
- - optional 'flashes' when things update
- - can be configured to 'stretch' rows and columns to fill an
+ * optional 'flashes' when things update
+ * can be configured to 'stretch' rows and columns to fill an
    enclosing widget
+ * support for Tk Kanji patch
 
-
-Building the widget
+BUILDING THE WIDGET
 
 1. Uncompress and unpack the distribution
 
-	gzip -d tkTable-0.4.tar.gz
-	tar -xf tkTable-0.4.tar
+	gzip -d tkTable<version>.tar.gz
+	tar -xf tkTable<version>.tar
 
-   This will create a subdirectory tkTable-0.4 with all the files in it.
+   This will create a subdirectory tkTable<version> with all the files in it.
 
-2. Hack the Makefile
+2. Configure
 
-   There is a very short makefile which I use to make a both a wish with
-   the table widget in it or a shared version (for sun 4.1.3). You'll 
-   need to change the paths for the various library files and put in your
-   favourite c compiler. I used acc, but I have also successfully compiled
-   with gcc.
+        cd tkTable<version>
+	./configure --prefix=/usr/local
 
-3. Hack tkAppInit
+   tkTable uses information left in tkConfigure.sh when you built tk.
 
-  In the distribution, I have put a tkAppInit.c file. All this is is the
-  original tkAppInit.c from tk4.1 with the line 
+3. Make and Install
 
-	if (Tktable_Init(interp)==TCL_ERROR){
-		return TCL_ERROR;
-	}
+	make
+	make install
 
-  added in after tk has been initialised. You will need either to use this 
-  file or add the same line wherever you initialize tcl and tk in your 
-  application. If you have other extensions compiled in, add this line
-  at the same place.
-
-  Note - If you are using a dynamically loading tcl/tk, you can build a
-         shared version of Table instead and you don't need the tkAppInit.c 
-         file. Add the dynamic loading comamand to one of your initialization
-         scripts.   The load command should look something like:
-	     load /usr/local/lib/libtktable.so.0.4 tktable
+   tkTable is built to comply to the latest tcl package conventions.
 
 4. Use it
 
@@ -90,54 +77,40 @@ Building the widget
    One of the cells will change a few moments later and you will see the 
    cell flash.
 
+   This widget is not compatible with versions below 0.60.  Please see
+   the notes in UPGRADING if you used a previous release of tkTable.
+
 5. Read the manpage
 
    There is a manpage that briefly describes the commands the widget will
    understand and respond to. The best way is just to try them out.
 
 
-Things to watch out for.
+THINGS TO WATCH OUT FOR
 
-Packing 
-	The table tries not to allocate huge chunks of screen real estate
-        if you ask it for a lot of rows and columns. You can always stretch 
-        out the frame or explicitly tell it how big it can be. If you want
-        to stretch the table, remember to pack it with fill both and expand on.
+Packing
+  The table tries not to allocate huge chunks of screen real estate if
+  you ask it for a lot of rows and columns.  You can always stretch out
+  the frame or explicitly tell it how big it can be.  If you want to
+  stretch the table, remember to pack it with fill both and expand on.
 
 Array   
- 	The array elements for the table are of the form array(2,3) etc.
-  	Make sure there are no spaces around the ','. You can have negative 
-	indices
+  The array elements for the table are of the form array(2,3) etc.  Make
+  sure there are no spaces around the ','.  You may have negative indices
 
 Editing
-	If you can't edit, remember that the focus model in tk is explicit,
-	so you need to click on the table or give it the focus command.
-	Just having a selected cell is not the same thing as being able to
-	edit. You also need the editing cursor. If you can't get the cursor,
-	make sure that you actually have a variable assigned to the table.
+  If you can't edit, remember that the focus model in tk is explicit, so
+  you need to click on the table or give it the focus command.  Just
+  having a selected cell is not the same thing as being able to edit.
+  You also need the editing cursor.  If you can't get the cursor, make
+  sure that you actually have a variable assigned to the table.
 
+COMMENTS, BUGS, etc.
 
-TODO list
+* Please can you send comments and bug reports to ellson@lucent.com or
+  jhobbs@cs.uoregon.edu and we'll do our best at addressing them.  This
+  is not a primary project for any of the authors.
 
-The makefile is pretty sparse and there is no automatic configuration
-available for the table. If anybody is good at that kind of stuff, I'd
-love for you to try and figure one out. Same goes for the manpage which
-on my machine troffs out like a Sun manpage not a tcl one!
-
-Comments, bugs etc.
-
-- Please can you send comments and bug reports to rols@lehman.com and I'll
-  try to get around to looking at them. This is a 'spare time' kind of
-  project and it just soaked up the last 3 weeks of spare time, so I dont
-  know how much time I can face giving it for a while.
-
-- If you find a bug, a short piece of Tcl that exercises it would be very
-  useful, or even better, compile with debugging and tell me where it crashed
-  in that short piece of Tcl.
-
-- If you have any general comments, I'd like to hear them too.
-
-(tkTable has been worked on more recently by paulf@lamont.ldgo.columbia.edu
-  and john.ellson@att.com.  We would also be a little interested
-  in bug reports, and very interested in any bug fixes that you might
-  produce.)
+* If you find a bug, a short piece of Tcl that exercises it would be very
+  useful, or even better, compile with debugging and specify where it
+  crashed in that short piece of Tcl.

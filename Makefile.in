@@ -1,0 +1,71 @@
+PACKAGE		= Tktable
+VERSION         = 1.0
+OBJS		= tkTable.o
+MANS		= tkTable.n
+
+#-------------------------------------------------
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+CC              = @CC@
+SHLIB_CFLAGS    = @TCL_SHLIB_CFLAGS@
+SHLIB_SUFFIX    = @TCL_SHLIB_SUFFIX@
+SHLIB_LD        = @TCL_SHLIB_LD@
+TCL_PREFIX      = @TCL_PREFIX@
+TCL_CFLAGS      = @TCL_CFLAGS@
+TCL_LIB_SPEC    = @TCL_LIB_SPEC@
+TCL_LIBS        = @TCL_LIBS@
+TCL_LD_FLAGS    = @TCL_LD_FLAGS@
+TCL_LD_SEARCH_FLAGS = @TCL_LD_SEARCH_FLAGS@
+TK_LIB_SPEC     = @TK_LIB_SPEC@
+TK_LIBS         = @TK_LIBS@
+
+exec_prefix     = @exec_prefix@
+
+LIB_RUNTIME_DIR = $(exec_prefix)/lib
+
+INCLUDES        = -I$(TCL_PREFIX)/include
+
+DLL             = $(PACKAGE)$(SHLIB_SUFFIX)
+PACKAGEDIR	= $(TCL_PREFIX)/lib/$(PACKAGE)
+
+CFLAGS          = $(TCL_CFLAGS) $(SHLIB_CFLAGS) $(INCLUDES) \
+		  -DVERSION=\"$(VERSION)\"
+
+MAN_INSTALL_DIR = $(TCL_PREFIX)/man/mann
+
+all: $(DLL) pkgIndex.tcl
+
+$(DLL): $(OBJS)
+	$(SHLIB_LD) -o $@ $(OBJS)
+
+tkTable.o: tkTabletcl.h
+
+pkgIndex.tcl:
+	(if test -f $(PACKAGEDIR)/pkgIndex.tcl; \
+	    then grep -v $(VERSION) $(PACKAGEDIR)/pkgIndex.tcl; \
+	else true; fi;) | \
+      echo 'package ifneeded $(PACKAGE) $(VERSION) "package require Tk; [list load [file join $$dir $(DLL).$(VERSION)] $(PACKAGE)]"' > pkgIndex.tcl
+
+install: all
+	if test ! -d $(PACKAGEDIR); then mkdir $(PACKAGEDIR); fi
+	$(INSTALL_PROGRAM) $(DLL) $(PACKAGEDIR)/$(DLL).$(VERSION)
+	$(INSTALL_DATA) pkgIndex.tcl $(PACKAGEDIR)/pkgIndex.tcl
+	$(INSTALL_DATA) tkTable.tcl $(PACKAGEDIR)/tkTable.tcl
+	$(INSTALL_DATA) $(MANS) $(MAN_INSTALL_DIR)/
+
+test: all
+	true
+
+clean: 
+	rm -f *.o *$(SHLIB_SUFFIX) core pkgIndex.tcl tkTabletcl.h tablewish
+
+distclean: clean
+	rm -f Makefile config.cache config.log config.status
+
+tkTabletcl.h: tkTable.tcl
+	sed -e '/^$\#/d' -e '/^$$/d' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' <tkTable.tcl >tkTabletcl.h || rm tkTabletcl.h
+
+tablewish: tkAppInit.o $(OBJS)
+	$(CC) $(TCL_LD_SEARCH_FLAGS) -o $@ tkAppInit.o $(OBJS) \
+	  $(LIBS) $(TK_LIB_SPEC) $(TCL_LIB_SPEC) $(TK_LIBS) $(TCL_LIBS) 

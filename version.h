@@ -1,1 +1,0 @@
-#define TKTABLE_VERSION "0.4"
