@@ -1,3 +1,16 @@
+2002-03-19  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c (TableDisplay): when building with threads on
+	WIN32, use NO_XSETCLIP instead of direct DC hacks because Tk
+	doesn't use CS_CLASSDC on threaded builds.
+	(Tktable_Init) Corrected to use BUILD_Tktable for EXTERN changes.
+
+	* configure:
+	* configure.in: use double-eval to substitute DBGX var for
+	${PACKAGE}_LIB_FILE.
+
+	* Makefile.in: cleaned up install target
+
 2002-03-13  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* demos/loadtable.tcl:
