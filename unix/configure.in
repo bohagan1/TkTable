@@ -38,8 +38,10 @@ echo "using '$COMPEXE' to compress archives"
 if test "`uname -s`" = "AIX" ; then
     SYSID="AIX-`uname -v`-`uname -r`"
     TK_LIBS="$TK_LIBS -lc"
-else
+elif (uname -p ; exit) 2>/dev/null; then
     SYSID="`uname -s`-`uname -r`-`uname -p`"
+else
+    SYSID="`uname -s`-`uname -r`"
 fi
 
 CC=$TCL_CC
