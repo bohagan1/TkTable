@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableCell.c,v 1.5 2001/06/22 23:15:43 hobbs Exp $
+ * RCS: @(#) $Id: tkTableCell.c,v 1.6 2001/06/23 05:26:31 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -857,7 +857,9 @@ TableGetIndex(tablePtr, str, row_p, col_p)
     } else {
     IndexError:
 	Tcl_AppendStringsToObj(Tcl_GetObjResult(tablePtr->interp),
-			       "bad table index \"", str, "\"", (char *)NULL);
+		"bad table index \"", str, "\": must be active, anchor, end, ",
+		"origin, topleft, bottomright, @x,y, or <row>,<col>",
+		(char *)NULL);
 	return TCL_ERROR;
     }
 
