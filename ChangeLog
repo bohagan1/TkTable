@@ -1,5 +1,9 @@
 2004-07-20  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* Makefile.in, configure.in, configure, tclconfig/tcl.m4: update
+	to TEA 3.1, use CFLAGS instead of EXTRA_CFLAGS and bump the
+	version number of Tktable to 2.9.
+
 	* generic/tkTable.h: add #include <ctype.h>
 
 	* generic/tkTableCell.c (TableGetCellValue, TableSetCellValue): 

@@ -12,7 +12,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: Makefile.in,v 1.10 2003/01/30 21:00:38 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.11 2003/12/10 23:02:19 hobbs Exp $
 
 #========================================================================
 # Nothing of the variables below this line need to be changed.  Please
@@ -162,9 +162,9 @@ INCLUDES	= @PKG_INCLUDES@ \
 ## Jeff's magic extra debug flag
 #TBL_CFLAGS	+= -DDEBUG
 
-EXTRA_CFLAGS	= $(TBL_CFLAGS) @EXTRA_CFLAGS@ @PKG_CFLAGS@
+PKG_CFLAGS	= $(TBL_CFLAGS) @PKG_CFLAGS@
 
-DEFS		= @DEFS@ $(EXTRA_CFLAGS) \
+DEFS		= @DEFS@ $(PKG_CFLAGS) \
 		  -DTBL_COMMAND=\"table\" \
 		  -DTBL_RUNTIME=\"tkTable.tcl\" \
 		  -DTBL_RUNTIME_DIR=\"$(pkglibdir)\"
@@ -209,8 +209,13 @@ install: all install-binaries install-libraries install-doc
 install-binaries: binaries install-lib-binaries install-bin-binaries
 	@mkdir -p $(DESTDIR)$(pkglibdir)
 	$(INSTALL_DATA) pkgIndex.tcl $(DESTDIR)$(pkglibdir)
-	$(INSTALL_DATA) $(srcdir)/license.txt $(DESTDIR)$(pkglibdir)
-	$(INSTALL_DATA) $(srcdir)/README.txt $(DESTDIR)$(pkglibdir)
+	@list='$(PKG_EXTRA_FILES)'; for p in $$list; do \
+	  if test -f $(srcdir)/$$p; then \
+	    destp=`basename $$p`; \
+	    echo " Install $$destp $(DESTDIR)$(pkglibdir)/$$destp"; \
+	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(pkglibdir)/$$destp; \
+	  fi; \
+	done
 
 #========================================================================
 # This rule installs platform-independent files, such as header files.
@@ -382,6 +387,42 @@ uninstall-binaries:
 	list='$(bin_BINARIES)'; for p in $$list; do \
 	  rm -f $(DESTDIR)$(bindir)/$$p; \
 	done
+
+#========================================================================
+# Starkit creation - requires ActiveTcl or compatible tclsh
+# You should not have to modify this target.
+#========================================================================
+
+STARKIT_EXT	= .kit.tcl
+STARKIT_TCLSH	= $(TCLSH)
+STARKIT_BASE	= tclsh
+STARKIT		= $(PACKAGE_NAME)$(STARKIT_EXT)
+
+starkit-clean:
+	rm -f $(STARKIT)
+
+starkit: starkit-clean
+	@echo "Building $(STARKIT)"
+	(\
+	echo 'package require vfs'; \
+	echo 'package require Mk4tcl'; \
+	echo ''; \
+	echo 'set HEADER {#!/bin/sh';\
+	echo '# \\'; \
+	echo 'exec %1s "$$0" $${1+"$$@"}'; \
+	echo 'package require starkit'; \
+	echo 'starkit::header mk4 -readonly}'; \
+	echo ''; \
+	echo 'set HEADER [format "$$HEADER\n%c" [file tail [info nameofexe]] 0x1a]'; \
+	echo 'set file "$(STARKIT)"'; \
+	echo 'set fid [open $$file w]'; \
+	echo 'puts $$fid $$HEADER'; \
+	echo 'close $$fid'; \
+	echo ''; \
+	echo 'vfs::mk4::Mount $$file $$file'; \
+	echo 'file copy $(PKG_LIB_FILE) $$file/'; \
+	echo 'vfs::unmount $$file'; \
+	) | $(STARKIT_TCLSH)
 
 #========================================================================
 # Distribution creation
