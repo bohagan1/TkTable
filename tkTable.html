@@ -175,6 +175,21 @@ are silently ignored. </DD>
 </DL>
 <P>
 <P>
+Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-command</B><BR>
+ Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>command</B><BR>
+ Database 
+Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>Command</B><BR>
+ 
+<DL>
+
+<DT> Specified a command to use as a procedural interface to 
+cell values. </DT>
+<DD>If <B>-usecommand</B> is true, this command will be used instead of 
+any reference to the <B>-variable</B> array. It uses the %-substition model described 
+in COMMAND SUBSTITUTION below. </DD>
+</DL>
+<P>
+<P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-drawmode</B><BR>
  Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>drawMode</B><BR>
  
@@ -416,6 +431,20 @@ Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-titlecols</B><BR>
 </DL>
 <P>
 <P>
+Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-usecommand</B><BR>
+ 
+Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>useCommand</B><BR>
+ Database Class:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>UseCommand</B><BR>
+ 
+<DL>
+
+<DT> A boolean value which 
+specifies whether to use the <B>command</B> option. </DT>
+<DD>This value sets itself to 
+zero if <B>command</B> is used and returns an error. </DD>
+</DL>
+<P>
+<P>
 Command-Line Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>-validate</B><BR>
  
 Database Name:<tt> </tt>&nbsp;<tt> </tt>&nbsp;<B>validate</B><BR>
@@ -630,74 +659,75 @@ the widget will be used. <P>
 Images are used for display purposes only.  If 
 an image is specified in a tag, then that image will be displayed instead 
 of the text for the cell. However, editing in that cell will still be enabled 
-and any selections will show the text value of the cell. <P>
+and any querying of the cell will show the text value of the cell. <P>
  
-<H2><A NAME="sect7" HREF="#toc7">THE SELECTION</A></H2>
+<H2><A NAME="sect7" HREF="#toc7">THE 
+SELECTION</A></H2>
 <P>
-Table 
-selections are available as type STRING (or COMPOUND_TEXT with the Kanji 
-patch).  By default, the value of the selection will be the values of the 
-selected cells in nested Tcl list form where each row is a list and each 
-column is an element of a row list.  You can change the way this value 
-is interpreted by setting the <B>-rowseparator</B> and <B>-colseparator</B> options.  For 
-example, default Excel format would be to set <B>-rowseparator</B> to "\n" and 
-<B>-colseparator</B> to "\t".  Changes these values affects both how the table sends 
-out the selection and reads in pasted data, ensuring that the table should 
-always be able to cut and paste to itself.  It is possible to change how 
-pastes are handled by editing the table library procedure <B>tk_tablePasteHandler</B>. 
- This might be necessary if <B>-selectioncommand</B> is set. <P>
+Table selections are available as type STRING (or COMPOUND_TEXT 
+with the Kanji patch).  By default, the value of the selection will be 
+the values of the selected cells in nested Tcl list form where each row 
+is a list and each column is an element of a row list.  You can change 
+the way this value is interpreted by setting the <B>-rowseparator</B> and <B>-colseparator</B> 
+options.  For example, default Excel format would be to set <B>-rowseparator</B> 
+to "\n" and <B>-colseparator</B> to "\t".  Changes these values affects both how 
+the table sends out the selection and reads in pasted data, ensuring that 
+the table should always be able to cut and paste to itself.  It is possible 
+to change how pastes are handled by editing the table library procedure 
+<B>tk_tablePasteHandler</B>.  This might be necessary if <B>-selectioncommand</B> is set. 
+<P>
  
 <H2><A NAME="sect8" HREF="#toc8">COMMAND SUBSTITUTION</A></H2>
 <P>
 <P>
- 
-The various option based commands that the table supports all support 
-the familiar Tk %-substitution model (see <B>bind</B> for more details).  The following 
-%-sequences are recognized and substituted by the table widget: 
+ The various option based commands that the table 
+supports all support the familiar Tk %-substitution model (see <B>bind</B> for 
+more details).  The following %-sequences are recognized and substituted 
+by the table widget: 
 <DL>
 
 <DT><B>%c</B> </DT>
-<DD>For 
-<B>ValidateCommand</B>, it is the column of the cell being validated. For <B>SelectionCommand</B>, 
-it is the maximum number of columns in any row in the selection. </DD>
+<DD>For <B>SelectionCommand</B>, it is the maximum number 
+of columns in any row in the selection.  Otherwise it is the column of 
+the triggered cell. </DD>
 
 <DT><B>%C</B> </DT>
-<DD>Only 
-valid for the <B>ValidateCommand</B>, it is the <I>row</I>,<I>col</I> index of the cell being 
-validated. </DD>
+<DD>Only valid for the <B>ValidateCommand</B>, it is the <I>row</I>,<I>col</I> 
+index of the cell being validated. </DD>
 
 <DT><B>%i</B> </DT>
-<DD>For <B>SelectionCommand</B>, it is the total number of cells in 
-the selection, otherwise it is the current cursor position in the cell. 
-</DD>
+<DD>For <B>SelectionCommand</B>, it is the total 
+number of cells in the selection. For <B>Command</B>, it is 0 for a read (get) 
+and 1 for a write (set). Otherwise it is the current cursor position in 
+the cell. </DD>
 
 <DT><B>%r</B> </DT>
-<DD>For <B>ValidateCommand</B>, it is the row of the cell being validated. For 
-<B>SelectionCommand</B>, it is the number of rows in the selection. </DD>
+<DD>For <B>SelectionCommand</B>, it is the number of rows in the selection. 
+Otherwise it is the row of the triggered cell. </DD>
 
 <DT><B>%s</B> </DT>
 <DD>For <B>ValidateCommand</B>, 
 it is the current value of the cell being validated. For <B>SelectionCommand</B>, 
 it is the default value of the selection. For <B>BrowseCommand</B>, it is the 
-index of the last active cell. </DD>
+index of the last active cell. For <B>Command</B>, it is "r" for a read (get) 
+and "w" for a write (set). </DD>
 
 <DT><B>%S</B> </DT>
 <DD>For <B>ValidateCommand</B>, it is the potential 
-new value of the cell being validated. For <B>SelectionCommand</B>, it is the 
-default value of the selection. For <B>BrowseCommand</B>, it is the index of the 
-new active cell. </DD>
+new value of the cell being validated. For <B>BrowseCommand</B>, it is the index 
+of the new active cell. </DD>
 
 <DT><B>%W</B> </DT>
-<DD>The pathname to the window for which the command was 
-generated. </DD>
+<DD>The pathname to the window for which the command 
+was generated. </DD>
 </DL>
 <P>
 <P>
  
 <H2><A NAME="sect9" HREF="#toc9">WIDGET COMMAND</A></H2>
 <P>
-The <B>table</B> command creates a new Tcl command whose 
-name is <I>pathName</I>.  This command may be used to invoke various operations 
+The <B>table</B> command creates a new Tcl command 
+whose name is <I>pathName</I>.  This command may be used to invoke various operations 
 on the widget.  It has the following general form: <blockquote><P>
  <I>pathName option </I>?<I>arg 
 arg ...</I>?<BR>
@@ -712,19 +742,20 @@ The following commands are possible for <B>table</B> widgets:
 <DD>Sets the active cell to the one indicated by <I>index</I>. </DD>
 
 <DT><I>pathName <B>bbox</B></I> 
-<I>index</I> </DT>
-<DD>Gives the x, y, width and height of the cell at the index in pixels, 
-if it is visible in the display.  Otherwise an empty string is returned. 
+<I>first</I> ?<I>last</I>? </DT>
+<DD>It returns the bounding box for the specified cell (range) 
+as a 4-tuple of x, y, width and height in pixels.  It clips the box to the 
+visible portion, if any, otherwise an empty string is returned. </DD>
+
+<DT><I>pathName 
+<B>cget</B></I> <I>option</I> </DT>
+<DD>Returns the current value of the configuration option given 
+by <I>option</I>.  <I>Option</I> may have any of the values accepted by the <B>table</B> command. 
 </DD>
 
-<DT><I>pathName <B>cget</B></I> <I>option</I> </DT>
-<DD>Returns the current value of the configuration option 
-given by <I>option</I>.  <I>Option</I> may have any of the values accepted by the <B>table</B> 
-command. </DD>
-
 <DT><I>pathName <B>configure</B></I> ?<I>option</I>? ?<I>value option value ...</I>? </DT>
-<DD>Query or modify 
-the configuration options of the widget. If no <I>option</I> is specified, returns 
+<DD>Query or modify the 
+configuration options of the widget. If no <I>option</I> is specified, returns 
 a list describing all of the available options for <I>pathName</I> (see <B>Tk_ConfigureInfo</B> 
 for information on the format of this list).  If <I>option</I> is specified with 
 no <I>value</I>, then the command returns a list describing the one named option 
@@ -758,10 +789,10 @@ character after that index, otherwise it deletes from the first index
 to the second.  <I>index</I> can be a number, <B>insert</B> or <B>end</B>. </DD>
 
 <DT><I>pathName <B>delete cols</B></I> 
-<I>col</I> ?<I>number</I>? </DT>
+<I>first</I> ?<I>last</I>? </DT>
 <DD>Currently unsupported. </DD>
 
-<DT><I>pathName <B>delete rows</B></I> <I>row</I> ?<I>number</I>? </DT>
+<DT><I>pathName <B>delete rows</B></I> <I>first</I> ?<I>last</I>? </DT>
 <DD>Currently 
 unsupported. </DD>
 </DL>
@@ -771,64 +802,64 @@ unsupported. </DD>
 
 <DT><I>pathName <B>get</B></I> <I>first</I> ?<I>last</I>? </DT>
 <DD>Returns the value of the cells specified 
-by the table indices <I>first</I> and (optionally) <I>last</I>. </DD>
+by the table indices <I>first</I> and (optionally) <I>last</I> in a list. </DD>
 
-<DT><I>pathName <B>height</B></I> ?<I>row</I>? 
-?<I>value row value ...</I>? </DT>
-<DD>If no <I>row</I> is specified, returns a list describing all 
-rows for which a height has been set.  If <B>row</B> is specified with no value, 
-it prints out the height of that row in pixels.  If one or more <I>row-value</I> 
-pairs are specified, then it sets each row to be that height in pixels. 
- If <I>value</I> is negative, then the row uses the default height. </DD>
+<DT><I>pathName <B>height</B></I> 
+?<I>row</I>? ?<I>value row value ...</I>? </DT>
+<DD>If no <I>row</I> is specified, returns a list describing 
+all rows for which a height has been set.  If <B>row</B> is specified with no 
+value, it prints out the height of that row in pixels.  If one or more 
+<I>row-value</I> pairs are specified, then it sets each row to be that height 
+in pixels.  If <I>value</I> is negative, then the row uses the default height. 
+</DD>
 
-<DT><I>pathName <B>icursor</B></I> 
-?<I>arg</I>? </DT>
-<DD>With no arguments, prints out the location of the insertion cursor 
-in the active cell.  With one argument, sets the cursor to that point in 
-the string.  0 is before the first character, you can also use <B>insert</B> or 
-<B>end</B> for the current insertion point or the end of the text. </DD>
+<DT><I>pathName <B>icursor</B></I> ?<I>arg</I>? </DT>
+<DD>With no arguments, prints out the location of the 
+insertion cursor in the active cell.  With one argument, sets the cursor 
+to that point in the string.  0 is before the first character, you can 
+also use <B>insert</B> or <B>end</B> for the current insertion point or the end of the 
+text. </DD>
 
-<DT><I>pathName <B>index</B></I> 
-<I>index</I> ?<I>row|col</I>? </DT>
-<DD>Returns the integer cell coordinate that corresponds to 
-<I>index</I> in the form row,col.  If <B>row</B> or <B>col</B> is specified, then only the row 
-or column index is returned. </DD>
+<DT><I>pathName <B>index</B></I> <I>index</I> ?<I>row|col</I>? </DT>
+<DD>Returns the integer cell coordinate 
+that corresponds to <I>index</I> in the form row,col.  If <B>row</B> or <B>col</B> is specified, 
+then only the row or column index is returned. </DD>
 
-<DT><I>pathName <B>insert</B></I> <I>option arg arg</I> </DT>
-<DD>This command 
-is used to into various things into a table.  It has several forms, depending 
-on the <I>option: <blockquote></DD>
+<DT><I>pathName <B>insert</B></I> <I>option arg 
+arg</I> </DT>
+<DD>This command is used to into various things into a table.  It has several 
+forms, depending on the <I>option: <blockquote></DD>
 
 <DT></I><I>pathName <B>insert active</B></I> <I>index value</I> </DT>
-<DD>The <I>value</I> is a text 
-string which is inserted at the <I>index</I> postion of the active cell.  The 
-cursor is then positioned after the new text. <I>index</I> can be a number, <B>insert</B> 
-or <B>end</B>. </DD>
+<DD>The 
+<I>value</I> is a text string which is inserted at the <I>index</I> postion of the active 
+cell.  The cursor is then positioned after the new text. <I>index</I> can be a 
+number, <B>insert</B> or <B>end</B>. </DD>
 
-<DT><I>pathName <B>insert cols</B></I> <I>col number</I> </DT>
-<DD>Currently unsupported. </DD>
+<DT><I>pathName <B>insert cols</B></I> <I>first</I> ?<I>last</I>? </DT>
+<DD>Currently unsupported. 
+</DD>
 
-<DT><I>pathName 
-<B>insert rows</B></I> <I>row number</I> </DT>
+<DT><I>pathName <B>insert rows</B></I> <I>first</I> ?<I>last</I>? </DT>
 <DD>Currently unsupported. </DD>
 </DL>
 </blockquote>
 
 <DL>
 
-<DT><I>pathName <B>reread</B></I> </DT>
-<DD>Rereads the 
-old contents of the cell back into the editing buffer.  Useful for a key 
-binding when &lt;Escape&gt; is pressed to abort the edit (a default binding). </DD>
+<DT><I>pathName <B>reread</B></I> 
+</DT>
+<DD>Rereads the old contents of the cell back into the editing buffer.  Useful 
+for a key binding when &lt;Escape&gt; is pressed to abort the edit (a default 
+binding). </DD>
 
-<DT><I>pathName 
-<B>scan</B></I> <I>option args</I> </DT>
-<DD>This command is used to implement scanning on tables. 
- It has two forms, depending on <I>option: <blockquote></DD>
+<DT><I>pathName <B>scan</B></I> <I>option args</I> </DT>
+<DD>This command is used to implement scanning 
+on tables.  It has two forms, depending on <I>option: <blockquote></DD>
 
-<DT></I><I>pathName <B>scan mark</B></I> <I>x y</I> </DT>
-<DD>Records 
-<I>x</I> and <I>y</I> and the current view in the table window;  used in conjunction 
+<DT></I><I>pathName <B>scan mark</B></I> <I>x 
+y</I> </DT>
+<DD>Records <I>x</I> and <I>y</I> and the current view in the table window;  used in conjunction 
 with later <B>scan dragto</B> commands. Typically this command is associated with 
 a mouse button press in the widget.  It returns an empty string. </DD>
 
@@ -894,7 +925,7 @@ specified index to the associated value. </DD>
 depends on the <I>option</I> argument that follows the <B>tag</B> argument.  The following 
 forms of the command are currently supported: <blockquote></DD>
 
-<DT><I>pathName <B>tag celltag</B></I> <I>tag 
+<DT><I>pathName <B>tag cell</B></I> <I>tagName 
 ?index ... ?</I> </DT>
 <DD>With no arguments, prints out the list of cells that use the 
 <I>tag</I>.  Otherwise it sets the specified cells to use the <I>tag</I>.  If <I>tag</I> is {}, 
@@ -907,7 +938,7 @@ command returns the current value of the option named <I>option</I> associated
 with the tag given by <I>tagName</I>. <I>Option</I> may have any of the values accepted 
 by the <B>tag configure</B> widget command. </DD>
 
-<DT><I>pathName <B>tag coltag</B></I> <I>tag ?col ... ?</I> </DT>
+<DT><I>pathName <B>tag col</B></I> <I>tagName ?col ... ?</I> </DT>
 <DD>With 
 no arguments, prints out the list of cols that use the <I>tag</I>.  Otherwise 
 it sets the specified cols to use the <I>tag</I>.  If <I>tag</I> is {}, the cols are 
@@ -942,7 +973,7 @@ not exist. </DD>
 the names of all defined tags. Otherwise the <I>pattern</I> is used as a glob 
 pattern to show only tags matching that pattern. </DD>
 
-<DT><I>pathName <B>tag rowtag</B></I> <I>tag 
+<DT><I>pathName <B>tag row</B></I> <I>tagName 
 ?row ...?</I> </DT>
 <DD>With no arguments, prints out the list of rows that use the <I>tag</I>. 
 Otherwise it sets the specified rows to use the tag.  If tag is {}, the 
@@ -1071,23 +1102,25 @@ the active cell to the edited value and moves to the next cell down. </LI><LI>Co
 moves the insertion cursor to the beginning of the active cell. </LI><LI>Control-e 
 moves the insertion cursor to the end of the active cell. </LI><LI>Control-minus 
 and Control-equals decrease and increase the width of the column with the 
-active cell in it. </LI>
+active cell in it. </LI><LI>Moving the mouse while button 3 (the right button on 
+Windows) is pressed while you are over a border will cause interactive 
+resizing of that row and/or column to occur. </LI>
 </OL>
 <P>
-Some bindings may have slightly different behavior dependent 
-on the -selectionmode of the widget. <P>
-If the widget is disabled using the 
-<B>-state</B> option, then its view can still be adjusted and cells can still 
-be selected, but no insertion cursor will be displayed and no cell modifications 
-will take place. <P>
-The behavior of tables can be changed by defining new 
-bindings for individual widgets or by redefining the class bindings.  The 
-default bindings are either compiled in or read from a file expected to 
-correspond to: "[lindex $tcl_pkgPath 0]/Tktable/tkTable.tcl". <P>
+Some bindings may have slightly 
+different behavior dependent on the -selectionmode of the widget. <P>
+If the 
+widget is disabled using the <B>-state</B> option, then its view can still be 
+adjusted and cells can still be selected, but no insertion cursor will 
+be displayed and no cell modifications will take place. <P>
+The behavior of 
+tables can be changed by defining new bindings for individual widgets 
+or by redefining the class bindings.  The default bindings are either compiled 
+in or read from a file expected to correspond to: "[lindex $tcl_pkgPath 
+0]/Tktable/tkTable.tcl". <P>
  
 <H2><A NAME="sect11" HREF="#toc11">KEYWORDS</A></H2>
-table, 
-widget, extension <P>
+table, widget, extension <P>
 
 <HR><P>
 <A NAME="toc"><B>Table of Contents</B></A><P>

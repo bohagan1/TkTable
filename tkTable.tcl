@@ -35,6 +35,19 @@ proc tkTableClipboardKeysyms {copy cut paste} {
 # can put "break"s in their bindings to avoid the error, but this check
 # makes that unnecessary.
 
+proc tkTableCheckBorder {w x y} {
+  set cursor [$w cget -cursor]
+  if [regexp {[0-9]} [$w border mark $x $y]] {
+    if [string comp fleur $cursor] { $w config -cursor fleur }
+  } else {
+    if [string comp xterm $cursor] { $w config -cursor xterm }
+  }
+}
+
+bind Table <Motion>	{ tkTableCheckBorder %W %x %y }
+bind Table <3>		{ %W border mark %x %y }
+bind Table <B3-Motion>	{ %W border dragto %x %y }
+
 ## Button events
 
 bind Table <1> {

@@ -1,5 +1,5 @@
 PACKAGE		= Tktable
-VERSION         = 1.3
+VERSION         = 1.4
 OBJS		= tkTable.o
 MANS		= tkTable.n
 

@@ -232,7 +232,7 @@ Database Class:	\\fB\\$3\\fR
 .de UL
 \\$1\l'|0\(ul'\\$2
 ..
-.TH table n 1.2 Tk "Tk Table Extension"
+.TH table n 1.4 Tk "Tk Table Extension"
 .HS table tk
 .BS
 .SH NAME
@@ -303,6 +303,11 @@ procedure passing the column number in question as the sole argument.  The
 procedure is expected to return the name of a tag to use, or a null string.
 Errors occuring during the evaluation of the procedure, or the return of an
 invalid tag name are silently ignored.
+.OP \-command command Command
+Specified a command to use as a procedural interface to cell values.
+If \fB\-usecommand\fR is true, this command will be used instead of any
+reference to the \fB\-variable\fR array.
+It uses the %-substition model described in COMMAND SUBSTITUTION below.
 .OP \-drawmode drawMode DrawMode
 Sets the table drawing mode to one of the following options:
 .RS
@@ -374,6 +379,9 @@ is in the widget.
 Number of rows to use as a title area.  Defaults to 0.
 .OP \-titlecols titleCols TitleCols
 Number of columns to use as a title area.  Defaults to 0.
+.OP \-usecommand useCommand UseCommand
+A boolean value which specifies whether to use the \fBcommand\fR option.
+This value sets itself to zero if \fBcommand\fR is used and returns an error.
 .OP \-validate validate Validate
 A boolean specifying whether validation should occur for the active buffer.
 Defaults to 0.
@@ -559,31 +567,31 @@ familiar Tk %-substitution model (see \fBbind\fR for more details).  The
 following %-sequences are recognized and substituted by the table widget:
 .TP 5
 \fB%c\fR
-For \fBValidateCommand\fR, it is the column of the cell being validated.
 For \fBSelectionCommand\fR, it is the maximum number of columns in any
-row in the selection.
+row in the selection.  Otherwise it is the column of the triggered cell.
 .TP 5
 \fB%C\fR
 Only valid for the \fBValidateCommand\fR, it is the \fIrow\fR,\fIcol\fR
 index of the cell being validated.
 .TP 5
 \fB%i\fR
-For \fBSelectionCommand\fR, it is the total number of cells in the selection,
-otherwise it is the current cursor position in the cell.
+For \fBSelectionCommand\fR, it is the total number of cells in the selection.
+For \fBCommand\fR, it is 0 for a read (get) and 1 for a write (set).
+Otherwise it is the current cursor position in the cell.
 .TP 5
 \fB%r\fR
-For \fBValidateCommand\fR, it is the row of the cell being validated.
 For \fBSelectionCommand\fR, it is the number of rows in the selection.
+Otherwise it is the row of the triggered cell.
 .TP 5
 \fB%s\fR
 For \fBValidateCommand\fR, it is the current value of the cell being validated.
 For \fBSelectionCommand\fR, it is the default value of the selection.
 For \fBBrowseCommand\fR, it is the index of the last active cell.
+For \fBCommand\fR, it is "r" for a read (get) and "w" for a write (set).
 .TP 5
 \fB%S\fR
 For \fBValidateCommand\fR, it is the potential new value of the cell
 being validated.
-For \fBSelectionCommand\fR, it is the default value of the selection.
 For \fBBrowseCommand\fR, it is the index of the new active cell.
 .TP 5
 \fB%W\fR
@@ -606,10 +614,10 @@ The following commands are possible for \fBtable\fR widgets:
 \fIpathName \fBactivate\fR \fIindex\fR
 Sets the active cell to the one indicated by \fIindex\fR.
 .TP
-\fIpathName \fBbbox\fR \fIindex\fR
-Gives the x, y, width and height of the cell at the index
-in pixels, if it is visible in the display.  Otherwise an
-empty string is returned.
+\fIpathName \fBbbox\fR \fIfirst\fR ?\fIlast\fR?
+It returns the bounding box for the specified cell (range) as a 4-tuple of
+x, y, width and height in pixels.  It clips the box to the visible portion,
+if any, otherwise an empty string is returned.
 .TP
 \fIpathName \fBcget\fR \fIoption\fR
 Returns the current value of the configuration option given
@@ -650,16 +658,16 @@ Deletes text from the active cell.  If only one index is given, it deletes
 the character after that index, otherwise it deletes from the first index to
 the second.  \fIindex\fR can be a number, \fBinsert\fR or \fBend\fR.
 .TP
-\fIpathName \fBdelete cols\fR \fIcol\fR ?\fInumber\fR?
+\fIpathName \fBdelete cols\fR \fIfirst\fR ?\fIlast\fR?
 Currently unsupported.
 .TP
-\fIpathName \fBdelete rows\fR \fIrow\fR ?\fInumber\fR?
+\fIpathName \fBdelete rows\fR \fIfirst\fR ?\fIlast\fR?
 Currently unsupported.
 .RE
 .TP
 \fIpathName \fBget\fR \fIfirst\fR ?\fIlast\fR?
-Returns the value of the cells specified by the
-table indices \fIfirst\fR and (optionally) \fIlast\fR.
+Returns the value of the cells specified by the table indices \fIfirst\fR
+and (optionally) \fIlast\fR in a list.
 .TP
 \fIpathName \fBheight\fR ?\fIrow\fR? ?\fIvalue row value ...\fR?
 If no \fIrow\fR is specified, returns a list describing all rows for which a
@@ -689,10 +697,10 @@ The \fIvalue\fR is a text string which is inserted at the \fIindex\fR
 postion of the active cell.  The cursor is then positioned after the
 new text. \fIindex\fR can be a number, \fBinsert\fR or \fBend\fR.
 .TP
-\fIpathName \fBinsert cols\fR \fIcol number\fR
+\fIpathName \fBinsert cols\fR \fIfirst\fR ?\fIlast\fR?
 Currently unsupported.
 .TP
-\fIpathName \fBinsert rows\fR \fIrow number\fR
+\fIpathName \fBinsert rows\fR \fIfirst\fR ?\fIlast\fR?
 Currently unsupported.
 .RE
 .TP
@@ -765,7 +773,7 @@ command depends on the \fIoption\fR argument that follows the
 supported:
 .RS
 .TP
-\fIpathName \fBtag celltag\fR \fItag ?index ... ?\fR
+\fIpathName \fBtag cell\fR \fItagName ?index ... ?\fR
 With no arguments, prints out the list of cells
 that use the \fItag\fR.  Otherwise it sets the specified
 cells to use the \fItag\fR.  If \fItag\fR is {},
@@ -778,7 +786,7 @@ associated with the tag given by \fItagName\fR.
 \fIOption\fR may have any of the values accepted by the \fBtag configure\fR
 widget command.
 .TP
-\fIpathName \fBtag coltag\fR \fItag ?col ... ?\fR
+\fIpathName \fBtag col\fR \fItagName ?col ... ?\fR
 With no arguments, prints out the list of cols
 that use the \fItag\fR.  Otherwise it sets the specified
 cols to use the \fItag\fR.  If \fItag\fR is {},
@@ -812,7 +820,7 @@ If no pattern is specified, shows the names of all defined tags.
 Otherwise the \fIpattern\fR is used as a glob pattern to show only
 tags matching that pattern.
 .TP
-\fIpathName \fBtag rowtag\fR \fItag ?row ...?\fR
+\fIpathName \fBtag row\fR \fItagName ?row ...?\fR
 With no arguments, prints out the list of rows that use the \fItag\fR.
 Otherwise it sets the specified rows to use the tag.  If tag is {}, the rows
 are reset to use the default tag.  Tags added during \-rowtagcommand
@@ -961,6 +969,10 @@ Control-e moves the insertion cursor to the end of the active cell.
 .IP [21]
 Control-minus and Control-equals decrease and increase the
 width of the column with the active cell in it.
+.IP [22]
+Moving the mouse while button 3 (the right button on Windows) is pressed
+while you are over a border will cause interactive resizing of that row
+and/or column to occur.
 .PP
 Some bindings may have slightly different behavior dependent on the
 \-selectionmode of the widget.

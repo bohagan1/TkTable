@@ -5,6 +5,36 @@
 	  ## Release dates between "****"s.		##
 	  ################################################
 
+**** v1.4 Feb 2 1997 **** (changes jhobbs@cs.uoregon.edu)
+
+Changed default unix font to medium weight (from bold).
+
+Updated "bbox" method to allow range.
+
+Added auto-resizable border code with new "border" method, TableAtBorder
+function and new Table bindings.
+
+Changed TableCellHidden to TableCellVCoords & extended it.  Now understands
+highlightWidth variation and clips area to actual visible coords.
+
+Added code in TableConfigure to prevent spurious redisplays of the
+entire table for any config request.
+
+fixed index bug where "ROW,COL<extrajunk>" translated to "ROW,COL" and
+a couple other similar interpretive bugs.
+
+fixed potential segfault in unsetting "active" element of attached array.
+
+changed min()/max() to MIN()/MAX() - avoids Windoze warning.
+
+changed textCurPosn to icursor.
+
+greatly simplified KANJI interoperability by making activeBuf a regular
+char *, changing a few interfaces, and some other stuff.  This reduced
+the number of KANJI #ifdef's significantly.
+
+added -command and -usecommand options.
+
 **** v1.3 Jan 28 1997 **** (changes jhobbs@cs.uoregon.edu)
 
 Included precompiled Win95/Tk8.0a2 DLL.

@@ -40,21 +40,22 @@
 #   define EXPORT(a,b) a b
 #endif	/* WIN32 */
 
-#define max(A,B)	((A)>(B))?(A):(B)
-#define min(A,B)	((A)>(B))?(B):(A)
+#define MAX(A,B)	((A)>(B))?(A):(B)
+#define MIN(A,B)	((A)>(B))?(B):(A)
 #define ARSIZE(A)	(sizeof(A)/sizeof(*A))
 #define INDEX_BUFSIZE	64
 
 #ifdef KANJI
 
-#include "tkWStr.h"
+#include <tkWStr.h>
 
 #define WCHAR			wchar
 #define WSTRLEN			Tcl_WStrlen
 #define WSTRCMP			Tcl_WStrcmp
 #define DECODE_WSTR		Tk_DecodeWStr
-#define ENCODE_WSTR(i,s)	Tk_GetWStr((i),(s))
+#define ENCODE_WSTR		Tk_GetWStr
 #define FREE_WSTR		Tk_FreeWStr
+#define WSTR2CTEXT		Tk_WStrToCtext
 
 #define DEF_TABLE_FONT          "a14"
 #define DEF_TABLE_KANJIFONT     "k14"
@@ -67,11 +68,12 @@
 #define DECODE_WSTR	
 #define ENCODE_WSTR(i,s)	(s)
 #define FREE_WSTR		ckfree
+#define WSTR2CTEXT(s,l)		(s)
 
-#if (TK_MAJOR_VERSION > 4)
+#if (TK_MAJOR_VERSION == 8)
 #define DEF_TABLE_FONT          "Helvetica 12"
 #else
-#define DEF_TABLE_FONT          "-Adobe-Helvetica-Bold-R-Normal--*-120-*"
+#define DEF_TABLE_FONT          "-Adobe-Helvetica-Medium-R-Normal--*-120-*"
 #endif
 #endif		/* KANJI */
 
@@ -118,12 +120,12 @@ typedef struct {
   XFontStruct *asciiFontPtr;
   XFontStruct *kanjiFontPtr;
 #else
-#if (TK_MAJOR_VERSION > 4)
+#if (TK_MAJOR_VERSION == 8)
   Tk_Font	fontPtr;	/* Information about text font, or NULL. */
 #else
   XFontStruct   *fontPtr;       /* default font pointer */
-#endif              /* TK 8 */
-#endif              /* KANJI */
+#endif	/* TK8 */
+#endif	/* KANJI */
   Tk_Anchor anchor;		/* default anchor point */
   /* experimental image support */
   char *imageStr;		/* name of image */
@@ -156,6 +158,10 @@ typedef struct {
   char *xScrollCmd;		/* the x-scroll command */
   char *browseCmd;		/* the command that is called when the
 				 * active cell changes */
+  char *command;		/* A command to eval when get/set occurs
+				 * for table values */
+  int useCmd;			/* Signals whether to use command or the
+				 * array variable, will be 0 if command errs */
   char *selCmd;			/* the command that is called to when a
 				 * [selection get] call occurs for a table */
   char *valCmd;			/* Command prefix to use when invoking
@@ -204,8 +210,8 @@ typedef struct {
   int activeRow, activeCol;	/* the row,col of the active cell */
   int oldTopRow, oldLeftCol;	/* cached by TableAdjustParams */
   int oldActRow, oldActCol;	/* cached by TableAdjustParams */
-  int textCurPosn;		/* The position of the text cursor in the
-				   string */
+  int icursor;			/* The index of the insertion cursor in the
+				   active cell */
   int flags;			/* An or'ed combination of flags concerning
 				   redraw/cursor etc. */
   int maxWidth, maxHeight;	/* max width|height required in pixels */
@@ -214,8 +220,7 @@ typedef struct {
   int *rowPixels;		/* Array of the pixel height of each row */
   int *colStarts, *rowStarts;	/* Array of start pixels for rows|columns */
   int scanMarkX, scanMarkY;
-  int scanMarkRowOffset;
-  int scanMarkColOffset;
+  int scanMarkRow, scanMarkCol;
   Tcl_HashTable *colWidths;	/* hash table of non default column widths */
   Tcl_HashTable *rowHeights;	/* hash table of non default row heights */
   Tcl_HashTable *tagTable;	/* the table for the style tags */
@@ -226,8 +231,8 @@ typedef struct {
   Tcl_HashTable *selCells;	/* the table of selected cells */
   Tcl_TimerToken cursorTimer;	/* the timer token for the cursor blinking */
   Tcl_TimerToken flashTimer;	/* the timer token for the cell flashing */
-  WCHAR	*activeBuf;		/* the buffer where the selection is kept
-				   for editing */
+  char *activeBuf;		/* the buffer where the selection is kept
+				   for editing the active cell */
   /* The invalid rectangle if there is an update pending */
   int invalidX, invalidY, invalidWidth, invalidHeight;
 } Table;
@@ -299,6 +304,7 @@ static int	TableCmd _ANSI_ARGS_((ClientData clientData,
 
 #define CMD_ACTIVATE	1	/* activate command a la listbox */
 #define CMD_BBOX	2	/* bounding box of cell <index> */
+#define CMD_BORDER	3	/* border movement function */
 #define CMD_CGET	4	/* basic cget widget command */
 #define	CMD_CONFIGURE	5	/* general configure command */
 #define CMD_CURSELECTION 6	/* get current selected cell(s) */
@@ -325,6 +331,7 @@ static int	TableCmd _ANSI_ARGS_((ClientData clientData,
 static CmdStruct main_cmds[] = {
   {"activate",		CMD_ACTIVATE},
   {"bbox",		CMD_BBOX},
+  {"border",		CMD_BORDER},
   {"cget",		CMD_CGET},
   {"configure",		CMD_CONFIGURE},
   {"curselection",	CMD_CURSELECTION},
@@ -395,6 +402,15 @@ static CmdStruct mod_cmds[] = {
   {"", 0}
 };
 
+/* border subcommands */
+#define BD_MARK		1
+#define BD_DRAGTO	2
+static CmdStruct bd_cmds[] = {
+  {"mark",	BD_MARK},
+  {"dragto",	BD_DRAGTO},
+  {"", 0}
+};
+
 /* drawmode values */
 #define	DRAW_MODE_SLOW		1	/* The display redraws with a pixmap
 					   using TK function calls */
@@ -462,6 +478,8 @@ static Tk_ConfigSpec TableConfig[] = {
    Tk_Offset(Table, browseCmd), TK_CONFIG_NULL_OK},
   {TK_CONFIG_SYNONYM, "-browsecmd", "browseCommand", (char *) NULL,
    (char *) NULL, 0, TK_CONFIG_NULL_OK},
+  {TK_CONFIG_STRING, "-command", "command", "Command", "",
+   Tk_Offset(Table, command), TK_CONFIG_NULL_OK},
   {TK_CONFIG_INT, "-colorigin", "colOrigin", "Origin", "0",
    Tk_Offset(Table, colOffset), 0 },
   {TK_CONFIG_INT, "-cols", "cols", "Cols", "10",
@@ -492,7 +510,7 @@ static Tk_ConfigSpec TableConfig[] = {
 #else
   {TK_CONFIG_FONT, "-font", "font", "Font",  DEF_TABLE_FONT,
    Tk_Offset(Table, defaultTag.fontPtr), 0 },
-#endif              /* KANJI */
+#endif	/* KANJI */
   {TK_CONFIG_COLOR, "-foreground", "foreground", "Foreground", "black",
    Tk_Offset(Table, defaultTag.foreground), 0 },
   {TK_CONFIG_INT, "-height", "height", "Height", 0,
@@ -544,6 +562,8 @@ static Tk_ConfigSpec TableConfig[] = {
    Tk_Offset(Table, titleCols), TK_CONFIG_NULL_OK },
   {TK_CONFIG_INT, "-titlerows", "titleRows", "TitleRows", "0",
    Tk_Offset(Table, titleRows), TK_CONFIG_NULL_OK },
+  {TK_CONFIG_BOOLEAN, "-usecommand", "useCommand", "UseCommand", "1",
+   Tk_Offset(Table, useCmd), 0},
   {TK_CONFIG_STRING, "-variable", "variable", "Variable", NULL,
    Tk_Offset(Table, arrayVar), TK_CONFIG_NULL_OK },
   {TK_CONFIG_BOOLEAN, "-validate", "validate", "Validate", "0",
@@ -560,6 +580,59 @@ static Tk_ConfigSpec TableConfig[] = {
    NULL, Tk_Offset(Table, yScrollCmd), TK_CONFIG_NULL_OK },
   {TK_CONFIG_END, (char *) NULL, (char *) NULL, (char *) NULL,
    (char *) NULL, 0, 0 }
+};
+
+/*
+ * This specifies the configure options that will cause an update to
+ * occur, so we should have a quick lookup table for them.
+ * Keep this in sync with the above values.
+ */
+static CmdStruct update_config[] = {
+  {"-anchor",		1},
+  {"-background",	1},
+  {"-bg",		1},
+  {"-bd",		1},
+  {"-borderwidth",	1},
+  {"-browsecommand",	1},
+  {"-browsecmd",	1},
+  {"-command",		1},
+  {"-colorigin",	1},
+  {"-cols",		1},
+  {"-colstretchmode",	1},
+  {"-coltagcommand",	1},
+  {"-fg",		1},
+  {"-flashmode",	1},
+  {"-flashtime",	1},
+#ifdef KANJI
+  {"-kanjifont",	1},
+#endif	/* KANJI */
+  {"-font",		1},
+  {"-foreground",	1},
+  {"-height",		1},
+  {"-highlightbackground",	1},
+  {"-highlightcolor",	1},
+  {"-highlightthickness",	1},
+  {"-insertbackground",	1},
+  {"-insertborderwidth",	1},
+  {"-insertofftime",	1},
+  {"-insertontime",	1},
+  {"-insertwidth",	1},
+  {"-maxheight",	1},
+  {"-maxwidth",		1},
+  {"-relief",		1},
+  {"-roworigin",	1},
+  {"-rows",		1},
+  {"-rowstretchmode",	1},
+  {"-rowtagcommand",	1},
+  {"-state",		1},
+  {"-titlecols",	1},
+  {"-titlerows",	1},
+  {"-usecommand",	1},
+  {"-variable",		1},
+  {"-width",		1},
+  {"-xscrollcommand",	1},
+  {"-yscrollcommand",	1},
+  {"", 0},
 };
 
 /*
@@ -586,7 +659,7 @@ static Tk_ConfigSpec tagConfig[] = {
 #else
   {TK_CONFIG_FONT, "-font", "font", "Font", NULL,
    Tk_Offset(TagStruct, fontPtr), TK_CONFIG_NULL_OK },
-#endif              /* KANJI */
+#endif	/* KANJI */
   {TK_CONFIG_STRING, "-image", "image", "Image", "",
    Tk_Offset(TagStruct, imageStr), TK_CONFIG_NULL_OK},
   {TK_CONFIG_RELIEF, "-relief", "relief", "Relief", NULL,

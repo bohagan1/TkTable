@@ -1,20 +1,11 @@
 ## TODO LIST
 ##
-## updated 13 Jan 1997, jhobbs@cs.uoregon.edu "Jeffrey Hobbs"
+## updated 29 Jan 1997, jhobbs@cs.uoregon.edu "Jeffrey Hobbs"
 ##
-
-* Type specification mechanism (low priority)
-  Mutually exclusive with validation mechanism, this would allow you to
-  be able to specify certain cells as a specific type (int, real, alpha)
 
 * Add ability to index by tagname
 
-* row/col resize by clicking on border (tcl solution)
-* separators in title areas for adjusting the width/height
-
 * improve cut/paste to delete/insert rows/cols
-
-* procedural interface for cells via -command (low priority)
 
 * To use the Tk-GC-Cache we must reserve our Tags-GC's
 	tablePtr->normalGC = TableGetGc(tablePtr,&tablePtr->defaultTag);

@@ -59,6 +59,15 @@ pack $table(table) -side left -fill both -expand on
 $table(table) tag config OddRow -bg orange -fg purple
 $table(table) tag config OddCol -bg brown -fg pink
 
+## Version 1.3 image features
+image create photo logo \
+    -file [file join [file dirname [info script]] tcllogo.gif]
+$table(table) tag config logo -image logo
+$table(table) tag cell logo 1,2 2,3 4,1
+
+## Version 1.4 -command feature
+proc showrc {r c} { return $r,$c }
+
 update
 
 ## This will show the use of the flash mode

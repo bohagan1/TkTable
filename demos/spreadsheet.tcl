@@ -30,9 +30,7 @@ if {[string match {} [info commands table]] && \
   }
 }
 
-proc colorize num {
-  if {$num>0 && $num%2} { return colored }
-}
+proc colorize num { if {$num>0 && $num%2} { return colored } }
 
 proc fill {array {r 10} {c 10}} {
   upvar \#0 $array ary
@@ -104,15 +102,8 @@ table $t \
     -batchmode 1 \
     -browsecommand {set table(current) %S}
 
-catch {
-  image create photo logo \
-      -file [file join [file dirname [info script]] tcllogo.gif]
-  $t tag config logo -image logo
-  $t tag cell logo 1,2 2,3 4,1
-}
-
 $t tag config colored -bg $table($table(page))
-$t tag config title -fg red
+$t tag config title -fg red -relief groove
 $t width 0 3 2 7
 
 scrollbar $sy -command [list $t yview]
