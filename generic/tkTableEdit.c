@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableEdit.c,v 1.5 2002/03/13 20:15:20 hobbs Exp $
+ * RCS: @(#) $Id: tkTableEdit.c,v 1.6 2002/06/21 18:14:02 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -245,6 +245,26 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 		/* move row/col style && width/height here */
 		TableModifyRC(tablePtr, doRows, flags, tagTblPtr, dimTblPtr,
 			offset, i, i-count, lo, hi, ((i-count) < first));
+	    }
+	    if (!(flags & HOLD_WINS)) {
+		/*
+		 * This may be a little severe, but it does unmap the
+		 * windows that need to be unmapped, and those that should
+		 * stay do remap correctly. [Bug #551325]
+		 */
+		if (doRows) {
+		    EmbWinUnmap(tablePtr,
+			    first - tablePtr->rowOffset,
+			    maxkey - tablePtr->rowOffset,
+			    lo - tablePtr->colOffset,
+			    hi - tablePtr->colOffset);
+		} else {
+		    EmbWinUnmap(tablePtr,
+			    lo - tablePtr->rowOffset,
+			    hi - tablePtr->rowOffset,
+			    first - tablePtr->colOffset,
+			    maxkey - tablePtr->colOffset);
+		}
 	    }
 	} else {
 	    /* (index = i && count = 1) == (index = i && count = -1) */
