@@ -20,7 +20,7 @@ array set table {
   BB		blue
   CC		green
 }
-append table(library) [info shared]
+append table(library) [info sharedlibextension]
 
 if {[string match {} [info commands table]] && \
     [catch {package require Tktable} err]} {
@@ -104,9 +104,16 @@ table $t \
     -batchmode 1 \
     -browsecommand {set table(current) %S}
 
+catch {
+  image create photo logo \
+      -file [file join [file dirname [info script]] tcllogo.gif]
+  $t tag config logo -image logo
+  $t tag cell logo 1,2 2,3 4,1
+}
+
 $t tag config colored -bg $table($table(page))
 $t tag config title -fg red
-$t width 0 3
+$t width 0 3 2 7
 
 scrollbar $sy -command [list $t yview]
 scrollbar $sx -command [list $t xview] -orient horizontal

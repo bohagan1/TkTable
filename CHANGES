@@ -5,6 +5,27 @@
 	  ## Release dates between "****"s.		##
 	  ################################################
 
+**** v1.3 Jan 28 1997 **** (changes jhobbs@cs.uoregon.edu)
+
+Included precompiled Win95/Tk8.0a2 DLL.
+
+Fixed several compiler warning problems.
+
+Moved header code to its own header file.
+
+Fixed some potential mem leaks.
+
+Added Windows support.  HACK ALERT!  Without an XSetClipRectangles, an
+extra Drawable is used for WIN32.  There may be a better way to do this.
+If so, make me a patch.
+
+Data struct / Cmd name changes to avoid any conflict when compiling older
+version of Table with newer version in same executable.
+
+Added -image option to tags.
+
+Removed NO_TOP_LEFT ifdef'ed code.  Topleft should be showing.
+
 **** v1.2 Jan 18 1997 **** (changes jhobbs@cs.uoregon.edu)
 
 Updated man page and HTML help page.

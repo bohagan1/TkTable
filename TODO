@@ -3,11 +3,7 @@
 ## updated 13 Jan 1997, jhobbs@cs.uoregon.edu "Jeffrey Hobbs"
 ##
 
-Windows support
-  Out-of-the-box.  This should be available by v1.5.
-  We will probably distribute a precompiled DLL.
-
-Type specification mechanism (low priority)
+* Type specification mechanism (low priority)
   Mutually exclusive with validation mechanism, this would allow you to
   be able to specify certain cells as a specific type (int, real, alpha)
 

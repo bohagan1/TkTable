@@ -15,7 +15,7 @@ array set table {
   page		AA
   table		.b.ss
 }
-append table(library) [info shared]
+append table(library) [info sharedlibext]
 
 if {[string match {} [info commands table]] && \
     [catch {package require Tktable} err]} {

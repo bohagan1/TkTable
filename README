@@ -41,6 +41,7 @@ to tk/tcl. The basic features of the widget are:
  * can be configured to 'stretch' rows and columns to fill an
    enclosing widget
  * support for Tk Kanji patch
+ * Windows support
 
 BUILDING THE WIDGET
 
@@ -50,6 +51,8 @@ BUILDING THE WIDGET
 	tar -xf tkTable<version>.tar
 
    This will create a subdirectory tkTable<version> with all the files in it.
+   There is a precompiled DLL built on Win95/VC4/Tk8.0a2.  Everyone else will
+   have to configure and compile.
 
 2. Configure
 
@@ -57,7 +60,10 @@ BUILDING THE WIDGET
 	./configure --prefix=/usr/local --exec-prefix=/usr/local
 
    tkTable uses information left in tkConfig.sh when you built tk.  This
-   file will be found in $exec_prefix/lib/.
+   file will be found in $exec_prefix/lib/.  For Win95/NT, hack up
+   makefile.vc until it works and compile.  It never worked 100% because
+   I couldn't execute wish80 from a path with a space in it, but the DLL
+   builds just fine.
 
 3. Make and Install
 

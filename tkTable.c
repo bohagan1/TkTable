@@ -16,587 +16,11 @@
  *
  */
 
-#include <string.h>
-#include <stdlib.h>
-#include <tk.h>
-#include <X11/Xatom.h>
-
-#define max(A,B)	((A)>(B))?(A):(B)
-#define min(A,B)	((A)>(B))?(B):(A)
-#define ARSIZE(A)	(sizeof(A)/sizeof(*A))
-#define INDEX_BUFSIZE	64
-
-#ifdef KANJI
-
-#include "tkWStr.h"
-
-#define WCHAR			wchar
-#define WSTRLEN			Tcl_WStrlen
-#define WSTRCMP			Tcl_WStrcmp
-#define DECODE_WSTR		Tk_DecodeWStr
-#define ENCODE_WSTR(i,s)	Tk_GetWStr((i),(s))
-#define FREE_WSTR		Tk_FreeWStr
-
-#define DEF_TABLE_FONT          "a14"
-#define DEF_TABLE_KANJIFONT     "k14"
-
-#else		/* NOT KANJI */
-
-#define WCHAR			char
-#define WSTRLEN			strlen
-#define WSTRCMP			strcmp
-#define DECODE_WSTR	
-#define ENCODE_WSTR(i,s)	(s)
-#define FREE_WSTR		ckfree
-
-#if (TK_MAJOR_VERSION > 4)
-#define DEF_TABLE_FONT          "Helvetica 12"
-#else
-#define DEF_TABLE_FONT          "-Adobe-Helvetica-Bold-R-Normal--*-120-*"
-#endif
-#endif		/* KANJI */
-
-/*
- * Assigned bits of "flags" fields of Table structures, and what those
- * bits mean:
- *
- * REDRAW_PENDING:	Non-zero means a DoWhenIdle handler has
- *			already been queued to redisplay the table.
- * REDRAW_BORDER:	Non-zero means 3-D border must be redrawn
- *			around window during redisplay.	 Normally
- *			only text portion needs to be redrawn.
- * CURSOR_ON:		Non-zero means insert cursor is displayed at
- *			present.  0 means it isn't displayed.
- * TEXT_CHANGED:	Non-zero means the active cell text is being edited.
- * HAS_FOCUS:		Non-zero means this window has the input focus.
- * HAS_ACTIVE:		Non-zero means the active cell is set.
- * HAS_ANCHOR:		Non-zero means the anchor cell is set.
- * BROWSE_CMD:		Non-zero means we're evaluating the -browsecommand.
- * VALIDATING:		Non-zero means we are in a valCmd
- * SET_ACTIVE:		About to set the active array element internally
- *
- * FIX - consider adding UPDATE_SCROLLBAR a la entry
- */
-
-#define REDRAW_PENDING		1
-#define CURSOR_ON		2
-#define	HAS_FOCUS		4
-#define TEXT_CHANGED		8
-#define HAS_ACTIVE		16
-#define HAS_ANCHOR		32
-#define BROWSE_CMD		64
-#define REDRAW_BORDER		128
-#define VALIDATING		256
-#define SET_ACTIVE		512
-
-/* The tag structure */
-typedef struct {
-  Tk_3DBorder bgBorder;
-  XColor *foreground;		/* foreground colour */
-  int relief;			/* relief type */
-#ifdef KANJI
-  XWSFontSet *fontPtr;
-  XFontStruct *asciiFontPtr;
-  XFontStruct *kanjiFontPtr;
-#else
-#if (TK_MAJOR_VERSION > 4)
-  Tk_Font	fontPtr;	/* Information about text font, or NULL. */
-#else
-  XFontStruct   *fontPtr;       /* default font pointer */
-#endif              /* TK 8 */
-#endif              /* KANJI */
-  Tk_Anchor anchor;		/* default anchor point */
-} TagStruct;
-
-/*  The widget structure for the table Widget */
-
-typedef struct {
-  /* basic information about the window and the interpreter */
-  Tk_Window tkwin;
-  Display *display;
-  Tcl_Interp *interp;
-  /* Configurable Options */
-  int autoClear;
-  char * selectMode;		/* single, browse, multiple, extended */
-  int rows, cols;		/* number of rows and columns */
-  int defRowHeight;		/* default row height in pixels */
-  int defColWidth;		/* default column width in chars */
-  int maxReqWidth;		/* the maximum requested width in pixels */
-  int maxReqHeight;		/* the maximum requested height in pixels */
-  char *arrayVar;		/* name of traced array variable */
-  char *rowSep;			/* separator string to place between
-				 * rows when getting selection */
-  char *colSep;			/* separator string to place between
-				 * cols when getting selection */
-  int borderWidth;		/* internal borderwidth */
-  TagStruct defaultTag;		/* the default tag colours/fonts etc */
-  char *yScrollCmd;		/* the y-scroll command */
-  char *xScrollCmd;		/* the x-scroll command */
-  char *browseCmd;		/* the command that is called when the
-				 * active cell changes */
-  char *selCmd;			/* the command that is called to when a
-				 * [selection get] call occurs for a table */
-  char *valCmd;			/* Command prefix to use when invoking
-				 * validate command.  NULL means don't
-				 * invoke commands.  Malloc'ed. */
-  int validate;			/* Non-zero means try to validate */
-  Tk_3DBorder insertBg;		/* the cursor colour */
-  Tk_Cursor cursor;		/* the regular mouse pointer */
-  int exportSelection;		/* Non-zero means tie internal table
-				 * to X selection. */
-  Tk_Uid state;			/* Normal or disabled.  Table is read-only
-				 * when disabled. */
-  int insertWidth;		/* Total width of insert cursor. */
-  int insertBorderWidth;	/* Width of 3-D border around insert cursor. */
-  int insertOnTime;		/* Number of milliseconds cursor should spend
-				 * in "on" state for each blink. */
-  int insertOffTime;		/* Number of milliseconds cursor should spend
-				 * in "off" state for each blink. */
-  int colStretch;		/* The way to stretch columns if the window
-				   is too large */
-  int rowStretch;		/* The way to stretch rows if the window is
-				   too large */
-  int colOffset;		/* X index of leftmost col in the display */
-  int rowOffset;		/* Y index of topmost row in the display */
-  int drawMode;			/* The mode to use when redrawing */
-  int flashMode;		/* Specifies whether flashing is enabled */
-  int flashTime;		/* The number of ms to flash a cell for */
-  int batchMode;		/* Whether to */
-  char *rowTagCmd, *colTagCmd;
-  int highlightWidth;		/* Width in pixels of highlight to draw
-				 * around widget when it has the focus.
-				 * <= 0 means don't draw a highlight. */
-  XColor *highlightBgColorPtr;	/* Color for drawing traversal highlight
-				 * area when highlight is off. */
-  XColor *highlightColorPtr;	/* Color for drawing traversal highlight. */
-  char *takeFocus;		/* Used only in Tcl to check if this
-				 * widget will accept focus */
-
-  /* Cached Information */
-  int topRow, leftCol;		/* The topleft cell to display excluding the
-				 * fixed title rows.  This is just the
-				 * config request.  The actual cell used may
-				 * be different to keep the screen full */
-  int titleRows, titleCols;	/* the number of rows|cols to use as a title */
-  int anchorRow, anchorCol;	/* the row,col of the anchor cell */
-  int activeRow, activeCol;	/* the row,col of the active cell */
-  int oldTopRow, oldLeftCol;	/* cached by TableAdjustParams */
-  int oldActRow, oldActCol;	/* cached by TableAdjustParams */
-  int textCurPosn;		/* The position of the text cursor in the
-				   string */
-  int flags;			/* An or'ed combination of flags concerning
-				   redraw/cursor etc. */
-  int maxWidth, maxHeight;	/* max width|height required in pixels */
-  int charWidth;		/* width of a character in the default font */
-  int *colPixels;		/* Array of the pixel width of each column */
-  int *rowPixels;		/* Array of the pixel height of each row */
-  int *colStarts, *rowStarts;	/* Array of start pixels for rows|columns */
-  int scanMarkX, scanMarkY;
-  int scanMarkRowOffset;
-  int scanMarkColOffset;
-  Tcl_HashTable *colWidths;	/* hash table of non default column widths */
-  Tcl_HashTable *rowHeights;	/* hash table of non default row heights */
-  Tcl_HashTable *tagTable;	/* the table for the style tags */
-  Tcl_HashTable *rowStyles;	/* the table for row styles */
-  Tcl_HashTable *colStyles;	/* the table for col styles */
-  Tcl_HashTable *cellStyles;	/* the table for cell styles */
-  Tcl_HashTable *flashCells;	/* the table full of flashing cells */
-  Tcl_HashTable *selCells;	/* the table full of selected cells */
-  Tcl_TimerToken cursorTimer;	/* the timer token for the cursor blinking */
-  Tcl_TimerToken flashTimer;	/* the timer token for the cell flashing */
-  WCHAR	*activeBuf;		/* the buffer where the selection is kept
-				   for editing */
-  /* The invalid rectangle if there is an update pending */
-  int invalidX, invalidY, invalidWidth, invalidHeight;
-} Table;
-
-/* structure for use in command parsing tables */
-typedef struct {
-  char *name;
-  int value;
-} command_struct;
-
-/*
- * simple command_struct lookup functions
- */
-
-static char *
-getCmdName(const command_struct* c,int val)
-{
-  for(;c->name && c->name[0];c++) {
-    if (c->value==val) return c->name;
-  }
-  return NULL;
-}
-
-static int
-getCmdValue(const command_struct* c,const char *arg)
-{
-  int len=strlen(arg);
-  for(;c->name && c->name[0];c++) {
-    if (!strncmp(c->name,arg,len)) return c->value;
-  }
-  return 0;
-}
-
-static void getCmdError(Tcl_Interp *interp,command_struct *c,const char *arg)
-{
-  int i;
-  Tcl_AppendResult (interp, "bad option \"", arg,"\" must be ", (char *) 0);
-  for(i=0;c->name && c->name[0];c++,i++) {
-    Tcl_AppendResult (interp,(i?", ":""),c->name,(char *) 0);
-  }
-}
-
-/*
- * Functions for handling custom options that use command_structs
- */
-
-static int
-TableOptionSet(ClientData clientData, Tcl_Interp *interp,
-	       Tk_Window tkwin, char *value, char *widgRec, int offset)
-{
-  command_struct *p=(command_struct *)clientData;
-  int mode=getCmdValue(p,value);
-  if (!mode) {
-    getCmdError(interp,p,value);
-    return TCL_ERROR;
-  }
-  *((int*)(widgRec+offset))=mode;
-  return TCL_OK;
-}
-
-static char *
-TableOptionGet(ClientData clientData, Tk_Window tkwin,
-	       char *widgRec, int offset, Tcl_FreeProc **freeProcPtr)
-{
-  command_struct *p=(command_struct *)clientData;
-  int mode = *((int*)(widgRec+offset));
-  return getCmdName(p,mode);
-}
-
-
-/* The list of command values for all the widget commands */
-
-#define CMD_ACTIVATE	1	/* activate command a la listbox */
-#define CMD_BBOX	2	/* bounding box of cell <index> */
-#define CMD_CGET	4	/* basic cget widget command */
-#define	CMD_CONFIGURE	5	/* general configure command */
-#define CMD_CURSELECTION 6	/* get current selected cell(s) */
-#define CMD_CURVALUE	7	/* get current selection buffer */
-#define	CMD_DELETE	8	/* delete text in the selection */
-#define CMD_GET		9	/* get mode a la listbox */
-#define	CMD_HEIGHT	12	/* (re)set row heights */
-#define CMD_ICURSOR	13	/* set the insertion cursor */
-#define CMD_INDEX	14	/* get an index */
-#define CMD_INSERT	15	/* insert text at any position */
-#define	CMD_REREAD	16	/* reread the current selection */
-#define CMD_SCAN	17	/* scan command a la listbox */
-#define CMD_SEE		18	/* see command a la listbox */
-#define CMD_SELECTION	19	/* selection command a la listbox */
-#define CMD_SET		20	/* set command, to set multiple items */
-#define	CMD_TAG		21	/* tag command menu */
-#define CMD_VALIDATE	22	/* validate contents of active cell */
-#define	CMD_WIDTH	23	/* (re)set column widths */
-#define CMD_XVIEW	24	/* change x view of widget (for scrollbars) */
-#define CMD_YVIEW	25	/* change y view of widget (for scrollbars) */
-
-/* The list of commands for the command parser */
-
-static command_struct commandos[] = {
-  {"activate",		CMD_ACTIVATE},
-  {"bbox",		CMD_BBOX},
-  {"cget",		CMD_CGET},
-  {"configure",		CMD_CONFIGURE},
-  {"curselection",	CMD_CURSELECTION},
-  {"curvalue",		CMD_CURVALUE},
-  {"delete",		CMD_DELETE},
-  {"get",		CMD_GET},
-  {"height",		CMD_HEIGHT},
-  {"icursor",		CMD_ICURSOR},
-  {"index",		CMD_INDEX},
-  {"insert",		CMD_INSERT},
-  {"reread",		CMD_REREAD},
-  {"scan",		CMD_SCAN},
-  {"see",		CMD_SEE},
-  {"selection",		CMD_SELECTION},
-  {"set",		CMD_SET},
-  {"tag",		CMD_TAG},
-  {"validate",		CMD_VALIDATE},
-  {"width",		CMD_WIDTH},
-  {"xview",		CMD_XVIEW},
-  {"yview",		CMD_YVIEW},
-  {"", 0}
-};
-
-/* List of tag subcommands */
-#define TAG_CELLTAG	1	/* tag a cell */
-#define TAG_CGET	2	/* get a config value */
-#define TAG_COLTAG	3	/* tag a column */
-#define	TAG_CONFIGURE	4	/* config/create a new tag */
-#define	TAG_DELETE	5	/* delete a tag */
-#define TAG_EXISTS	6	/* does a tag exist? */
-#define	TAG_NAMES	7	/* print the tag names */
-#define TAG_ROWTAG	8	/* tag a row */
-
-static command_struct tag_commands[] = {
-  {"celltag",	TAG_CELLTAG},
-  {"coltag",	TAG_COLTAG},
-  {"configure",	TAG_CONFIGURE},
-  {"cget",	TAG_CGET},
-  {"delete",	TAG_DELETE},
-  {"exists",	TAG_EXISTS},
-  {"names",	TAG_NAMES},
-  {"rowtag",	TAG_ROWTAG},
-  {"", 0}
-};
-
-#define SEL_ANCHOR      1
-#define SEL_CLEAR       2
-#define SEL_INCLUDES    3
-#define SEL_SET         4
-
-command_struct sel_commands[]= {
-  {"anchor",	 SEL_ANCHOR},
-  {"clear",	 SEL_CLEAR},
-  {"includes",	 SEL_INCLUDES},
-  {"set",	 SEL_SET},
-  {"",		 0 }
-};
-
-/* insert/delete subcommands */
-#define MOD_ACTIVE	1
-#define MOD_COLS	2
-#define MOD_ROWS	3
-static command_struct mod_commands[] = {
-  {"active",	MOD_ACTIVE},
-  {"cols",	MOD_COLS},
-  {"rows",	MOD_ROWS},
-  {"", 0}
-};
-
-/* drawmode values */
-#define	DRAW_MODE_SLOW		1	/* The display redraws with a pixmap
-					   using TK function calls */
-#define	DRAW_MODE_TK_COMPAT	2	/* The redisplay is direct to the
-					   screen, but TK function calls are
-					   still used to give correct 3-d
-					   border appearance and thus remain
-					   compatible with other TK apps */
-#define DRAW_MODE_FAST		4	/* the redisplay goes straight to
-					   the screen and the 3d borders are
-					   rendered with a single pixel wide
-					   line only. It cheats and uses the
-					   internal border structure to do
-					   the borders */
-
-static command_struct drawmode_values[] = {
-  {"fast",		DRAW_MODE_FAST},
-  {"compatible",	DRAW_MODE_TK_COMPAT},
-  {"slow",		DRAW_MODE_SLOW},
-  {"", 0}
-};
-
-/* stretchmode values */
-#define	STRETCH_MODE_NONE	1	/* No additional pixels will be
-					   added to rows or cols */
-#define	STRETCH_MODE_UNSET	2	/* All default rows or columns will
-					   be stretched to fill the screen */
-#define STRETCH_MODE_ALL	4	/* All rows/columns will be padded
-					   to fill the window */
-#define STRETCH_MODE_LAST	8	/* Stretch last elememt to fill
-					   window */
-#define STRETCH_MODE_FILL       16	/* More ROWS in Window */
-
-static command_struct stretch_values[] = {
-  {"none",	STRETCH_MODE_NONE},
-  {"unset",	STRETCH_MODE_UNSET},
-  {"all",	STRETCH_MODE_ALL},
-  {"last",	STRETCH_MODE_LAST},
-  {"fill",	STRETCH_MODE_FILL},
-  {"", 0}
-};
-
-/* The widget configuration table */
-static Tk_CustomOption drawOption = { TableOptionSet, TableOptionGet,
-				      (ClientData)(&drawmode_values) };
-static Tk_CustomOption stretchOption = { TableOptionSet, TableOptionGet,
-					  (ClientData)(&stretch_values) };
-
-static Tk_ConfigSpec TableConfig[] = {
-  {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor", "center",
-   Tk_Offset(Table, defaultTag.anchor), 0 },
-  {TK_CONFIG_BOOLEAN, "-autoclear", "autoClear", "AutoClear", "0",
-   Tk_Offset(Table, autoClear), 0 },
-  {TK_CONFIG_BORDER, "-background", "background", "Background", "gray80",
-   Tk_Offset(Table, defaultTag.bgBorder), 0 },
-  {TK_CONFIG_BOOLEAN, "-batchmode", "batchMode", "BatchMode", "0",
-   Tk_Offset(Table, batchMode), 0 },
-  {TK_CONFIG_SYNONYM, "-bg", "background", (char *) NULL,
-   (char *) NULL, 0, 0},
-  {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *) NULL,
-   (char *) NULL, 0, 0},
-  {TK_CONFIG_PIXELS, "-borderwidth", "borderWidth", "BorderWidth", "1",
-   Tk_Offset(Table, borderWidth), 0 },
-  {TK_CONFIG_STRING, "-browsecommand", "browseCommand", "BrowseCommand", "",
-   Tk_Offset(Table, browseCmd), TK_CONFIG_NULL_OK},
-  {TK_CONFIG_SYNONYM, "-browsecmd", "browseCommand", (char *) NULL,
-   (char *) NULL, 0, TK_CONFIG_NULL_OK},
-  {TK_CONFIG_INT, "-colorigin", "colOrigin", "Origin", "0",
-   Tk_Offset(Table, colOffset), 0 },
-  {TK_CONFIG_INT, "-cols", "cols", "Cols", "10",
-   Tk_Offset(Table, cols), 0 },
-  {TK_CONFIG_STRING, "-colseparator", "colSeparator", "Separator", NULL,
-   Tk_Offset(Table, colSep), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_CUSTOM, "-colstretchmode", "colStretch", "StretchMode",
-   "none", Tk_Offset (Table, colStretch), 0 , &stretchOption },
-  {TK_CONFIG_STRING, "-coltagcommand", "colTagCommand", "TagCommand", NULL,
-   Tk_Offset(Table, colTagCmd), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_ACTIVE_CURSOR, "-cursor", "cursor", "Cursor", "xterm",
-   Tk_Offset(Table, cursor), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_CUSTOM, "-drawmode", "drawMode", "DrawMode", "compatible",
-   Tk_Offset (Table, drawMode), 0, &drawOption },
-  {TK_CONFIG_BOOLEAN, "-exportselection", "exportSelection",
-   "ExportSelection", "1", Tk_Offset(Table, exportSelection), 0},
-  {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *) NULL, (char *) NULL,
-   0, 0 },
-  {TK_CONFIG_BOOLEAN, "-flashmode", "flashMode", "FlashMode", "0",
-   Tk_Offset(Table, flashMode), 0 },
-  {TK_CONFIG_INT, "-flashtime", "flashTime", "FlashTime", "2",
-   Tk_Offset(Table, flashTime), 0 },
-#ifdef KANJI
-  {TK_CONFIG_FONT, "-font", "font", "Font",  DEF_TABLE_FONT,
-   Tk_Offset(Table, defaultTag.asciiFontPtr), 0 },
-  {TK_CONFIG_FONT, "-kanjifont", "kanjifont", "KanjiFont", DEF_TABLE_KANJIFONT,
-   Tk_Offset(Table, defaultTag.kanjiFontPtr), 0 },
-#else
-  {TK_CONFIG_FONT, "-font", "font", "Font",  DEF_TABLE_FONT,
-   Tk_Offset(Table, defaultTag.fontPtr), 0 },
-#endif              /* KANJI */
-  {TK_CONFIG_COLOR, "-foreground", "foreground", "Foreground", "black",
-   Tk_Offset(Table, defaultTag.foreground), 0 },
-  {TK_CONFIG_INT, "-height", "height", "Height", 0,
-   Tk_Offset(Table, defRowHeight), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_COLOR, "-highlightbackground", "highlightBackground",
-   "HighlightBackground", "GRAY80", Tk_Offset(Table, highlightBgColorPtr), 0 },
-  {TK_CONFIG_COLOR, "-highlightcolor", "highlightColor", "HighlightColor",
-   "Black", Tk_Offset(Table, highlightColorPtr), 0 },
-  {TK_CONFIG_PIXELS, "-highlightthickness", "highlightThickness",
-   "HighlightThickness", "2", Tk_Offset(Table, highlightWidth), 0 },
-  {TK_CONFIG_BORDER, "-insertbackground", "insertBackground", "Foreground",
-   "black", Tk_Offset(Table, insertBg), 0 },
-  {TK_CONFIG_PIXELS, "-insertborderwidth", "insertBorderWidth", "BorderWidth",
-   "0", Tk_Offset(Table, insertBorderWidth), TK_CONFIG_COLOR_ONLY},
-  {TK_CONFIG_PIXELS, "-insertborderwidth", "insertBorderWidth", "BorderWidth",
-   "0", Tk_Offset(Table, insertBorderWidth), TK_CONFIG_MONO_ONLY},
-  {TK_CONFIG_INT, "-insertofftime", "insertOffTime", "OffTime", "300",
-   Tk_Offset(Table, insertOffTime), 0},
-  {TK_CONFIG_INT, "-insertontime", "insertOnTime", "OnTime", "600",
-   Tk_Offset(Table, insertOnTime), 0},
-  {TK_CONFIG_PIXELS, "-insertwidth", "insertWidth", "InsertWidth", "2",
-   Tk_Offset(Table, insertWidth), 0},
-  {TK_CONFIG_PIXELS, "-maxheight", "maxHeight", "MaxHeight", "800",
-   Tk_Offset(Table, maxReqHeight), 0 },
-  {TK_CONFIG_PIXELS, "-maxwidth", "maxWidth", "MaxWidth", "1000",
-   Tk_Offset(Table, maxReqWidth), 0 },
-  {TK_CONFIG_RELIEF, "-relief", "relief", "Relief", "sunken",
-   Tk_Offset(Table, defaultTag.relief), 0 },
-  {TK_CONFIG_INT, "-roworigin", "rowOrigin", "Origin", "0",
-   Tk_Offset(Table, rowOffset), 0 },
-  {TK_CONFIG_INT, "-rows", "rows", "Rows", "10", Tk_Offset(Table, rows), 0 },
-  {TK_CONFIG_STRING, "-rowseparator", "rowSeparator", "Separator", NULL,
-   Tk_Offset(Table, rowSep), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_CUSTOM, "-rowstretchmode", "rowStretch", "StretchMode", "none",
-   Tk_Offset (Table, rowStretch), 0 , &stretchOption },
-  {TK_CONFIG_STRING, "-rowtagcommand", "rowTagCommand", "TagCommand", NULL,
-   Tk_Offset(Table, rowTagCmd), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_STRING, "-selectmode", "selectMode", "SelectMode", "single",
-   Tk_Offset(Table, selectMode), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_SYNONYM, "-selcmd", "selectionCommand", (char *) NULL,
-   (char *) NULL, 0, TK_CONFIG_NULL_OK},
-  {TK_CONFIG_STRING, "-selectioncommand", "selectionCommand",
-   "SelectionCommand", NULL, Tk_Offset(Table, selCmd), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_UID, "-state", "state", "State", "normal",
-   Tk_Offset(Table, state), 0},
-  {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus", NULL,
-   Tk_Offset(Table, takeFocus), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_INT, "-titlecols", "titleCols", "TitleCols", "0",
-   Tk_Offset(Table, titleCols), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_INT, "-titlerows", "titleRows", "TitleRows", "0",
-   Tk_Offset(Table, titleRows), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_STRING, "-variable", "variable", "Variable", NULL,
-   Tk_Offset(Table, arrayVar), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_BOOLEAN, "-validate", "validate", "Validate", "0",
-   Tk_Offset(Table, validate), 0 },
-  {TK_CONFIG_STRING, "-validatecommand", "validateCommand", "ValidateCommand",
-   "", Tk_Offset(Table, valCmd), TK_CONFIG_NULL_OK},
-  {TK_CONFIG_SYNONYM, "-vcmd", "validateCommand", (char *) NULL,
-   (char *) NULL, 0, TK_CONFIG_NULL_OK},
-  {TK_CONFIG_INT, "-width", "width", "Width", "10",
-   Tk_Offset(Table, defColWidth), 0 },
-  {TK_CONFIG_STRING, "-xscrollcommand", "xScrollCommand", "ScrollCommand",
-   NULL, Tk_Offset(Table, xScrollCmd), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_STRING, "-yscrollcommand", "yScrollCommand", "ScrollCommand",
-   NULL, Tk_Offset(Table, yScrollCmd), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_END, (char *) NULL, (char *) NULL, (char *) NULL,
-   (char *) NULL, 0, 0 }
-};
-
-/*
- * The default specification for configuring tags
- * Done like this to make the command line parsing easy
- */
-
-static Tk_ConfigSpec tagConfig[] = {
-  {TK_CONFIG_BORDER, "-background", "background", "Background", NULL,
-   Tk_Offset(TagStruct, bgBorder), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_SYNONYM, "-bg", "background", (char *) NULL,
-   (char *) NULL, 0, 0 },
-  {TK_CONFIG_COLOR, "-foreground", "foreground", "Foreground", NULL,
-   Tk_Offset(TagStruct, foreground), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *) NULL,
-   (char *) NULL, 0, 0 },
-#ifdef KANJI
-  {TK_CONFIG_FONT, "-font", "font", "Font",  NULL,
-   Tk_Offset(TagStruct,asciiFontPtr), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_FONT, "-kanjifont", "kanjifont", "KanjiFont", NULL,
-   Tk_Offset(TagStruct,kanjiFontPtr), TK_CONFIG_NULL_OK },
-#else
-  {TK_CONFIG_FONT, "-font", "font", "Font", NULL,
-   Tk_Offset(TagStruct, fontPtr), TK_CONFIG_NULL_OK },
-#endif              /* KANJI */
-  {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor", NULL,
-   Tk_Offset(TagStruct, anchor), 0 },
-  {TK_CONFIG_RELIEF, "-relief", "relief", "Relief", NULL,
-   Tk_Offset(TagStruct, relief), TK_CONFIG_NULL_OK },
-  {TK_CONFIG_END, (char *) NULL, (char *) NULL, (char *) NULL,
-   (char *) NULL, 0, 0 }
-};
-
-/* required for -state option */
-extern Tk_Uid	tkNormalUid, tkDisabledUid;
-
-static int	TableFetchSelection _ANSI_ARGS_((ClientData clientData,
-						 int offset, char *buffer,
-						 int maxBytes));
-#ifdef KANJI
-static int	TableFetchSelectionCtext _ANSI_ARGS_((ClientData clientData,
-						      int offset, char *buffer,
-						      int maxBytes));
-#endif
-static void	TableLostSelection _ANSI_ARGS_((ClientData clientData));
-static int	TableValidate _ANSI_ARGS_((Table *tablePtr, char *cmd));
-static int	TableValidateChange _ANSI_ARGS_((Table *tablePtr, int r,
-						 int c, char *old, char *new,
-						 int index));
-static void	ExpandPercents _ANSI_ARGS_((Table *tablePtr, char *before,
-					    int r, int c, char *old, char *new,
-					    int index, Tcl_DString *dsPtr,
-					    int cmdType));
-static Tk_RestrictAction TableRestrictProc _ANSI_ARGS_((ClientData arg,
-							XEvent *eventPtr));
+#include "tkTable.h"
 
 #ifdef IMP
+
+/* Functions necessary for special X input methods (KANJI) */
 #include "tkXimp.h"
 extern ImpInfo impInfo;
 
@@ -606,7 +30,7 @@ AddXIMeventMask(d, w)
      Window   w;
 {
   XWindowAttributes attr;
-  return; /* Erk, fix this */
+  return; /* FIX, what's going on here? */
   if (!XGetWindowAttributes(d, w, &attr)) return;
   XSelectInput(d, w, (impInfo.eventMask | attr.your_event_mask));
 }
@@ -703,6 +127,66 @@ ImpKGetStr(Tcl_Interp *interp, char *cp)
 #endif		/* IMP */
 
 /*
+ * simple CmdStruct lookup functions
+ */
+
+static char *
+getCmdName(const CmdStruct* c,int val)
+{
+  for(;c->name && c->name[0];c++) {
+    if (c->value==val) return c->name;
+  }
+  return NULL;
+}
+
+static int
+getCmdValue(const CmdStruct* c, const char *arg)
+{
+  int len=strlen(arg);
+  for(;c->name && c->name[0];c++) {
+    if (!strncmp(c->name,arg,len)) return c->value;
+  }
+  return 0;
+}
+
+static void
+getCmdError(Tcl_Interp *interp, CmdStruct *c, const char *arg)
+{
+  int i;
+  Tcl_AppendResult (interp, "bad option \"", arg,"\" must be ", (char *) 0);
+  for(i=0;c->name && c->name[0];c++,i++) {
+    Tcl_AppendResult (interp,(i?", ":""),c->name,(char *) 0);
+  }
+}
+
+/*
+ * Functions for handling custom options that use CmdStructs
+ */
+
+static int
+TableOptionSet(ClientData clientData, Tcl_Interp *interp,
+	       Tk_Window tkwin, char *value, char *widgRec, int offset)
+{
+  CmdStruct *p=(CmdStruct *)clientData;
+  int mode=getCmdValue(p,value);
+  if (!mode) {
+    getCmdError(interp,p,value);
+    return TCL_ERROR;
+  }
+  *((int*)(widgRec+offset))=mode;
+  return TCL_OK;
+}
+
+static char *
+TableOptionGet(ClientData clientData, Tk_Window tkwin,
+	       char *widgRec, int offset, Tcl_FreeProc **freeProcPtr)
+{
+  CmdStruct *p=(CmdStruct *)clientData;
+  int mode = *((int*)(widgRec+offset));
+  return getCmdName(p,mode);
+}
+
+/*
  * Parses a command string passed in an arg comparing it with all the
  * command strings in the command array. If it finds a string which is a
  * unique identifier of one of the commands, returns the index . If none of
@@ -711,12 +195,12 @@ ImpKGetStr(Tcl_Interp *interp, char *cp)
  */
 
 static int
-parse_command (Tcl_Interp *interp, command_struct *commands, char *arg)
+parse_command (Tcl_Interp *interp, CmdStruct *cmds, char *arg)
 {
   int len = strlen (arg);
-  command_struct *matched = (command_struct *) 0;
+  CmdStruct *matched = (CmdStruct *) 0;
   int err = 0;
-  command_struct *next = commands;
+  CmdStruct *next = cmds;
   while (*(next->name)) {
     if (strncmp (next->name, arg, len) == 0) {
       /* have we already matched this one if so make up an error message */
@@ -745,7 +229,7 @@ parse_command (Tcl_Interp *interp, command_struct *commands, char *arg)
   } else {
     Tcl_AppendResult (interp, "bad option \"", arg,"\" must be ",
 		      (char *) NULL);
-    next = commands;
+    next = cmds;
     while (1) {
       Tcl_AppendResult (interp, next->name, (char *) NULL);
       /* the end of them all ? */
@@ -758,6 +242,10 @@ parse_command (Tcl_Interp *interp, command_struct *commands, char *arg)
     }
   }
 }
+
+#define TableInvalidateAll(tablePtr, force)  \
+  TableInvalidate((tablePtr), 0, 0, Tk_Width((tablePtr)->tkwin), \
+		  Tk_Height((tablePtr)->tkwin), (force))
 
 /*
  * Turn row/col into an index into the table
@@ -985,15 +473,17 @@ TableNewTag(Table * tablePtr)
 {
   TagStruct *tagPtr;
   tagPtr = (TagStruct *) ckalloc(sizeof (TagStruct));
-  tagPtr->bgBorder = NULL;
-  tagPtr->foreground = NULL;
-  tagPtr->relief = 0;
-  tagPtr->fontPtr = NULL;
+  tagPtr->bgBorder	= NULL;
+  tagPtr->foreground	= NULL;
+  tagPtr->relief	= 0;
+  tagPtr->fontPtr	= NULL;
 #ifdef KANJI
-  tagPtr->asciiFontPtr=NULL;
-  tagPtr->kanjiFontPtr=NULL;
+  tagPtr->asciiFontPtr	= NULL;
+  tagPtr->kanjiFontPtr	= NULL;
 #endif
-  tagPtr->anchor = (Tk_Anchor)-1;
+  tagPtr->anchor	= (Tk_Anchor)-1;
+  tagPtr->image		= NULL;
+  tagPtr->imageStr	= NULL;
   return tagPtr;
 }
 
@@ -1060,6 +550,11 @@ TableMergeTag(TagStruct * baseTag, TagStruct * addTag)
 #endif
   if (baseTag->anchor == (Tk_Anchor)-1)
     baseTag->anchor = addTag->anchor;
+  if (baseTag->image == NULL)
+    baseTag->image = addTag->image;
+  /* FIX, should this do a ckalloc/copy? */
+  if (baseTag->imageStr == NULL)
+    baseTag->imageStr = addTag->imageStr;
 }
 
 static Tcl_HashEntry *
@@ -1122,6 +617,13 @@ InitTagTable(Table *tablePtr)
   CreateTagEntry(tablePtr, "flash", ARSIZE(flashArgs), flashArgs);
 }
 
+static void
+TableImageProc (ClientData clientData, int x, int y, int width, int height,
+		int imageWidth, int imageHeight)
+{
+  TableInvalidateAll((Table *)clientData, 0);
+}
+
 /*
  * Gets a GC correponding to the tag structure passed
  */
@@ -1165,6 +667,11 @@ TableGetGc(Table * tablePtr, TagStruct * tagPtr)
  * TableDisplay --
  *
  *	This procedure redraws the contents of a table window.
+ *	The excessive amount of conditional code in this function
+ *	is due to these factors:
+ *		o Differences in KANJI and regular Tk
+ *		o Differences in Tk4 and Tk8 font handling
+ *		o Lack of XSetClipRectangles on Windows
  *
  * Results:
  *	None.
@@ -1183,23 +690,28 @@ TableDisplay(ClientData clientdata)
   Display *display = tablePtr->display;
   Tcl_Interp *interp = tablePtr->interp;
   Drawable window;
-  int rowFrom, rowTo, colFrom, colTo;
-  int invalidX, invalidY, invalidWidth, invalidHeight;
-  int i, j, x, y, width, height;
-  int direction, ascent, descent, bd;
-  int originX, originY, offsetX, offsetY;
-  int activeCell, clipRectSet;
-  XCharStruct bbox, bbox2;
+#ifdef WIN32
+  Drawable clipWind;
+#else
   XRectangle clipRect;
+#endif
+  int rowFrom, rowTo, colFrom, colTo,
+    invalidX, invalidY, invalidWidth, invalidHeight,
+    i, j, x, y, imageW, imageH, imageX, imageY, 
+    width, height, ascent, descent, bd,
+    originX, originY, offsetX, offsetY, activeCell, clipRectSet;
+  XCharStruct bbox, bbox2;
 #ifdef KANJI
   XWSGC copyGc;
 #else
   GC copyGc;
 #endif
-  GC topGc, bottomGc, lightGc, darkGc;
+  GC topGc, bottomGc;
   WCHAR *value = NULL;
 #if (TK_MAJOR_VERSION > 4)
   Tk_FontMetrics fm;
+#else
+  int direction;
 #endif
   char buf[INDEX_BUFSIZE];
   char *data;
@@ -1219,8 +731,8 @@ TableDisplay(ClientData clientdata)
    * create the pixmap and set up offsetX and Y 
    */
   if (tablePtr->drawMode == DRAW_MODE_SLOW) {
-    window = XCreatePixmap (display, Tk_WindowId (tkwin),
-			    invalidWidth, invalidHeight, Tk_Depth (tkwin));
+    window = Tk_GetPixmap(display, Tk_WindowId (tkwin),
+			  invalidWidth, invalidHeight, Tk_Depth (tkwin));
     offsetX = invalidX;
     offsetY = invalidY;
   } else {
@@ -1228,6 +740,13 @@ TableDisplay(ClientData clientdata)
     offsetX = 0;
     offsetY = 0;
   }
+#ifdef WIN32
+  clipWind = Tk_GetPixmap(display, window,
+			 invalidWidth, invalidHeight, Tk_Depth(tkwin));
+#endif
+
+  /* get the border width to adjust the calculations */
+  bd = tablePtr->borderWidth;
 
   /* set up the permanent tag styles */
   entryPtr = Tcl_FindHashEntry (tablePtr->tagTable, "title");
@@ -1270,12 +789,6 @@ TableDisplay(ClientData clientdata)
       if (j < tablePtr->leftCol && j >= tablePtr->titleCols)
 	j = tablePtr->leftCol;
 
-#ifdef NO_TOP_LEFT
-      /* are we in both row and column titles */
-      if (i < tablePtr->titleRows && j < tablePtr->titleCols)
-	continue;
-#endif
-
       /* put the cell ref into a buffer for the hash lookups */
       TableMakeArrayIndex(i+tablePtr->rowOffset, j+tablePtr->colOffset, buf);
 
@@ -1289,7 +802,7 @@ TableDisplay(ClientData clientdata)
 
       /* if flash mode is on, is this cell flashing */
       if (tablePtr->flashMode &&
-	  (entryPtr = Tcl_FindHashEntry (tablePtr->flashCells, buf)) != NULL)
+	  Tcl_FindHashEntry (tablePtr->flashCells, buf) != NULL)
 	TableMergeTag (tagPtr, flashPtr);
       /* is this cell active? */
       if ((tablePtr->flags & HAS_ACTIVE) && tablePtr->state == tkNormalUid
@@ -1298,7 +811,7 @@ TableDisplay(ClientData clientdata)
 	activeCell = 1;
       }
       /* is this cell selected? */
-      if ((entryPtr=Tcl_FindHashEntry(tablePtr->selCells, buf))!=NULL)
+      if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL)
 	TableMergeTag(tagPtr, selPtr);
       /* Am I in the titles */
       if (i < tablePtr->topRow || j < tablePtr->leftCol)
@@ -1307,9 +820,8 @@ TableDisplay(ClientData clientdata)
       if ((entryPtr = Tcl_FindHashEntry (tablePtr->cellStyles, buf)) != NULL)
 	TableMergeTag (tagPtr, (TagStruct *) Tcl_GetHashValue (entryPtr));
       /* 
-        Then try the rows.  First check in the row hash table.
-        If nothing found there, then try evaluating the row
-        tag procedure (if specified).
+       * Try the rows.  First check in the row hash table.
+       * If NULL, try evaluating the row tag command (if specified).
        */
       if ((entryPtr = Tcl_FindHashEntry (tablePtr->rowStyles, (char *) i + tablePtr->rowOffset)) == NULL) {
 	if (tablePtr->rowTagCmd)
@@ -1318,11 +830,9 @@ TableDisplay(ClientData clientdata)
       }
       if (entryPtr)
 	TableMergeTag (tagPtr, (TagStruct *) Tcl_GetHashValue (entryPtr));
-
       /* 
-        Then try the columns.  Same procedure as rows.  First check 
-        in the col hash table.  If nothing found there, then try 
-        evaluating the col tag procedure (if specified).
+       * Then try the columns (same as for rows).  First check in the col
+       * hash table.  If NULL, try evaluating the col tag command.
        */
       if ((entryPtr = Tcl_FindHashEntry (tablePtr->colStyles, (char *) j + tablePtr->colOffset)) == NULL) {
 	if (tablePtr->colTagCmd)
@@ -1340,15 +850,60 @@ TableDisplay(ClientData clientdata)
       /* get the coordinates for the cell */
       TableCellCoords (tablePtr, i, j, &x, &y, &width, &height);
 
-      /* 
-        first fill in a blank rectangle. This is left
-        as a Tk call instead of a direct X call for Tk
-        compatibilty. The TK_RELIEF_FLAT ensures that only
-        XFillRectangle is called anyway so the speed is the same
+      /*
+       * first fill in a blank rectangle. This is left as a Tk call instead
+       * of a direct X call for Tk compatibilty. The TK_RELIEF_FLAT ensures
+       * that only XFillRectangle is called anyway so the speed is the same
        */
       Tk_Fill3DRectangle (tablePtr->tkwin, window, tagPtr->bgBorder,
 			  x - offsetX, y - offsetY, width, height,
 			  tablePtr->borderWidth, TK_RELIEF_FLAT);
+
+      if (tagPtr->image != NULL) {
+	Tk_SizeOfImage(tagPtr->image, &imageW, &imageH);
+	/* set the X origin first */
+	switch (tagPtr->anchor) {
+	case TK_ANCHOR_NW:
+	case TK_ANCHOR_W:
+	case TK_ANCHOR_SW:	/* western position */
+	  originX = imageX = 0;
+	  break;
+	case TK_ANCHOR_N:
+	case TK_ANCHOR_S:
+	case TK_ANCHOR_CENTER:	/* centered position */
+	  imageX = max(0, (imageW-width)/2-bd);
+	  originX = max(0, (width-imageW)/2);
+	  break;
+	default:	/* eastern position */
+	  imageX = max(0, imageW-width-2*bd);
+	  originX = max(0, width-imageW);
+	}
+
+	/* then set the Y origin */
+	switch (tagPtr->anchor) {
+	case TK_ANCHOR_N:
+	case TK_ANCHOR_NE:
+	case TK_ANCHOR_NW:	/* northern position */
+	  originY = imageY = 0;
+	  break;
+	case TK_ANCHOR_W:
+	case TK_ANCHOR_E:
+	case TK_ANCHOR_CENTER:	/* centered position */
+	  imageY = max(0, (imageH-height)/2-bd);
+	  originY = max(0, (height-imageH)/2);
+	  break;
+	default:	/* southern position */
+	  imageY = max(0, imageH-height-2*bd);
+	  originY = max(0, height-imageH);
+	}
+	/* Right now anchoring is ignored */
+	Tk_RedrawImage(tagPtr->image, imageX, imageY,
+		       min(imageW, width-originX-2*bd),
+		       min(imageH, height-originY-2*bd), window,
+		       x+originX-offsetX+bd, y+originY-offsetY+bd);
+	/* Jump to avoid display of the text value */
+	goto ImageUsed;
+      }
 
       /* if this is the active cell, use the buffer */
       if (activeCell) {
@@ -1366,9 +921,6 @@ TableDisplay(ClientData clientdata)
 
       /* If there is a value, show it */
       if (value != NULL) {
-	/* get the border width to adjust the calculations */
-	bd = tablePtr->borderWidth;
-
 	/* get the dimensions of the string */
 #ifdef KANJI
 	/* max of 1 necessary to avoid TkWSTextExtents bug for 0 */
@@ -1378,20 +930,20 @@ TableDisplay(ClientData clientdata)
 #if (TK_MAJOR_VERSION > 4)
 	Tk_GetFontMetrics(tagPtr->fontPtr, &fm);
 	bbox.rbearing = Tk_TextWidth (tagPtr->fontPtr, value, strlen(value));
+	/* FIX not 100% accurate, but how can I get it in Tk8.0? */
 	bbox.lbearing = 0;
 	ascent = fm.ascent;
 	descent = fm.descent;
 #else
 	XTextExtents (tagPtr->fontPtr, value, strlen(value),
 		      &direction, &ascent, &descent, &bbox);
-#endif
-#endif
+#endif	/* TK8 */
+#endif	/* KANJI */
 
 	/* 
-	  Set the origin coordinates of the string to draw using the anchor.
-	  origin represents the (x,y) coordinate of the
-	  lower left corner of the text box, relative to
-	  the internal (ie inside the border) window
+	 * Set the origin coordinates of the string to draw using the anchor.
+	 * origin represents the (x,y) coordinate of the lower left corner of
+	 * the text box, relative to the internal (inside the border) window
 	 */
 
 	/* set the X origin first */
@@ -1448,16 +1000,18 @@ TableDisplay(ClientData clientdata)
 			&direction, &ascent, &descent, &bbox2);
 #endif		/* VERSION 8 Font Change */
 #endif
-	  originX = max (3 - bbox2.width,
-			 min (originX, width - bbox2.width - 2 * bd - 3));
+	  originX = max (tablePtr->insertWidth+1 - bbox2.width,
+			 min (originX, width - bbox2.width - 2*bd - 
+			      tablePtr->insertWidth + 1));
 	}
 	/* 
-	 * only if I am desperate will I use a clip rectangle as it means
+	 * use a clip rectangle only if necessary as it means
 	 * updating the GC in the server which slows everything down.
 	 */
 	if ((clipRectSet = ((originX + bbox.lbearing < -bd)
 			    || (originX + bbox.rbearing > width - bd)
 			    || (ascent + descent > height)))) {
+#ifndef WIN32
 	  /* set the clipping rectangle */
 	  clipRect.x = x - offsetX;
 	  clipRect.y = y - offsetY;
@@ -1472,28 +1026,59 @@ TableDisplay(ClientData clientdata)
 			     &clipRect, 1, Unsorted);
 #else
 	  XSetClipRectangles (display, copyGc, 0, 0, &clipRect, 1, Unsorted);
-#endif
+#endif	/* KANJI */
+#endif	/* WIN32 */
 	}
+
+#ifdef WIN32	/* no cliprect on windows */
+	if (clipRectSet) {
+	  Tk_Fill3DRectangle (tablePtr->tkwin, clipWind, tagPtr->bgBorder,
+			      0, 0, width, height,
+			      tablePtr->borderWidth, TK_RELIEF_FLAT);
+	  clipRectSet = 0;
+#ifdef KANJI
+	  TkWSDrawString(display, clipWind, copyGc, originX+bd,
+			 originY-descent+bd, value, WSTRLEN(value));
+	  XCopyArea(display, clipWind, window, copyGc->fe[0].gc, 0, 0,
+		    width, height, x-offsetX, y-offsetY);
+	  XCopyArea(display, clipWind, window, copyGc->fe[1].gc, 0, 0,
+		    width, height, x-offsetX, y-offsetY);
+#else	/* KANJI */
+#if (TK_MAJOR_VERSION > 4)
+	  Tk_DrawChars(display, clipWind, copyGc, tablePtr->defaultTag.fontPtr,
+		       value, strlen(value), originX+bd, originY-descent+bd);
+#else	/* TK8 */
+	  XDrawString (display, clipWind, copyGc, originX+bd,
+		       originY-descent+bd, value, strlen (value));
+#endif	/* TK8 */
+	  XCopyArea(display, clipWind, window, copyGc, 0, 0,
+		    width, height, x-offsetX, y-offsetY);
+#endif	/* KANJI */
+	} else {
+#endif	/* WIN32 */
 #ifdef KANJI
         TkWSDrawString(display, window, copyGc,
 		       x-offsetX+originX+bd, y-offsetY+originY-descent+bd,
 		       value, WSTRLEN(value));
-#else
+#else	/* KANJI */
 #if (TK_MAJOR_VERSION > 4)
 	Tk_DrawChars(display, window, copyGc, tablePtr->defaultTag.fontPtr,
 		     value, strlen(value),
 		     x-offsetX+originX+bd, y-offsetY+originY-descent+bd);
-#else
+#else	/* TK8 */
 	XDrawString (display, window, copyGc,
 		     x-offsetX+originX+bd, y-offsetY+originY-descent+bd,
 		     value, strlen (value));
-#endif
-#endif
+#endif	/* TK8 */
+#endif	/* KANJI */
+#ifdef WIN32
+	}
+#endif	/* WIN32 */
 
-	/* if this is the selected cell draw the cursor if it's on
-	   and will fit in the box */
+	/* if this is the active cell draw the cursor if it's on. */
 	if (activeCell && (tablePtr->flags & CURSOR_ON) &&
 	    (width > originX+bd+bbox2.width)) {
+	  /* make sure it will fit in the box */
 	  if (originY-descent-ascent+bd > 0)
 	    Tk_Fill3DRectangle(tablePtr->tkwin, window, tablePtr->insertBg,
 			       x-offsetX+originX+bd+bbox2.width,
@@ -1506,6 +1091,8 @@ TableDisplay(ClientData clientdata)
 			       y-offsetY, tablePtr->insertWidth, height,
 			       tablePtr->insertBorderWidth, TK_RELIEF_FLAT);
 	}
+
+#ifndef WIN32	/* no cliprect on windows */
 	/* reset the clip mask */
 	if (clipRectSet) {
 #ifdef KANJI
@@ -1515,14 +1102,18 @@ TableDisplay(ClientData clientdata)
           XSetClipMask(display, copyGc->fe[1].gc, None);
 #else
 	  XSetClipMask(display, copyGc, None);
-#endif
+#endif	/* KANJI */
         }
+#endif	/* WIN32 */
+
 #ifdef KANJI
+	/* Must free this data because it's allocated by GetWStr */
 	if (!activeCell)
 	  FREE_WSTR(value);
 #endif
       }
 
+    ImageUsed:
       /* Draw the 3d border on the pixmap correctly offset */
       switch (tablePtr->drawMode) {
       case DRAW_MODE_SLOW:
@@ -1571,19 +1162,11 @@ TableDisplay(ClientData clientdata)
 
       /* delete the tag structure */
       ckfree ((char *) (tagPtr));
+      TableFreeGc(tablePtr, copyGc);
     }
   }
-
-#ifdef NO_TOP_LEFT
-  /* clear the top left corner */
-  if (tablePtr->titleRows != 0 || tablePtr->titleCols != 0)
-    Tk_Fill3DRectangle (tablePtr->tkwin, window, titlePtr->bgBorder,
-			0 - offsetX + tablePtr->highlightWidth,
-			0 - offsetY + tablePtr->highlightWidth,
-			(tablePtr->colStarts)[tablePtr->titleCols],
-			(tablePtr->rowStarts)[tablePtr->titleRows],
-	 (tablePtr->drawMode == DRAW_MODE_FAST) ? 1 : tablePtr->borderWidth,
-			titlePtr->relief);
+#ifdef WIN32
+  Tk_FreePixmap (display, clipWind);
 #endif
 
   /* 
@@ -1592,29 +1175,35 @@ TableDisplay(ClientData clientdata)
    */
   TableCellCoords (tablePtr, tablePtr->rows, tablePtr->cols,
 		   &x, &y, &width, &height);
-  if (x + width < invalidX + invalidWidth - 1)
-    if (tablePtr->drawMode == DRAW_MODE_SLOW)
+  if (x + width < invalidX + invalidWidth - 1) {
+#ifndef WIN32
+    if (tablePtr->drawMode != DRAW_MODE_SLOW)
+      XClearArea (display, window, x + width, invalidY,
+		  invalidX + invalidWidth - x - width, invalidHeight, False);
+    else
+#endif
       /* we are using a pixmap, so use TK to clear it */
       Tk_Fill3DRectangle (tablePtr->tkwin, window,
 			  tablePtr->defaultTag.bgBorder, x+width-offsetX, 0,
 			  invalidX+invalidWidth-x-width, invalidHeight,
 			  0, TK_RELIEF_FLAT);
-    else
-      XClearArea (display, window, x + width, invalidY,
-		  invalidX + invalidWidth - x - width, invalidHeight, False);
+  }
 
-  if (y + height < invalidY + invalidHeight - 1)
-    if (tablePtr->drawMode == DRAW_MODE_SLOW)
+  if (y + height < invalidY + invalidHeight - 1) {
+#ifndef WIN32
+    if (tablePtr->drawMode != DRAW_MODE_SLOW)
+      XClearArea (display, window, invalidX, y + height, invalidWidth,
+		  invalidY + invalidHeight - y - height, False);
+    else
+#endif
       /* we are using a pixmap, so use TK to clear it */
       Tk_Fill3DRectangle (tablePtr->tkwin, window,
 			  tablePtr->defaultTag.bgBorder, 0, y+height-offsetY,
 			  invalidWidth, invalidY+invalidHeight-y-height,
 			  0, TK_RELIEF_FLAT);
-    else
-      XClearArea (display, window, invalidX, y + height, invalidWidth,
-		  invalidY + invalidHeight - y - height, False);
+  }
 
-  /* copy on and delete the pixmap if we are in slow mode */
+  /* copy over and delete the pixmap if we are in slow mode */
   if (tablePtr->drawMode == DRAW_MODE_SLOW) {
     /* Get a default GC */
     copyGc = TableGetGc (tablePtr, &(tablePtr->defaultTag));
@@ -1624,18 +1213,19 @@ TableDisplay(ClientData clientdata)
     XCopyArea(display, window, Tk_WindowId(tkwin), copyGc->fe[1].gc, 0, 0,
               invalidWidth, invalidHeight, invalidX, invalidY);
 #else
-    XCopyArea (display, window, Tk_WindowId (tkwin), copyGc, 0, 0,
-	       invalidWidth, invalidHeight, invalidX, invalidY);
+    XCopyArea(display, window, Tk_WindowId(tkwin), copyGc, 0, 0,
+	      invalidWidth, invalidHeight, invalidX, invalidY);
 #endif /* KANJI */
-    XFreePixmap (Tk_Display (tkwin), window);
+    Tk_FreePixmap (display, window);
+    TableFreeGc(tablePtr, copyGc);
   }
   if ((tablePtr->flags & REDRAW_BORDER) && tablePtr->highlightWidth != 0) {
     GC gc = Tk_GCForColor ((tablePtr->flags & HAS_FOCUS)
 			   ? (tablePtr->highlightColorPtr)
-		    : (tablePtr->highlightBgColorPtr), Tk_WindowId (tkwin));
+		    : (tablePtr->highlightBgColorPtr), Tk_WindowId(tkwin));
     tablePtr->flags &= ~REDRAW_BORDER;
     Tk_DrawFocusHighlight (tkwin, gc, tablePtr->highlightWidth,
-			   Tk_WindowId (tkwin));
+			   Tk_WindowId(tkwin));
   }
   /* 
    * If rowTagCmd or colTagCmd were specified then free up
@@ -1649,7 +1239,6 @@ TableDisplay(ClientData clientdata)
     Tcl_DeleteHashTable (colProcTbl);
     ckfree ((char *) (colProcTbl));
   }
-  TableFreeGc(tablePtr,copyGc);
 }
 
 /* 
@@ -1657,10 +1246,6 @@ TableDisplay(ClientData clientdata)
  * waiting to be redrawn if the force flag is set, does an update
  * instantly else waits until TK is idle
  */
-
-#define TableInvalidateAll(tablePtr,force)  \
-  TableInvalidate((tablePtr), 0, 0, Tk_Width((tablePtr)->tkwin), \
-		  Tk_Height((tablePtr)->tkwin), (force))
 
 static void
 TableInvalidate(Table * tablePtr, int x, int y,
@@ -1841,7 +1426,7 @@ TableVarProc(ClientData clientdata, Tcl_Interp * interp,
 #ifdef KANJI
 	FREE_WSTR(data);
 #endif
-	return;
+	return (char *) NULL;
       }
 #ifdef KANJI
       Tk_FreeWStr(tablePtr->activeBuf);
@@ -1902,7 +1487,6 @@ TableAdjustParams(tablePtr)
   int diff, colPad, unpresetCols, lastUnpresetCol, lastColPad, rowPad,
     unpresetRows, lastUnpresetRow, lastRowPad, setRowPixels, setColPixels;
   Tcl_HashEntry *entryPtr;
-  Tcl_HashSearch search;
   int bd, recalc = 0;
 
   /* cache the borderwidth (doubled) for many upcoming calculations */
@@ -1932,8 +1516,10 @@ TableAdjustParams(tablePtr)
   }
 
   /* work out how much to pad each col depending on the mode */
-  diff = Tk_Width(tablePtr->tkwin)-setColPixels-2*tablePtr->highlightWidth
-    -unpresetCols*((tablePtr->charWidth)*(tablePtr->defColWidth)+bd);
+  diff = Tk_Width(tablePtr->tkwin) - setColPixels - 2*tablePtr->highlightWidth
+    - (unpresetCols * ((tablePtr->charWidth)*(tablePtr->defColWidth) + bd));
+  /* diff lower than 0 means we can't see the entire set of columns */
+  if (diff < 0) diff = 0;
   switch(tablePtr->colStretch) {
   case STRETCH_MODE_NONE:
     colPad = 0;
@@ -1944,20 +1530,20 @@ TableAdjustParams(tablePtr)
       colPad = 0;
       lastColPad = 0;
     } else {
-      colPad = max(0,diff) / unpresetCols;
-      lastColPad = max(0,diff) - colPad * (unpresetCols - 1);
+      colPad = diff / unpresetCols;
+      lastColPad = diff - colPad * (unpresetCols - 1);
     }
     break;
   case STRETCH_MODE_LAST:
     colPad = 0;
-    lastColPad = max(0,diff);
+    lastColPad = diff;
     lastUnpresetCol = tablePtr->cols - 1;
     break;
   default:	/* STRETCH_MODE_ALL, but also FILL for cols */
-    colPad = max(0,diff) / (tablePtr->cols);
-    lastColPad = max(0,diff) - colPad * (tablePtr->cols - 1);
+    colPad = diff / (tablePtr->cols);
     /* force it to be applied to the last column too */
     lastUnpresetCol = tablePtr->cols - 1;
+    lastColPad = diff - colPad * lastUnpresetCol;
   }
 
   /* now do the padding and calculate the column starts */
@@ -1965,9 +1551,9 @@ TableAdjustParams(tablePtr)
   for (i = 0; i < tablePtr->cols; i++) {
     if ((tablePtr->colPixels)[i] == -1)
       (tablePtr->colPixels)[i] = tablePtr->charWidth * tablePtr->defColWidth
-	+ bd + ((i!=lastUnpresetCol)?colPad:lastColPad);
+	+ bd + ((i==lastUnpresetCol)?lastColPad:colPad);
     else if (tablePtr->colStretch == STRETCH_MODE_ALL)
-      (tablePtr->colPixels)[i] += (i!=lastUnpresetCol)?colPad:lastColPad;
+      (tablePtr->colPixels)[i] += (i==lastUnpresetCol)?lastColPad:colPad;
     total = (((tablePtr->colStarts)[i] = total) + (tablePtr->colPixels)[i]);
   }
   (tablePtr->colStarts)[i] = tablePtr->maxWidth = total;
@@ -1978,6 +1564,7 @@ TableAdjustParams(tablePtr)
    */
   do {
     /* Set up the arrays to hold the row pixels and starts */
+    /* FIX - this can be moved outside 'do' if you check >row size */
     if (tablePtr->rowPixels) ckfree ((char *) (tablePtr->rowPixels));
     tablePtr->rowPixels = (int *) ckalloc (tablePtr->rows * sizeof (int));
     if (tablePtr->rowStarts) ckfree ((char *) (tablePtr->rowStarts));
@@ -2001,7 +1588,7 @@ TableAdjustParams(tablePtr)
 
     /* work out how much to pad each row depending on the mode */
     diff = Tk_Height(tablePtr->tkwin)-setRowPixels-2*tablePtr->highlightWidth
-      -unpresetRows*(tablePtr->defRowHeight+bd);
+      - (unpresetRows * (tablePtr->defRowHeight+bd));
     switch(tablePtr->rowStretch) {
     case STRETCH_MODE_NONE:
       rowPad = 0;
@@ -2039,9 +1626,9 @@ TableAdjustParams(tablePtr)
       break;
     default:	/* STRETCH_MODE_ALL */
       rowPad = max(0,diff) / (tablePtr->rows);
-      lastRowPad = max(0,diff) - rowPad * (tablePtr->rows - 1);
       /* force it to be applied to the last column too */
       lastUnpresetRow = tablePtr->rows - 1;
+      lastRowPad = max(0,diff) - rowPad * lastUnpresetRow;
     }
 
     /* now do the padding and calculate the row starts */
@@ -2049,9 +1636,9 @@ TableAdjustParams(tablePtr)
     for (i = 0; i < tablePtr->rows; i++) {
       if ((tablePtr->rowPixels)[i] == -1)
 	(tablePtr->rowPixels)[i] = tablePtr->defRowHeight + bd
-	  + ((i!=lastUnpresetRow)?rowPad:lastRowPad);
+	  + ((i==lastUnpresetRow)?lastRowPad:rowPad);
       else if (tablePtr->colStretch == STRETCH_MODE_ALL)
-	(tablePtr->colPixels)[i] += (i!=lastUnpresetRow)?rowPad:lastRowPad;
+	(tablePtr->colPixels)[i] += (i==lastUnpresetRow)?lastRowPad:rowPad;
 
       /* calculate the start of each row */
       total = (((tablePtr->rowStarts)[i] = total) + (tablePtr->rowPixels)[i]);
@@ -2199,7 +1786,8 @@ TableAdjustParams(tablePtr)
  *
  * Equivalent to EntryBlinkProc
  */
-static void TableCursorEvent (ClientData clientData)
+static void
+TableCursorEvent (ClientData clientData)
 {
   register Table *tablePtr = (Table *) clientData;
   int x, y, width, height;
@@ -2386,7 +1974,7 @@ TableConfigure(interp, tablePtr, argc, argv, flags)
    */
   TableAdjustParams (tablePtr);
   /* reset the cursor */
-  TableConfigCursor ((ClientData) tablePtr);
+  TableConfigCursor (tablePtr);
   /* set up the background colour in the window */
   Tk_SetBackgroundFromBorder (tablePtr->tkwin, tablePtr->defaultTag.bgBorder);
   /* set the geometry and border */
@@ -2415,6 +2003,8 @@ TableConfigure(interp, tablePtr, argc, argv, flags)
 static void
 TableCleanupTag(Table * tablePtr, TagStruct * tagPtr)
 {
+  if (tagPtr->image)
+    Tk_FreeImage(tagPtr->image);
   /* free the options in the widget */
   Tk_FreeOptions (tagConfig, (char *) tagPtr, tablePtr->display, 0);
 }
@@ -3111,7 +2701,7 @@ TableDeleteChars(tablePtr, index, count)
     int index;			/* Index of first character to delete. */
     int count;			/* How many characters to delete. */
 {
-  int i, x, y, width, height, oldlen;
+  int x, y, width, height, oldlen;
   WCHAR *new;
   char *old;
 
@@ -3192,7 +2782,7 @@ TableInsertChars(tablePtr, index, string)
     char *string;		/* New characters to add (NULL-terminated
 				 * string). */
 {
-  int i, x, y, width, height, oldlen, newlen, code;
+  int x, y, width, height, oldlen, newlen;
   WCHAR *diff, *new;
   char *old;
 
@@ -3287,10 +2877,11 @@ TableTagCommand(Table * tablePtr, int argc, char *argv[])
   Tcl_HashEntry *entryPtr, *scanPtr, *newEntryPtr, *oldEntryPtr;
   Tcl_HashTable *hashTblPtr;
   Tcl_HashSearch search;
+  Tk_Image image;
   char buf[INDEX_BUFSIZE], *keybuf;
 
   /* parse the next argument */
-  retval = parse_command (tablePtr->interp, tag_commands, argv[2]);
+  retval = parse_command (tablePtr->interp, tag_cmds, argv[2]);
   switch (retval) {
     /* failed to parse the argument, error */
   case 0:
@@ -3498,6 +3089,21 @@ TableTagCommand(Table * tablePtr, int argc, char *argv[])
 	  return TCL_ERROR;
       }
     }
+
+    /* handle change of image name */
+    if (tagPtr->imageStr) {
+      image = Tk_GetImage(tablePtr->interp, tablePtr->tkwin, tagPtr->imageStr,
+			  TableImageProc, (ClientData)tablePtr);
+      if (image == NULL)
+	result = TCL_ERROR;
+    } else {
+      image = NULL;
+    }
+    if (tagPtr->image) {
+      Tk_FreeImage(tagPtr->image);
+    }
+    tagPtr->image = image;
+
     /* 
      * If there were less than 6 args, we need
      * to do a printout of the config, even for new tags
@@ -3535,24 +3141,24 @@ TableTagCommand(Table * tablePtr, int argc, char *argv[])
 	/* delete all references to this tag in rows */
 	scanPtr = Tcl_FirstHashEntry (tablePtr->rowStyles, &search);
 	for (; scanPtr != NULL; scanPtr = Tcl_NextHashEntry (&search))
-	  if (Tcl_GetHashValue (scanPtr) == tagPtr)
+	  if ((TagStruct *)Tcl_GetHashValue (scanPtr) == tagPtr)
 	    Tcl_DeleteHashEntry (scanPtr);
 
 	/* delete all references to this tag in cols */
 	scanPtr = Tcl_FirstHashEntry (tablePtr->colStyles, &search);
 	for (; scanPtr != NULL; scanPtr = Tcl_NextHashEntry (&search))
-	  if (Tcl_GetHashValue (scanPtr) == tagPtr)
+	  if ((TagStruct *)Tcl_GetHashValue (scanPtr) == tagPtr)
 	    Tcl_DeleteHashEntry (scanPtr);
 
 	/* delete all references to this tag in cells */
 	scanPtr = Tcl_FirstHashEntry (tablePtr->cellStyles, &search);
 	for (; scanPtr != NULL; scanPtr = Tcl_NextHashEntry (&search))
-	  if (Tcl_GetHashValue (scanPtr) == tagPtr)
+	  if ((TagStruct *)Tcl_GetHashValue (scanPtr) == tagPtr)
 	    Tcl_DeleteHashEntry (scanPtr);
 
 	/* release the structure */
 	TableCleanupTag (tablePtr, (TagStruct *) Tcl_GetHashValue (entryPtr));
-	ckfree ((TagStruct *) Tcl_GetHashValue (entryPtr));
+	ckfree ((char *) Tcl_GetHashValue (entryPtr));
 
 	/* and free the hash table entry */
 	Tcl_DeleteHashEntry (entryPtr);
@@ -3637,7 +3243,7 @@ TableWidgetCmd(clientData, interp, argc, argv)
 
   result = TCL_OK;
   /* parse the first parameter */
-  retval = parse_command(interp, commandos, argv[1]);
+  retval = parse_command(interp, main_cmds, argv[1]);
 
   /* Switch on the parameter value */
   switch (retval) {
@@ -3825,7 +3431,7 @@ TableWidgetCmd(clientData, interp, argc, argv)
       result = TCL_ERROR;
       break;
     }
-    sub_retval = parse_command (interp, mod_commands, argv[2]);
+    sub_retval = parse_command (interp, mod_cmds, argv[2]);
     switch (sub_retval) {
     case 0:
       result = TCL_ERROR;
@@ -3946,10 +3552,10 @@ TableWidgetCmd(clientData, interp, argc, argv)
       TableAdjustParams (tablePtr);
 
       /* rerequest geometry */
-      x = min (tablePtr->maxWidth, max (Tk_Width (tablePtr->tkwin),
-					tablePtr->maxReqWidth));
-      y = min (tablePtr->maxHeight, max (Tk_Height (tablePtr->tkwin),
-					 tablePtr->maxReqHeight));
+      x = min (tablePtr->maxWidth,
+	       max(Tk_Width(tablePtr->tkwin), tablePtr->maxReqWidth));
+      y = min (tablePtr->maxHeight,
+	       max(Tk_Height(tablePtr->tkwin), tablePtr->maxReqHeight));
       Tk_GeometryRequest (tablePtr->tkwin, x, y);
 
       /*
@@ -4014,7 +3620,7 @@ TableWidgetCmd(clientData, interp, argc, argv)
       result = TCL_ERROR;
       break;
     }
-    sub_retval = parse_command (interp, mod_commands, argv[2]);
+    sub_retval = parse_command (interp, mod_cmds, argv[2]);
     switch (sub_retval) {
     case 0:
       result = TCL_ERROR;
@@ -4102,7 +3708,7 @@ TableWidgetCmd(clientData, interp, argc, argv)
       result=TCL_ERROR;
       break;
     }
-    retval=parse_command(interp, sel_commands, argv[2]);
+    retval=parse_command(interp, sel_cmds, argv[2]);
     switch(retval) {
     case 0: 		/* failed to parse the argument, error */
       return TCL_ERROR;
@@ -4259,7 +3865,9 @@ TableWidgetCmd(clientData, interp, argc, argv)
       }
       interp->result = DECODE_WSTR(TableGetCellValue(tablePtr, row, col));
     } else if (tablePtr->state == tkNormalUid) {
+#ifdef KANJI
       WCHAR *data;
+#endif
       for (i=2; i<argc; i++) {
 	if (TableGetIndex(tablePtr, argv[i], &row, &col) != TCL_OK) {
 	  result = TCL_ERROR;
@@ -4350,9 +3958,9 @@ TableWidgetCmd(clientData, interp, argc, argv)
 	case TK_SCROLL_MOVETO:
 	  if (frac < 0) frac = 0;
 	  if ( retval == CMD_YVIEW ) {
-	    tablePtr->topRow = frac * tablePtr->rows + tablePtr->titleRows;
+	    tablePtr->topRow = (int)(frac*tablePtr->rows)+tablePtr->titleRows;
 	  } else {
-	    tablePtr->leftCol = frac * tablePtr->cols + tablePtr->titleCols;
+	    tablePtr->leftCol = (int)(frac*tablePtr->cols)+tablePtr->titleCols;
 	  }
 	  break;
 	case TK_SCROLL_PAGES:
@@ -4457,7 +4065,7 @@ TableDestroy(ClientData clientdata)
     /* free up the Gcs etc */
     TableCleanupTag (tablePtr, (TagStruct *) Tcl_GetHashValue (entryPtr));
     /* free the memory */
-    ckfree ((TagStruct *) Tcl_GetHashValue (entryPtr));
+    ckfree ((char *) Tcl_GetHashValue (entryPtr));
   }
   /* And delete the actual hash table */
   Tcl_DeleteHashTable (tablePtr->tagTable);
@@ -4632,6 +4240,8 @@ TableCmd(clientData, interp, argc, argv)
   tablePtr->defaultTag.kanjiFontPtr = NULL;
 #endif              /* KANJI */
   tablePtr->defaultTag.anchor	= TK_ANCHOR_CENTER;
+  tablePtr->defaultTag.image	= NULL;
+  tablePtr->defaultTag.imageStr	= NULL;
   tablePtr->yScrollCmd		= NULL;
   tablePtr->xScrollCmd		= NULL;
   tablePtr->insertBg		= NULL;
@@ -4743,8 +4353,8 @@ TableCmd(clientData, interp, argc, argv)
 
 /* Function to call on loading the Table module */
 
-int
-Tktable_Init (Tcl_Interp * interp)
+EXPORT(int,Tktable_Init)(interp)
+    Tcl_Interp *interp;
 {
   static char init_script[] =
   "if [catch {source [lindex $tcl_pkgPath 0]/Tktable/tkTable.tcl}] {\n"
@@ -4760,12 +4370,13 @@ Tktable_Init (Tcl_Interp * interp)
     return TCL_ERROR;
   }
   Tcl_CreateCommand (interp, "table", TableCmd,
-	   (ClientData) Tk_MainWindow (interp), (Tcl_CmdDeleteProc *) NULL);
+		     (ClientData) Tk_MainWindow(interp),
+		     (Tcl_CmdDeleteProc *) NULL);
   return Tcl_Eval(interp, init_script);
 }
 
-int
-Tktable_SafeInit (Tcl_Interp * interp)
+EXPORT(int,Tktable_SafeInit)(interp)
+    Tcl_Interp *interp;
 {
   static char init_script[] =
   "if [catch {source [lindex $tcl_pkgPath 0]/Tktable/tkTable.tcl}] {\n"
@@ -4781,6 +4392,40 @@ Tktable_SafeInit (Tcl_Interp * interp)
     return TCL_ERROR;
   }
   Tcl_CreateCommand (interp, "table", TableCmd,
-	   (ClientData) Tk_MainWindow (interp), (Tcl_CmdDeleteProc *) NULL);
+		     (ClientData) Tk_MainWindow(interp),
+		     (Tcl_CmdDeleteProc *) NULL);
   return Tcl_Eval(interp, init_script);
 }
+
+#ifdef WIN32
+/*
+ *----------------------------------------------------------------------
+ *
+ * DllEntryPoint --
+ *
+ *	This wrapper function is used by Windows to invoke the
+ *	initialization code for the DLL.  If we are compiling
+ *	with Visual C++, this routine will be renamed to DllMain.
+ *	routine.
+ *
+ * Results:
+ *	Returns TRUE;
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+BOOL APIENTRY
+DllEntryPoint(hInst, reason, reserved)
+    HINSTANCE hInst;		/* Library instance handle. */
+    DWORD reason;		/* Reason this function is being called. */
+    LPVOID reserved;		/* Not used. */
+{
+  tkNormalUid   = Tk_GetUid("normal");
+  tkDisabledUid = Tk_GetUid("disabled");
+  return TRUE;
+}
+
+#endif

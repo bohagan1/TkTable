@@ -1,0 +1,94 @@
+# Makefile.bc
+#
+# This makefile builds Tktable.dll.  This makefile is suitable for use with
+# Microsoft Visual C++ 2.x and 4.0.
+#
+# This is a hack based of Sun's example Makefile.vc.  I have included a
+# precompiled DLL because this requires heavy modification of paths to
+# work properly.  The DLL is built against Tk8.0a2.
+#
+
+PROJECT	= Tktable
+
+#
+# Project directories -- these may need to be customized for your site
+#
+# ROOT --	location of the example files.
+# TMPDIR --	location for .obj files.
+# TOOLS32 --	location of VC++ compiler installation.
+# TCL --	location where Tcl is installed.
+#
+
+ROOT	= .
+TMPDIR	= .
+TOOLS32	= c:\msdev
+TVERS	= 8.0a2
+TCL	= C:\Program Files\Tcl
+PTCL	= C:\jhobbs\src\tcl$(TVERS)
+TK	= C:\jhobbs\src\tk$(TVERS)
+
+# comment the following line to compile with symbols
+NODEBUG=1
+
+#
+# Visual C++ tools
+#
+
+PATH=$(TOOLS32)\bin;$(PATH)
+
+cc32	= $(TOOLS32)\bin\cl -I$(TOOLS32)\include
+CP      = copy
+RM      = del
+
+INCLUDES = -I$(TOOLS32)\include -I"$(TCL)\include" \
+	-I"$(TK)\generic" -I"$(TK)\win"
+DEFINES = -nologo $(DEBUGDEFINES) -DVERSION=\"1.3\"
+LIBS	=  ..\tcl$(TVERS)\win\tcl80.lib ..\tk$(TVERS)\win\tk80.lib
+
+!include <ntwin32.mak>
+
+# 
+# Global makefile settings
+#
+
+DLLOBJS = \
+	$(TMPDIR)\$(PROJECT).obj
+
+# Targets
+
+all: pkgIndex.tcl
+
+test: pkgIndex.tcl
+	@"$(TCL)\bin\wish80" <<
+		lappend auto_path $(ROOT)
+		package require $(PROJECT)
+		if ![catch {$(PROJECT)}] {
+		    puts "Test passed."
+		    exit 0
+		} else {
+		    puts "$(PROJECT) failed to load and run"
+		    exit 1
+		}
+<<
+
+pkgIndex.tcl: $(PROJECT).dll
+	"$(TCL)\bin\wish80" <<
+		pkg_mkIndex $(ROOT) $(PROJECT).dll
+<<
+
+$(PROJECT).dll: $(DLLOBJS)
+	$(link) $(linkdebug) $(dlllflags) $(LIBS) \
+		$(guilibsdll) -out:$(PROJECT).dll $(DLLOBJS)
+
+# Implicit Targets
+
+.c.obj:
+	$(cc32) $(cdebug) $(cflags) $(cvarsdll) $(INCLUDES) \
+		$(DEFINES) -Fo$(TMPDIR)\ $<
+
+clean:
+	-$(RM) $(TMPDIR)\*.obj
+	-$(RM) $(PROJECT).dll
+	-$(RM) $(PROJECT).lib
+	-$(RM) $(PROJECT).exp
+	-$(RM) pkgIndex.tcl

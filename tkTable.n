@@ -510,6 +510,9 @@ font for the cell
 \fB-foreground\fR or \fB-fg\fR
 foreground color of the cell
 .TP
+\fB-image\fR
+an image to display in the cell instead of text
+.TP
 \fB-relief\fR
 the relief for the cell
 .RE
@@ -527,6 +530,11 @@ it is specified as an empty string, then that option will never be used; the
 next-highest-priority tag's option will used instead.  If no tag specifies a
 particular display option, then the default style for the widget will be
 used.
+.PP
+Images are used for display purposes only.  If an image is specified in a
+tag, then that image will be displayed instead of the text for the cell.
+However, editing in that cell will still be enabled and any querying of the
+cell will show the text value of the cell.
 
 .SH "THE SELECTION"
 .PP

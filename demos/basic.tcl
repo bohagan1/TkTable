@@ -15,7 +15,7 @@ array set table {
   table		.t
   array		t
 }
-append table(library) [info shared]
+append table(library) [info sharedlibext]
 
 ## Ensure that the table library extension is loaded
 if {[string match {} [info commands table]] && \
