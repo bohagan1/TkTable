@@ -427,6 +427,7 @@ AC_DEFUN(TEA_ENABLE_THREADS, [
 
 	if test "${TEA_PLATFORM}" != "windows" ; then
 	    # We are always OK on Windows, so check what this platform wants.
+	    AC_DEFINE(USE_THREAD_ALLOC)
 	    AC_DEFINE(_REENTRANT)
 	    AC_DEFINE(_THREAD_SAFE)
 	    AC_CHECK_LIB(pthread,pthread_mutex_init,tcl_ok=yes,tcl_ok=no)
@@ -1177,7 +1178,7 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS=""
 	    LDFLAGS="-export-dynamic"
-	    LD_SEARCH_FLAGS=""
+	    LD_SEARCH_FLAGS='-Wl,-rpath,${LIB_RUNTIME_DIR}'
 	    if test "${TCL_THREADS}" = "1" ; then
 		EXTRA_CFLAGS="-pthread"
 	    	LDFLAGS="$LDFLAGS -pthread"
@@ -2445,17 +2446,6 @@ AC_DEFUN(TEA_SETUP_COMPILER, [
     #--------------------------------------------------------------------
 
     AC_PROG_RANLIB
-
-    #--------------------------------------------------------------------
-    # This macro performs additional compiler tests.
-    #--------------------------------------------------------------------
-
-    AC_CYGWIN
-
-    if test "$ac_cv_cygwin" = "yes" ; then
-	AC_MSG_ERROR([Compiling with the Cygwin version of gcc is not supported.
-	Use the Mingw version of gcc from www.mingw.org instead.])
-    fi
 
     #--------------------------------------------------------------------
     # Determines the correct binary file extension (.o, .obj, .exe etc.)
