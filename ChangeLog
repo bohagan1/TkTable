@@ -1,5 +1,13 @@
 2000-08-18  Jeff Hobbs  <hobbs@scriptics.com>
 
+	* generic/tkTable.c: changed the -ipad* defaults to 0, to go along
+	with the -pad* defaults.  For users looking for backwards
+	compatability with 2.5 padding, add:
+	    option add *Table.ipadX 2
+	    option add *Table.ipadY 1
+	Users will likely find that -pad* is more intuitive though.
+		**** POTENTIAL INCOMPATABILITY ****
+
 	* doc/tkTable.html:
 	* doc/tkTable.n: updated docs to reflect new -(i)pad* definitions
 	and enhanced -bd behavior.
@@ -19,6 +27,7 @@
 	(-pad* from v2.5 should now be -ipad* in 2.7).  -pad* now enforces
 	absolute empty padding for cells, expanding the default size.
 	Embedded windows can override the -pad* value.  See docs for more.
+		**** POTENTIAL INCOMPATABILITY ****
 
 	* generic/tkTable.h: removed use of INLINE, added new border style
 	support to structures.
