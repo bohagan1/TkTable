@@ -1,7 +1,7 @@
 '\" The definitions below are for supplemental macros used in Tcl/Tk
 '\" manual entries.
 '\"
-'\" RCS: @(#) $Id:  $
+'\" RCS: @(#) $Id: tkTable.n,v 1.2 2000/08/18 23:22:34 hobbs Exp $
 '\"
 '\" .AP type name in/out ?indent?
 '\"	Start paragraph describing an argument to a library procedure.
@@ -371,7 +371,7 @@ further limited by \fB\-maxheight\fR.
 .OP \-invertselected invertSelected InvertSelected
 Specifies whether the foreground and background of an item should simply
 have their values swapped instead of merging the \fIsel\fR tag options
-when the cell is selected.  Defaults to 0 (merge).
+when the cell is selected.  Defaults to 0 (merge \fIsel\fR tag).
 .OP \-ipadx ipadX Pad
 A pixel value specifying the internal offset X padding for text in a cell.
 This value does not grow the size of the cell, it just causes the text to
@@ -584,12 +584,13 @@ the above forms.
 
 .SH TAGS
 .PP
-A tag is a textual string that is associated with zero or more rows, columns
-or cells in a table.  Tags may contain arbitrary characters, but it is
-probably best to avoid using names which look like indices.  There may be
-any number of tags associated with rows, columns or cells in a table.  There
-are several permanent tags in each table that can be configured by the user
-and will determine the attributes for special cells:
+A tag is a textual string that is associated with zero or more rows,
+columns or cells in a table.  Tags may contain arbitrary characters, but it
+is probably best to avoid using names which look like indices to reduce
+coding confusion.  There may be any number of tags in a table, but each
+row, column or cell can only have one tag associated with it at a time.
+There are several permanent tags in each table that can be configured by
+the user and will determine the attributes for special cells:
 .RS
 .TP 10
 \fBactive\fR
@@ -610,10 +611,10 @@ tag has \fB\-state\fR \fIdisabled\fR by default.
 Tags control the way cells are displayed on the screen.  Where appropriate,
 the default for displaying cells is determined by the options for the table
 widget.  However, display options may be associated with individual tags
-using the ``\fIpathName \fBtag configure\fR'' widget command.  If a cell
-has been tagged, then the display options associated with the tag override
-the default display style.  The following options are currently supported
-for tags:
+using the ``\fIpathName \fBtag configure\fR'' widget command.  If a cell,
+row or column has been tagged, then the display options associated with the
+tag override the default display style.  The following options are
+currently supported for tags:
 .RS
 .TP
 \fB\-anchor \fIanchor\fR
@@ -657,19 +658,21 @@ methods, but a direct \fIset\fR will not be prevented.
 Whether characters should wrap in a cell that is not wide enough.
 .RE
 .PP
-A priority order is defined among tags, and this order is used in
+A priority order is defined among tags based on creation order (first
+created tag has highest default priority), and this order is used in
 implementing some of the tag\-related functions described below.  When a cell
 is displayed, its properties are determined by the tags which are assigned
-to it.  Including the special tags, this order is \fBflash\fR, \fBactive\fR,
-\fBsel\fR, \fBtitle\fR, \fBcelltag\fR, \fBrowtag\fR, \fBcoltag\fR, default.
+to it.  The priority of a tag can be modified by the ``\fIpathName \fBtag
+lower\fR'' and ``\fIpathName \fBtag raise\fR'' widget commands.
 .PP
-If a cell has several tags associated with it, and if their display options
-conflict, then the options of the highest priority tag are used.  If a
+If a cell has several tags associated with it that define the same display
+options (eg - a \fBtitle\fR cell with specific \fBrow\fR and \fBcell\fR
+tags), then the options of the highest priority tag are used.  If a
 particular display option hasn't been specified for a particular tag, or if
-it is specified as an empty string, then that option will never be used; the
-next\-highest\-priority tag's option will used instead.  If no tag specifies a
-particular display option, then the default style for the widget will be
-used.
+it is specified as an empty string, then that option will not be used; the
+next\-highest\-priority tag's option will be used instead.  If no tag
+specifies a particular display option, then the default style for the
+widget will be used.
 .PP
 Images are used for display purposes only.  Editing in that cell will still
 be enabled and any querying of the cell will show the text value of the cell,
@@ -1104,9 +1107,11 @@ The following forms of the command are currently supported:
 .TP
 \fIpathName \fBtag cell\fR \fItagName ?index ...?\fR
 With no arguments, prints out the list of cells that use the \fItag\fR.
-Otherwise it sets the specified cells to use the \fItag\fR.  If \fItag\fR is
+Otherwise it sets the specified cells to use the named tag, replacing any
+tag that may have been set using this method before.  If \fItagName\fR is
 {}, the cells are reset to the default \fItag\fR.  Tags added during
-\-*tagcommand evaluation do not register here.
+\-*tagcommand evaluation do not register here.  If \fItagName\fR does
+not exist, it will be created with the default options.
 .TP
 \fIpathName \fBtag cget\fR \fItagName option\fR
 This command returns the current value of the option named \fIoption\fR
@@ -1115,10 +1120,11 @@ of the values accepted by the \fBtag configure\fR widget command.
 .TP
 \fIpathName \fBtag col\fR \fItagName ?col ...?\fR
 With no arguments, prints out the list of cols that use the \fItag\fR.
-Otherwise it sets the specified cols to use the \fItag\fR.  If \fItag\fR is
+Otherwise it sets the specified columns to use the named tag, replacing any
+tag that may have been set using this method before.  If \fItagName\fR is
 {}, the cols are reset to the default \fItag\fR.  Tags added during
 \-coltagcommand evaluation do not register here.  If \fItagName\fR does
-not exist, it is not created, but nor is an error generated.
+not exist, it will be created with the default options.
 .TP
 \fIpathName \fBtag configure \fItagName\fR ?\fIoption\fR? ?\fIvalue\fR? ?\fIoption value ...\fR?
 This command is similar to the \fBconfigure\fR widget command except that
@@ -1144,17 +1150,29 @@ Returns 1 if the named tag exists, 0 otherwise.
 \fIpathName \fBtag includes\fR \fItagName index\fR
 Returns 1 if the specified index has the named tag, 0 otherwise.
 .TP
+\fIpathName \fBtag lower\fR \fItagName\fR ?\fIbelowThis\fR?
+Lower the priority of the named tag.  If \fIbelowThis\fR is not specified,
+then the tag's priority is lowered to the bottom, otherwise it is lowered
+to one below \fIbelowThis\fR.
+.TP
 \fIpathName \fBtag names\fR ?\fIpattern\fR?
 If no pattern is specified, shows the names of all defined tags.
 Otherwise the \fIpattern\fR is used as a glob pattern to show only
-tags matching that pattern.
+tags matching that pattern.  Tag names are returned in priority order
+(highest priority tag first).
 .TP
-\fIpathName \fBtag row\fR \fItagName ?row ...?\fR
+\fIpathName \fBtag raise\fR \fItagName\fR ?\fIaboveThis\fR?
+Raise the priority of the named tag.  If \fIaboveThis\fR is not specified,
+then the tag's priority is raised to the top, otherwise it is raised to
+one above \fIaboveThis\fR.
+.TP
+\fIpathName \fBtag row\fR \fItagName\fR ?\fIrow ...\fR?
 With no arguments, prints out the list of rows that use the \fItag\fR.
-Otherwise it sets the specified rows to use the \fItag\fR.  If \fItag\fR is
+Otherwise it sets the specified columns to use the named tag, replacing any
+tag that may have been set using this method before.  If \fItagName\fR is
 {}, the rows are reset to use the default tag.  Tags added during
 \-rowtagcommand evaluation do not register here.  If \fItagName\fR does
-not exist, it is not created, but nor is an error generated.
+not exist, it will be created with the default options.
 .RE
 .TP
 \fIpathName \fBvalidate\fR \fIindex\fR
