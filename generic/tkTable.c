@@ -16,10 +16,10 @@
  *
  * Copyright (c) 1997-2000 Jeffrey Hobbs
  *
- * See the file "license.terms" for information on usage and redistribution
+ * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.9 2000/08/21 17:53:06 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.10 2000/08/31 02:09:17 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -40,6 +40,9 @@ static int	Tk_TableObjCmd _ANSI_ARGS_((ClientData clientData,
 
 static int	TableWidgetObjCmd _ANSI_ARGS_((ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int	TableConfigure _ANSI_ARGS_((Tcl_Interp *interp,
+			Table *tablePtr, int objc, Tcl_Obj *CONST objv[],
+			int flags, int forceUpdate));
 static void	TableDestroy _ANSI_ARGS_((ClientData clientdata));
 static void	TableEventProc _ANSI_ARGS_((ClientData clientData,
 			XEvent *eventPtr));
@@ -51,7 +54,6 @@ static void	TableGetGc _ANSI_ARGS_((Display *display, Drawable d,
 
 static void	TableDisplay _ANSI_ARGS_((ClientData clientdata));
 static void	TableFlashEvent _ANSI_ARGS_((ClientData clientdata));
-extern void	TableAddFlash _ANSI_ARGS_((Table *tablePtr, int row, int col));
 static char *	TableVarProc _ANSI_ARGS_((ClientData clientData,
 			Tcl_Interp *interp, char *name, char *index,
 			int flags));
@@ -995,7 +997,7 @@ TableDestroy(ClientData clientdata)
  *
  *----------------------------------------------------------------------
  */
-int
+static int
 TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
      Tcl_Interp *interp;	/* Used for error reporting. */
      register Table *tablePtr;	/* Information about widget;  may or may
