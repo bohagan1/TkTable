@@ -177,6 +177,38 @@ if {[string match "macintosh" $tcl_platform(platform)]} {
     bind Table <Command-KeyPress> {# nothing}
 }
 
+# ::tk::table::GetSelection --
+#   This tries to obtain the default selection.  On Unix, we first try
+#   and get a UTF8_STRING, a type supported by modern Unix apps for
+#   passing Unicode data safely.  We fall back on the default STRING
+#   type otherwise.  On Windows, only the STRING type is necessary.
+# Arguments:
+#   w	The widget for which the selection will be retrieved.
+#	Important for the -displayof property.
+#   sel	The source of the selection (PRIMARY or CLIPBOARD)
+# Results:
+#   Returns the selection, or an error if none could be found
+#
+if {[string equal $tcl_platform(platform) "unix"]} {
+    proc ::tk::table::GetSelection {w {sel PRIMARY}} {
+	if {[catch {selection get -displayof $w -selection $sel \
+		-type UTF8_STRING} txt] \
+		&& [catch {selection get -displayof $w -selection $sel} txt]} {
+	    return -code error "could not find default selection"
+	} else {
+	    return $txt
+	}
+    }
+} else {
+    proc ::tk::table::GetSelection {w {sel PRIMARY}} {
+	if {[catch {selection get -displayof $w -selection $sel} txt]} {
+	    return -code error "could not find default selection"
+	} else {
+	    return $txt
+	}
+    }
+}
+
 # ::tk::table::CancelRepeat --
 # A copy of tkCancelRepeat, just in case it's not available or changes.
 # This procedure is invoked to cancel an auto-repeat action described
@@ -583,7 +615,7 @@ proc ::tk::table::ChangeWidth {w i a} {
 proc tk_tableCopy w {
     if {[selection own -displayof $w] == "$w"} {
 	clipboard clear -displayof $w
-	catch {clipboard append -displayof $w [selection get -displayof $w]}
+	catch {clipboard append -displayof $w [::tk::table::GetSelection $w]}
     }
 }
 
@@ -599,7 +631,7 @@ proc tk_tableCut w {
     if {[selection own -displayof $w] == "$w"} {
 	clipboard clear -displayof $w
 	catch {
-	    clipboard append -displayof $w [selection get -displayof $w]
+	    clipboard append -displayof $w [::tk::table::GetSelection $w]
 	    $w cursel {}
 	    $w selection clear all
 	}
@@ -616,9 +648,9 @@ proc tk_tableCut w {
 
 proc tk_tablePaste {w {cell {}}} {
     if {[string compare {} $cell]} {
-	if {[catch {selection get -displayof $w} data]} return
+	if {[catch {::tk::table::GetSelection $w} data]} return
     } else {
-	if {[catch {selection get -displayof $w -selection CLIPBOARD} data]} {
+	if {[catch {::tk::table::GetSelection $w CLIPBOARD} data]} {
 	    return
 	}
 	set cell active

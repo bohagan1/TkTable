@@ -1,5 +1,8 @@
 2001-06-23  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* library/tkTable.tcl: support for future UTF8_STRING selection on
+	unix.
+
 	* generic/tkTable.c:
 	* generic/tkTable.h:
 	* generic/tkTableTag.c: added support for priorities in tags.
