@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.29 2003/12/10 23:02:20 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.30 2004/06/11 00:24:29 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -2891,9 +2891,12 @@ TableVarProc(clientData, interp, name, index, flags)
 		if (data) { ckfree(data); }
 	    }
 	    data = (char *) Tcl_GetVar2(interp, name, index, TCL_GLOBAL_ONLY);
-	    if (!data) data = "";
-	    val = (char *)ckalloc(strlen(data)+1);
-	    strcpy(val, data);
+	    if (data && *data != '\0') {
+		val = (char *)ckalloc(strlen(data)+1);
+		strcpy(val, data);
+	    } else {
+		val = NULL;
+	    }
 	    Tcl_SetHashValue(entryPtr, val);
 	}
 	/* convert index to real coords */

@@ -1,3 +1,18 @@
+2004-07-20  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableCell.c (TableGetCellValue, TableSetCellValue): 
+	Do faster cache checks when DATA_CACHE is the only data source.
+	In fallback from command that errors to array var, retrieve array
+	value immediately on current get|set request.
+	When setting the value with cache and array sources, don't do the
+	caching branch as the array trace will do that already.
+	(TableMoveCellValue): Do the efficient cache value management when
+	cache is the only data source, otherwise the regular fallback has
+	all the necessary checks. [Bug #919872]
+
+	* generic/tkTable.c (TableVarProc): allow setting NULL value in
+	cache hash from array trace.
+
 2004-06-10  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* generic/tkTableWin.c (EmbWinDisplay): make min window displayed

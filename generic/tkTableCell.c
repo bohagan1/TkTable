@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableCell.c,v 1.9 2002/10/16 07:31:10 hobbs Exp $
+ * RCS: @(#) $Id: tkTableCell.c,v 1.10 2002/12/11 00:27:34 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -473,13 +473,25 @@ TableGetCellValue(Table *tablePtr, int r, int c)
     char *result = NULL;
     char buf[INDEX_BUFSIZE];
     Tcl_HashEntry *entryPtr = NULL;
-    int new = 1;
+    int new;
 
     TableMakeArrayIndex(r, c, buf);
 
+    if (tablePtr->dataSource == DATA_CACHE) {
+	/*
+	 * only cache as data source - just rely on cache
+	 */
+	entryPtr = Tcl_FindHashEntry(tablePtr->cache, buf);
+	if (entryPtr) {
+	    result = (char *) Tcl_GetHashValue(entryPtr);
+	}
+	goto VALUE;
+    }
     if (tablePtr->caching) {
 	/*
-	 * If we are caching, let's see if we have the value cached
+	 * If we are caching, let's see if we have the value cached.
+	 * If so, use it, otherwise it will be cached after retrieving
+	 * from the other data source.
 	 */
 	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
 	if (!new) {
@@ -487,7 +499,7 @@ TableGetCellValue(Table *tablePtr, int r, int c)
 	    goto VALUE;
 	}
     }
-    if (tablePtr->command && tablePtr->useCmd) {
+    if (tablePtr->dataSource & DATA_COMMAND) {
 	Tcl_DString script;
 	Tcl_DStringInit(&script);
 	ExpandPercents(tablePtr, tablePtr->command, r, c, "", (char *)NULL,
@@ -505,7 +517,8 @@ TableGetCellValue(Table *tablePtr, int r, int c)
 	    result = (char *) Tcl_GetStringResult(interp);
 	}
 	Tcl_DStringFree(&script);
-    } else if (tablePtr->arrayVar) {
+    }
+    if (tablePtr->dataSource & DATA_ARRAY) {
 	result = (char *) Tcl_GetVar2(interp, tablePtr->arrayVar, buf,
 		TCL_GLOBAL_ONLY);
     }
@@ -550,6 +563,10 @@ VALUE:
 	    } else {
 		result = Tcl_GetStringResult(interp);
 	    }
+	    /*
+	     * XXX FIX: Can't free result that we still need.
+	     * Use ref-counted objects instead.
+	     */
 	    Tcl_FreeResult(interp);
 	    Tcl_DStringFree(&script);      
 	    Tcl_DeleteHashEntry(entryPtr);
@@ -580,16 +597,16 @@ VALUE:
 int
 TableSetCellValue(Table *tablePtr, int r, int c, char *value)
 {
-    register Tcl_Interp *interp = tablePtr->interp;
     char buf[INDEX_BUFSIZE];
     int code = TCL_OK, flash = 0;
+    Tcl_Interp *interp = tablePtr->interp;
 
     TableMakeArrayIndex(r, c, buf);
 
     if (tablePtr->state == STATE_DISABLED) {
 	return TCL_OK;
     }
-    if (tablePtr->command && tablePtr->useCmd) {
+    if (tablePtr->dataSource & DATA_COMMAND) {
 	Tcl_DString script;
 
 	Tcl_DStringInit(&script);
@@ -610,7 +627,8 @@ TableSetCellValue(Table *tablePtr, int r, int c, char *value)
 	}
 	Tcl_SetResult(interp, (char *) NULL, TCL_STATIC);
 	Tcl_DStringFree(&script);
-    } else if (tablePtr->arrayVar) {
+    }
+    if (tablePtr->dataSource & DATA_ARRAY) {
 	/* Warning: checking for \0 as the first char could invalidate
 	 * allowing it as a valid first char, but only with incorrect utf-8
 	 */
@@ -626,7 +644,10 @@ TableSetCellValue(Table *tablePtr, int r, int c, char *value)
 	return TCL_ERROR;
     }
 
-    if (tablePtr->caching) {
+    /*
+     * This would be repetitive if we are using the array (which traces).
+     */
+    if (tablePtr->caching && !(tablePtr->dataSource & DATA_ARRAY)) {
 	Tcl_HashEntry *entryPtr;
 	int new;
 	char *val = NULL;
@@ -678,30 +699,36 @@ int
 TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf,
 	int tor, int toc, char *tobuf, int outOfBounds)
 {
-    int new;
-    char *result = NULL;
-    Tcl_Interp *interp = tablePtr->interp;
-
     if (outOfBounds) {
 	return TableSetCellValue(tablePtr, tor, toc, "");
     }
 
-    if (tablePtr->caching && (!(tablePtr->command && tablePtr->useCmd))) {
+    if (tablePtr->dataSource == DATA_CACHE) {
+	char *val;
+	char *result = NULL;
 	Tcl_HashEntry *entryPtr;
+
 	/*
-	 * if we are caching, let's see if we have the value cached
+	 * Let's see if we have the from value cached.  If so, copy
+	 * that to the to cell.  The to cell entry value will be
+	 * deleted from the cache, and recreated only if from value
+	 * was not NULL.
+	 * We can be liberal removing our internal cached cells when
+	 * DATA_CACHE is our only data source.
 	 */
-	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, frombuf, &new);
-	if (!new) {
-	    char *val;
+	entryPtr = Tcl_FindHashEntry(tablePtr->cache, frombuf);
+	if (entryPtr) {
 	    result = (char *) Tcl_GetHashValue(entryPtr);
 	    /*
 	     * we set tho old value to NULL
 	     */
-	    Tcl_SetHashValue(entryPtr, NULL);
-
+	    Tcl_DeleteHashEntry(entryPtr);
+	}
+	if (result) {
+	    int new;
 	    /*
-	     * set the destination to the source pointer without new mallocing!
+	     * We enter here when there was a from value.
+	     * set 'to' to the 'from' value without new mallocing.
 	     */
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->cache, tobuf, &new);
 	    /*
@@ -712,28 +739,15 @@ TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf,
 		if (val) ckfree(val);
 	    }
 	    Tcl_SetHashValue(entryPtr, result);
-	    if (tablePtr->arrayVar) {
-		/*
-		 * first, delete from var.
-		 */
-		Tcl_UnsetVar2(interp, tablePtr->arrayVar, frombuf,
-			TCL_GLOBAL_ONLY);
-		/*
-		 * Do not set the value if it is empty and we are a
-		 * sparse array.
-		 */
-		if ((result != NULL && *result != '\0') || !tablePtr->sparse) {
-		    if (Tcl_SetVar2(interp, tablePtr->arrayVar, tobuf,
-				(result ? result : ""),
-				TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG) == NULL) {
-			return TCL_ERROR;
-		    }
-		}
-	    }     
-      
-
-	    return TCL_OK;
+	} else {
+	    entryPtr = Tcl_FindHashEntry(tablePtr->cache, tobuf);
+	    if (entryPtr) {
+		val = (char *) Tcl_GetHashValue(entryPtr);
+		if (val) ckfree(val);
+		Tcl_DeleteHashEntry(entryPtr);
+	    }
 	}
+	return TCL_OK;
     }
     /*
      * We have to do it the old way
