@@ -232,7 +232,7 @@ Database Class:	\\fB\\$3\\fR
 .de UL
 \\$1\l'|0\(ul'\\$2
 ..
-.TH table n 2.4 Tk "Tk Table Extension"
+.TH table n 2.6 Tk "Tk Table Extension"
 .HS table tk
 .BS
 .SH NAME
@@ -894,13 +894,17 @@ Deletes \fIcount\fR cols starting at (and including) col \fIindex\fR.  The
 \fIindex\fR will be constrained to the limits of the tables.  If
 \fIcount\fR is negative, it deletes cols to the left.  Otherwise it deletes
 cols to the right.  \fIcount\fR defaults to 1 (meaning just the column
-specified).  The selection will be cleared.  At the moment, spans are
+specified).  At the moment, spans are
 not adjusted with this action.  Optional switches are:
 .RS
 .TP
 \fB\-holddimensions\fR
 Causes the table cols to be unaffected by the deletion (empty cols may
 appear).  By default the dimensions are adjusted by \fBcount\fR.
+.TP
+\fB\-holdselection\fR
+Causes the selection to be maintained on the absolute cells values.
+Otherwise, the selection will be cleared..
 .TP
 \fB\-holdtags\fR
 Causes the tags specified by the \fItag\fR method to not move along

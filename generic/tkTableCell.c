@@ -13,9 +13,6 @@
 
 #include "tkTable.h"
 
-static int	TableSortCompareProc _ANSI_ARGS_((CONST VOID *first,
-						  CONST VOID *second));
-
 /*
  *----------------------------------------------------------------------
  *
@@ -590,79 +587,6 @@ TableSetCellValue(Table *tablePtr, int r, int c, char *value)
 /*
  *----------------------------------------------------------------------
  *
- * TableSortCompareProc --
- *	This procedure is invoked by qsort to determine the proper
- *	ordering between two elements.
- *
- * Results:
- *	< 0 means first is "smaller" than "second", > 0 means "first"
- *	is larger than "second", and 0 means they should be treated
- *	as equal.
- *
- * Side effects:
- *	None, unless a user-defined comparison command does something
- *	weird.
- *
- *----------------------------------------------------------------------
- */
-static int
-TableSortCompareProc(first, second)
-    CONST VOID *first, *second;		/* Elements to be compared. */
-{
-    int r1, c1, r2, c2;
-    char *firstString = *((char **) first);
-    char *secondString = *((char **) second);
-
-    /* This doesn't account for badly formed indices */
-    sscanf(firstString, "%d,%d", &r1, &c1);
-    sscanf(secondString, "%d,%d", &r2, &c2);
-    if (r1 > r2) {
-	return 1;
-    } else if (r1 < r2) {
-	return -1;
-    } else if (c1 > c2) {
-	return 1;
-    } else if (c1 < c2) {
-	return -1;
-    }
-    return 0;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TableCellSort --
- *	Sort a list of table cell elements (of form row,col)
- *
- * Results:
- *	Returns the sorted list of elements.  Because Tcl_Merge allocs
- *	the space for result, it must later be Tcl_Free'd by caller.
- *
- * Side effects:
- *	Behaviour undefined for ill-formed input list of elements.
- *
- *----------------------------------------------------------------------
- */
-char *
-TableCellSort(Table *tablePtr, char *str)
-{
-    int listArgc;
-    char **listArgv;
-    char *result;
-
-    if (Tcl_SplitList(tablePtr->interp, str, &listArgc, &listArgv) != TCL_OK) {
-	return str;
-    }
-    qsort((VOID *) listArgv, (size_t) listArgc, sizeof (char *),
-	  TableSortCompareProc);
-    result = Tcl_Merge(listArgc, listArgv);
-    ckfree((char *) listArgv);
-    return result;
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * TableGetIcursor --
  *	Parses the argument as an index into the active cell string.
  *	Recognises 'end', 'insert' or an integer.  Constrains it to the
@@ -1212,25 +1136,20 @@ Table_HiddenCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     if (objc == 2) {
 	/* return all "hidden" cells */
-	Tcl_DString cells;
 	Tcl_HashSearch search;
+	Tcl_Obj *objPtr = Tcl_NewObj();
 
-	Tcl_DStringInit(&cells);
 	for (entryPtr = Tcl_FirstHashEntry(tablePtr->spanAffTbl, &search);
 	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
 	    if ((span = (char *) Tcl_GetHashValue(entryPtr)) == NULL) {
 		/* this is actually a spanning cell */
 		continue;
 	    }
-	    Tcl_DStringAppendElement(&cells,
-				     Tcl_GetHashKey(tablePtr->spanAffTbl,
-						    entryPtr));
+	    Tcl_ListObjAppendElement(NULL, objPtr,
+			Tcl_NewStringObj(Tcl_GetHashKey(tablePtr->spanAffTbl,
+							entryPtr), -1));
 	}
-	span = TableCellSort(tablePtr, Tcl_DStringValue(&cells));
-	if (span != NULL) {
-	    Tcl_SetResult(interp, span, TCL_DYNAMIC);
-	}
-	Tcl_DStringFree(&cells);
+	Tcl_SetObjResult(interp, TableCellSortObj(interp, objPtr));
 	return TCL_OK;
     }
     if (objc == 3) {

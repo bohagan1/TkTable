@@ -9,8 +9,6 @@
 #
 !include <ntwin32.mak>
 
-#Get version info (this is in Makefile and C format)
-!include "version.h"
 PROJECT	= Tktable
 TBL_COMMAND = table
 TBL_RUNTIME = tkTable.tcl
@@ -18,27 +16,31 @@ TBL_RUNTIME = tkTable.tcl
 # Project directories -- these may need to be customized for your site
 #
 # ROOT --	location of the source files.
-# TMPDIR --	location for .obj files.
+# TMP_DIR --	location for .obj files.
 # TOOLS32 --	location of VC++ compiler installation.
-# DESTDIR --	location of Tcl/Tk installation hierarchy
-# DESTDIRU --	same as above with "/" as path separator
+# DEST_DIR --	location of Tcl/Tk installation hierarchy
+# DEST_DIRU --	same as above with "/" as path separator
 #
 
-ROOT		= .
-TMPDIR		= .
+ROOT		= ..
+TMP_DIR		= .
 TOOLS32		= C:\Progra~1\DevStudio\Vc
-DESTDIR		= C:\Progra~1\Tcl
-DESTDIRU	= C:/Progra~1/Tcl
+DEST_DIR	= C:\Progra~1\Tcl
+DEST_DIRU	= C:/Progra~1/Tcl
+
+WIN_DIR		= $(ROOT)\win
+GENERIC_DIR	= $(ROOT)\generic
+
+#Get version info (this is in Makefile and C format)
+!include "$(GENERIC_DIR)\version.h"
 
 # Set your version of Tcl
 
-TCL_VERSION	= 8.1
-TK_VERSION	= 8.1
-TCL_LIB_V	= 81
-TK_LIB_V	= 81
+TCL_VERSION	= 8.3
+TCL_VER		= 83
 
-INST_RUNTIME	= $(DESTDIR)\lib\tkTable$(TBL_VERSION)
-INST_RUNTIMEU	= $(DESTDIRU)/lib/tkTable$(TBL_VERSION)
+INST_RUNTIME	= $(DEST_DIR)\lib\$(PROJECT)$(TBL_VERSION)
+INST_RUNTIMEU	= $(DEST_DIRU)/lib/$(PROJECT)$(TBL_VERSION)
 
 # NO_EMBEDDED_RUNTIME means that the tkTable.tcl file will not be embedded
 # into the executable, thus the default tkTable.tcl library file will not
@@ -47,18 +49,14 @@ INST_RUNTIMEU	= $(DESTDIRU)/lib/tkTable$(TBL_VERSION)
 # predefined set of directories (see docs).
 #TBL_CFLAGS	+= -DNO_EMBEDDED_RUNTIME
 
-# comment the following line to compile with symbols
+# comment out the following line to compile with symbols
 NODEBUG=1
-
-# Necessary for some partially-installed VC++ setups:
-#INCLUDE="$(TOOLS32)\include"
-#LIB="$(TOOLS32)\lib"
 
 #
 # Visual C++ tools
 #
 
-PATH=$(TOOLS32)\bin;$(PATH)
+PATH	= $(TOOLS32)\bin;$(PATH)
 cc32	= "$(TOOLS32)\bin\cl" -I"$(TOOLS32)\include"
 CP      = copy
 RM      = del
@@ -67,12 +65,13 @@ RM      = del
 # Project specific targets
 ######################################################################
 
-TBL_LIBDIR	= $(ROOT)\..\lib
+TBL_LIB_DIR	= $(ROOT)\library
 # Assume that WISH is already INSTALLED
-TCLSH	= $(DESTDIR)\bin\tclsh$(TCL_LIB_V)
-WISH	= $(DESTDIR)\bin\wish$(TK_LIB_V)
-LIBS	= $(DESTDIR)\lib\tcl$(TCL_LIB_V).lib $(DESTDIR)\lib\tk$(TK_LIB_V).lib
-INCLUDES	= -I"$(TOOLS32)\include" -I"$(DESTDIR)\include"
+TCLSH		= $(DEST_DIR)\bin\tclsh$(TCL_VER)
+WISH		= $(DEST_DIR)\bin\wish$(TCL_VER)
+LIBS		= $(DEST_DIR)\lib\tclstub$(TCL_VER).lib \
+		  $(DEST_DIR)\lib\tkstub$(TCL_VER).lib
+INCLUDES	= -I"$(DEST_DIR)\include" -I.
 
 DEFINES = -DDLL_BUILD -DBUILD_tkTable $(TBL_CFLAGS) \
 	  -DTBL_VERSION=\"$(TBL_VERSION)\" \
@@ -80,16 +79,29 @@ DEFINES = -DDLL_BUILD -DBUILD_tkTable $(TBL_CFLAGS) \
 	  -DTBL_RUNTIME="\"$(TBL_RUNTIME)\"" \
 	  -DTBL_RUNTIME_DIR="\"$(INST_RUNTIMEU)\""
 
+## Define this if you want to use STUBS
+## This only works for the dynamic library
+##
+DEFINES	= $(DEFINES) -DUSE_TCL_STUBS -DUSE_TK_STUBS
+
 #
 # Global makefile settings
 #
+DLLOBJS = $(TMP_DIR)\tkTable.obj \
+	$(TMP_DIR)\tkTableWin.obj \
+	$(TMP_DIR)\tkTableTag.obj \
+	$(TMP_DIR)\tkTableEdit.obj \
+	$(TMP_DIR)\tkTableCell.obj \
+	$(TMP_DIR)\tkTableCellSort.obj \
+	$(TMP_DIR)\tkTableCmds.obj \
+	$(TMP_DIR)\cmd.obj
+# $(TMP_DIR)\tkTablePs.obj
 
-DLLOBJS = $(TMPDIR)\tkTable.obj $(TMPDIR)\tkTableWin.obj $(TMPDIR)\tkTableTag.obj $(TMPDIR)\tkTableEdit.obj $(TMPDIR)\tkTableCell.obj $(TMPDIR)\tkTableCmds.obj $(TMPDIR)\cmd.obj
-# $(TMPDIR)\tkTablePs.obj
 DLL=$(PROJECT).dll
 
+#
 # Targets
-
+#
 all: pkgIndex.tcl
 
 test: pkgIndex.tcl
@@ -112,21 +124,29 @@ test: pkgIndex.tcl
 pkgIndex.tcl: $(DLL)
 	"$(TCLSH)" << pkgIndex.tcl
 	set out [open [lindex $$argv 0] w]
-	puts $$out {if {[catch {package require Tcl $(TCL_VERSION)}]} return}
+	puts $$out {if {[catch {package require Tcl 8.1}]} return}
 	puts -nonewline $$out {package ifneeded $(PROJECT) $(TBL_VERSION) }
-	puts -nonewline $$out {"package require Tk $(TK_VERSION); }
+	puts -nonewline $$out {"package require Tk 8.1; }
 	puts $$out {[list load [file join $$dir $(DLL)] $(PROJECT)]"}
 	close $$out
 <<
 
-$(DLLOBJS): tkTable.tcl.h
+pkgIndex.tcl-NOSTUBS: $(DLL)
+	"$(TCLSH)" << pkgIndex.tcl
+	set out [open [lindex $$argv 0] w]
+	puts $$out {if {[catch {package require Tcl $(TCL_VERSION)}]} return}
+	puts -nonewline $$out {package ifneeded $(PROJECT) $(TBL_VERSION) }
+	puts -nonewline $$out {"package require Tk $(TCL_VERSION); }
+	puts $$out {[list load [file join $$dir $(DLL)] $(PROJECT)]"}
+	close $$out
+<<
 
-$(DLL): $(DLLOBJS)
+$(DLL): tkTable.tcl.h $(DLLOBJS)
 	$(link) $(linkdebug) $(dlllflags) $(LIBS) \
-		$(guilibsdll) -out:$(DLL) $(DLLOBJS)
+		$(guilibsdll) -out:$@ $(DLLOBJS)
 
-tkTable.tcl.h: $(TBL_LIBDIR)\tkTable.tcl
-	"$(TCLSH)" << $(TBL_LIBDIR)\tkTable.tcl >$(TMPDIR)\tkTable.tcl.h
+tkTable.tcl.h: $(TBL_LIB_DIR)\tkTable.tcl
+	"$(TCLSH)" << $(TBL_LIB_DIR)\tkTable.tcl >$(TMP_DIR)\tkTable.tcl.h
 	set in [open [lindex $$argv 0] r]
 	while {[gets $$in line] != -1} {
 	    switch -regexp -- $$line "^$$" - {^#} continue
@@ -138,13 +158,17 @@ tkTable.tcl.h: $(TBL_LIBDIR)\tkTable.tcl
 
 # Implicit Targets
 
-.c.obj:
+{$(WIN_DIR)}.c{$(TMP_DIR)}.obj:
 	$(cc32) $(cdebug) $(cflags) $(cvarsdll) \
-		$(INCLUDES) $(DEFINES) -Fo$(TMPDIR)\ $<
+		$(INCLUDES) $(DEFINES) -Fo$(TMP_DIR)\ $<
 
-install:
+{$(GENERIC_DIR)}.c{$(TMP_DIR)}.obj:
+	$(cc32) $(cdebug) $(cflags) $(cvarsdll) \
+		$(INCLUDES) $(DEFINES) -Fo$(TMP_DIR)\ $<
+
+install: $(DLL)
 	if not exist "$(INST_RUNTIME)\" mkdir "$(INST_RUNTIME)"
-	copy "$(TBL_LIBDIR)\tkTable.tcl" "$(INST_RUNTIME)"
+	copy "$(TBL_LIB_DIR)\tkTable.tcl" "$(INST_RUNTIME)"
 	copy "$(DLL)" "$(INST_RUNTIME)"
 	copy pkgIndex.tcl "$(INST_RUNTIME)"
 
@@ -154,9 +178,9 @@ uninstall:
 	-$(RM) "$(INST_RUNTIME)\pkgIndex.tcl"
 
 clean:
-	-$(RM) $(TMPDIR)\*.obj 2>nul
-	-$(RM) $(DLL) 2>nul
-	-$(RM) $(PROJECT).lib 2>nul
-	-$(RM) $(PROJECT).exp 2>nul
-	-$(RM) pkgIndex.tcl 2>nul
-	-$(RM) $(TMPDIR)\tkTable.tcl.h 2>nul
+	-$(RM) $(TMP_DIR)\*.obj 2>nul
+	-$(RM) $(TMP_DIR)\$(DLL) 2>nul
+	-$(RM) $(TMP_DIR)\$(PROJECT).lib 2>nul
+	-$(RM) $(TMP_DIR)\$(PROJECT).exp 2>nul
+	-$(RM) $(TMP_DIR)\pkgIndex.tcl 2>nul
+	-$(RM) $(TMP_DIR)\tkTable.tcl.h 2>nul

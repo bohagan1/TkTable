@@ -1,0 +1,265 @@
+# This sets the name that tkTable will define for itself when loaded
+# If you change this, then the demos won't work, but it might be necessary
+# for those with another built-in "table" command
+TBL_COMMAND	= table
+TBL_RUNTIME	= tkTable.tcl
+
+SRC_DIR		= @srcdir@
+TOP_DIR		= @srcdir@/..
+LIB_DIR		= $(TOP_DIR)/library
+DOC_DIR		= $(TOP_DIR)/doc
+GENERIC_DIR	= $(TOP_DIR)/generic
+MAC_DIR		= $(TOP_DIR)/mac
+UNIX_DIR	= $(TOP_DIR)/unix
+WIN_DIR		= $(TOP_DIR)/win
+DEMO_DIR	= $(TOP_DIR)/demos
+TEST_DIR	= $(TOP_DIR)/tests
+
+# version info in Makefile and C format
+include $(GENERIC_DIR)/version.h
+
+PACKAGE		= Tktable
+
+OBJS		= tkTable.o \
+		tkTableWin.o \
+		tkTableTag.o \
+		tkTableEdit.o \
+		tkTableCell.o \
+		tkTableCellSort.o \
+		tkTableCmds.o \
+		cmd.o
+
+## PostScript is on the drawing board
+#OBJS		+= tkTablePs.o
+
+MANS		= tkTable.n
+
+## Define this if you want to use STUBS
+## This only works for the dynamic library
+##
+STUBS_FLAGS	= -DUSE_TCL_STUBS -DUSE_TK_STUBS
+
+#-------------------------------------------------
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+
+TCL_VERSION	= @TCL_VERSION@
+TK_VERSION	= @TK_VERSION@
+WISH		= wish$(TK_VERSION)
+
+TCL_SRC_DIR 	= @TCL_SRC_DIR@
+TK_SRC_DIR 	= @TK_SRC_DIR@
+
+TCL_BUILD_LIB_SPEC	= @TCL_BUILD_LIB_SPEC@
+TK_BUILD_LIB_SPEC	= @TK_BUILD_LIB_SPEC@
+
+TCL_BUILD_STUB_LIB_SPEC	= @TCL_BUILD_STUB_LIB_SPEC@
+TK_BUILD_STUB_LIB_SPEC	= @TK_BUILD_STUB_LIB_SPEC@
+
+TCL_LIB_SPEC	= @TCL_LIB_SPEC@
+TK_LIB_SPEC	= @TK_LIB_SPEC@
+
+TCL_LIBS	= @TCL_LIBS@
+TK_LIBS		= @TK_LIBS@
+
+TBL_CFLAGS	= -O
+
+## NO_EMBEDDED_RUNTIME means that the tkTable.tcl file will not be embedded
+## into the executable, thus the default tkTable.tcl library file will not
+## be available when the library is loaded.
+## If this is defined, the tkTable.tcl file must be available in a
+## predefined set of directories (see docs).
+#TBL_CFLAGS	+= -DNO_EMBEDDED_RUNTIME
+
+## USE_EXIT_HANDLER is necessary for 8.1 before b3 and 8.0
+## It is a work-around for the improper unloading of DLLs when exiting
+#TBL_CFLAGS	+= -DUSE_EXIT_HANDLER
+
+## NO_SORT_CELLS changes the behavior of certain commands (like curselection)
+## to not sort the cells before returning them.  If this is not important to
+## you, it can cut save significant time for large return sets (> 1000 cells).
+## You can always pass the data to [lsort -dictionary $cells] to get the same
+## result.
+#TBL_CFLAGS	+= -DNO_SORT_CELLS
+
+## Experimental, not documented, not complete...
+#TBL_CFLAGS	+= -DPROCS
+
+## I use this for helping hunt down the slightest error
+#TBL_CFLAGS	+= -DDEBUG -g -Wall -Wno-implicit -Wshadow \
+		   -Wpointer-arith -Wmissing-prototypes \
+		   -Wmissing-declarations -Wnested-externs -Winline
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+CC		= @CC@
+RM		= rm -f
+RANLIB		= @TCL_RANLIB@
+SHLIB_CFLAGS	= @TCL_SHLIB_CFLAGS@
+SHLIB_SUFFIX	= @TCL_SHLIB_SUFFIX@
+SHLIB_LD	= @TCL_SHLIB_LD@
+TCL_PREFIX	= @TCL_PREFIX@
+## HP cc sometimes requires -Aa for proper ansi compilation
+TCL_CFLAGS	= $(STUBS_FLAGS) $(TBL_CFLAGS) @TCL_DEFS@ @TCL_CFLAGS@
+TCL_LD_FLAGS	= @TCL_LD_FLAGS@
+TK_LD_SEARCH_FLAGS = @TK_LD_SEARCH_FLAGS@
+TK_XINCLUDES	= @TK_XINCLUDES@
+
+LIB_RUNTIME_DIR = @libdir@
+
+INCLUDES	= -I@includedir@ $(TK_XINCLUDES)\
+		  -I$(TCL_SRC_DIR)/generic\
+		  -I$(TK_SRC_DIR)/generic
+
+DLL		= $(PACKAGE)$(SHLIB_SUFFIX)
+STATIC_LIB	= $(PACKAGE).a
+PKG_DIR		= $(PACKAGE)$(TBL_VERSION)
+STATIC_EXEC	= tablewish
+DLL_DIR		= ${exec_prefix}/lib/$(PKG_DIR)
+RUN_DIR		= ${prefix}/lib/$(PKG_DIR)
+
+CFLAGS		= -I. -I$(GENERIC_DIR) $(INCLUDES)\
+		  $(TCL_CFLAGS) $(SHLIB_CFLAGS)\
+		  -DTBL_VERSION=\"$(TBL_VERSION)\"\
+		  -DTBL_COMMAND=\"$(TBL_COMMAND)\"\
+		  -DTBL_RUNTIME=\"$(TBL_RUNTIME)\"\
+		  -DTBL_RUNTIME_DIR=\"$(RUN_DIR)\"
+
+MAN_INSTALL_DIR = @mandir@/mann
+
+##
+## TARGETS
+##
+
+all: $(DLL) pkgIndex.tcl
+
+$(DLL): $(OBJS)
+	$(SHLIB_LD) -o $@ $(OBJS)
+
+tablewish: tkAppInit.o $(OBJS)
+wish: tkAppInit.o $(OBJS)
+	$(CC) $(TK_LD_SEARCH_FLAGS) -o $(STATIC_EXEC) tkAppInit.o $(OBJS) \
+	  $(LIBS) $(TK_BUILD_LIB_SPEC) $(TK_LIB_SPEC) $(TCL_BUILD_LIB_SPEC) $(TCL_LIB_SPEC) $(TK_LIBS) $(TCL_LIBS)
+
+static $(STATIC_LIB): $(OBJS) pkgIndex.tcl
+	$(RM) $(STATIC_LIB)
+	ar cr $(STATIC_LIB) $(OBJS)
+	$(RANLIB) $(STATIC_LIB)
+
+tkTable.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTable.c \
+		$(GENERIC_DIR)/tkTableInitScript.h tkTable.tcl.h
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
+
+tkTableCell.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTableCell.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
+
+tkTableCellSort.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTableCellSort.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
+
+tkTableCmds.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTableCmds.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
+
+tkTableEdit.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTableEdit.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
+
+tkTableTag.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTableTag.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
+
+tkTablePs.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTablePs.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
+
+tkTableWin.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTableWin.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
+
+cmd.o:		$(GENERIC_DIR)/mm.h $(GENERIC_DIR)/cmd.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
+
+tkTable.tcl.h: $(LIB_DIR)/tkTable.tcl
+	sed -e '/^$\#/d' -e '/^$$/d' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' <$(LIB_DIR)/tkTable.tcl > $@ || { $(RM) $@; exit 1; }
+
+## If you are using stubs, this first one should work, as stubs are OK
+## for 8.1+ (not 8.0 because of UTF calls)
+pkgIndex.tcl:
+	(echo 'if {[catch {package require Tcl 8.1}]} return';\
+	echo 'package ifneeded $(PACKAGE) $(TBL_VERSION)\
+	    "package require Tk 8.1;\
+	     [list load [file join $$dir $(DLL).$(TBL_VERSION)] $(PACKAGE)]"'\
+	) > pkgIndex.tcl
+
+pkgIndex.tcl-NOSTUBS:
+	(echo 'if {[catch {package require Tcl $(TCL_VERSION)}]} return';\
+	echo 'package ifneeded $(PACKAGE) $(TBL_VERSION)\
+	    "package require Tk $(TK_VERSION);\
+	     [list load [file join $$dir $(DLL).$(TBL_VERSION)] $(PACKAGE)]"'\
+	) > pkgIndex.tcl
+
+html:
+	nroff -man $(DOC_DIR)/tkTable.n | rman -f HTML >$(DOC_DIR)/tkTable.html
+
+install: all
+	if test ! -d "$(DLL_DIR)"; then mkdir "$(DLL_DIR)"; fi
+	if test ! -d "$(RUN_DIR)"; then mkdir "$(RUN_DIR)"; fi
+	$(INSTALL_PROGRAM) $(DLL) "$(DLL_DIR)/$(DLL).$(TBL_VERSION)"
+	$(INSTALL_DATA) pkgIndex.tcl "$(DLL_DIR)/pkgIndex.tcl"
+	$(INSTALL_DATA) $(LIB_DIR)/tkTable.tcl "$(RUN_DIR)/tkTable.tcl"
+	$(INSTALL_DATA) $(DOC_DIR)/$(MANS) $(MAN_INSTALL_DIR)/
+
+# Leaves behind created directories
+uninstall:
+	$(RM) "$(DLL_DIR)/$(DLL).$(TBL_VERSION)" "$(DLL_DIR)/pkgIndex.tcl" "$(RUN_DIR)/tkTable.tcl" $(MAN_INSTALL_DIR)/$(MANS)
+
+test: all
+	$(WISH) $(DEMO_DIR)/basic.tcl
+
+clean: 
+	$(RM) $(OBJS) $(DLL) $(STATIC_LIB) $(STATIC_EXEC) core pkgIndex.tcl tkTable.tcl.h
+
+distclean: clean
+	$(RM) Makefile config.cache config.log config.status $(DOC_DIR)/tkTable.html
+
+#COMPRESS	= tar cvf $(PKG_DIR).tar $(PKG_DIR); compress $(PKG_DIR).tar
+COMPRESS	= gtar zcvf $(PKG_DIR).tar.gz $(PKG_DIR)
+DIST_ROOT	= /tmp/dist
+DIST_DIR	= $(DIST_ROOT)/$(PKG_DIR)
+
+$(UNIX_DIR)/configure: $(UNIX_DIR)/configure.in
+	autoconf $(UNIX_DIR)/configure.in > $(UNIX_DIR)/configure
+
+dist-clean:
+	rm -rf $(DIST_DIR) $(DIST_ROOT)/$(PKG_DIR).tar.*
+
+dist: dist-clean html $(UNIX_DIR)/configure
+	mkdir -p $(DIST_DIR)
+	cp -p $(TOP_DIR)/*.txt $(TOP_DIR)/README* $(DIST_DIR)
+
+	mkdir $(DIST_DIR)/demos
+	cp -p $(DEMO_DIR)/*.tcl $(DEMO_DIR)/*.gif $(DIST_DIR)/demos
+
+	mkdir $(DIST_DIR)/doc
+	cp -p $(DOC_DIR)/*.n $(DOC_DIR)/*.html $(DIST_DIR)/doc
+
+	mkdir $(DIST_DIR)/generic
+	cp -p $(GENERIC_DIR)/*.c $(GENERIC_DIR)/*.h $(DIST_DIR)/generic
+
+	mkdir $(DIST_DIR)/library
+	cp -p $(LIB_DIR)/*.tcl $(DIST_DIR)/library
+
+	mkdir $(DIST_DIR)/mac
+	cp -p $(MAC_DIR)/*.mcp $(MAC_DIR)/*.h $(MAC_DIR)/*.r \
+		$(DIST_DIR)/mac
+
+	mkdir $(DIST_DIR)/tests
+
+	mkdir $(DIST_DIR)/unix
+	cp $(UNIX_DIR)/Makefile.in $(UNIX_DIR)/install-sh \
+		$(UNIX_DIR)/configure $(UNIX_DIR)/configure.in \
+		$(DIST_DIR)/unix
+	chmod 664 $(DIST_DIR)/unix/Makefile.in
+	chmod 775 $(DIST_DIR)/unix/configure $(DIST_DIR)/unix/configure.in
+	chmod +x $(DIST_DIR)/unix/install-sh
+
+	mkdir $(DIST_DIR)/win
+	cp -p $(WIN_DIR)/Makefile $(DIST_DIR)/win
+
+	(cd $(DIST_ROOT); $(COMPRESS);)

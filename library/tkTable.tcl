@@ -30,6 +30,7 @@ proc tkTableClipboardKeysyms {copy cut paste} {
     bind Table <$cut>	{tk_tableCut %W}
     bind Table <$paste>	{tk_tablePaste %W}
 }
+tkTableClipboardKeysyms <Copy> <Cut> <Paste>
 
 ## Interactive cell resizing, affected by -resizeborders option
 ##
@@ -91,12 +92,6 @@ bind Table <ButtonRelease-2> {
 }
 
 ## Key events
-
-if {[string comp {} [info command event]]} {
-    tkTableClipboardKeysyms <Copy> <Cut> <Paste>
-} else {
-    tkTableClipboardKeysyms Control-c Control-x Control-v
-}
 
 # This forces a cell commit if an active cell exists
 bind Table <<Table_Commit>> {
@@ -566,7 +561,7 @@ proc tk_tableCut w {
 	clipboard clear -displayof $w
 	catch {
 	    clipboard append -displayof $w [selection get -displayof $w]
-	    $w cursel set {}
+	    $w cursel {}
 	    $w selection clear all
 	}
     }

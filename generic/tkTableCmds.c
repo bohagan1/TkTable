@@ -340,7 +340,7 @@ Table_BorderCmd(ClientData clientData, register Tcl_Interp *interp,
     Tcl_Obj *objPtr, *resultPtr;
 
     if (objc < 5 || objc > 6) {
-	Tcl_WrongNumArgs(interp, 2, objv, "mark|dragto x y ?r|c?");
+	Tcl_WrongNumArgs(interp, 2, objv, "mark|dragto x y ?row|col?");
 	return TCL_ERROR;
     }
     if (Tcl_GetIndexFromObj(interp, objv[2], bdCmdNames,
@@ -351,7 +351,7 @@ Table_BorderCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     if (objc == 6) {
 	rc = Tcl_GetStringFromObj(objv[5], &w);
-	if ((w < 1) || strncmp(rc, "row", w) || strncmp(rc, "col", w)) {
+	if ((w < 1) || (strncmp(rc, "row", w) && strncmp(rc, "col", w))) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "mark|dragto x y ?row|col?");
 	    return TCL_ERROR;
 	}
@@ -663,14 +663,15 @@ Table_CurselectionCmd(ClientData clientData, register Tcl_Interp *interp,
 	    TableRefresh(tablePtr, row, col, CELL);
 	}
     } else {
+	Tcl_Obj *objPtr = Tcl_NewObj();
+
 	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
 	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	    Tcl_AppendElement(interp,
-			      Tcl_GetHashKey(tablePtr->selCells, entryPtr));
+	    value = Tcl_GetHashKey(tablePtr->selCells, entryPtr);
+	    Tcl_ListObjAppendElement(NULL, objPtr,
+				     Tcl_NewStringObj(value, -1));
 	}
-	Tcl_SetResult(interp,
-		      TableCellSort(tablePtr, Tcl_GetStringResult(interp)),
-		      TCL_DYNAMIC);
+	Tcl_SetObjResult(interp, TableCellSortObj(interp, objPtr));
     }
     return TCL_OK;
 }

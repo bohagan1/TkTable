@@ -688,18 +688,20 @@ Table_WinMove(register Table *tablePtr, char *CONST srcPtr,
     int srow, scol, row, col, new;
     Tcl_HashEntry *entryPtr;
     TableEmbWindow *ewPtr;
-    char buf[INDEX_BUFSIZE];
 
     if (TableGetIndex(tablePtr, srcPtr, &srow, &scol) != TCL_OK ||
 	TableGetIndex(tablePtr, destPtr, &row, &col) != TCL_OK) {
 	return TCL_ERROR;
     }
-    TableMakeArrayIndex(srow, scol, buf);
-    if ((entryPtr = Tcl_FindHashEntry(tablePtr->winTable, buf)) == NULL) {
-	Tcl_AppendStringsToObj(Tcl_GetObjResult(tablePtr->interp),
-			       "no window at index \"", srcPtr, "\"",
-			       (char *) NULL);
-	return TCL_ERROR;
+    entryPtr = Tcl_FindHashEntry(tablePtr->winTable, srcPtr);
+    if (entryPtr == NULL) {
+	if (flags & INV_NO_ERR_MSG) {
+	    return TCL_OK;
+	} else {
+	    Tcl_AppendStringsToObj(Tcl_GetObjResult(tablePtr->interp),
+		    "no window at index \"", srcPtr, "\"", (char *) NULL);
+	    return TCL_ERROR;
+	}
     }
     /* avoid moving it to the same location */
     if (srow == row && scol == col) {
@@ -710,15 +712,12 @@ Table_WinMove(register Table *tablePtr, char *CONST srcPtr,
     /* and free the old hash table entry */
     Tcl_DeleteHashEntry(entryPtr);
 
-    TableMakeArrayIndex(row, col, buf);
-    entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, buf, &new);
+    entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, destPtr, &new);
     if (!new) {
 	/* window already there - just delete it */
 	TableEmbWindow *ewPtrDel;
-
 	ewPtrDel = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
-	/* This prevents the deletion of it's own entry,
-	 * since we need it */
+	/* This prevents the deletion of it's own entry, since we need it */
 	ewPtrDel->hPtr = NULL;
 	EmbWinDelete(tablePtr, ewPtrDel);
     }
@@ -730,14 +729,12 @@ Table_WinMove(register Table *tablePtr, char *CONST srcPtr,
 	int x, y, w, h;
 	/* Invalidate old cell */
 	if (TableCellVCoords(tablePtr, srow-tablePtr->rowOffset,
-			     scol-tablePtr->colOffset,
-			     &x, &y, &w, &h, 0)) {
+		scol-tablePtr->colOffset, &x, &y, &w, &h, 0)) {
 	    TableInvalidate(tablePtr, x, y, w, h, 0);
 	}
 	/* Invalidate new cell */
 	if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
-			     col-tablePtr->colOffset,
-			     &x, &y, &w, &h, 0)) {
+		col-tablePtr->colOffset, &x, &y, &w, &h, 0)) {
 	    TableInvalidate(tablePtr, x, y, w, h, 0);
 	}
     }
@@ -912,7 +909,9 @@ Table_WindowCmd(ClientData clientData, register Tcl_Interp *interp,
 			       Tcl_GetString(objv[4]), INV_FORCE);
 	break;
 
-    case WIN_NAMES:
+    case WIN_NAMES: {
+	Tcl_Obj *objPtr = Tcl_NewObj();
+
 	/* just print out the window names */
 	if (objc < 3 || objc > 4) {
 	    Tcl_WrongNumArgs(interp, 3, objv, "?pattern?");
@@ -923,14 +922,14 @@ Table_WindowCmd(ClientData clientData, register Tcl_Interp *interp,
 	while (entryPtr != NULL) {
 	    keybuf = Tcl_GetHashKey(tablePtr->winTable, entryPtr);
 	    if (objc == 3 || Tcl_StringMatch(keybuf, winname)) {
-		Tcl_AppendElement(interp, keybuf);
+		Tcl_ListObjAppendElement(NULL, objPtr,
+					 Tcl_NewStringObj(keybuf, -1));
 	    }
 	    entryPtr = Tcl_NextHashEntry(&search);
 	}
-	Tcl_SetResult(interp,
-		      TableCellSort(tablePtr, Tcl_GetStringResult(interp)),
-		      TCL_DYNAMIC);
+	Tcl_SetObjResult(interp, TableCellSortObj(interp, objPtr));
 	break;
+    }
     }
     return TCL_OK;
 }

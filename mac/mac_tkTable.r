@@ -1,12 +1,12 @@
 #include <Types.r>
 #include <SysTypes.r>
 
-#include "version.h"
+#include "../generic/version.h"
 
 resource 'vers' (1) {
 	TBL_MAJOR_VERSION, TBL_MINOR_VERSION,
 	final, 0x00, verUS,
-	"2.3",
+	TBL_VERSION,
 	"tkTable " TBL_VERSION " by Jeffrey Hobbs\n"
 	"Macintosh Port by Chuck Houpt"
 };
@@ -15,7 +15,7 @@ resource 'vers' (2) {
 	TBL_MAJOR_VERSION, TBL_MINOR_VERSION,
 	final, 0x00, verUS,
 	TBL_VERSION,
-	"tkTable " TBL_VERSION " © 1997,1998"
+	"tkTable " TBL_VERSION " © 1997-2000"
 };
 
 /*
@@ -39,7 +39,7 @@ read 'TEXT' (3000, "tkTable", purgeable, preload) "tkTable.tcl";
  * We now load the Tk library into the resource fork of the library.
  */
 
-data 'TEXT' (4000,"pkgIndex",purgeable, preload) {
+data 'TEXT' (4000, "pkgIndex", purgeable, preload) {
 	"package ifneeded Tktable " TBL_VERSION " "
 	"\"package require Tk; [list load [file join $dir Tktable.shlb] Tktable]\""
 };

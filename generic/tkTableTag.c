@@ -488,7 +488,9 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	return TCL_OK;
 
     case TAG_COLTAG:
-    case TAG_ROWTAG:
+    case TAG_ROWTAG: {
+	int forRows = (cmdIndex == TAG_ROWTAG);
+
 	/* tag a row or a column */
 	if (objc < 4) {
 	    Tcl_WrongNumArgs(interp, 3, objv, "tag ?arg arg ..?");
@@ -511,18 +513,71 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	}
 
 	/* and choose the correct hash table */
-	hashTblPtr = (cmdIndex == TAG_ROWTAG) ?
-	    tablePtr->rowStyles : tablePtr->colStyles;
+	hashTblPtr = forRows ? tablePtr->rowStyles : tablePtr->colStyles;
 
 	if (objc == 4) {
 	    /* the user just wants the tagged cells to be returned */
-	    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
-		 scanPtr != NULL; scanPtr = Tcl_NextHashEntry(&search)) {
-		/* is this the tag pointer on this row */
-		if ((TableTag *) Tcl_GetHashValue(scanPtr) == tagPtr) {
-		    objPtr = Tcl_NewIntObj((int) Tcl_GetHashKey(hashTblPtr,
-								scanPtr));
-		    Tcl_ListObjAppendElement(NULL, resultPtr, objPtr);
+	    /* Special handling for tags: active, flash, sel, title */
+
+	    if ((tablePtr->flags & HAS_ACTIVE) &&
+		strcmp(tagname, "active") == 0) {
+		Tcl_SetIntObj(resultPtr,
+			      (forRows ?
+			       tablePtr->activeRow+tablePtr->rowOffset :
+			       tablePtr->activeCol+tablePtr->colOffset));
+	    } else if ((tablePtr->flashMode && strcmp(tagname, "flash") == 0)
+		       || (strcmp(tagname, "sel") == 0)) {
+		Tcl_HashTable *cacheTblPtr;
+
+		cacheTblPtr = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
+		Tcl_InitHashTable(cacheTblPtr, TCL_ONE_WORD_KEYS);
+
+		if (strcmp(tagname, "sel") == 0) {
+		    hashTblPtr = tablePtr->selCells;
+		} else {
+		    hashTblPtr = tablePtr->flashCells;
+		}
+		for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
+		     scanPtr != NULL; scanPtr = Tcl_NextHashEntry(&search)) {
+		    TableParseArrayIndex(&row, &col,
+					 Tcl_GetHashKey(hashTblPtr, scanPtr));
+		    value = forRows ? row : col;
+		    entryPtr = Tcl_CreateHashEntry(cacheTblPtr,
+						   (char *)value, &newEntry);
+		    if (newEntry) {
+			Tcl_ListObjAppendElement(NULL, resultPtr,
+						 Tcl_NewIntObj(value));
+		    }
+		}
+
+		Tcl_DeleteHashTable(cacheTblPtr);
+		ckfree((char *) (cacheTblPtr));
+	    } else if (strcmp(tagname, "title") == 0 &&
+		       (forRows ? tablePtr->titleRows : tablePtr->titleCols)) {
+		if (forRows) {
+		    for (row = tablePtr->rowOffset;
+			 row < tablePtr->rowOffset+tablePtr->titleRows;
+			 row++) {
+			Tcl_ListObjAppendElement(NULL, resultPtr,
+						 Tcl_NewIntObj(row));
+		    }
+		} else {
+		    for (col = tablePtr->colOffset;
+			 col < tablePtr->colOffset+tablePtr->titleCols;
+			 col++) {
+			Tcl_ListObjAppendElement(NULL, resultPtr,
+						 Tcl_NewIntObj(col));
+		    }
+		}
+	    } else {
+		for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
+		     scanPtr != NULL; scanPtr = Tcl_NextHashEntry(&search)) {
+		    /* is this the tag pointer on this row */
+		    if ((TableTag *) Tcl_GetHashValue(scanPtr) == tagPtr) {
+			objPtr = Tcl_NewIntObj((int) Tcl_GetHashKey(hashTblPtr,
+								    scanPtr));
+			Tcl_ListObjAppendElement(NULL, resultPtr, objPtr);
+		    }
 		}
 	    }
 	    return TCL_OK;
@@ -554,6 +609,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	    }
 	}
 	return TCL_OK;	/* COLTAG && ROWTAG */
+    }
 
     case TAG_CGET:
 	if (objc != 5) {

@@ -14,7 +14,7 @@
  * Tom Moore		tmoore@spatial.ca
  * Sebastian Wangnick	wangnick@orthogon.de
  *
- * Copyright (c) 1997-1999 Jeffrey Hobbs
+ * Copyright (c) 1997-2000 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -3194,8 +3194,9 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	} else {
 	    lastrow = r;
 	    needcs = 0;
-	    if (!rslen)
+	    if (!rslen) {
 		Tcl_DStringStartSublist(&selection);
+	    }
 	}
 	data = TableGetCellValue(tablePtr, r, c);
 	if (cslen) {
@@ -3558,24 +3559,45 @@ EXTERN int
 Tktable_Init(interp)
      Tcl_Interp *interp;
 {
-    /* This defines the static char initScript */
+    /* This defines the static chars tkTable(Safe)InitScript */
 #include "tkTableInitScript.h"
 
-    if (Tcl_PkgRequire(interp, "Tcl", TCL_VERSION, 0) == NULL ||
-#if (TK_MINOR_VERSION == 0)
-	/* We require 8.0 exact because of the Unicode in 8.1+ */
-	Tcl_PkgRequire(interp, "Tk", TK_VERSION, 1) == NULL ||
+    if (
+#ifdef USE_TCL_STUBS
+	Tcl_InitStubs(interp, "8.0", 0)
 #else
-	Tcl_PkgRequire(interp, "Tk", TK_VERSION, 0) == NULL ||
+	Tcl_PkgRequire(interp, "Tcl", "8.0", 0)
 #endif
-	Tcl_PkgProvide(interp, "Tktable", TBL_VERSION) != TCL_OK) {
+	== NULL) {
+	return TCL_ERROR;
+    }
+    if (
+#ifdef USE_TK_STUBS
+	Tk_InitStubs(interp, "8.0", 0)
+#else
+#    if (TK_MAJOR_VERSION == 8) && (TK_MINOR_VERSION == 0)
+	/* We require 8.0 exact because of the Unicode in 8.1+ */
+	Tcl_PkgRequire(interp, "Tk", "8.0", 1)
+#    else
+	Tcl_PkgRequire(interp, "Tk", "8.0", 0)
+#    endif
+#endif
+	== NULL) {
+	return TCL_ERROR;
+    }
+    if (Tcl_PkgProvide(interp, "Tktable", TBL_VERSION) != TCL_OK) {
 	return TCL_ERROR;
     }
     Tcl_CreateObjCommand(interp, TBL_COMMAND, Tk_TableObjCmd,
 			 (ClientData) Tk_MainWindow(interp),
 			 (Tcl_CmdDeleteProc *) NULL);
 
-    return Tcl_Eval(interp, initScript);
+    /*
+     * The init script can't make certain calls in a safe interpreter,
+     * so we always have to use the embedded runtime for it
+     */
+    return Tcl_Eval(interp, Tcl_IsSafe(interp) ?
+	    tkTableSafeInitScript : tkTableInitScript);
 }
 
 EXTERN int

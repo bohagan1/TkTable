@@ -28,17 +28,20 @@ enum modCmd {
 
 /* insert/delete row/col switches */
 static char *rcCmdNames[] = {
-    "-keeptitles",	"-holddimensions",	"-holdtags",
-    "-holdwindows",	"--", (char *) NULL
+    "-keeptitles",	"-holddimensions",	"-holdselection",
+    "-holdtags",	"-holdwindows",	"--",
+    (char *) NULL
 };
 enum rcCmd {
-    OPT_TITLES,	OPT_DIMS,	OPT_TAGS,	OPT_WINS,	OPT_LAST
+    OPT_TITLES,	OPT_DIMS,	OPT_SEL,
+    OPT_TAGS,	OPT_WINS,	OPT_LAST
 };
 
 #define HOLD_TITLES	1<<0
 #define HOLD_DIMS	1<<1
 #define HOLD_TAGS	1<<2
 #define HOLD_WINS	1<<3
+#define HOLD_SEL	1<<4
 
 
 /*
@@ -145,6 +148,9 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 	    case OPT_DIMS:
 		flags |= HOLD_DIMS;
 		break;
+ 	    case OPT_SEL:
+ 		flags |= HOLD_SEL;
+ 		break;
 	    case OPT_TAGS:
 		flags |= HOLD_TAGS;
 		break;
@@ -228,7 +234,7 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 	    for (i = maxkey; i >= first; i--) {
 		/* move row/col style && width/height here */
 		TableModifyRC(tablePtr, doRows, flags, tagTblPtr, dimTblPtr,
-			      offset, i, i-count, lo, hi, ((i-count) < first));
+			offset, i, i-count, lo, hi, ((i-count) < first));
 	    }
 	} else {
 	    /* (index = i && count = 1) == (index = i && count = -1) */
@@ -258,10 +264,11 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 	    }
 	    for (i = first; i <= maxkey; i++) {
 		TableModifyRC(tablePtr, doRows, flags, tagTblPtr, dimTblPtr,
-			      offset, i, i+count, lo, hi, ((i+count)>maxkey));
+			offset, i, i+count, lo, hi, ((i+count) > maxkey));
 	    }
 	}
-	if (Tcl_FirstHashEntry(tablePtr->selCells, &search) != NULL) {
+	if (!(flags & HOLD_SEL) &&
+		Tcl_FirstHashEntry(tablePtr->selCells, &search) != NULL) {
 	    /* clear selection - forceful, but effective */
 	    Tcl_DeleteHashTable(tablePtr->selCells);
 	    Tcl_InitHashTable(tablePtr->selCells, TCL_STRING_KEYS);
@@ -532,71 +539,131 @@ TableModifyRC(tablePtr, doRows, flags, tagTblPtr, dimTblPtr,
     int lo, hi;		/* the lo and hi col/row */
     int outOfBounds;	/* the boundary check for shifting items */
 {
-  int j, dummy;
-  char buf[INDEX_BUFSIZE], buf1[INDEX_BUFSIZE];
-  Tcl_HashEntry *entryPtr, *newPtr;
+    int j, new;
+    char buf[INDEX_BUFSIZE], buf1[INDEX_BUFSIZE];
+    Tcl_HashEntry *entryPtr, *newPtr;
+    TableEmbWindow *ewPtr;
 
-  /* move row/col style && width/height here */
-  if (!(flags & HOLD_TAGS)) {
-      entryPtr = Tcl_FindHashEntry(tagTblPtr, (char *)from);
-      if (entryPtr != NULL) {
-	  Tcl_DeleteHashEntry(entryPtr);
-      }
-      entryPtr = Tcl_FindHashEntry(dimTblPtr, (char *)from-offset);
-      if (entryPtr != NULL) {
-	  Tcl_DeleteHashEntry(entryPtr);
-      }
-      if (!outOfBounds) {
-	  entryPtr = Tcl_FindHashEntry(tagTblPtr, (char *)to);
-	  if (entryPtr != NULL) {
-	      newPtr = Tcl_CreateHashEntry(tagTblPtr, (char *)from, &dummy);
-	      Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-	      Tcl_DeleteHashEntry(entryPtr);
-	  }
-	  entryPtr = Tcl_FindHashEntry(dimTblPtr, (char *)to-offset);
-	  if (entryPtr != NULL) {
-	      newPtr = Tcl_CreateHashEntry(dimTblPtr, (char *)from-offset,
-					   &dummy);
-	      Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-	      Tcl_DeleteHashEntry(entryPtr);
-	  }
-      }
-  }
-  for (j = lo; j <= hi; j++) {
-      if (doRows /* rows */) {
-	  TableMakeArrayIndex(from, j, buf);
-	  TableMakeArrayIndex(to, j, buf1);
-	  TableSetCellValue(tablePtr, from, j, outOfBounds ? "" :
-			    TableGetCellValue(tablePtr, to, j));
-      } else {
-	  TableMakeArrayIndex(j, from, buf);
-	  TableMakeArrayIndex(j, to, buf1);
-	  TableSetCellValue(tablePtr, j, from, outOfBounds ? "" :
-			    TableGetCellValue(tablePtr, j, to));
-      }
-      /* move cell style here */
-      if (!(flags & HOLD_TAGS)) {
-	  entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf);
-	  if (entryPtr != NULL) {
-	      Tcl_DeleteHashEntry(entryPtr);
-	  }
-	  if (!outOfBounds) {
-	      entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf1);
-	      if (entryPtr != NULL) {
-		  newPtr = Tcl_CreateHashEntry(tablePtr->cellStyles, buf,
-					       &dummy);
-		  Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-		  Tcl_DeleteHashEntry(entryPtr);
-	      }
-	  }
-      }
-      /* move embedded windows here */
-      if (!(flags & HOLD_WINS)) {
-	  if (outOfBounds) {
-	      Table_WinDelete(tablePtr, buf);
-	  } else {
-	      Table_WinMove(tablePtr, buf, buf1, 0);
-	  }
-      }
-  }
+    /*
+     * move row/col style && width/height here
+     * If -holdtags is specified, we don't move the user-set widths/heights
+     * of the absolute rows/columns, otherwise we enter here to move the
+     * dimensions appropriately
+     */
+    if (!(flags & HOLD_TAGS)) {
+	entryPtr = Tcl_FindHashEntry(tagTblPtr, (char *)from);
+	if (entryPtr != NULL) {
+	    Tcl_DeleteHashEntry(entryPtr);
+	}
+	entryPtr = Tcl_FindHashEntry(dimTblPtr, (char *)from-offset);
+	if (entryPtr != NULL) {
+	    Tcl_DeleteHashEntry(entryPtr);
+	}
+	if (!outOfBounds) {
+	    entryPtr = Tcl_FindHashEntry(tagTblPtr, (char *)to);
+	    if (entryPtr != NULL) {
+		newPtr = Tcl_CreateHashEntry(tagTblPtr, (char *)from, &new);
+		Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+		Tcl_DeleteHashEntry(entryPtr);
+	    }
+	    entryPtr = Tcl_FindHashEntry(dimTblPtr, (char *)to-offset);
+	    if (entryPtr != NULL) {
+		newPtr = Tcl_CreateHashEntry(dimTblPtr, (char *)from-offset,
+			&new);
+		Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+		Tcl_DeleteHashEntry(entryPtr);
+	    }
+	}
+    }
+    for (j = lo; j <= hi; j++) {
+	if (doRows /* rows */) {
+	    TableMakeArrayIndex(from, j, buf);
+	    TableMakeArrayIndex(to, j, buf1);
+	    TableSetCellValue(tablePtr, from, j, outOfBounds ? "" :
+		    TableGetCellValue(tablePtr, to, j));
+	} else {
+	    TableMakeArrayIndex(j, from, buf);
+	    TableMakeArrayIndex(j, to, buf1);
+	    TableSetCellValue(tablePtr, j, from, outOfBounds ? "" :
+		    TableGetCellValue(tablePtr, j, to));
+	}
+	/*
+	 * If -holdselection is specified, we leave the selected cells in the
+	 * absolute cell values, otherwise we enter here to move the
+	 * selection appropriately
+	 */
+	if (!(flags & HOLD_SEL)) {
+	    entryPtr = Tcl_FindHashEntry(tablePtr->selCells, buf);
+	    if (entryPtr != NULL) {
+		Tcl_DeleteHashEntry(entryPtr);
+	    }
+	    if (!outOfBounds) {
+		entryPtr = Tcl_FindHashEntry(tablePtr->selCells, buf1);
+		if (entryPtr != NULL) {
+		    Tcl_CreateHashEntry(tablePtr->selCells, buf, &new);
+		    Tcl_DeleteHashEntry(entryPtr);
+		}
+	    }
+	}
+	/*
+	 * If -holdtags is specified, we leave the tags in the
+	 * absolute cell values, otherwise we enter here to move the
+	 * tags appropriately
+	 */
+	if (!(flags & HOLD_TAGS)) {
+	    entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf);
+	    if (entryPtr != NULL) {
+		Tcl_DeleteHashEntry(entryPtr);
+	    }
+	    if (!outOfBounds) {
+		entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf1);
+		if (entryPtr != NULL) {
+		    newPtr = Tcl_CreateHashEntry(tablePtr->cellStyles, buf,
+			    &new);
+		    Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+		    Tcl_DeleteHashEntry(entryPtr);
+		}
+	    }
+	}
+	/*
+	 * If -holdwindows is specified, we leave the windows in the
+	 * absolute cell values, otherwise we enter here to move the
+	 * windows appropriately
+	 */
+	if (!(flags & HOLD_WINS)) {
+	    /*
+	     * Delete whatever window might be in our destination
+	     */
+	    Table_WinDelete(tablePtr, buf);
+	    if (!outOfBounds) {
+		/*
+		 * buf1 is where the window is
+		 * buf is where we want it to be
+		 *
+		 * This is an adaptation of Table_WinMove, which we can't
+		 * use because we are intermediately fiddling with boundaries
+		 */
+		entryPtr = Tcl_FindHashEntry(tablePtr->winTable, buf1);
+		if (entryPtr != NULL) {
+		    /*
+		     * If there was a window in our source,
+		     * get the window pointer to move it
+		     */
+		    ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
+		    /* and free the old hash table entry */
+		    Tcl_DeleteHashEntry(entryPtr);
+
+		    entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, buf,
+			    &new);
+		    /*
+		     * We needn't check if a window was in buf, since the
+		     * Table_WinDelete above should guarantee that no window
+		     * is there.  Just set the new entry's value.
+		     */
+		    Tcl_SetHashValue(entryPtr, (ClientData) ewPtr);
+		    ewPtr->hPtr = entryPtr;
+		}
+	    }
+	}
+    }
 }

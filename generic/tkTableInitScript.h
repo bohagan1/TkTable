@@ -16,7 +16,7 @@
  * version of tkTable.  The sourced script has all key bindings defined.
  */
 
-static char initScript[] = "if {[info proc tkTableInit]==\"\"} {\n\
+static char tkTableInitScript[] = "if {[info proc tkTableInit]==\"\"} {\n\
   proc tkTableInit {} {\n\
     global tk_library tcl_pkgPath errorInfo env\n\
     rename tkTableInit {}\n\
@@ -61,6 +61,29 @@ static char initScript[] = "if {[info proc tkTableInit]==\"\"} {\n\
 "    }"
 #   endif
 #endif
+"  }\n\
+}\n\
+tkTableInit";
+
+/*
+ * The init script can't make certain calls in a safe interpreter,
+ * so we always have to use the embedded runtime for it
+ */
+static char tkTableSafeInitScript[] = "if {[info proc tkTableInit]==\"\"} {\n\
+  proc tkTableInit {} {\n\
+    set env(TK_TABLE_LIBRARY) EMBEDDED_RUNTIME\n"
+#ifdef NO_EMBEDDED_RUNTIME
+"    append msg \"tkTable requires embedded runtime to be compiled for\"\n\
+    append msg \" use in safe interpreters\"\n\
+    return -code error $msg\n"
+#endif
+#   ifdef MAC_TCL
+"    source -rsrc tkTable"
+#   else
+"    uplevel #0 {"
+#	include "tkTable.tcl.h"
+"    }"
+#   endif
 "  }\n\
 }\n\
 tkTableInit";

@@ -44,7 +44,7 @@
 #define STRICT_WINDOWS  1
 
 #define TBL_COMMAND "table"
-#define TBL_RUNTIME "tktable.tcl"
+#define TBL_RUNTIME "tkTable.tcl"
 #define TBL_RUNTIME_DIR "{}"
 
-#include "version.h"
+#include "../generic/version.h"

@@ -1,3 +1,8 @@
+2000-03-22  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* */*: complete restructure of tktable sources
+	* CHANGES.txt: moved to ChangeLog, will now use ChangeLog format
+
 ##########################################################################
 ## TkTable CHANGES
 ##
@@ -19,6 +24,27 @@
 ## Mac support provided by Chuck Houpt (choupt@als.com). (v2.3+)
 ##
 ##########################################################################
+
+**** v2.6 29 February 29 2000 ****
+
+Fixed row/col insertion/deletion to correctly handle embedded windows.
+(fix in part by albrecht@DAnalyse.de)
+
+Added stubs support to makefile.
+
+Added support for safe init script (requires embedded runtime) to
+be used in safe interpreters.
+
+Fixed bug in Table_BorderCmd on passing the 6th arg (the optional
+row|col).  (rickm@vsl.com)
+
+Added -holdselection arg to row/col insert/delete. (Paolo.Brutti@tlsoft.it)
+
+Added -DNO_SORT_CELLS ...
+
+Created tkTableCellSort.c with cell sorting routines.  Redid ...
+
+Fixed bug in tk_tableCut due to change in curselection syntax.
 
 Fixed missing comma in tkTableEdit.c:32 (Brutti)
 
