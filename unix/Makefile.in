@@ -2,7 +2,7 @@
 # If you change this, then the demos won't work, but it might be necessary
 # for those with another built-in "table" command
 #
-# RCS: @(#) $Id: Makefile.in,v 1.7 2000/08/18 02:45:00 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.8 2000/08/31 02:05:49 hobbs Exp $
 #
 
 TBL_COMMAND	= table
@@ -190,11 +190,12 @@ tkTable.tcl.h: $(LIB_DIR)/tkTable.tcl
 	sed -e '/^$\#/d' -e '/^$$/d' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' <$(LIB_DIR)/tkTable.tcl > $@ || { $(RM) $@; exit 1; }
 
 ## If you are using stubs, this first one should work, as stubs are OK
-## for 8.1+ (not 8.0 because of UTF calls)
+## for 8.1+ (not 8.0 because of UTF calls).  We require 8.2 because
+## there is a missing X stub in 8.1 (nobody needs 8.1 anyway).
 pkgIndex.tcl:
-	(echo 'if {[catch {package require Tcl 8.1}]} return';\
+	(echo 'if {[catch {package require Tcl 8.2}]} return';\
 	echo 'package ifneeded $(PACKAGE) $(TBL_VERSION)\
-	    "package require Tk 8.1;\
+	    "package require Tk 8.2;\
 	     [list load [file join $$dir $(DLL).$(TBL_VERSION)] $(PACKAGE)]"'\
 	) > pkgIndex.tcl
 

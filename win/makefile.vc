@@ -24,7 +24,8 @@ TBL_RUNTIME = tkTable.tcl
 
 ROOT		= ..
 TMP_DIR		= .
-TOOLS32		= C:\Progra~1\DevStudio\Vc
+TOOLS32		= C:\Progra~1\Microsoft Visual Studio\VC98
+#TOOLS32		= C:\Progra~1\DevStudio\Vc
 DEST_DIR	= C:\Progra~1\Tcl
 DEST_DIRU	= C:/Progra~1/Tcl
 
@@ -124,9 +125,9 @@ test: pkgIndex.tcl
 pkgIndex.tcl: $(DLL)
 	"$(TCLSH)" << pkgIndex.tcl
 	set out [open [lindex $$argv 0] w]
-	puts $$out {if {[catch {package require Tcl 8.1}]} return}
+	puts $$out {if {[catch {package require Tcl 8.2}]} return}
 	puts -nonewline $$out {package ifneeded $(PROJECT) $(TBL_VERSION) }
-	puts -nonewline $$out {"package require Tk 8.1; }
+	puts -nonewline $$out {"package require Tk 8.2; }
 	puts $$out {[list load [file join $$dir $(DLL)] $(PROJECT)]"}
 	close $$out
 <<
