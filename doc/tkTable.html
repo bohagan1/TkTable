@@ -1685,13 +1685,12 @@ left or right according to <I>number</I> and <I>what</I>.
 <I>Number</I> must be an integer. <I>What</I> must be
 either <B>units</B> or <B>pages</B> or an abbreviation of
 one of these. If <I>what</I> is <B>units</B>, the view
-adjusts left or right by <I>number</I> character
-units (the width of the <B>0</B> character) on the
+adjusts left or right by <I>number</I> cells on the
 display; if it is <B>pages</B> then the view
 adjusts by <I>number</I> screenfuls. If <I>number</I> is
-negative then characters farther to the left
+negative then cells farther to the left
 become visible; if it is positive then
-characters farther to the right become visible.
+cells farther to the right become visible.
 <P>
 <I>pathName</I> <B>yview</B> <I>?args</I>?<BR>
 
@@ -1734,7 +1733,7 @@ This command adjusts the view in the window
 up or down according to <I>number</I> and <I>what</I>.
 <I>Number</I> must be an integer. <I>What</I> must be
 either <B>units</B> or <B>pages</B>. If <I>what</I> is <B>units</B>,
-the view adjusts up or down by <I>number</I> lines;
+the view adjusts up or down by <I>number</I> cells;
 if it is <B>pages</B> then the view adjusts by <I>num</I><B>_</B>b<I>er</I>
 screenfuls. If <I>number</I> is negative then
 earlier elements become visible; if it is
@@ -1750,10 +1749,14 @@ following default behaviour:
 
 <DT>[1] </DT></DT>
 <DD>   Clicking Button-1 in a cell activates that cell.
+</DD>
+</DL>
+<P>
 Clicking into an already active cell moves the
 insertion cursor to the character nearest the
 mouse.
-</DD>
+
+<DL>
 
 <DT>[2] </DT></DT>
 <DD>   Moving the mouse while Button-1 is pressed will
