@@ -1,3 +1,11 @@
+2003-04-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure: regen
+	* tclconfig/tcl.m4: updated
+
+	* library/tkTable.tcl (BeginExtend): avoid error in tables that
+	have no anchor index yet. (renshaw)
+
 2003-04-09  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* configure: regen

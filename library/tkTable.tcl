@@ -4,7 +4,7 @@
 # This file defines the default bindings for Tk table widgets
 # and provides procedures that help in implementing those bindings.
 #
-# RCS: @(#) $Id: tkTable.tcl,v 1.8 2002/03/13 20:14:58 hobbs Exp $
+# RCS: @(#) $Id: tkTable.tcl,v 1.9 2002/10/16 07:32:01 hobbs Exp $
 
 #--------------------------------------------------------------------------
 # ::tk::table::Priv elements used in this file:
@@ -464,6 +464,8 @@ proc ::tk::table::Motion {w el} {
 # one under the pointer). Must be in numerical form.
 
 proc ::tk::table::BeginExtend {w el} {
+    # avoid tables that have no anchor index yet.
+    if {[catch {$w index anchor}]} { return }
     if {[string match extended [$w cget -selectmode]] &&
 	[$w selection includes anchor]} {
 	::tk::table::Motion $w $el
