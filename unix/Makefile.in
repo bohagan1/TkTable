@@ -137,7 +137,7 @@ MAN_INSTALL_DIR = @mandir@/mann
 all: $(DLL) pkgIndex.tcl
 
 $(DLL): $(OBJS)
-	$(SHLIB_LD) -o $@ $(OBJS) $(SHLIB_CFLAGS) $(SHLIB_LD_LIBS)
+	$(SHLIB_LD) -o $@ $(OBJS) $(SHLIB_LD_LIBS) $(TK_LD_SEARCH_FLAGS)
 
 # The megawish builds may not work anymore - I don't use anything but
 # extensions nowadays.
