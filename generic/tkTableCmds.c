@@ -758,7 +758,6 @@ Table_GetCmd(ClientData clientData, register Tcl_Interp *interp,
 	     int objc, Tcl_Obj *CONST objv[])
 {
     register Table *tablePtr = (Table *) clientData;
-    Tcl_Obj *objPtr = NULL;
     int result = TCL_OK;
     int r1, c1, r2, c2, row, col;
 
@@ -768,24 +767,22 @@ Table_GetCmd(ClientData clientData, register Tcl_Interp *interp,
     } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) == TCL_ERROR) {
 	result = TCL_ERROR;
     } else if (objc == 3) {
-	objPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1);
+	Tcl_SetObjResult(interp,
+		Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1));
     } else if (TableGetIndexObj(tablePtr, objv[3], &r2, &c2) == TCL_ERROR) {
 	result = TCL_ERROR;
     } else {
-	Tcl_Obj *cellPtr;
-	objPtr = Tcl_NewObj();
+	Tcl_Obj *objPtr = Tcl_NewObj();
 
 	r1 = MIN(row,r2); r2 = MAX(row,r2);
 	c1 = MIN(col,c2); c2 = MAX(col,c2);
 	for ( row = r1; row <= r2; row++ ) {
 	    for ( col = c1; col <= c2; col++ ) {
-		cellPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr,
-			row, col), -1);
-		Tcl_ListObjAppendElement(NULL, objPtr, cellPtr);
+		Tcl_ListObjAppendElement(NULL, objPtr,
+			Tcl_NewStringObj(TableGetCellValue(tablePtr,
+				row, col), -1));
 	    }
 	}
-    }
-    if ((result != TCL_ERROR) && objPtr); {
 	Tcl_SetObjResult(interp, objPtr);
     }
     return result;
