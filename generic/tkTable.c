@@ -19,10 +19,15 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id:  $
+ * RCS: @(#) $Id: tkTable.c,v 1.6 2000/08/18 03:34:11 hobbs Exp $
  */
 
 #include "tkTable.h"
+
+#define DEBUG
+#ifdef DEBUG
+#include "dprint.h"
+#endif
 
 #if defined(WIN32) || defined(macintosh)
 #define NO_XSETCLIP
@@ -993,7 +998,7 @@ TableDestroy(ClientData clientdata)
  */
 int
 TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
-     Tcl_Interp *interp;		/* Used for error reporting. */
+     Tcl_Interp *interp;	/* Used for error reporting. */
      register Table *tablePtr;	/* Information about widget;  may or may
 				 * not already have values for some fields. */
      int objc;			/* Number of arguments. */
@@ -1679,7 +1684,7 @@ TableDisplay(ClientData clientdata)
 	    invalidY+invalidHeight-1, &rowTo, &colTo);
     tablePtr->flags &= ~AVOID_SPANS;
 
-#if 0
+#ifdef DEBUG
     tcl_dprintf(tablePtr->interp, "%d,%d => %d,%d",
 	    rowFrom+tablePtr->rowOffset, colFrom+tablePtr->colOffset,
 	    rowTo+tablePtr->rowOffset, colTo+tablePtr->colOffset);
@@ -1786,6 +1791,10 @@ TableDisplay(ClientData clientdata)
 			tablePtr->flags |= ACTIVE_DISABLED;
 		    }
 
+		    /*
+		     * The EmbWinDisplay function may modify values in
+		     * tagPtr, so reference those after this call.
+		     */
 		    EmbWinDisplay(tablePtr, window, ewPtr, tagPtr,
 			    x, y, width, height);
 
@@ -1860,7 +1869,7 @@ TableDisplay(ClientData clientdata)
 	    }
 	    /* is this cell active? */
 	    if ((tablePtr->flags & HAS_ACTIVE) &&
-		    tablePtr->state == STATE_NORMAL	&&
+		    (tablePtr->state == STATE_NORMAL) &&
 		    row == tablePtr->activeRow && col == tablePtr->activeCol) {
 		if (tagPtr->state == STATE_DISABLED) {
 		    tablePtr->flags |= ACTIVE_DISABLED;
@@ -2407,14 +2416,13 @@ TableFlashEvent(ClientData clientdata)
 	if (--count <= 0) {
 	    /* get the cell address and invalidate that region only */
 	    TableParseArrayIndex(&row, &col,
-				 Tcl_GetHashKey(tablePtr->flashCells,
-						entryPtr));
+		    Tcl_GetHashKey(tablePtr->flashCells, entryPtr));
 
 	    /* delete the entry from the table */
 	    Tcl_DeleteHashEntry(entryPtr);
 
 	    TableRefresh(tablePtr, row-tablePtr->rowOffset,
-			 col-tablePtr->colOffset, CELL);
+		    col-tablePtr->colOffset, CELL);
 	} else {
 	    Tcl_SetHashValue(entryPtr, (ClientData) count);
 	    entries++;
@@ -2424,7 +2432,7 @@ TableFlashEvent(ClientData clientdata)
     /* do I need to restart the timer */
     if (entries && tablePtr->flashMode) {
 	tablePtr->flashTimer = Tcl_CreateTimerHandler(250, TableFlashEvent,
-						      (ClientData) tablePtr);
+		(ClientData) tablePtr);
     } else {
 	tablePtr->flashTimer = 0;
     }
@@ -2466,7 +2474,7 @@ TableAddFlash(Table *tablePtr, int row, int col)
     /* now set the timer if it's not already going and invalidate the area */
     if (tablePtr->flashTimer == NULL) {
 	tablePtr->flashTimer = Tcl_CreateTimerHandler(250, TableFlashEvent,
-						      (ClientData) tablePtr);
+		(ClientData) tablePtr);
     }
 }
 
@@ -2491,7 +2499,7 @@ TableSetActiveIndex(register Table *tablePtr)
     if (tablePtr->arrayVar) {
 	tablePtr->flags |= SET_ACTIVE;
 	Tcl_SetVar2(tablePtr->interp, tablePtr->arrayVar, "active",
-		    tablePtr->activeBuf, TCL_GLOBAL_ONLY);
+		tablePtr->activeBuf, TCL_GLOBAL_ONLY);
 	tablePtr->flags &= ~SET_ACTIVE;
     }
 }
@@ -2518,8 +2526,8 @@ TableGetActiveBuf(register Table *tablePtr)
 
     if (tablePtr->flags & HAS_ACTIVE) {
 	data = TableGetCellValue(tablePtr,
-				 tablePtr->activeRow+tablePtr->rowOffset,
-				 tablePtr->activeCol+tablePtr->colOffset);
+		tablePtr->activeRow+tablePtr->rowOffset,
+		tablePtr->activeCol+tablePtr->colOffset);
     }
 
     if (strcmp(tablePtr->activeBuf, data) == 0) {
@@ -2531,7 +2539,7 @@ TableGetActiveBuf(register Table *tablePtr)
     }
     /* is the buffer long enough */
     tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf,
-					    strlen(data)+1);
+	    strlen(data)+1);
     strcpy(tablePtr->activeBuf, data);
     TableGetIcursor(tablePtr, "end", (int *)0);
     tablePtr->flags &= ~TEXT_CHANGED;
@@ -2578,9 +2586,8 @@ TableVarProc(clientData, interp, name, index, flags)
 
 	    /* set a trace on the variable */
 	    Tcl_TraceVar(interp, name,
-			 TCL_TRACE_WRITES | TCL_TRACE_UNSETS | TCL_GLOBAL_ONLY,
-			 (Tcl_VarTraceProc *)TableVarProc,
-			 (ClientData) tablePtr);
+		    TCL_TRACE_WRITES | TCL_TRACE_UNSETS | TCL_GLOBAL_ONLY,
+		    (Tcl_VarTraceProc *)TableVarProc, (ClientData) tablePtr);
 
 	    /* only do the following if arrayVar is our data source */
 	    if (tablePtr->dataSource & DATA_ARRAY) {
@@ -2620,7 +2627,7 @@ TableVarProc(clientData, interp, name, index, flags)
 		return (char *)NULL;
 	    }
 	    tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf,
-						    strlen(data)+1);
+		    strlen(data)+1);
 	    strcpy(tablePtr->activeBuf, data);
 	    /* set cursor to the last char */
 	    TableGetIcursor(tablePtr, "end", (int *)0);
@@ -2722,51 +2729,60 @@ TableAdjustActive(tablePtr)
      register Table *tablePtr;		/* Widget record for table */
 {
     if (tablePtr->flags & HAS_ACTIVE) {
-	/* make sure the active cell has a reasonable real index */
+	/*
+	 * Make sure the active cell has a reasonable real index
+	 */
 	CONSTRAIN(tablePtr->activeRow, 0, tablePtr->rows-1);
 	CONSTRAIN(tablePtr->activeCol, 0, tablePtr->cols-1);
     }
 
     /*
-     * now check the new value of active cell against the original,
-     * If it changed, invalidate the area, else leave it alone
+     * Check the new value of active cell against the original,
+     * Only invalidate if it changed.
      */
-    if (tablePtr->oldActRow != tablePtr->activeRow ||
-	tablePtr->oldActCol != tablePtr->activeCol) {
-	/* put the value back in the cell */
-	if (tablePtr->oldActRow >= 0 && tablePtr->oldActCol >= 0) {
-	    /* 
-	     * Set the value of the old active cell to the active buffer
-	     * SetCellValue will check if the value actually changed
-	     */
-	    if (tablePtr->flags & TEXT_CHANGED) {
-		/* WARNING an outside trace will be triggered here and if it
-		 * calls something that causes TableAdjustParams to be called
-		 * again, we are in data consistency trouble */
-		/* HACK - turn TEXT_CHANGED off now to possibly avoid the
-		 * above data inconsistency problem.  */
-		tablePtr->flags &= ~TEXT_CHANGED;
-		TableSetCellValue(tablePtr,
-				  tablePtr->oldActRow+tablePtr->rowOffset,
-				  tablePtr->oldActCol+tablePtr->colOffset,
-				  tablePtr->activeBuf);
-	    }
-	    /* invalidate the old active cell */
-	    TableRefresh(tablePtr, tablePtr->oldActRow, tablePtr->oldActCol,
-			 CELL);
-	}
-
-	/* get the new value of the active cell into buffer */
-	TableGetActiveBuf(tablePtr);
-
-	/* invalidate the new active cell */
-	TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
-	/*
-	 * set the old active row/col for the next time this is called
-	 */
-	tablePtr->oldActRow = tablePtr->activeRow;
-	tablePtr->oldActCol = tablePtr->activeCol;
+    if (tablePtr->oldActRow == tablePtr->activeRow &&
+	    tablePtr->oldActCol == tablePtr->activeCol) {
+	return;
     }
+
+    if (tablePtr->oldActRow >= 0 && tablePtr->oldActCol >= 0) {
+	/* 
+	 * Set the value of the old active cell to the active buffer
+	 * SetCellValue will check if the value actually changed
+	 */
+	if (tablePtr->flags & TEXT_CHANGED) {
+	    /* WARNING an outside trace will be triggered here and if it
+	     * calls something that causes TableAdjustParams to be called
+	     * again, we are in data consistency trouble */
+	    /* HACK - turn TEXT_CHANGED off now to possibly avoid the
+	     * above data inconsistency problem.  */
+	    tablePtr->flags &= ~TEXT_CHANGED;
+	    TableSetCellValue(tablePtr,
+		    tablePtr->oldActRow + tablePtr->rowOffset,
+		    tablePtr->oldActCol + tablePtr->colOffset,
+		    tablePtr->activeBuf);
+	}
+	/*
+	 * Invalidate the old active cell
+	 */
+	TableRefresh(tablePtr, tablePtr->oldActRow, tablePtr->oldActCol, CELL);
+    }
+
+    /*
+     * Store the new active cell value into the active buffer
+     */
+    TableGetActiveBuf(tablePtr);
+
+    /*
+     * Invalidate the new active cell
+     */
+    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
+
+    /*
+     * Cache the old active row/col for the next time this is called
+     */
+    tablePtr->oldActRow = tablePtr->activeRow;
+    tablePtr->oldActCol = tablePtr->activeCol;
 }
 
 /*
@@ -2793,7 +2809,7 @@ void
 TableAdjustParams(register Table *tablePtr)
 {
     int topRow, leftCol, row, col, total, i, value, x, y, width, height,
-	w, h, hl, px, py, recalc = 0, bd[4],
+	w, h, hl, px, py, recalc, bd[4],
 	diff, unpreset, lastUnpreset, pad, lastPad, numPixels,
 	defColWidth, defRowHeight;
     Tcl_HashEntry *entryPtr;
@@ -2883,7 +2899,7 @@ TableAdjustParams(register Table *tablePtr)
 	    total += tablePtr->colPixels[i];
 	}
     } else {
-	switch(tablePtr->colStretch) {
+	switch (tablePtr->colStretch) {
 	case STRETCH_MODE_NONE:
 	    pad		= 0;
 	    lastPad	= 0;
@@ -2925,6 +2941,7 @@ TableAdjustParams(register Table *tablePtr)
     /*
      * The 'do' loop is only necessary for rows because of FILL mode
      */
+    recalc = 0;
     do {
 	/* Set up the arrays to hold the row pixels and starts */
 	/* FIX - this can be moved outside 'do' if you check >row size */
@@ -2960,31 +2977,32 @@ TableAdjustParams(register Table *tablePtr)
 	diff = h - numPixels - (unpreset * defRowHeight);
 	switch(tablePtr->rowStretch) {
 	case STRETCH_MODE_NONE:
-	    pad = 0;
-	    lastPad = 0;
+	    pad		= 0;
+	    lastPad	= 0;
 	    break;
 	case STRETCH_MODE_UNSET:
 	    if (unpreset == 0)  {
-		pad = 0;
-		lastPad = 0;
+		pad	= 0;
+		lastPad	= 0;
 	    } else {
-		pad = MAX(0,diff) / unpreset;
-		lastPad = MAX(0,diff) - pad * (unpreset - 1);
+		pad	= MAX(0,diff) / unpreset;
+		lastPad	= MAX(0,diff) - pad * (unpreset - 1);
 	    }
 	    break;
 	case STRETCH_MODE_LAST:
-	    pad = 0;
-	    lastPad = MAX(0,diff);
+	    pad		= 0;
+	    lastPad	= MAX(0,diff);
 	    /* force it to be applied to the last column too */
 	    lastUnpreset = tablePtr->rows - 1;
 	    break;
 	case STRETCH_MODE_FILL:
-	    pad = 0;
-	    lastPad = diff;
+	    pad		= 0;
+	    lastPad	= diff;
 	    if (diff && !recalc) {
 		tablePtr->rows += (diff/defRowHeight);
-		if (diff < 0 && tablePtr->rows < 0)
-		    tablePtr->rows = 0;
+		if (diff < 0 && tablePtr->rows <= 0) {
+		    tablePtr->rows = 1;
+		}
 		lastUnpreset = tablePtr->rows - 1;
 		recalc = 1;
 		continue;
@@ -2994,10 +3012,10 @@ TableAdjustParams(register Table *tablePtr)
 	    }
 	    break;
 	default:	/* STRETCH_MODE_ALL */
-	    pad = MAX(0,diff) / tablePtr->rows;
+	    pad		= MAX(0,diff) / tablePtr->rows;
 	    /* force it to be applied to the last column too */
 	    lastUnpreset = tablePtr->rows - 1;
-	    lastPad = MAX(0,diff) - pad * lastUnpreset;
+	    lastPad	= MAX(0,diff) - pad * lastUnpreset;
 	}
     } while (recalc);
 
@@ -3103,9 +3121,9 @@ TableAdjustParams(register Table *tablePtr)
 	    }
 	    sprintf(buf, " %g %g", first, last);
 	    if (Tcl_VarEval(interp, tablePtr->yScrollCmd,
-			    buf, (char *)NULL) != TCL_OK) {
+		    buf, (char *)NULL) != TCL_OK) {
 		Tcl_AddErrorInfo(interp,
-				 "\n    (vertical scrolling command executed by table)");
+			"\n\t(vertical scrolling command executed by table)");
 		Tcl_BackgroundError(interp);
 	    }
 	}
@@ -3122,9 +3140,9 @@ TableAdjustParams(register Table *tablePtr)
 	    }
 	    sprintf(buf, " %g %g", first, last);
 	    if (Tcl_VarEval(interp, tablePtr->xScrollCmd,
-			    buf, (char *)NULL) != TCL_OK) {
+		    buf, (char *)NULL) != TCL_OK) {
 		Tcl_AddErrorInfo(interp,
-				 "\n    (horizontal scrolling command executed by table)");
+			"\n\t(horizontal scrolling command executed by table)");
 		Tcl_BackgroundError(interp);
 	    }
 	}
@@ -3186,7 +3204,9 @@ TableCursorEvent(ClientData clientData)
 {
     register Table *tablePtr = (Table *) clientData;
 
-    if (!(tablePtr->flags & HAS_FOCUS) || (tablePtr->insertOffTime == 0)) {
+    if (!(tablePtr->flags & HAS_FOCUS) || (tablePtr->insertOffTime == 0)
+	    || (tablePtr->flags & ACTIVE_DISABLED)
+	    || (tablePtr->state != STATE_NORMAL)) {
 	return;
     }
 
@@ -3224,12 +3244,21 @@ TableCursorEvent(ClientData clientData)
 void
 TableConfigCursor(register Table *tablePtr)
 {
-    /* to get a cursor, we have to have focus and allow edits */
+    /*
+     * To have a cursor, we have to have focus and allow edits
+     */
     if ((tablePtr->flags & HAS_FOCUS) && (tablePtr->state == STATE_NORMAL) &&
 	!(tablePtr->flags & ACTIVE_DISABLED)) {
-	/* turn the cursor on */
+	/*
+	 * Turn the cursor ON
+	 */
 	if (!(tablePtr->flags & CURSOR_ON)) {
 	    tablePtr->flags |= CURSOR_ON;
+	    /*
+	     * Only refresh when we toggled cursor
+	     */
+	    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
+		    CELL);
 	}
 
 	/* set up the first timer */
@@ -3241,9 +3270,13 @@ TableConfigCursor(register Table *tablePtr)
 			TableCursorEvent, (ClientData) tablePtr);
 	}
     } else {
-	/* turn the cursor off */
+	/*
+	 * Turn the cursor OFF
+	 */
 	if ((tablePtr->flags & CURSOR_ON)) {
 	    tablePtr->flags &= ~CURSOR_ON;
+	    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
+		    CELL);
 	}
 
 	/* and disable the timer */
@@ -3253,8 +3286,6 @@ TableConfigCursor(register Table *tablePtr)
 	tablePtr->cursorTimer = NULL;
     }
 
-    /* Invalidate the selection window to show or hide the cursor */
-    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
 }
 
 /*
