@@ -3,11 +3,12 @@
  *
  *	This module implements editing functions of a table widget.
  *
- * Copyright (c) 1998 Jeffrey Hobbs
+ * Copyright (c) 1998-2000 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
+ * RCS: @(#) $Id:  $
  */
 
 #include "tkTable.h"
@@ -190,8 +191,8 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 	    tagTblPtr	= tablePtr->rowStyles;
 	    dimTblPtr	= tablePtr->rowHeights;
 	    dimPtr	= &(tablePtr->rows);
-	    lo		= tablePtr->colOffset+((flags & HOLD_TITLES) ?
-					       tablePtr->titleCols : 0);
+	    lo		= tablePtr->colOffset
+		+ ((flags & HOLD_TITLES) ? tablePtr->titleCols : 0);
 	    hi		= maxcol;
 	} else {
 	    maxkey	= maxcol;
@@ -201,8 +202,8 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 	    tagTblPtr	= tablePtr->colStyles;
 	    dimTblPtr	= tablePtr->colWidths;
 	    dimPtr	= &(tablePtr->cols);
-	    lo		= tablePtr->rowOffset+((flags & HOLD_TITLES) ?
-					       tablePtr->titleRows : 0);
+	    lo		= tablePtr->rowOffset
+		+ ((flags & HOLD_TITLES) ? tablePtr->titleRows : 0);
 	    hi		= maxrow;
 	}
 
@@ -242,7 +243,16 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 		/* if the count is negative, make sure that the col count will
 		 * delete no greater than the original index */
 		if (first+count < minkey) {
-		    count += first-minkey;
+		    if (first-minkey < abs(count)) {
+			/*
+			 * In this case, the user is asking to delete more rows
+			 * than exist before the minkey, so we have to shrink
+			 * the count down to the existing rows up to index.
+			 */
+			count = first-minkey;
+		    } else {
+			count += first-minkey;
+		    }
 		    first = minkey;
 		} else {
 		    first += count;
@@ -273,6 +283,12 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 	    Tcl_DeleteHashTable(tablePtr->selCells);
 	    Tcl_InitHashTable(tablePtr->selCells, TCL_STRING_KEYS);
 	}
+
+	/*
+	 * Make sure that the modified dimension is actually legal
+	 * after removing all that stuff.
+	 */
+	*dimPtr = MAX(1, *dimPtr);
 
 	TableAdjustParams(tablePtr);
 	/* change the geometry */
