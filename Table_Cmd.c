@@ -138,8 +138,11 @@ command_struct stretch_commands[]=
 ** The command procedure for a table widget
 */
 
-int TableWidgetCmd( 	ClientData clientdata,
-			Tcl_Interp *interp, int argc, char *argv[])
+int TableWidgetCmd(clientdata, interp, argc, argv)
+     ClientData clientdata;
+     Tcl_Interp *interp;
+     int argc;
+     char **argv;
 {
 	int result, retval, row, col, x, y, x1, y1, subcommand_retval;
 	int paramParsed=0;
@@ -770,7 +773,10 @@ int TableWidgetCmd( 	ClientData clientdata,
 */
 
 int
-TableTagCommand(Table *tablePtr, int argc, char *argv[])
+TableTagCommand(tablePtr, argc, argv)
+     Table *tablePtr;
+     int argc;
+     char **argv;
 {
 	int result, retval, i, newEntry, maxval, value;
 	int row, col;
@@ -1103,8 +1109,10 @@ TableTagCommand(Table *tablePtr, int argc, char *argv[])
 ** unique, then it sets up the message accordingly and returns 0
 */
 
-int parse_command(	Tcl_Interp *interp,	
-				command_struct *commands, char *arg)
+int parse_command(interp, commands, arg)
+     Tcl_Interp *interp;
+     command_struct *commands;
+     char *arg;
 {
 	int len=strlen(arg);
 	command_struct *matched=(command_struct *)0;
@@ -1175,7 +1183,8 @@ int parse_command(	Tcl_Interp *interp,
 ** set the position to the end of the string
 */
 void
-TableGetSelection(Table *tablePtr)
+TableGetSelection(tablePtr)
+     Table *tablePtr;
 {
 	char *data;
 	char buf[100];
@@ -1201,7 +1210,11 @@ TableGetSelection(Table *tablePtr)
 
 /* Turn row/col into an index into the table */
 void 
-TableMakeArrayIndex(Table *tablePtr, int row, int col, char *buf)
+TableMakeArrayIndex(tablePtr, row, col, buf)
+     Table *tablePtr;
+     int row;
+     int col;
+     char *buf;
 {
 	if(tablePtr->rowThenCol)
 		sprintf(buf, "%d,%d", row, col);
@@ -1215,7 +1228,11 @@ TableMakeArrayIndex(Table *tablePtr, int row, int col, char *buf)
 ** should be two 
 */
 int
-TableParseArrayIndex(Table *tablePtr, int *row, int *col, char *index)
+TableParseArrayIndex(tablePtr, row, col, index)
+     Table *tablePtr;
+     int *row;
+     int *col;
+     char *index;
 {
 	if(tablePtr->rowThenCol)
 	 		return sscanf(index, "%d,%d", row, col);
@@ -1230,7 +1247,10 @@ TableParseArrayIndex(Table *tablePtr, int *row, int *col, char *index)
 ** constrains it to the size of the buffer 
 */
 int
-TableParseStringPosn(Table *tablePtr, char *arg, int *posn)
+TableParseStringPosn(tablePtr, arg, posn)
+     Table *tablePtr;
+     char *arg;
+     int *posn;
 {
   	int temp;
 
@@ -1260,7 +1280,9 @@ TableParseStringPosn(Table *tablePtr, char *arg, int *posn)
 ** the buffer and frees the old one
 */
 void
-TableBufLengthen(Table *tablePtr, int len)
+TableBufLengthen(tablePtr, len)
+     Table *tablePtr;
+     int len;
 {
 	char *newbuf;
 	if(tablePtr->selectBufLen<len+1)

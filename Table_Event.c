@@ -9,7 +9,9 @@
 #include "Table.h"
 
 
-void  TableEventProc(ClientData clientdata, XEvent *eventPtr)
+void  TableEventProc(clientdata, eventPtr)
+     ClientData clientdata;
+     XEvent *eventPtr;
 {
 	Table *tablePtr=(Table *)clientdata;
 
@@ -43,7 +45,7 @@ void  TableEventProc(ClientData clientdata, XEvent *eventPtr)
 					TableVarProc, (ClientData) tablePtr);
 
 		/* free the widget in time */	
-		Tk_EventuallyFree((ClientData) tablePtr, TableDestroy);
+		Tk_EventuallyFree((ClientData) tablePtr, (Tcl_FreeProc *) TableDestroy);
 		break;
 	
 	case ConfigureNotify:
@@ -81,7 +83,13 @@ void  TableEventProc(ClientData clientdata, XEvent *eventPtr)
 */
 
 void 
-TableInvalidate(Table *tablePtr, int x, int y, int width, int height, int force)
+TableInvalidate(tablePtr, x, y, width, height, force)
+     Table *tablePtr;
+     int x;
+     int y;
+     int width;
+     int height;
+     int force;
 {
 
   	int old_x, old_y, old_width, old_height;
@@ -132,7 +140,8 @@ TableInvalidate(Table *tablePtr, int x, int y, int width, int height, int force)
 
 
 
-void TableDestroy(ClientData clientdata)
+void TableDestroy(clientdata)
+     ClientData clientdata;
 {
 	Table *tablePtr=(Table *)clientdata;
 	Tcl_HashEntry *entryPtr;
@@ -234,8 +243,12 @@ void TableDestroy(ClientData clientdata)
 
 
 char *
-TableVarProc(	ClientData clientdata, Tcl_Interp *interp, 
-		char *name, char *index, int flags)
+TableVarProc(clientdata, interp, name, index, flags)
+     ClientData clientdata;
+     Tcl_Interp *interp;
+     char *name;
+     char *index;
+     int flags;
 {
 	Table *tablePtr=(Table *)clientdata;
 	int x, y, width, height, i, j;
@@ -295,7 +308,8 @@ TableVarProc(	ClientData clientdata, Tcl_Interp *interp,
 ** Toggle the cursor status 
 */
 void	
-TableCursorEvent(ClientData clientdata)
+TableCursorEvent(clientdata)
+     ClientData clientdata;
 {
 	Table *tablePtr=(Table *)clientdata;
 	int x, y, width, height;
@@ -325,7 +339,8 @@ TableCursorEvent(ClientData clientdata)
 ** state of the table.
 */
 void
-TableConfigCursor(Table *tablePtr)
+TableConfigCursor(tablePtr)
+     Table *tablePtr;
 {
 	int mask, x, y, width, height;
 
@@ -363,7 +378,9 @@ TableConfigCursor(Table *tablePtr)
 ** if stopping, clears out the flash structure
 */
 void
-TableFlashConfigure(Table *tablePtr, int startStop)
+TableFlashConfigure(tablePtr, startStop)
+     Table *tablePtr;
+     int startStop;
 {
 	if(startStop && (tablePtr->tableFlags&TBL_FLASH_ENABLED) && tablePtr->flashTag!=NULL)
 	{
@@ -397,7 +414,8 @@ TableFlashConfigure(Table *tablePtr, int startStop)
 ** else reenables it 
 */
 void
-TableFlashEvent(ClientData clientdata)
+TableFlashEvent(clientdata)
+     ClientData clientdata;
 {
 	Table *tablePtr=(Table *)clientdata;
 	Tcl_HashEntry *entryPtr;
@@ -449,7 +467,10 @@ TableFlashEvent(ClientData clientdata)
 ** enabled and there is a flash ta defined
 */
 void
-TableAddFlash(Table *tablePtr, int row, int col)
+TableAddFlash(tablePtr, row, col)
+     Table *tablePtr;
+     int row;
+     int col;
 {
 	char buf[100];
 	int dummy, x, y, width, height;

@@ -8,29 +8,39 @@
 
 #include "Table.h"
 
+static char *init_script[] = {
+#include "TableInit.c"
+(char *) NULL
+};
+
 /* 
 ** Function to call on loading the
 ** Table module 
 */
 
-int Table_Init(Tcl_Interp *interp) {
+int
+Tktable_Init(interp)
+    Tcl_Interp *interp;
+{
+    char **p = init_script;
+    Tcl_DString data;
+    Tcl_DStringInit(&data);
 
-  	static char initCmd[] =
-		" if [file exists $tk_library/TableInit.tcl] {\n\
-			source $tk_library/TableInit.tcl\n\
-		} else { \n\
-			set msg \"can't find $tk_library/TableInit.tcl; perhaps you \"\n\
-            		append msg \"need to\\ninstall TableInit.tcl in your TK_LIBRARY directory?\"\n\
-            		append msg \"environment variable?\"\n\
-            		error $msg\n\
-        	}";
-
-	Tcl_CreateCommand(	interp, "table", TableCmd,
-				(ClientData) Tk_MainWindow(interp),
-				(Tcl_CmdDeleteProc *)NULL);
-
-	return Tcl_Eval(interp, initCmd);
-	
+    Tcl_CreateCommand(interp, "table", TableCmd,
+	(ClientData) Tk_MainWindow(interp),(Tcl_CmdDeleteProc *)NULL);
+    while(*p) {
+        /* Copy the constant into a dynamic string. This */
+        /* is necessary because Tcl7.4 doesn't accept    */
+        /* constants as an argument to Tcl_Eval()        */
+        Tcl_DStringSetLength(&data,0);
+        Tcl_DStringAppend(&data,*p++,-1);
+        if(Tcl_Eval(interp,Tcl_DStringValue(&data)) == TCL_ERROR) {
+            Tcl_DStringFree(&data);
+            return TCL_ERROR;
+        }
+    }
+    Tcl_DStringFree(&data);
+    return TCL_OK;
 }
 
 
@@ -39,9 +49,11 @@ int Table_Init(Tcl_Interp *interp) {
 ** Table widget
 */
 
-int TableCmd(	ClientData clientdata, 
-			Tcl_Interp *interp, 
-			int argc, char *argv[])
+int TableCmd(clientdata, interp, argc, argv)
+     ClientData clientdata;
+     Tcl_Interp *interp;
+     int argc;
+     char **argv;
 {
 	Tk_Window main_window= (Tk_Window) clientdata;
 	Table 		*tablePtr;	

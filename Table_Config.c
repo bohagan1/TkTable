@@ -15,7 +15,7 @@
 Tk_ConfigSpec TableConfig[]= 
 {
 	{ 	TK_CONFIG_BORDER, "-background", "background",
-		"Background", "BISQUE1",
+		"Background", "GRAY80",
 		Tk_Offset(Table, defaultTag.bgBorder), 0, (Tk_CustomOption *)NULL
 	},
 	{ 	TK_CONFIG_SYNONYM, "-bg", "background",
@@ -157,8 +157,12 @@ Tk_ConfigSpec tagConfig[] =
 };
 
 
-int TableConfigure(	Tcl_Interp *interp, Table *tablePtr,
-		   	int argc, char *argv[], int flags)
+int TableConfigure(interp, tablePtr, argc, argv, flags)
+     Tcl_Interp *interp;
+     Table *tablePtr;
+     int argc;
+     char **argv;
+     int flags;
 {
 	XGCValues	gcValues;
 	GC		newGC;
@@ -256,8 +260,8 @@ int TableConfigure(	Tcl_Interp *interp, Table *tablePtr,
 	*/
 	if((tablePtr->tagTable)==NULL)
 	{
-		char *titleArgs[]={"-bg", "BISQUE2"};
-		char *selArgs[]={"-bg", "BISQUE3"};
+		static char *titleArgs[]={"-bg", "GRAY70", "-relief", "flat"};
+		static char *selArgs[]={"-bg", "GRAY60", "-relief", "sunken"};
 
 		tablePtr->tagTable=(Tcl_HashTable *)malloc(sizeof(Tcl_HashTable));
 		Tcl_InitHashTable(tablePtr->tagTable, TCL_STRING_KEYS);
@@ -268,7 +272,7 @@ int TableConfigure(	Tcl_Interp *interp, Table *tablePtr,
 
 		/* Do a configuration */
 		Tk_ConfigureWidget(	interp, tablePtr->tkwin, tagConfig, 
-					2, titleArgs, (char *)tagPtr, 0); 
+					4, titleArgs, (char *)tagPtr, 0); 
 		
 		entryPtr=Tcl_CreateHashEntry(tablePtr->tagTable, "Title", &dummy);
 		Tcl_SetHashValue(entryPtr, (ClientData)tagPtr);
@@ -278,7 +282,7 @@ int TableConfigure(	Tcl_Interp *interp, Table *tablePtr,
 
 		/* Do a configuration */
 		Tk_ConfigureWidget(	interp, tablePtr->tkwin, tagConfig, 
-					2, selArgs, (char *)tagPtr, 0); 
+					4, selArgs, (char *)tagPtr, 0); 
 		
 		entryPtr=Tcl_CreateHashEntry(tablePtr->tagTable, "sel", &dummy);
 		Tcl_SetHashValue(entryPtr, (ClientData)tagPtr);
@@ -343,7 +347,8 @@ int TableConfigure(	Tcl_Interp *interp, Table *tablePtr,
 */
 
 void
-TableAdjustParams(Table *tablePtr)
+TableAdjustParams(tablePtr)
+     Table *tablePtr;
 {
 	int minX, maxX, minY, maxY,i,j;
 	int topLeftCol, topLeftRow, botRightCol, botRightRow;
@@ -723,7 +728,8 @@ TableAdjustParams(Table *tablePtr)
 ** the pointer to the new structure
 */
 tagStruct * 
-TableNewTag( Table *tablePtr )
+TableNewTag(tablePtr)
+     Table *tablePtr;
 {
 	tagStruct *tagPtr;
 
@@ -744,7 +750,9 @@ TableNewTag( Table *tablePtr )
 ** before it is freed up.
 */
 void
-TableCleanupTag(Table *tablePtr, tagStruct *tagPtr)
+TableCleanupTag(tablePtr, tagPtr)
+     Table *tablePtr;
+     tagStruct *tagPtr;
 {
 	/* free the options in the widget */
 	Tk_FreeOptions(tagConfig, (char *)tagPtr, tablePtr->display, 0);

@@ -13,7 +13,8 @@
 ** The main display procedure
 */
 
-void TableDisplay(ClientData clientdata)
+void TableDisplay(clientdata)
+     ClientData clientdata;
 {
 	Table *tablePtr		=(Table *)clientdata;
 	Tk_Window tkwin		=tablePtr->tkwin;
@@ -31,13 +32,13 @@ void TableDisplay(ClientData clientdata)
 	int offsetX, offsetY;
 	XCharStruct bbox, bbox2;
 	XRectangle  clipRect;
-	GC topGc, bottomGc, copyGc;
+	GC topGc, bottomGc, copyGc, lightGc, darkGc;
 	char *value, buf[150];
 	tagStruct *tagPtr;
 	tagStruct *titlePtr;
 	tagStruct *selPtr;
 	Tcl_HashEntry *entryPtr;
-	XPoint rect[6]={{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
+	static XPoint rect[6]={{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
 
 	tablePtr->tableFlags &= ~TBL_REDRAW_PENDING;
 	invalidX=tablePtr->invalidX;
@@ -141,7 +142,7 @@ void TableDisplay(ClientData clientdata)
 			** compatibilty. The TK_RELIEF_FLAT ensures that only
 			** XFillRectangle is called anyway so the speed is the same
 			*/
-			Tk_Fill3DRectangle(	display, window, tagPtr->bgBorder,
+			Tk_Fill3DRectangle(	tablePtr->tkwin, window, tagPtr->bgBorder,
 						x-offsetX, y-offsetY, width, height,
 						tablePtr->borderWidth, TK_RELIEF_FLAT);   
 
@@ -233,7 +234,7 @@ void TableDisplay(ClientData clientdata)
 				/* if this is the selected cell draw the cursor if it's on */
 				if(selectedCell && (tablePtr->tableFlags&TBL_CURSOR_ON))
 				{
-					Tk_Fill3DRectangle(	display, window, tablePtr->cursorBg, 
+					Tk_Fill3DRectangle(	tablePtr->tkwin, window, tablePtr->cursorBg, 
 								x-offsetX+originX+bd+bbox2.width, 
 								y-offsetY+originY-descent-ascent+bd,
 								2, ascent+descent, 0,TK_RELIEF_FLAT); 
@@ -243,34 +244,36 @@ void TableDisplay(ClientData clientdata)
 					XSetClipMask(display, copyGc, None); 
 			}
 			/* Draw the 3d border on the pixmap correctly offset */
+    		/*	if (((Border *)(tagPtr->bgBorder))->lightGC == None ) { */
+			lightGc = Tk_3DBorderGC(  tablePtr->tkwin, tagPtr->bgBorder, TK_3D_LIGHT_GC);
+			darkGc = Tk_3DBorderGC(  tablePtr->tkwin, tagPtr->bgBorder, TK_3D_DARK_GC);
+							
 			switch(tablePtr->drawMode)
 			{
 			case DRAW_MODE_SLOW:
 			case DRAW_MODE_TK_COMPAT:
-				Tk_Draw3DRectangle(	display, window, tagPtr->bgBorder,
+				Tk_Draw3DRectangle(	tablePtr->tkwin, window, tagPtr->bgBorder,
 							x-offsetX, y-offsetY, width, height,
 							tablePtr->borderWidth, tagPtr->relief);     
 				break;
 			case DRAW_MODE_FAST:
-				/* 
-				** choose the GCs to get the best approximation 
-				** to the desired drawing style
-				*/
+
 				switch(tagPtr->relief)
 				{
 				case TK_RELIEF_FLAT:
-					topGc=bottomGc=((Border *)(tagPtr->bgBorder))->bgGC;
+					topGc=bottomGc=copyGc;
 					break;
 				case TK_RELIEF_RAISED:
 				case TK_RELIEF_RIDGE:
-					topGc=((Border *)(tagPtr->bgBorder))->lightGC;
-					bottomGc=((Border *)(tagPtr->bgBorder))->darkGC;
+					topGc=lightGc;
+					bottomGc=darkGc;
 					break;
 				default: /* TK_RELIEF_SUNKEN TK_RELIEF_GROOVE */
-					bottomGc=((Border *)(tagPtr->bgBorder))->lightGC;
-					topGc=((Border *)(tagPtr->bgBorder))->darkGC;
+					bottomGc=lightGc;
+					topGc=darkGc;
 					break;
 				}
+
 				/* draw a line with no width */
 				rect[0].x=x; rect[0].y=y+height-1; rect[1].y=-height+1; rect[2].x=width-1;
 				rect[3].x=x+width-1;rect[3].y=y;rect[4].y=height-1;rect[5].x=-width	+1;
@@ -284,10 +287,11 @@ void TableDisplay(ClientData clientdata)
 
 	/* clear the top left corner */
 	if(tablePtr->titleRows!=0 || tablePtr->titleCols!=0)
- 	  	Tk_Fill3DRectangle(	display, window, titlePtr->bgBorder, 
+ 	  	Tk_Fill3DRectangle(	tablePtr->tkwin, window, titlePtr->bgBorder, 
 					0-offsetX, 0-offsetY, (tablePtr->colStarts)[tablePtr->titleCols], 
 			     		(tablePtr->rowStarts)[tablePtr->titleRows],
-			     		(tablePtr->drawMode==DRAW_MODE_FAST)?1:tablePtr->borderWidth, titlePtr->relief);  
+			     		(tablePtr->drawMode==DRAW_MODE_FAST)?1:tablePtr->borderWidth, 
+					titlePtr->relief);  
 
 
 
@@ -299,7 +303,7 @@ void TableDisplay(ClientData clientdata)
 	if(x+width<invalidX+invalidWidth-1)
 		if(tablePtr->drawMode==DRAW_MODE_SLOW)
 			/* we are using a pixmap, so use TK to clear it */
-			Tk_Fill3DRectangle( 	display, window, tablePtr->defaultTag.bgBorder, 
+			Tk_Fill3DRectangle( 	tablePtr->tkwin, window, tablePtr->defaultTag.bgBorder, 
 						x+width-offsetX, 0, invalidX+invalidWidth-x-width, invalidHeight,
 						0, TK_RELIEF_FLAT);
 		else	
@@ -308,7 +312,7 @@ void TableDisplay(ClientData clientdata)
 	if(y+height<invalidY+invalidHeight-1)
 		if(tablePtr->drawMode==DRAW_MODE_SLOW)
 			/* we are using a pixmap, so use TK to clear it */
-			Tk_Fill3DRectangle( 	display, window, tablePtr->defaultTag.bgBorder, 
+			Tk_Fill3DRectangle( 	tablePtr->tkwin, window, tablePtr->defaultTag.bgBorder, 
 						0, y+height-offsetY, invalidWidth, invalidY+invalidHeight-y-height,
 						0, TK_RELIEF_FLAT);
 		else
@@ -337,8 +341,14 @@ void TableDisplay(ClientData clientdata)
 */
 
 void 
-TableCellCoords(Table *tablePtr, int row, int col,
-		int *x, int *y, int *width, int *height)
+TableCellCoords(tablePtr, row, col, x, y, width, height)
+     Table *tablePtr;
+     int row;
+     int col;
+     int *x;
+     int *y;
+     int *width;
+     int *height;
 {
 	int i, j, w=0, h=0;
 
@@ -363,7 +373,12 @@ TableCellCoords(Table *tablePtr, int row, int col,
 ** Cell that contains that point
 */
 void
-TableWhatCell(Table *tablePtr, int x, int y, int *row, int *col)
+TableWhatCell(tablePtr, x, y, row, col)
+     Table *tablePtr;
+     int x;
+     int y;
+     int *row;
+     int *col;
 {
 int i;
 
@@ -395,7 +410,9 @@ for(i=1;y>=(tablePtr->rowStarts)[i];i++); *row=i-1;
 */
 
 void
-TableMergeTag(tagStruct *baseTag, tagStruct *addTag)
+TableMergeTag(baseTag, addTag)
+     tagStruct *baseTag;
+     tagStruct *addTag;
 {
 	if(baseTag->foreground==NULL)
 		baseTag->foreground=addTag->foreground;
@@ -414,7 +431,9 @@ TableMergeTag(tagStruct *baseTag, tagStruct *addTag)
 /* Gets a GC correponding to the tag structure passed */
 
 GC
-TableGetGc(Table *tablePtr, tagStruct *tagPtr)
+TableGetGc(tablePtr, tagPtr)
+     Table *tablePtr;
+     tagStruct *tagPtr;
 {
 
 	XGCValues gcValues;

@@ -1,6 +1,5 @@
 version 0.1 --> version 0.2
 ---------------------------
-
 Changed the tag code to apply the effects of multiple tags
 to a cell. 
 
@@ -19,3 +18,23 @@ appear twice when the cursor was moved
 
 Thanks particularly to Lou Salkind for pointing out some of the 
 above and suggesting fixes.
+
+
+version 0.2 --> version 0.3
+---------------------------
+Upgraded to tk4.0 (Paul Friberg)
+
+
+version 0.3 --> version 0.4
+---------------------------
+tk4.1 and tk4.0 compatability  (John.Ellson@att.com)
+   - dynamically loadable library (SunOS 4.1.3 only so far)
+   - changed BISQUE to GRAY
+   - statically included TableInit.tcl into dynamic library
+   - fixed various compiler warnings
+       (now none with tk4.1, but still one with tk4.0)
+   - upgraded tkAppInit.c
+   - changed a few names:     library:  libtktable.so.0.4
+			  entry point:  Tktable_Init
+		        extended wish:  tablewish
+

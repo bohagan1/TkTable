@@ -13,10 +13,9 @@
 */
 
 #ifndef _TABLE_INCL
-	#include <tk.h>
-	#define _TABLE_INCL
-	#include "malloc.h"
-#endif
+#include <tk.h>
+#define _TABLE_INCL
+#include "malloc.h"
 
 #define max(A,B) ((A)>(B))?(A):(B)
 #define min(A,B) ((A)>(B))?(B):(A)
@@ -166,38 +165,44 @@ typedef struct  {
 extern Tk_ConfigSpec TableConfig[];
 
 /* Forward Function Definitions */
-
-Tcl_CmdProc		TableCmd;
-Tk_EventProc 		TableEventProc;
-Tcl_CmdProc		TableWidgetCmd;
-Tk_IdleProc  		TableDisplay;
-Tk_FreeProc  		TableDestroy;
-Tcl_VarTraceProc	TableVarProc;
-void TableDimensionCalc(Table *);
-void TableInvalidate(Table *, int, int, int, int, int);
-void TableCellCoords(Table *, int, int, int *, int *, int *, int *);
-void TableGetRange(Table *, int, int, int, int,	int *, int *, int *, int *);
-int parse_command(Tcl_Interp *, command_struct *,char *);
-void TablePixelCalc(Table *tablePtr);
-void TableAdjustParams(Table *);
-void TableTagConfig(Table *, tagStruct *);
-void TableWhatCell(Table *, int , int , int *, int *);
-tagStruct * TableNewTag( Table *);
-int TableTagCommand(Table *, int, char **);
-void TableCleanupTag(Table *, tagStruct *);
-void TableCursorEvent(ClientData);
-void TableMakeArrayIndex(Table *, int, int, char *);
-int TableParseArrayIndex(Table *, int *, int *, char *);
-int TableParseStringPosn(Table *, char *, int *);
-void TableBufLengthen(Table *, int);
-void TableGetSelection(Table *);
-void TableConfigCursor(Table *tablePtr);
-void TableFlashConfigure(Table *, int );
-void TableFlashEvent(ClientData);
-void TableAddFlash(Table *, int , int );
-void TableMergeTag(tagStruct *, tagStruct *);
-GC TableGetGc(Table *, tagStruct *);
+#ifdef __STDC__
+#define PL_(x) x
+#else
+#define PL_(x) ( )
+#endif /* __STDC__ */
+ 
+extern int TableWidgetCmd PL_(( ClientData clientdata, Tcl_Interp *interp, int argc, char *argv[] ));
+extern int TableTagCommand PL_(( Table *tablePtr, int argc, char *argv[] ));
+extern int parse_command PL_(( Tcl_Interp *interp, command_struct *commands, char *arg ));
+extern void TableGetSelection PL_(( Table *tablePtr ));
+extern void TableMakeArrayIndex PL_(( Table *tablePtr, int row, int col, char *buf ));
+extern int TableParseArrayIndex PL_(( Table *tablePtr, int *row, int *col, char *index ));
+extern int TableParseStringPosn PL_(( Table *tablePtr, char *arg, int *posn ));
+extern void TableBufLengthen PL_(( Table *tablePtr, int len ));
+extern int TableConfigure PL_(( Tcl_Interp *interp, Table *tablePtr, int argc, char *argv[], int flags ));
+extern void TableAdjustParams PL_(( Table *tablePtr ));
+extern tagStruct * TableNewTag PL_(( Table *tablePtr ));
+extern void TableCleanupTag PL_(( Table *tablePtr, tagStruct *tagPtr ));
+extern void TableDisplay PL_(( ClientData clientdata ));
+extern void TableCellCoords PL_(( Table *tablePtr, int row, int col, int *x, int *y, int *width, int *height ));
+extern void TableWhatCell PL_(( Table *tablePtr, int x, int y, int *row, int *col ));
+extern void TableMergeTag PL_(( tagStruct *baseTag, tagStruct *addTag ));
+extern GC TableGetGc PL_(( Table *tablePtr, tagStruct *tagPtr ));
+extern void TableEventProc PL_(( ClientData clientdata, XEvent *eventPtr ));
+extern void TableInvalidate PL_(( Table *tablePtr, int x, int y, int width, int height, int force ));
+extern void TableDestroy PL_(( ClientData clientdata ));
+extern char * TableVarProc PL_(( ClientData clientdata, Tcl_Interp *interp, char *name, char *index, int flags ));
+extern void TableCursorEvent PL_(( ClientData clientdata ));
+extern void TableConfigCursor PL_(( Table *tablePtr ));
+extern void TableFlashConfigure PL_(( Table *tablePtr, int startStop ));
+extern void TableFlashEvent PL_(( ClientData clientdata ));
+extern void TableAddFlash PL_(( Table *tablePtr, int row, int col ));
+extern int Table_Init PL_(( Tcl_Interp *interp ));
+extern int TableCmd PL_(( ClientData clientdata, Tcl_Interp *interp, int argc, char *argv[] ));
+ 
+#undef PL_
 
 
 extern Tk_ConfigSpec tagConfig[];
 
+#endif

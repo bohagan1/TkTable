@@ -4,10 +4,14 @@
  * All rights reserved.
  * See the file COPYRIGHT for the copyright notes.
  *
-*/
+ */
+
+/*
+ * README updated for tkTable.0.4 by John.Ellson@att.com
+ */
 
 *******************************
-The Tk Table Widget Version 0.1
+The Tk Table Widget Version 0.4
 *******************************
 
 Introduction
@@ -37,10 +41,10 @@ Building the widget
 
 1. Uncompress and unpack the distribution
 
-	gzip -d tkTable.0.1.beta.tar.gz
-	tar -xf tkTable.0.1.beta.tar
+	gzip -d tkTable-0.4.tar.gz
+	tar -xf tkTable-0.4.tar
 
-   This will create a subdirectory tkTable.0.1 with all the files in it.
+   This will create a subdirectory tkTable-0.4 with all the files in it.
 
 2. Hack the Makefile
 
@@ -50,15 +54,12 @@ Building the widget
    favourite c compiler. I used acc, but I have also successfully compiled
    with gcc.
 
-   If you are using extended tcl/tk, add the correct libraries to the link
-   path.
-
 3. Hack tkAppInit
 
   In the distribution, I have put a tkAppInit.c file. All this is is the
-  original tkAppInit.c from tk3.6 with the line 
+  original tkAppInit.c from tk4.1 with the line 
 
-	if (Table_Init(interp)==TCL_ERROR){
+	if (Tktable_Init(interp)==TCL_ERROR){
 		return TCL_ERROR;
 	}
 
@@ -70,28 +71,20 @@ Building the widget
   Note - If you are using a dynamically loading tcl/tk, you can build a
          shared version of Table instead and you don't need the tkAppInit.c 
          file. Add the dynamic loading comamand to one of your initialization
-         scripts. Again, in the command, just call Table_Init().
+         scripts.   The load command should look something like:
+	     load /usr/local/lib/libtktable.so.0.4 tktable
 
-4. Install the key table bindings
+4. Use it
 
-   The Table widget is set up to read it's binding file from the tk_library
-   path variable. If you dont know where this points, start a wish shell
-   and type
-
-	set tk_library
-
-   Put the file TableInit.tcl into that directory
-
-5. Use it
-
-   Start a wish interpreter wish and use the table.
+   Start a regular wish interpreter, load the library,  and use the table.
+   Or use the "tablewish" interpreter that has tktable built in.
    There is a very short test script called test.tcl which you can source.
    This will create a table, fill an array and attach it to the table. It will
    start pretty small to demonstrate the scrollbars and the fixed titles.
    One of the cells will change a few moments later and you will see the 
    cell flash.
 
-6. Read the manpage
+5. Read the manpage
 
    There is a manpage that briefly describes the commands the widget will
    understand and respond to. The best way is just to try them out.
@@ -137,3 +130,8 @@ Comments, bugs etc.
   in that short piece of Tcl.
 
 - If you have any general comments, I'd like to hear them too.
+
+(tkTable has been worked on more recently by paulf@lamont.ldgo.columbia.edu
+  and john.ellson@att.com.  We would also be a little interested
+  in bug reports, and very interested in any bug fixes that you might
+  produce.)

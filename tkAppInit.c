@@ -5,43 +5,75 @@
  *	use in wish and similar Tk-based applications.
  *
  * Copyright (c) 1993 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1994 Sun Microsystems, Inc.
  *
- * Permission is hereby granted, without written agreement and without
- * license or royalty fees, to use, copy, modify, and distribute this
- * software and its documentation for any purpose, provided that the
- * above copyright notice and the following two paragraphs appear in
- * all copies of this software.
- * 
- * IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
- * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
- * OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
- * CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
- * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
- * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ * See the file "license.terms" for information on usage and redistribution
+ * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
 #ifndef lint
-static char rcsid[] = "$Header: /user6/ouster/wish/RCS/tkAppInit.c,v 1.8 93/08/26 14:38:24 ouster Exp $ SPRITE (Berkeley)";
+static char sccsid[] = "@(#) tkAppInit.c 1.17 95/09/08 17:05:44";
 #endif /* not lint */
 
 #include "tk.h"
 
 /*
+ * The following variable is a special hack that is needed in order for
+ * Sun shared libraries to be used for Tcl.
+ */
+
+EXTERN int matherr();
+int (*tclDummyMathPtr)() = matherr;
+
+#ifdef TK_TEST
+EXTERN int		TkTest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+#endif /* TK_TEST */
+
+#ifdef TK_USE_MAIN
+
+/*
  * The following variable is a special hack that allows applications
- * to be linked using the procedure "main" from the Tk library.  The
+ * to be linked using the procedure "main" from the Tk3.x library.  The
  * variable generates a reference to "main", which causes main to
  * be brought in from the library (and all of Tk and Tcl with it).
  */
 
-EXTERN int main _ANSI_ARGS_((int     argc,
-                             char  **argv));
-int (*tclDummyMainPtr)() = (int (*)()) main;
+EXTERN int main();
+int (*tclDummyMainPtr)() = main;
 
+#else
+/*
+ *----------------------------------------------------------------------
+ *
+ * main --
+ *
+ *	This is the main program for the application.
+ *
+ * Results:
+ *	None: Tk_Main never returns here, so this procedure never
+ *	returns either.
+ *
+ * Side effects:
+ *	Whatever the application does.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+#ifdef __cplusplus
+main (int    argc,		/* Number of command-line arguments. */
+      char **argv)		/* Values of command-line arguments. */
+#else
+main(argc, argv)
+    int argc;			/* Number of command-line arguments. */
+    char **argv;		/* Values of command-line arguments. */
+#endif
+{
+    Tk_Main(argc, argv, Tcl_AppInit);
+    return 0;			/* Needed only to prevent compiler warning. */
+}
+
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -63,12 +95,25 @@ int (*tclDummyMainPtr)() = (int (*)()) main;
  */
 
 int
+#ifdef __cplusplus
+Tcl_AppInit (Tcl_Interp *interp)/* Interpreter for application. */
+#else
 Tcl_AppInit(interp)
     Tcl_Interp *interp;		/* Interpreter for application. */
+#endif
 {
-    Tk_Window main;
+    if (Tcl_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    if (Tk_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+#ifdef TK_TEST
+    if (TkTest_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+#endif /* TK_TEST */
 
-    main = Tk_MainWindow(interp);
 
     /*
      * Call the init procedures for included packages.  Each call should
@@ -80,16 +125,8 @@ Tcl_AppInit(interp)
      *
      * where "Mod" is the name of the module.
      */
-
-    if (Tcl_Init(interp) == TCL_ERROR) {
-	return TCL_ERROR;
-    }
-    if (Tk_Init(interp) == TCL_ERROR) {
-	return TCL_ERROR;
-    }
-    
-    if(Table_Init(interp) == TCL_ERROR) {
-       return TCL_ERROR ;
+     if (Tktable_Init(interp)==TCL_ERROR){
+         return TCL_ERROR;
      }
 
     /*
@@ -104,7 +141,6 @@ Tcl_AppInit(interp)
      * then no user-specific startup file will be run under any conditions.
      */
 
-    tcl_RcFileName = "~/.wishrc";
+    Tcl_SetVar(interp, "tcl_rcFileName", "~/.wishrc", TCL_GLOBAL_ONLY);
     return TCL_OK;
 }
-
