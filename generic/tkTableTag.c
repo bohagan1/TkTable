@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableTag.c,v 1.7 2001/06/24 23:14:22 hobbs Exp $
+ * RCS: @(#) $Id: tkTableTag.c,v 1.8 2001/06/24 23:45:24 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -1160,6 +1160,10 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	    tagPtr  = (TableTag *) Tcl_GetHashValue(entryPtr);
 	    tagPrio = TableTagGetPriority(tablePtr, tagPtr);
 	    keybuf  = tablePtr->tagPrioNames[tagPrio];
+	    /*
+	     * In the RAISE case, the priority is one higher (-1) because
+	     * we want the named tag to move above the other in priority.
+	     */
 	    if (objc == 5) {
 		tagname  = Tcl_GetString(objv[4]);
 		entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
@@ -1180,7 +1184,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		    value = tablePtr->tagPrioSize - 1;
 		} else {
 		    /*
-		     * Raise this tag's priority to the bottom.
+		     * Raise this tag's priority to the top.
 		     */
 		    value = -1;
 		}
