@@ -5,12 +5,12 @@
 # in this directory.
 #
 # Copyright (c) 1998-2000 Ajuba Solutions
-# Copyright (c) 2000 Jeffrey Hobbs
+# Copyright (c) 2000-2002 Jeffrey Hobbs
 #
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # 
-# RCS: @(#) $Id: all.tcl,v 1.4 1999/04/21 21:53:29 rjohnson Exp $
+# RCS: @(#) $Id: all.tcl,v 1.1 2000/10/19 18:29:28 hobbs Exp $
 
 package require tcltest
 namespace import -force ::tcltest::*
@@ -21,41 +21,38 @@ set ::tcltest::testsDirectory [file dir [info script]]
 # We need to ensure that the testsDirectory is absolute
 catch {::tcltest::normalizePath ::tcltest::testsDirectory}
 
-puts $::tcltest::outputChannel \
-	"Tk $tk_patchLevel tests running in interp:  [info nameofexecutable]"
-puts $::tcltest::outputChannel \
-	"Tests running in working dir:  $::tcltest::testsDirectory"
+set chan $::tcltest::outputChannel
+
+puts $chan "Tk $tk_patchLevel tests running in interp: [info nameofexecutable]"
+puts $chan "Tests running with pwd:           [pwd]"
+puts $chan "Tests running in working dir:     $::tcltest::testsDirectory"
 if {[llength $::tcltest::skip] > 0} {
-    puts $::tcltest::outputChannel \
-	    "Skipping tests that match:  $::tcltest::skip"
+    puts $chan "Skipping tests that match:            $::tcltest::skip"
 }
 if {[llength $::tcltest::match] > 0} {
-    puts $::tcltest::outputChannel \
-	    "Only running tests that match:  $::tcltest::match"
+    puts $chan "Only running tests that match:        $::tcltest::match"
 }
 
 if {[llength $::tcltest::skipFiles] > 0} {
-    puts $::tcltest::outputChannel \
-	    "Skipping test files that match:  $::tcltest::skipFiles"
+    puts $chan "Skipping test files that match:       $::tcltest::skipFiles"
 }
 if {[llength $::tcltest::matchFiles] > 0} {
-    puts $::tcltest::outputChannel \
-	    "Only sourcing test files that match:  $::tcltest::matchFiles"
+    puts $chan "Only sourcing test files that match:  $::tcltest::matchFiles"
 }
 
 set timeCmd {clock format [clock seconds]}
-puts $::tcltest::outputChannel "Tests began at [eval $timeCmd]"
+puts $chan "Tests began at [eval $timeCmd]"
 
 # source each of the specified tests
 foreach file [lsort [::tcltest::getMatchingFiles]] {
     set tail [file tail $file]
-    puts $::tcltest::outputChannel $tail
+    puts $chan $tail
     if {[catch {source $file} msg]} {
-	puts $::tcltest::outputChannel $msg
+	puts $chan $msg
     }
 }
 
 # cleanup
-puts $::tcltest::outputChannel "\nTests ended at [eval $timeCmd]"
+puts $chan "\nTests ended at [eval $timeCmd]"
 ::tcltest::cleanupTests 1
 exit
