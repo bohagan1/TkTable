@@ -1,8 +1,37 @@
+2002-10-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	**** 2.8 TAGGED FOR RELEASE ****
+
+	* Makefile.in: updated dist target to get changed fileset.
+
+	* generic/tkTableEdit.c (Table_EditCmd): Ensure that embedded
+	widgets being moved offscreen get unmapped. [Bug #551325]
+
+	* generic/tkTableCell.c (TableAtBorder): refine border detection
+	in the midst of spanned cells. [Patch #544117] (duxbury)
+
+	* doc/tkTable.n:
+	* doc/tkTable.html:
+	* tests/tkTable.test:
+	* generic/tkTable.c: Add global -justify option. [Bug #623557]
+
+	* generic/tkTableTag.c: more CONST84 casting fixes.
+	Allowing setting of tag relief to "". [Bug #233619]
+
+	* generic/tkTable.h:
+	* generic/tkTableUtil.c: 
+	* generic/tkTableWin.c: more CONST84 casting fixes.
+
+	* library/tkTable.tcl: Add <FocusOut> as a default auto-commit
+	event. [Bug #611132]
+	(::tk::table::Motion): abort "extended" arm if the anchor cell
+	isn't defined. [Bug #604470]
+
 2002-10-15  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tclconfig/tcl.m4:
 	* configure:
-	* configure.in: move the CFLAGS definition into TEA_ENABLE_SHARED
+	* configure.in: move the CFLAGS definition into TEA_MAKE_LIB
 	and make it pick up the env CFLAGS at configure time.
 
 2002-10-15  Andreas Kupries  <andreask@pliers.activestate.com>
@@ -207,7 +236,7 @@
 
 2001-06-30  Jeff Hobbs  <jeffh@ActiveState.com>
 
-	2.7 RELEASE
+	**** 2.7 RELEASE ****
 
 	* generic/tkTable.h: added STREQ #def to replace strcmp(a,b) == 0
 	* generic/tkTable.c:

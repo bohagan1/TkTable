@@ -11,7 +11,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: Makefile.in,v 1.7 2002/09/26 01:47:20 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.8 2002/09/28 00:15:36 hobbs Exp $
 
 #========================================================================
 # Edit the following few lines when writing a new extension
@@ -425,7 +425,7 @@ dist-clean:
 
 dist: dist-clean
 	mkdir -p $(DIST_DIR)
-	cp -p $(srcdir)/README.txt $(srcdir)/license.txt $(srcdir)/ChangeLog \
+	cp -p $(srcdir)/README.* $(srcdir)/*.txt $(srcdir)/ChangeLog \
 		$(srcdir)/Makefile.in $(srcdir)/aclocal.m4 \
 		$(srcdir)/configure $(srcdir)/configure.in  $(DIST_DIR)/
 	chmod 664 $(DIST_DIR)/Makefile.in $(DIST_DIR)/aclocal.m4
@@ -438,12 +438,11 @@ dist: dist-clean
 	chmod +x $(DIST_DIR)/tclconfig/install-sh
 
 	mkdir $(DIST_DIR)/demos
-	cp -p $(srcdir)/demos/*.tcl $(srcdir)/demos/*.txt \
-		$(srcdir)/demos/*.xbm $(DIST_DIR)/demos/
+	cp -p $(srcdir)/demos/*.tcl $(srcdir)/demos/*.py \
+		$(srcdir)/demos/*.gif $(DIST_DIR)/demos/
 
 	mkdir $(DIST_DIR)/doc
-	cp -p $(srcdir)/doc/*.html $(srcdir)/doc/man.macros \
-		$(srcdir)/doc/*.man $(DIST_DIR)/doc/
+	cp -p $(srcdir)/doc/*.html $(srcdir)/doc/*.n $(DIST_DIR)/doc/
 
 	mkdir $(DIST_DIR)/generic
 	cp -p $(srcdir)/generic/*.c $(srcdir)/generic/*.h $(DIST_DIR)/generic/
@@ -454,8 +453,11 @@ dist: dist-clean
 	mkdir $(DIST_DIR)/tests
 	cp -p $(srcdir)/tests/*.tcl $(srcdir)/tests/*.test $(DIST_DIR)/tests/
 
+	mkdir $(DIST_DIR)/unix
+	cp -p $(srcdir)/unix/tktable.spec $(DIST_DIR)/unix/
+
 	mkdir $(DIST_DIR)/win
-	cp -p $(srcdir)/win/*.c $(srcdir)/win/makefile.vc $(DIST_DIR)/win/
+	cp -p $(srcdir)/win/makefile.vc $(DIST_DIR)/win/
 
 	mkdir $(DIST_DIR)/mac
 	cp -p $(srcdir)/mac/*.xml $(srcdir)/mac/*.h $(srcdir)/mac/*.r \
