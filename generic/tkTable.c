@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.14 2001/06/23 09:21:21 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.15 2001/07/01 01:33:17 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -902,6 +902,7 @@ TableDestroy(ClientData clientdata)
     register Table *tablePtr = (Table *) clientdata;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
+    char *value;
 
     /* These may be repetitive from DestroyNotify, but it doesn't hurt */
     /* cancel any pending update or timer */
@@ -930,6 +931,11 @@ TableDestroy(ClientData clientdata)
     if (tablePtr->activeBuf != NULL) ckfree(tablePtr->activeBuf);
 
     /* delete the cache, row, column and cell style hash tables */
+    for (entryPtr = Tcl_FirstHashEntry(tablePtr->cache, &search);
+	 entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
+	value = (char *) Tcl_GetHashValue(entryPtr);
+	if (value != NULL) ckfree(value);
+    }
     Tcl_DeleteHashTable(tablePtr->cache);
     ckfree((char *) (tablePtr->cache));
     Tcl_DeleteHashTable(tablePtr->rowStyles);
