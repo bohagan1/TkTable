@@ -2,6 +2,9 @@
 ##
 ## updated 1 June 1999, jeff.hobbs@acm.org
 ##
+## Any information in here may be out of date.  For up-to-date info see:
+##	http://tktable.sourceforge.net/
+##
 
 These are recommendations, not all of the same priority, and not
 all necessarily will be implemented.  If you see something you
@@ -55,8 +58,6 @@ loadable library.  FIXED with hack that creates ExitHandler for each
 instance of table to make sure it is destroyed before Tcl exits.
 The finalization code is fixed in Tk8.1final and Tk8.0.5+.
 
-A span that cover the last (end) cell doesn't draw correctly.
-
 MINOR:
 
 Windows: With "-colstretchmode last", the scrollbar behaves oddly in
@@ -68,3 +69,6 @@ Windows: With "-colstretchmode last", the scrollbar behaves oddly in
 
 Windows: when moving windows in "Show Window While Dragging" mode,
 	the column titles don't refresh properly.
+
+Windows: When using bitmaps in cells, they occasionally don't redraw
+	 correctly.  The work-around is to use -drawmode slow.
