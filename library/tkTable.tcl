@@ -4,7 +4,7 @@
 # This file defines the default bindings for Tk table widgets
 # and provides procedures that help in implementing those bindings.
 #
-# RCS: @(#) $Id: tkTable.tcl,v 1.10 2003/04/11 01:20:59 hobbs Exp $
+# RCS: @(#) $Id: tkTable.tcl,v 1.11 2004/02/13 22:41:57 hobbs Exp $
 
 #--------------------------------------------------------------------------
 # ::tk::table::Priv elements used in this file:
@@ -107,8 +107,8 @@ bind Table <Shift-Up>		{::tk::table::ExtendSelect %W -1  0}
 bind Table <Shift-Down>		{::tk::table::ExtendSelect %W  1  0}
 bind Table <Shift-Left>		{::tk::table::ExtendSelect %W  0 -1}
 bind Table <Shift-Right>	{::tk::table::ExtendSelect %W  0  1}
-bind Table <Prior>		{%W yview scroll -1 pages; %W activate @0,0}
-bind Table <Next>		{%W yview scroll  1 pages; %W activate @0,0}
+bind Table <Prior>		{%W yview scroll -1 pages; %W activate topleft}
+bind Table <Next>		{%W yview scroll  1 pages; %W activate topleft}
 bind Table <Control-Prior>	{%W xview scroll -1 pages}
 bind Table <Control-Next>	{%W xview scroll  1 pages}
 bind Table <Home>		{%W see origin}

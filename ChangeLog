@@ -2,6 +2,8 @@
 
 	* library/tkTable.tcl (::tk::table::Button1): account for what
 	resizeborders are set when selecting cell [Bug 876320] (ferenc) 
+	(<Prior> <Next>): activate topleft, not @0,0 (accounts for title
+	rows) [Bug 879347] (ferenc)
 
 2003-12-10  Jeff Hobbs  <jeffh@ActiveState.com>
 
