@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableEdit.c,v 1.4 2001/06/22 23:15:43 hobbs Exp $
+ * RCS: @(#) $Id: tkTableEdit.c,v 1.5 2002/03/13 20:15:20 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -232,6 +232,15 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 		maxkey += count;
 		*dimPtr += count;
 	    }
+	    /*
+	     * We need to call TableAdjustParams before TableModifyRC to
+	     * ensure that side effect code like var traces that might get
+	     * called will access the correct new dimensions.
+	     */
+	    if (*dimPtr < 1) {
+		*dimPtr = 1;
+	    }
+	    TableAdjustParams(tablePtr);
 	    for (i = maxkey; i >= first; i--) {
 		/* move row/col style && width/height here */
 		TableModifyRC(tablePtr, doRows, flags, tagTblPtr, dimTblPtr,
@@ -272,6 +281,15 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 	    if (!(flags & HOLD_DIMS)) {
 		*dimPtr -= count;
 	    }
+	    /*
+	     * We need to call TableAdjustParams before TableModifyRC to
+	     * ensure that side effect code like var traces that might get
+	     * called will access the correct new dimensions.
+	     */
+	    if (*dimPtr < 1) {
+		*dimPtr = 1;
+	    }
+	    TableAdjustParams(tablePtr);
 	    for (i = first; i <= maxkey; i++) {
 		TableModifyRC(tablePtr, doRows, flags, tagTblPtr, dimTblPtr,
 			offset, i, i+count, lo, hi, ((i+count) > maxkey));
@@ -288,9 +306,11 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
 	 * Make sure that the modified dimension is actually legal
 	 * after removing all that stuff.
 	 */
-	*dimPtr = MAX(1, *dimPtr);
+	if (*dimPtr < 1) {
+	    *dimPtr = 1;
+	    TableAdjustParams(tablePtr);
+	}
 
-	TableAdjustParams(tablePtr);
 	/* change the geometry */
 	TableGeometryRequest(tablePtr);
 	/* FIX:
