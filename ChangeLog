@@ -1,5 +1,8 @@
 2003-01-30  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* Makefile.in: remove use of nested $(PACKAGE) to enable building
+	on older, cruftier make versions
+
 	* doc/tkTable.n:        add -ellipsis tag /global option which
 	* tests/tkTable.test:   takes a char string (ie: "...") to display
 	* generic/tkTableTag.c: as an ellipsis.  These will only be shown
