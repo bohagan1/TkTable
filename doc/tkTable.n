@@ -2,7 +2,7 @@
 '\" The definitions below are for supplemental macros used in Tcl/Tk
 '\" manual entries.
 '\"
-'\" RCS: @(#) $Id: tkTable.n,v 1.8 2003/01/30 21:01:31 hobbs Exp $
+'\" RCS: @(#) $Id: tkTable.n,v 1.9 2003/07/16 20:50:56 hobbs Exp $
 '\"
 '\" .AP type name in/out ?indent?
 '\"	Start paragraph describing an argument to a library procedure.
@@ -233,7 +233,7 @@ Database Class:	\\fB\\$3\\fR
 .de UL
 \\$1\l'|0\(ul'\\$2
 ..
-.TH table n 2.7 Tk "Tk Table Extension"
+.TH table n 2.8 Tk "Tk Table Extension"
 .HS table tk
 .BS
 .SH NAME
@@ -511,7 +511,9 @@ Specifies the default wrap value for tags.  Defaults to 0.
 .SH DESCRIPTION
 .PP
 The \fBtable\fR command creates a 2\-dimensional grid of cells.  The table
-can use a Tcl array variable or Tcl command for data storage and retrieval.
+can use a Tcl array variable or Tcl command for data storage and retrieval,
+as well as optionally cache data in memory for speed.  One of these data
+sources \fImust\fR be configured before any data is retained by the table.
 The widget has an active cell, the contents of which can be edited (when
 the state is normal).  The widget supports a default style for the cells
 and also multiple \fItags\fR, which can be used to change the style of a
@@ -601,10 +603,9 @@ the above forms.
 A tag is a textual string that is associated with zero or more rows,
 columns or cells in a table.  Tags may contain arbitrary characters, but it
 is probably best to avoid using names which look like indices to reduce
-coding confusion.  There may be any number of tags in a table, but each
-row, column or cell can only have one tag associated with it at a time.
-There are several permanent tags in each table that can be configured by
-the user and will determine the attributes for special cells:
+coding confusion.  A tag can apply to an entire row or column, or just a
+single cell.  There are several permanent tags in each table that can be
+configured by the user and will determine the attributes for special cells:
 .RS
 .TP 10
 \fBactive\fR
