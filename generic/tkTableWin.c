@@ -4,11 +4,12 @@
  *	This module implements embedded windows for table widgets.
  *	Much of this code is adapted from tkGrid.c and tkTextWind.c.
  *
- * Copyright (c) 1998 Jeffrey Hobbs
+ * Copyright (c) 1998-2000 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
+ * RCS: @(#) $Id:  $
  */
 
 #include "tkTable.h"
@@ -77,8 +78,9 @@ static Tk_ConfigSpec winConfigSpecs[] = {
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 0, 0},
-  {TK_CONFIG_PIXELS, "-borderwidth", "borderWidth", "BorderWidth", "-1",
-   Tk_Offset(TableEmbWindow, bd), TK_CONFIG_DONT_SET_DEFAULT },
+  {TK_CONFIG_STRING, "-borderwidth", "borderWidth", "BorderWidth", "",
+   Tk_Offset(TableEmbWindow, borderStr),
+   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_STRING, "-create", (char *)NULL, (char *)NULL, (char *)NULL,
    Tk_Offset(TableEmbWindow, create),
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
@@ -195,17 +197,16 @@ static TableEmbWindow *
 TableNewEmbWindow(Table *tablePtr)
 {
     TableEmbWindow *ewPtr = (TableEmbWindow *) ckalloc(sizeof(TableEmbWindow));
+    memset((VOID *) ewPtr, 0, sizeof(TableEmbWindow));
+
+    /*
+     * Set the values that aren't 0/NULL by default
+     */
     ewPtr->tablePtr	= tablePtr;
-    ewPtr->tkwin	= NULL;
-    ewPtr->hPtr		= NULL;
-    ewPtr->bg		= NULL;
-    ewPtr->bd		= -1;
-    ewPtr->create	= NULL;
     ewPtr->relief	= -1;
-    ewPtr->sticky	= 0;
-    ewPtr->padX		= 0;
-    ewPtr->padY		= 0;
-    ewPtr->displayed	= 0;
+    ewPtr->padX		= -1;
+    ewPtr->padY		= -1;
+
     return ewPtr;
 }
 
@@ -226,7 +227,6 @@ TableNewEmbWindow(Table *tablePtr)
 static void
 EmbWinCleanup(Table *tablePtr, TableEmbWindow *ewPtr)
 {
-    /* free the options in the widget */
     Tk_FreeOptions(winConfigSpecs, (char *) ewPtr, tablePtr->display, 0);
 }
 
@@ -255,15 +255,26 @@ EmbWinDisplay(Table *tablePtr, Drawable window, TableEmbWindow *ewPtr,
     int diffx=0;	/* Cavity width - slave width. */
     int diffy=0;	/* Cavity hight - slave height. */
     int sticky = ewPtr->sticky;
+    int padx, pady;
 
-    if (ewPtr->bg)		tagPtr->bg = ewPtr->bg;
-    if (ewPtr->relief != -1)	tagPtr->relief = ewPtr->relief;
-    if (ewPtr->bd >= 0)		tagPtr->bd = ewPtr->bd;
+    if (ewPtr->bg)		tagPtr->bg	= ewPtr->bg;
+    if (ewPtr->relief != -1)	tagPtr->relief	= ewPtr->relief;
+    if (ewPtr->borders) {
+	tagPtr->borderStr	= ewPtr->borderStr;
+	tagPtr->borders		= ewPtr->borders;
+	tagPtr->bd[0]		= ewPtr->bd[0];
+	tagPtr->bd[1]		= ewPtr->bd[1];
+	tagPtr->bd[2]		= ewPtr->bd[2];
+	tagPtr->bd[3]		= ewPtr->bd[3];
+    }
 
-    x += ewPtr->padX/2;
-    width -= ewPtr->padX;
-    y += ewPtr->padY/2;
-    height -= ewPtr->padY;
+    padx = (ewPtr->padX < 0) ? tablePtr->padX : ewPtr->padX;
+    pady = (ewPtr->padY < 0) ? tablePtr->padY : ewPtr->padY;
+
+    x		+= padx;
+    width	-= padx*2;
+    y		+= pady;
+    height	-= pady*2;
 
     if (width > Tk_ReqWidth(ewPtr->tkwin)) {
 	diffx = width - Tk_ReqWidth(ewPtr->tkwin);
@@ -286,8 +297,10 @@ EmbWinDisplay(Table *tablePtr, Drawable window, TableEmbWindow *ewPtr,
 	y += (sticky&STICK_SOUTH) ? diffy : diffy/2;
     }
 
-    /* If we fall below a specific minimum width/height requirement,
-   * we just unmap the window */
+    /*
+     * If we fall below a specific minimum width/height requirement,
+     * we just unmap the window
+     */
     if (width < 4 || height < 4) {
 	if (ewPtr->displayed) {
 	    EmbWinUnmapNow(ewTkwin, tkwin);
@@ -357,7 +370,9 @@ EmbWinUnmap(Table *tablePtr, int rlo, int rhi, int clo, int chi)
     int row, col, trow, tcol;
     char buf[INDEX_BUFSIZE];
 
-    /* we need to deal with things user coords */
+    /*
+     * Transform numbers from real to user user coords
+     */
     rlo += tablePtr->rowOffset;
     rhi += tablePtr->rowOffset;
     clo += tablePtr->colOffset;
@@ -406,7 +421,9 @@ EmbWinRequestProc(clientData, tkwin)
 {
     register TableEmbWindow *ewPtr = (TableEmbWindow *) clientData;
 
-  /* resize depends on the sticky */
+    /*
+     * Resize depends on the sticky
+     */
     if (ewPtr->displayed && ewPtr->hPtr != NULL) {
 	Table *tablePtr = ewPtr->tablePtr;
 	int row, col, x, y, width, height;
@@ -593,6 +610,7 @@ EmbWinConfigure(tablePtr, ewPtr, objc, objv)
      int objc;			/* Number of objs in objv. */
      Tcl_Obj *CONST objv[];	/* Obj type options. */
 {
+    Tcl_Interp *interp = tablePtr->interp;
     Tk_Window oldWindow;
     int i, result;
     char **argv;
@@ -604,12 +622,47 @@ EmbWinConfigure(tablePtr, ewPtr, objc, objv)
     for (i = 0; i < objc; i++)
 	argv[i] = Tcl_GetString(objv[i]);
     argv[i] = NULL;
-    result = Tk_ConfigureWidget(tablePtr->interp, tablePtr->tkwin,
+    result = Tk_ConfigureWidget(interp, tablePtr->tkwin,
 				winConfigSpecs, objc, argv, (char *) ewPtr,
 				TK_CONFIG_ARGV_ONLY);
     ckfree((char *) argv);
     if (result != TCL_OK) {
 	return TCL_ERROR;
+    }
+
+    /*
+     * Handle change of border style
+     */
+    ewPtr->borders = 0;
+    if (ewPtr->borderStr) {
+	int argc;
+
+	result = Tcl_SplitList(interp, ewPtr->borderStr, &argc, &argv);
+	if (result == TCL_OK) {
+	    if ((argc == 3) || (argc > 4)) {
+		Tcl_SetResult(interp,
+			"1, 2 or 4 values must be specified to -borderwidth",
+			TCL_STATIC);
+		result = TCL_ERROR;
+	    } else {
+		ewPtr->borders = argc;
+		for (i = 0; i < argc; i++) {
+		    if (Tk_GetPixels(interp, tablePtr->tkwin,
+			    argv[i], &(ewPtr->bd[i])) != TCL_OK) {
+			result = TCL_ERROR;
+			break;
+		    }
+		    ewPtr->bd[i] = MAX(0, ewPtr->bd[i]);
+		}
+	    }
+	    ckfree ((char *) argv);
+	}
+	if (result != TCL_OK) {
+	    ckfree ((char *) ewPtr->borderStr);
+	    ewPtr->borderStr	= (char *) NULL;
+	    ewPtr->borders	= 0;
+	    return TCL_ERROR;
+	}
     }
 
     if (oldWindow != ewPtr->tkwin) {
@@ -639,7 +692,7 @@ EmbWinConfigure(tablePtr, ewPtr, objc, objv)
 		}
 		if (Tk_IsTopLevel(ancestor)) {
 		badMaster:
-		    Tcl_AppendStringsToObj(Tcl_GetObjResult(tablePtr->interp),
+		    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
 					   "can't embed ",
 					   Tk_PathName(ewPtr->tkwin), " in ",
 					   Tk_PathName(tablePtr->tkwin),

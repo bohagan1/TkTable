@@ -4,11 +4,12 @@
  *	This module implements cell oriented functions for table
  *	widgets.
  *
- * Copyright (c) 1998-1999 Jeffrey Hobbs
+ * Copyright (c) 1998-2000 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
+ * RCS: @(#) $Id:  $
  */
 
 #include "tkTable.h"
@@ -35,7 +36,8 @@ int
 TableTrueCell(Table *tablePtr, int r, int c, int *row, int *col)
 {
     *row = r; *col = c;
-    /* We check spans before constraints, because we don't want to
+    /*
+     * We check spans before constraints, because we don't want to
      * constrain and then think we ended up in a span
      */
     if (tablePtr->spanAffTbl && !(tablePtr->flags & AVOID_SPANS)) {
@@ -46,8 +48,10 @@ TableTrueCell(Table *tablePtr, int r, int c, int *row, int *col)
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
 	if ((entryPtr != NULL) &&
 		((char *)Tcl_GetHashValue(entryPtr) != NULL)) {
-	    /* This cell is covered by another spanning cell */
-	    /* We need to return the coords for that cell */
+	    /*
+	     * This cell is covered by another spanning cell.
+	     * We need to return the coords for that spanning cell.
+	     */
 	    TableParseArrayIndex(row, col, (char *)Tcl_GetHashValue(entryPtr));
 	    return 0;
 	}
@@ -90,11 +94,8 @@ TableCellCoords(Table *tablePtr, int row, int col,
      * Real coords required, always should be passed acceptable values,
      * but this is a possible seg fault otherwise
      */
-#define BOUNDS_CHECK 1
-#ifdef BOUNDS_CHECK
     CONSTRAIN(row, 0, tablePtr->rows-1);
     CONSTRAIN(col, 0, tablePtr->cols-1);
-#endif
     *w = tablePtr->colPixels[col];
     *h = tablePtr->rowPixels[row];
     /*
@@ -331,18 +332,26 @@ TableWhatCell(register Table *tablePtr, int x, int y, int *row, int *col)
 int
 TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col)
 {
-    int i, brow, bcol, borders = 2, bd = tablePtr->defaultTag.bd;
-    int dbd = 2*bd;
+    int i, brow, bcol, borders = 2, bd[6];
+
+    TableGetTagBorders(&(tablePtr->defaultTag),
+	    &bd[0], &bd[1], &bd[2], &bd[3]);
+    bd[4] = (bd[0] + bd[1])/2;
+    bd[5] = (bd[2] + bd[3])/2;
+
+    /*
+     * Constrain x && y appropriately, and adjust x if it is not in the
+     * column titles to change display coords into internal coords.
+     */
     x = MAX(0, x); y = MAX(0, y);
     x -= tablePtr->highlightWidth; y -= tablePtr->highlightWidth;
-    /* Adjust the x coord if not in the column titles to change display
-     * coords into internal coords */
     x += (x < tablePtr->colStarts[tablePtr->titleCols]) ? 0 :
 	tablePtr->colStarts[tablePtr->leftCol] -
 	tablePtr->colStarts[tablePtr->titleCols];
     x = MIN(x, tablePtr->maxWidth - 1);
-    for (i = 1; i <= tablePtr->cols && x+dbd >= tablePtr->colStarts[i]; i++);
-    if (x > tablePtr->colStarts[--i]+bd) {
+    for (i = 1; (i <= tablePtr->cols) &&
+	     (x + (bd[0] + bd[1])) >= tablePtr->colStarts[i]; i++);
+    if (x > tablePtr->colStarts[--i] + bd[4]) {
 	borders--;
 	*col = -1;
 	bcol = (i < tablePtr->leftCol && i >= tablePtr->titleCols) ?
@@ -355,8 +364,9 @@ TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col)
 	tablePtr->rowStarts[tablePtr->topRow] -
 	tablePtr->rowStarts[tablePtr->titleRows];
     y = MIN(y, tablePtr->maxHeight - 1);
-    for (i = 1; i <= tablePtr->rows && y+dbd >= tablePtr->rowStarts[i]; i++);
-    if (y > tablePtr->rowStarts[--i]+bd) {
+    for (i = 1; i <= tablePtr->rows &&
+	     (y + (bd[2] + bd[3])) >= tablePtr->rowStarts[i]; i++);
+    if (y > tablePtr->rowStarts[--i]+bd[5]) {
 	borders--;
 	*row = -1;
 	brow = (i < tablePtr->topRow && i >= tablePtr->titleRows) ?
@@ -365,11 +375,13 @@ TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col)
 	brow = *row = (i < tablePtr->topRow && i >= tablePtr->titleRows) ?
 	    tablePtr->titleRows-1 : i-1;
     }
-    /* Have to account for spanning cells */
+    /*
+     * We have to account for spanning cells, which may hide cells.
+     * In that case, we have to decrement our border count.
+     */
     if (tablePtr->spanAffTbl && !(tablePtr->flags & AVOID_SPANS) && borders) {
 	char buf1[INDEX_BUFSIZE], buf2[INDEX_BUFSIZE];
 
-	/* Have to account for "hidden" cells */
 	if (*row != -1) {
 	    TableMakeArrayIndex(brow+tablePtr->rowOffset,
 				bcol+tablePtr->colOffset+1, buf1);
@@ -425,7 +437,9 @@ TableGetCellValue(Table *tablePtr, int r, int c)
     TableMakeArrayIndex(r, c, buf);
 
     if (tablePtr->caching) {
-	/* if we are caching, let's see if we have the value cached */
+	/*
+	 * If we are caching, let's see if we have the value cached
+	 */
 	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
 	if (!new) {
 	    result = (char *) Tcl_GetHashValue(entryPtr);
@@ -457,9 +471,12 @@ TableGetCellValue(Table *tablePtr, int r, int c)
     if (result == NULL)
 	result = "";
     if (tablePtr->caching && entryPtr != NULL) {
-	/* if we are caching, make sure we cache the returned value */
-	/* entryPtr will have been set from above, but check to make sure
-	 * someone didn't change caching during -command evaluation */
+	/*
+	 * If we are caching, make sure we cache the returned value
+	 *
+	 * entryPtr will have been set from above, but check to make sure
+	 * someone didn't change caching during -command evaluation.
+	 */
 	char *val;
 	val = (char *)ckalloc(strlen(result)+1);
 	strcpy(val, result);

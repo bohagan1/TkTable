@@ -9,6 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
+ * RCS: @(#) $Id:  $
  */
 
 #ifndef _TKTABLE_H_
@@ -23,7 +24,7 @@
 # include <X11/Xatom.h>
 #endif /* MAC_TCL */
 
-#if (TCL_MINOR_VERSION == 0) /* Tcl8.0 stuff */
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION == 0) /* Tcl8.0 stuff */
 #define Tcl_GetString(objPtr)	Tcl_GetStringFromObj(objPtr, (int *)NULL)
 #endif
 
@@ -63,17 +64,6 @@
 #	define XSync(display, bool) {display->request++;}
 #   endif
 #endif /* defn of XSync */
-
-#ifdef INLINE
-#   undef INLINE
-#endif
-#ifdef __GNUC__
-#   define INLINE inline
-#elif defined(_MSC_VER)
-#   define INLINE __inline
-#else
-#   define INLINE
-#endif /* INLINE defn */
 
 #ifndef NORMAL_BG
 #   ifdef WIN32
@@ -186,174 +176,185 @@
 #define DATA_COMMAND	(1<<3)
 
 typedef enum {
-  STATE_UNUSED, STATE_UNKNOWN, STATE_HIDDEN,
-  STATE_NORMAL, STATE_DISABLED, STATE_ACTIVE,
-  STATE_LAST
+    STATE_UNUSED, STATE_UNKNOWN, STATE_HIDDEN,
+    STATE_NORMAL, STATE_DISABLED, STATE_ACTIVE,
+    STATE_LAST
 } TableState;
 
 /* The tag structure */
 typedef struct {
-  Tk_3DBorder	bg;		/* background color */
-  Tk_3DBorder	fg;		/* foreground color */
-  int		bd;		/* cell border width */
-  int		relief;		/* relief type */
-  Tk_Font	tkfont;		/* Information about text font, or NULL. */
-  Tk_Anchor	anchor;		/* default anchor point */
-  char *	imageStr;	/* name of image */
-  Tk_Image	image;		/* actual pointer to image, if any */
-  TableState	state;		/* state of the cell */
-  Tk_Justify	justify;	/* justification of text in the cell */
-  int		multiline;	/* wrapping style of multiline text */
-  int		wrap;		/* wrapping style of multiline text */
-  int		showtext;	/* whether to display text over image */
+    Tk_3DBorder	bg;		/* background color */
+    Tk_3DBorder	fg;		/* foreground color */
+    char *	borderStr;	/* border style */
+    int		bd[4];		/* cell border width */
+    int		borders;	/* number of borders specified (1, 2 or 4) */
+    int		relief;		/* relief type */
+    Tk_Font	tkfont;		/* Information about text font, or NULL. */
+    Tk_Anchor	anchor;		/* default anchor point */
+    char *	imageStr;	/* name of image */
+    Tk_Image	image;		/* actual pointer to image, if any */
+    TableState	state;		/* state of the cell */
+    Tk_Justify	justify;	/* justification of text in the cell */
+    int		multiline;	/* wrapping style of multiline text */
+    int		wrap;		/* wrapping style of multiline text */
+    int		showtext;	/* whether to display text over image */
 } TableTag;
 
 /*  The widget structure for the table Widget */
 
 typedef struct {
-  /* basic information about the window and the interpreter */
-  Tk_Window tkwin;
-  Display *display;
-  Tcl_Interp *interp;
-  Tcl_Command widgetCmd;	/* Token for entry's widget command. */
-  /* Configurable Options */
-  int autoClear;
-  char *selectMode;		/* single, browse, multiple, or extended */
-  int selectType;		/* row, col, both, or cell */
-  int selectTitles;		/* whether to do automatic title selection */
-  int rows, cols;		/* number of rows and columns */
-  int defRowHeight;		/* default row height in chars (positive)
+    /* basic information about the window and the interpreter */
+    Tk_Window tkwin;
+    Display *display;
+    Tcl_Interp *interp;
+    Tcl_Command widgetCmd;	/* Token for entry's widget command. */
+
+    /*
+     * Configurable Options
+     */
+    int autoClear;
+    char *selectMode;		/* single, browse, multiple, or extended */
+    int selectType;		/* row, col, both, or cell */
+    int selectTitles;		/* whether to do automatic title selection */
+    int rows, cols;		/* number of rows and columns */
+    int defRowHeight;		/* default row height in chars (positive)
 				 * or pixels (negative) */
-  int defColWidth;		/* default column width in chars (positive)
+    int defColWidth;		/* default column width in chars (positive)
 				 * or pixels (negative) */
-  int maxReqCols;		/* the requested # cols to display */
-  int maxReqRows;		/* the requested # rows to display */
-  int maxReqWidth;		/* the maximum requested width in pixels */
-  int maxReqHeight;		/* the maximum requested height in pixels */
-  char *arrayVar;		/* name of traced array variable */
-  char *rowSep;			/* separator string to place between
+    int maxReqCols;		/* the requested # cols to display */
+    int maxReqRows;		/* the requested # rows to display */
+    int maxReqWidth;		/* the maximum requested width in pixels */
+    int maxReqHeight;		/* the maximum requested height in pixels */
+    char *arrayVar;		/* name of traced array variable */
+    char *rowSep;		/* separator string to place between
 				 * rows when getting selection */
-  char *colSep;			/* separator string to place between
+    char *colSep;		/* separator string to place between
 				 * cols when getting selection */
-  TableTag defaultTag;		/* the default tag colors/fonts etc */
-  char *yScrollCmd;		/* the y-scroll command */
-  char *xScrollCmd;		/* the x-scroll command */
-  char *browseCmd;		/* the command that is called when the
+    TableTag defaultTag;	/* the default tag colors/fonts etc */
+    char *yScrollCmd;		/* the y-scroll command */
+    char *xScrollCmd;		/* the x-scroll command */
+    char *browseCmd;		/* the command that is called when the
 				 * active cell changes */
-  int caching;			/* whether to cache values of table */
-  char *command;		/* A command to eval when get/set occurs
+    int caching;		/* whether to cache values of table */
+    char *command;		/* A command to eval when get/set occurs
 				 * for table values */
-  int useCmd;			/* Signals whether to use command or the
+    int useCmd;			/* Signals whether to use command or the
 				 * array variable, will be 0 if command errs */
-  char *selCmd;			/* the command that is called to when a
+    char *selCmd;		/* the command that is called to when a
 				 * [selection get] call occurs for a table */
-  char *valCmd;			/* Command prefix to use when invoking
+    char *valCmd;		/* Command prefix to use when invoking
 				 * validate command.  NULL means don't
 				 * invoke commands.  Malloc'ed. */
-  int validate;			/* Non-zero means try to validate */
-  Tk_3DBorder insertBg;		/* the cursor color */
-  Tk_Cursor cursor;		/* the regular mouse pointer */
-  Tk_Cursor bdcursor;		/* the mouse pointer when over borders */
-  int exportSelection;		/* Non-zero means tie internal table
+    int validate;		/* Non-zero means try to validate */
+    Tk_3DBorder insertBg;	/* the cursor color */
+    Tk_Cursor cursor;		/* the regular mouse pointer */
+    Tk_Cursor bdcursor;		/* the mouse pointer when over borders */
+    int exportSelection;	/* Non-zero means tie internal table
 				 * to X selection. */
-  TableState state;		/* Normal or disabled.  Table is read-only
+    TableState state;		/* Normal or disabled.	Table is read-only
 				 * when disabled. */
-  int insertWidth;		/* Total width of insert cursor. */
-  int insertBorderWidth;	/* Width of 3-D border around insert cursor. */
-  int insertOnTime;		/* Number of milliseconds cursor should spend
+    int insertWidth;		/* Total width of insert cursor. */
+    int insertBorderWidth;	/* Width of 3-D border around insert cursor. */
+    int insertOnTime;		/* Number of milliseconds cursor should spend
 				 * in "on" state for each blink. */
-  int insertOffTime;		/* Number of milliseconds cursor should spend
+    int insertOffTime;		/* Number of milliseconds cursor should spend
 				 * in "off" state for each blink. */
-  int invertSelected;           /* Whether to draw selected cells swapping
-                                   foreground and background */
-  int colStretch;		/* The way to stretch columns if the window
-				   is too large */
-  int rowStretch;		/* The way to stretch rows if the window is
-				   too large */
-  int colOffset;		/* X index of leftmost col in the display */
-  int rowOffset;		/* Y index of topmost row in the display */
-  int drawMode;			/* The mode to use when redrawing */
-  int flashMode;		/* Specifies whether flashing is enabled */
-  int flashTime;		/* The number of ms to flash a cell for */
-  int resize;			/* -resizeborders option for interactive
+    int invertSelected;		/* Whether to draw selected cells swapping
+				 * foreground and background */
+    int colStretch;		/* The way to stretch columns if the window
+				 * is too large */
+    int rowStretch;		/* The way to stretch rows if the window is
+				 * too large */
+    int colOffset;		/* X index of leftmost col in the display */
+    int rowOffset;		/* Y index of topmost row in the display */
+    int drawMode;		/* The mode to use when redrawing */
+    int flashMode;		/* Specifies whether flashing is enabled */
+    int flashTime;		/* The number of ms to flash a cell for */
+    int resize;			/* -resizeborders option for interactive
 				 * resizing of borders */
-  int sparse;			/* Whether to use "sparse" arrays by
+    int sparse;			/* Whether to use "sparse" arrays by
 				 * deleting empty array elements (default) */
-  char *rowTagCmd, *colTagCmd;	/* script to eval for getting row/tag cmd */
-  int highlightWidth;		/* Width in pixels of highlight to draw
+    char *rowTagCmd, *colTagCmd;/* script to eval for getting row/tag cmd */
+    int highlightWidth;		/* Width in pixels of highlight to draw
 				 * around widget when it has the focus.
 				 * <= 0 means don't draw a highlight. */
-  XColor *highlightBgColorPtr;	/* Color for drawing traversal highlight
+    XColor *highlightBgColorPtr;/* Color for drawing traversal highlight
 				 * area when highlight is off. */
-  XColor *highlightColorPtr;	/* Color for drawing traversal highlight. */
-  char *takeFocus;		/* Used only in Tcl to check if this
+    XColor *highlightColorPtr;	/* Color for drawing traversal highlight. */
+    char *takeFocus;		/* Used only in Tcl to check if this
 				 * widget will accept focus */
-  int padX, padY;		/* Extra space around text (pixels to leave
+    int padX, padY;		/* Extra space around text (pixels to leave
 				 * on each side).  Ignored for bitmaps and
 				 * images. */
-  int ipadX, ipadY;		/* Space to leave empty around cell borders.
+    int ipadX, ipadY;		/* Space to leave empty around cell borders.
 				 * This differs from pad* in that it is always
-				 * present for the cell. */
+				 * present for the cell (except windows). */
 
-  /* Cached Information */
-  int titleRows, titleCols;	/* the number of rows|cols to use as a title */
-  /* these are kept in real coords */
-  int topRow, leftCol;		/* The topleft cell to display excluding the
+    /*
+     * Cached Information
+     */
+    int titleRows, titleCols;	/* the number of rows|cols to use as a title */
+    /* these are kept in real coords */
+    int topRow, leftCol;	/* The topleft cell to display excluding the
 				 * fixed title rows.  This is just the
 				 * config request.  The actual cell used may
 				 * be different to keep the screen full */
-  int anchorRow, anchorCol;	/* the row,col of the anchor cell */
-  int activeRow, activeCol;	/* the row,col of the active cell */
-  int oldTopRow, oldLeftCol;	/* cached by TableAdjustParams */
-  int oldActRow, oldActCol;	/* cached by TableAdjustParams */
-  int icursor;			/* The index of the insertion cursor in the
-				   active cell */
-  int flags;			/* An or'ed combination of flags concerning
-				   redraw/cursor etc. */
-  int dataSource;		/* where our data comes from:
+    int anchorRow, anchorCol;	/* the row,col of the anchor cell */
+    int activeRow, activeCol;	/* the row,col of the active cell */
+    int oldTopRow, oldLeftCol;	/* cached by TableAdjustParams */
+    int oldActRow, oldActCol;	/* cached by TableAdjustParams */
+    int icursor;		/* The index of the insertion cursor in the
+				 * active cell */
+    int flags;			/* An or'ed combination of flags concerning
+				 * redraw/cursor etc. */
+    int dataSource;		/* where our data comes from:
 				 * DATA_{NONE,CACHE,ARRAY,COMMAND} */
-  int maxWidth, maxHeight;	/* max width|height required in pixels */
-  int charWidth, charHeight;	/* size of a character in the default font */
-  int *colPixels, *rowPixels;	/* Array of the pixel widths/heights */
-  int *colStarts, *rowStarts;	/* Array of start pixels for rows|columns */
-  int scanMarkX, scanMarkY;	/* Used by "scan" and "border" to mark */
-  int scanMarkRow, scanMarkCol;	/* necessary information for dragto */
-  /* values in these are kept in user coords */
-  Tcl_HashTable *cache;		/* value cache */
-  /* colWidths and rowHeights are indexed from 0, so always adjust numbers
-     by the appropriate *Offset factor */
-  Tcl_HashTable *colWidths;	/* hash table of non default column widths */
-  Tcl_HashTable *rowHeights;	/* hash table of non default row heights */
-  Tcl_HashTable *spanTbl;	/* table for spans */
-  Tcl_HashTable *spanAffTbl;	/* table for cells affected by spans */
-  Tcl_HashTable *tagTable;	/* table for style tags */
-  Tcl_HashTable *winTable;	/* table for embedded windows */
-  Tcl_HashTable *rowStyles;	/* table for row styles */
-  Tcl_HashTable *colStyles;	/* table for col styles */
-  Tcl_HashTable *cellStyles;	/* table for cell styles */
-  Tcl_HashTable *flashCells;	/* table of flashing cells */
-  Tcl_HashTable *selCells;	/* table of selected cells */
-  Tcl_TimerToken cursorTimer;	/* timer token for the cursor blinking */
-  Tcl_TimerToken flashTimer;	/* timer token for the cell flashing */
-  char *activeBuf;		/* buffer where the selection is kept
-				   for editing the active cell */
-  TableTag *activeTagPtr;	/* cache of active composite tag */
-  int activeX, activeY;		/* cache offset of active layout in cell */
+    int maxWidth, maxHeight;	/* max width|height required in pixels */
+    int charWidth, charHeight;	/* size of a character in the default font */
+    int *colPixels, *rowPixels;	/* Array of the pixel widths/heights */
+    int *colStarts, *rowStarts;	/* Array of start pixels for rows|columns */
+    int scanMarkX, scanMarkY;	/* Used by "scan" and "border" to mark */
+    int scanMarkRow, scanMarkCol;/* necessary information for dragto */
+    /* values in these are kept in user coords */
+    Tcl_HashTable *cache;	/* value cache */
 
-#ifdef PROCS
-  Tcl_HashTable *inProc;	/* cells where proc is being evaled */
-  int showProcs;		/* whether to show embedded proc (1) or
-				 * its calculated value (0) */
-  int hasProcs;			/* whether table has embedded procs or not */
+    /*
+     * colWidths and rowHeights are indexed from 0, so always adjust numbers
+     * by the appropriate *Offset factor
+     */
+    Tcl_HashTable *colWidths;	/* hash table of non default column widths */
+    Tcl_HashTable *rowHeights;	/* hash table of non default row heights */
+    Tcl_HashTable *spanTbl;	/* table for spans */
+    Tcl_HashTable *spanAffTbl;	/* table for cells affected by spans */
+    Tcl_HashTable *tagTable;	/* table for style tags */
+    Tcl_HashTable *winTable;	/* table for embedded windows */
+    Tcl_HashTable *rowStyles;	/* table for row styles */
+    Tcl_HashTable *colStyles;	/* table for col styles */
+    Tcl_HashTable *cellStyles;	/* table for cell styles */
+    Tcl_HashTable *flashCells;	/* table of flashing cells */
+    Tcl_HashTable *selCells;	/* table of selected cells */
+    Tcl_TimerToken cursorTimer;	/* timer token for the cursor blinking */
+    Tcl_TimerToken flashTimer;	/* timer token for the cell flashing */
+    char *activeBuf;		/* buffer where the selection is kept
+				 * for editing the active cell */
+    TableTag *activeTagPtr;	/* cache of active composite tag */
+    int activeX, activeY;	/* cache offset of active layout in cell */
+
+    /* The invalid rectangle if there is an update pending */
+    int invalidX, invalidY, invalidWidth, invalidHeight;
+    int seen[4];			/* see TableUndisplay */
+
+#ifdef POSTSCRIPT
+    /* Pointer to information used for generating Postscript for the canvas.
+     * NULL means no Postscript is currently being generated. */
+    struct TkPostscriptInfo *psInfoPtr;
 #endif
 
-  /* The invalid rectangle if there is an update pending */
-  int invalidX, invalidY, invalidWidth, invalidHeight;
-  int seen[4];			/* see TableUndisplay */
-#ifdef POSTSCRIPT
-  /* Pointer to information used for generating Postscript for the canvas.
-   * NULL means no Postscript is currently being generated. */
-  struct TkPostscriptInfo *psInfoPtr;
+#ifdef PROCS
+    Tcl_HashTable *inProc;	/* cells where proc is being evaled */
+    int showProcs;		/* whether to show embedded proc (1) or
+				 * its calculated value (0) */
+    int hasProcs;		/* whether table has embedded procs or not */
 #endif
 } Table;
 
@@ -367,24 +368,24 @@ typedef struct {
  */
 
 typedef struct TableEmbWindow {
-  Table *tablePtr;		/* Information about the overall table
+    Table *tablePtr;		/* Information about the overall table
 				 * widget. */
-  Tk_Window tkwin;		/* Window for this segment.  NULL
-				 * means that the window hasn't
-				 * been created yet. */
-  Tcl_HashEntry *hPtr;		/* entry into winTable */
-  Tk_3DBorder bg;		/* background color */
-  char *create;			/* Script to create window on-demand.
+    Tk_Window tkwin;		/* Window for this segment.  NULL means that
+				 * the window hasn't been created yet. */
+    Tcl_HashEntry *hPtr;	/* entry into winTable */
+    Tk_3DBorder bg;		/* background color */
+    char *create;		/* Script to create window on-demand.
 				 * NULL means no such script.
 				 * Malloc-ed. */
-  int bd;			/* border width for cell around window */
-  int relief;			/* relief type */
-  int sticky;			/* How to align window in space */
-  int padX, padY;		/* Padding to leave around each side
+    char *borderStr;		/* border style */
+    int bd[4];			/* border width for cell around window */
+    int borders;		/* number of borders specified (1, 2 or 4) */
+    int relief;			/* relief type */
+    int sticky;			/* How to align window in space */
+    int padX, padY;		/* Padding to leave around each side
 				 * of window, in pixels. */
-  int displayed;		/* Non-zero means that the window
-				 * has been displayed on the screen
-				 * recently. */
+    int displayed;		/* Non-zero means that the window has been
+				 * displayed on the screen recently. */
 } TableEmbWindow;
 
 extern Tk_ConfigSpec tableSpecs[];
@@ -461,6 +462,8 @@ extern TableTag *TableNewTag _ANSI_ARGS_((void));
 extern void	TableMergeTag _ANSI_ARGS_((TableTag *baseTag,
 			TableTag *addTag));
 extern void	TableInvertTag _ANSI_ARGS_((TableTag *baseTag));
+extern int	TableGetTagBorders _ANSI_ARGS_((TableTag *tagPtr,
+			int *left, int *right, int *top, int *bottom));
 extern void	TableInitTags _ANSI_ARGS_((Table *tablePtr));
 extern TableTag *FindRowColTag _ANSI_ARGS_((Table *tablePtr,
 			int cell, int type));
@@ -551,9 +554,9 @@ void	TableAdjustActive _ANSI_ARGS_((register Table *tablePtr));
 void	TableAdjustParams _ANSI_ARGS_((register Table *tablePtr));
 void	TableConfigCursor _ANSI_ARGS_((register Table *tablePtr));
 
-#define TableInvalidateAll(tablePtr, flags)	\
+#define TableInvalidateAll(tablePtr, flags) \
 	TableInvalidate((tablePtr), 0, 0, Tk_Width((tablePtr)->tkwin),\
-			Tk_Height((tablePtr)->tkwin), (flags))
+		Tk_Height((tablePtr)->tkwin), (flags))
 
      /*
       * Turn row/col into an index into the table
@@ -569,11 +572,11 @@ void	TableConfigCursor _ANSI_ARGS_((register Table *tablePtr));
      /*
       * Macro for finding the last cell of the table
       */
-#define TableGetLastCell(tablePtr, rowPtr, colPtr)	\
+#define TableGetLastCell(tablePtr, rowPtr, colPtr) \
 	TableWhatCell((tablePtr),\
-		      Tk_Width((tablePtr)->tkwin)-(tablePtr)->highlightWidth-1,\
-		      Tk_Height((tablePtr)->tkwin)-(tablePtr)->highlightWidth-1,\
-		      (rowPtr), (colPtr))
+		Tk_Width((tablePtr)->tkwin)-(tablePtr)->highlightWidth-1,\
+		Tk_Height((tablePtr)->tkwin)-(tablePtr)->highlightWidth-1,\
+		(rowPtr), (colPtr))
 
 /*
  * end of header
