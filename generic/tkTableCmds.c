@@ -698,7 +698,7 @@ Table_CurvalueCmd(ClientData clientData, register Tcl_Interp *interp,
     register Table *tablePtr = (Table *) clientData;
 
     if (objc > 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "curvalue ?<value>?");
+	Tcl_WrongNumArgs(interp, 2, objv, "?<value>?");
 	return TCL_ERROR;
     } else if (!(tablePtr->flags & HAS_ACTIVE)) {
 	return TCL_OK;
