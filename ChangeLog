@@ -1,3 +1,8 @@
+2004-02-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/tkTable.tcl (::tk::table::Button1): account for what
+	resizeborders are set when selecting cell [Bug 876320] (ferenc) 
+
 2003-12-10  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* Makefile.in: updated to TEA3 spec

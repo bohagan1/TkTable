@@ -4,7 +4,7 @@
 # This file defines the default bindings for Tk table widgets
 # and provides procedures that help in implementing those bindings.
 #
-# RCS: @(#) $Id: tkTable.tcl,v 1.9 2002/10/16 07:32:01 hobbs Exp $
+# RCS: @(#) $Id: tkTable.tcl,v 1.10 2003/04/11 01:20:59 hobbs Exp $
 
 #--------------------------------------------------------------------------
 # ::tk::table::Priv elements used in this file:
@@ -265,6 +265,13 @@ proc ::tk::table::Button1 {w x y} {
     #
     if {$Priv(borderB1) == 1} {
 	set Priv(borderInfo) [$w border mark $x $y]
+	# account for what resizeborders are set [Bug 876320] (ferenc)
+	set rbd [$w cget -resizeborders]
+	if {$rbd == "none" || ![llength $Priv(borderInfo)]
+	    || ($rbd == "col" && [lindex $Priv(borderInfo) 1] == "")
+	    || ($rbd == "row" && [lindex $Priv(borderInfo) 0] == "")} {
+	    set Priv(borderInfo) ""
+	}
     } else {
 	set Priv(borderInfo) ""
     }
