@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.22 2002/09/26 01:47:20 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.23 2002/10/16 07:32:22 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -1041,7 +1041,7 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     /* Do the configuration */
     argv = StringifyObjects(objc, objv);
     result = Tk_ConfigureWidget(interp, tablePtr->tkwin, tableSpecs,
-	    objc, argv, (char *) tablePtr, flags);
+	    objc, (CONST84 char **) argv, (char *) tablePtr, flags);
     ckfree((char *) argv);
     if (result != TCL_OK) {
 	return TCL_ERROR;
