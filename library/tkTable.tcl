@@ -4,7 +4,7 @@
 # This file defines the default bindings for Tk table widgets
 # and provides procedures that help in implementing those bindings.
 #
-# RCS: @(#) $Id: tkTableCell.c,v 1.7 2001/06/23 08:50:14 hobbs Exp $
+# RCS: @(#) $Id: tkTable.tcl,v 1.7 2001/08/24 01:08:14 hobbs Exp $
 
 #--------------------------------------------------------------------------
 # ::tk::table::Priv elements used in this file:
@@ -759,14 +759,14 @@ proc tk_tablePasteHandler {w cell data} {
     ## If you were to want multi-character row separators, you would need:
     # regsub -all $rsep $data <newline> data
     # set data [join $data <newline>]
-    if {[string comp {} $rsep]} { set data [split $data $rsep] }
+    if {[string compare {} $rsep]} { set data [split $data $rsep] }
     set row	$r
     foreach line $data {
 	if {$row > $rows} break
 	set col	$c
 	## Assume separate cols are split by col separator if specified
 	## Unless a -separator was specified
-	if {[string comp {} $csep]} { set line [split $line $csep] }
+	if {[string compare {} $csep]} { set line [split $line $csep] }
 	## If you were to want multi-character col separators, you would need:
 	# regsub -all $csep $line <newline> line
 	# set line [join $line <newline>]
