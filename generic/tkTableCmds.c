@@ -4,9 +4,9 @@
  *	This module implements general commands of a table widget,
  *	based on the major/minor command structure.
  *
- * Copyright (c) 1998-1999 Jeffrey Hobbs
+ * Copyright (c) 1998-2000 Jeffrey Hobbs
  *
- * See the file "license.terms" for information on usage and redistribution
+ * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  */
@@ -124,7 +124,7 @@ Table_ActivateCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     return result;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -229,7 +229,7 @@ Table_AdjustCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     return TCL_OK;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -305,7 +305,7 @@ Table_BboxCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     return TCL_OK;
 }
-
+
 static char *bdCmdNames[] = {
     "mark", "dragto", (char *)NULL
 };
@@ -436,8 +436,7 @@ Table_BorderCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     return TCL_OK;
 }
-
-
+
 /* clear subcommands */
 static char *clearNames[] = {
     "all", "cache", "sizes", "tags", (char *)NULL
@@ -612,7 +611,7 @@ Table_ClearCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     return TCL_OK;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -675,7 +674,7 @@ Table_CurselectionCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     return TCL_OK;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -737,7 +736,7 @@ Table_CurvalueCmd(ClientData clientData, register Tcl_Interp *interp,
     Tcl_SetStringObj(Tcl_GetObjResult(interp), tablePtr->activeBuf, -1);
     return TCL_OK;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -787,7 +786,7 @@ Table_GetCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     return result;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -851,7 +850,7 @@ Table_ScanCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     return TCL_OK;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -896,7 +895,7 @@ Table_SelAnchorCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     return TCL_OK;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -987,7 +986,7 @@ CLEAR_CELLS:
     if (key) goto CLEAR_BOTH;
     return result;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -1024,8 +1023,7 @@ Table_SelIncludesCmd(ClientData clientData, register Tcl_Interp *interp,
     }
     return TCL_OK;
 }
-
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -1132,7 +1130,7 @@ SET_CELLS:
     }
     return TCL_OK;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -1264,8 +1262,8 @@ Table_ViewCmd(ClientData clientData, register Tcl_Interp *interp,
 
     return TCL_OK;
 }
-
-
+
+#if 0
 /*
  *--------------------------------------------------------------
  *
@@ -1291,4 +1289,4 @@ Table_Cmd(ClientData clientData, register Tcl_Interp *interp,
 
     return result;
 }
-
+#endif
