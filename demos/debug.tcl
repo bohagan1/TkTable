@@ -56,7 +56,7 @@ grid columnconfig . 0 -weight 1
 grid rowconfig . 1 -weight 1
 
 $table(table) tag config OddCol -bg brown -fg pink
-$table(table) tag config title -bg red -fg blue -relief sunken
+$table(table) tag config title -bg red -fg green -relief sunken
 $table(table) tag config dis -state disabled
 
 set i -1
