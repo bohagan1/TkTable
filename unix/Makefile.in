@@ -267,7 +267,8 @@ dist-clean:
 
 dist: dist-clean html $(UNIX_DIR)/configure
 	mkdir -p $(DIST_DIR)
-	cp -p $(TOP_DIR)/*.txt $(TOP_DIR)/README* $(DIST_DIR)
+	cp -p $(TOP_DIR)/*.txt $(TOP_DIR)/README* $(TOP_DIR)/ChangeLog \
+		$(DIST_DIR)
 
 	mkdir $(DIST_DIR)/demos
 	cp -p $(DEMO_DIR)/*.tcl $(DEMO_DIR)/*.gif $(DIST_DIR)/demos
