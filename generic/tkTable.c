@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.24 2002/12/11 00:27:09 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.25 2003/01/30 21:01:34 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -1693,16 +1693,19 @@ TableDisplay(ClientData clientdata)
     padx  = tablePtr->padX;
     pady  = tablePtr->padY;
 
+#ifndef WIN32
     /* 
      * if we are using the slow drawing mode with a pixmap 
      * create the pixmap and adjust x && y for offset in pixmap
+     * FIX: Ignore slow mode for Win32 as the fast ClipRgn trick
+     * below does not work for bitmaps.
      */
     if (tablePtr->drawMode == DRAW_MODE_SLOW) {
 	window = Tk_GetPixmap(display, Tk_WindowId(tkwin),
 		invalidWidth, invalidHeight, Tk_Depth(tkwin));
-    } else {
+    } else
+#endif
 	window = Tk_WindowId(tkwin);
-    }
 #ifdef NO_XSETCLIP
     clipWind = Tk_GetPixmap(display, window,
 	    invalidWidth, invalidHeight, Tk_Depth(tkwin));
@@ -1847,11 +1850,13 @@ TableDisplay(ClientData clientdata)
 		    EmbWinDisplay(tablePtr, window, ewPtr, tagPtr,
 			    x, y, width, height);
 
+#ifndef WIN32
 		    if (tablePtr->drawMode == DRAW_MODE_SLOW) {
 			/* Correctly adjust x && y with the offset */
 			x -= invalidX;
 			y -= invalidY;
 		    }
+#endif
 
 		    Tk_Fill3DRectangle(tkwin, window, tagPtr->bg, x, y, width,
 			    height, 0, TK_RELIEF_FLAT);
@@ -1866,11 +1871,13 @@ TableDisplay(ClientData clientdata)
 		}
 	    }
 
+#ifndef WIN32
 	    if (tablePtr->drawMode == DRAW_MODE_SLOW) {
 		/* Correctly adjust x && y with the offset */
 		x -= invalidX;
 		y -= invalidY;
 	    }
+#endif
 
 	    shouldInvert = 0;
 	    /*
@@ -2234,6 +2241,7 @@ TableDisplay(ClientData clientdata)
 				y0 + originY + fm.ascent);
 		    }
 		    SelectClipRgn(dc, NULL);
+		    ReleaseDC(twdPtr->window.handle, dc);
 #else
 		    /*
 		     * Use an X clipping rectangle.  The clipping is the
@@ -2397,6 +2405,7 @@ TableDisplay(ClientData clientdata)
     /* Take care of removing embedded windows that are no longer in view */
     TableUndisplay(tablePtr);
 
+#ifndef WIN32
     /* copy over and delete the pixmap if we are in slow mode */
     if (tablePtr->drawMode == DRAW_MODE_SLOW) {
 	/* Get a default valued GC */
@@ -2406,6 +2415,7 @@ TableDisplay(ClientData clientdata)
 	Tk_FreePixmap(display, window);
 	window = Tk_WindowId(tkwin);
     }
+#endif
 
     /* 
      * If we are at the end of the table, clear the area after the last
