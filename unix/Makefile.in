@@ -51,24 +51,17 @@ WISH		= wish$(TK_VERSION)
 TCL_SRC_DIR 	= @TCL_SRC_DIR@
 TK_SRC_DIR 	= @TK_SRC_DIR@
 
-TCL_LIB_SPEC	= @TCL_LIB_SPEC@
-TK_LIB_SPEC	= @TK_LIB_SPEC@
-
-TCL_STUB_LIB_SPEC	= @TCL_STUB_LIB_SPEC@
+TK_LIB_SPEC		= @TK_LIB_SPEC@
 TK_STUB_LIB_SPEC	= @TK_STUB_LIB_SPEC@
-
-TCL_LIBS	= @TCL_LIBS@
-TK_LIBS		= @TK_LIBS@
+TK_LIBS			= @TK_LIBS@
 
 ## The *_BUILD*_LIB_SPEC variables replace the non-BUILD ones when
 ## compiling against an uninstalled version of Tcl (not the default).
-TCL_BUILD_LIB_SPEC	= @TCL_BUILD_LIB_SPEC@
 TK_BUILD_LIB_SPEC	= @TK_BUILD_LIB_SPEC@
-
-TCL_BUILD_STUB_LIB_SPEC	= @TCL_BUILD_STUB_LIB_SPEC@
 TK_BUILD_STUB_LIB_SPEC	= @TK_BUILD_STUB_LIB_SPEC@
 
-LIBS	= $(TK_LIB_SPEC) $(TK_LIBS)
+# Remove _STUB when not wanting to build with stubs support
+LIBS		= $(TK_STUB_LIB_SPEC) $(TK_LIBS)
 
 TBL_CFLAGS	= -O
 
