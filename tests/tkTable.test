@@ -1,12 +1,12 @@
 # This file is a Tcl script to test out the "table" command.
 # It is organized in the standard fashion for Tcl tests.
 #
-# Copyright (c) 2000 Jeffrey Hobbs
+# Copyright (c) 2000-2001 Jeffrey Hobbs
 #
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tkTable.test,v 1.3 2001/06/23 08:48:24 hobbs Exp $
+# RCS: @(#) $Id: tkTable.test,v 1.4 2001/06/23 08:57:16 hobbs Exp $
 
 # deletes:
 # test 2 -5
@@ -357,6 +357,65 @@ test table-25.1 {TableWidgetCmd procedure, "tag" option} {
 test table-25.2.1 {TableWidgetCmd procedure, "tag names" option} {
     .t tag names
 } {flash active sel title}
+test table-25.2.2 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag names *
+} {flash active sel title}
+test table-25.2.3 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag names f*
+} {flash}
+test table-25.2.4 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag configure foo
+} {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {unknown relief}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
+test table-25.2.5 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag names
+} {flash active sel title foo}
+test table-25.2.6 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag names f*
+} {flash foo}
+test table-25.2.7 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag raise foo
+    .t tag names f*
+} {foo flash}
+test table-25.2.8 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag lower foo
+    .t tag names
+} {flash active sel title foo}
+test table-25.2.9 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag raise foo active
+    .t tag names
+} {flash foo active sel title}
+test table-25.2.10 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag raise foo sel
+    .t tag names
+} {flash active foo sel title}
+test table-25.2.11 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag lower foo active
+    .t tag names
+} {flash active foo sel title}
+test table-25.2.12 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag lower foo foo
+    .t tag names
+} {flash active foo sel title}
+test table-25.2.13 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag lower foo sel
+    .t tag names
+} {flash active sel foo title}
+test table-25.2.14 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag lower foo
+    .t tag names
+} {flash active sel title foo}
+test table-25.2.15 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag raise foo foo
+    .t tag names
+} {flash active sel title foo}
+test table-25.2.16 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag raise foo flash
+    .t tag names
+} {foo flash active sel title}
+test table-25.2.17 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag lower foo title
+    .t tag names
+} {flash active sel title foo}
 
 test table-26.1 {TableWidgetCmd procedure, "validate" option} {
     list [catch {.t validate} msg] $msg
