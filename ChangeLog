@@ -1,3 +1,24 @@
+2000-08-30  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* generic/tkTable.h:
+	* generic/tkTableWin.c (EmbWinConfigure):
+	* generic/tkTableTag.c (Table_TagCmd):
+	* generic/tkTable.c (TableConfigure): changed -borderwidth to use
+	TK_CONFIG_CUSTOM functions for option parsing.
+
+	* win/makefile.vc:
+	* unix/Makefile.in: updated for added/removed source files
+
+	* generic/cmd.c (removed):
+	* generic/mm.h (removed):
+	* generic/tkTableUtil.c (new): moved the few used Cmd_* functions
+	into tkTableUtil.c (Cmd_Struct moved to tkTable.h), removing the
+	need for the other accessory files.
+
+	* unix/configure:
+	* unix/configure.in (uname check): added support for systems where
+	uname has no -p option (ie HP).
+
 2000-08-21  Jeff Hobbs  <hobbs@scriptics.com>
 
 	* generic/tkTable.c (TableConfigure): added check for NULL

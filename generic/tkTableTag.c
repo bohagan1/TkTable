@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id:  $
+ * RCS: @(#) $Id: tkTableTag.c,v 1.2 2000/08/18 03:34:11 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -36,8 +36,10 @@ static Cmd_Struct tagState_vals[]= {
     {"",	 0 }
 };
 
-static Tk_CustomOption tagStateOpt = { Cmd_OptionSet, Cmd_OptionGet,
-				       (ClientData)(&tagState_vals) };
+static Tk_CustomOption tagStateOpt	= { Cmd_OptionSet, Cmd_OptionGet,
+					    (ClientData)(&tagState_vals) };
+static Tk_CustomOption tagBdOpt		= { TableOptionBdSet, TableOptionBdGet,
+					    (ClientData) BD_TABLE_TAG };
 
 /*
  * The default specification for configuring tags
@@ -51,9 +53,9 @@ static Tk_ConfigSpec tagConfig[] = {
    Tk_Offset(TableTag, bg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 0, 0},
-  {TK_CONFIG_STRING, "-borderwidth", "borderWidth", "BorderWidth", "",
-   Tk_Offset(TableTag, borderStr),
-   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+  {TK_CONFIG_CUSTOM, "-borderwidth", "borderWidth", "BorderWidth", "",
+   0 /* no offset */,
+   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK, &tagBdOpt },
   {TK_CONFIG_BORDER, "-foreground", "foreground", "Foreground", NULL,
    Tk_Offset(TableTag, fg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL, 0, 0},
@@ -76,7 +78,7 @@ static Tk_ConfigSpec tagConfig[] = {
    Tk_Offset(TableTag, wrap), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, 0, 0}
 };
-
+
 /* 
  *----------------------------------------------------------------------
  *
@@ -99,7 +101,7 @@ TableImageProc(ClientData clientData, int x, int y, int width, int height,
 {
     TableInvalidateAll((Table *)clientData, 0);
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -133,7 +135,7 @@ TableNewTag(void)
 
     return tagPtr;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -176,7 +178,7 @@ TableMergeTag(TableTag *baseTag, TableTag *addTag)
 	baseTag->bd[3]		= addTag->bd[3];
     }
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -200,7 +202,7 @@ TableInvertTag(TableTag *baseTag)
     baseTag->fg	= baseTag->bg;
     baseTag->bg	= tmpBg;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -251,7 +253,7 @@ TableGetTagBorders(TableTag *tagPtr,
     }
     return tagPtr->borders;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -279,7 +281,7 @@ CreateTagEntry(Table *tablePtr, char *name, int objc, char **argv)
     entryPtr = Tcl_CreateHashEntry(tablePtr->tagTable, name, &dummy);
     Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -794,41 +796,6 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		Tk_FreeImage(tagPtr->image);
 	    }
 	    tagPtr->image = image;
-
-	    /*
-	     * Handle change of border style
-	     */
-	    tagPtr->borders = 0;
-	    if (tagPtr->borderStr) {
-		int argc;
-
-		result = Tcl_SplitList(interp, tagPtr->borderStr,
-			&argc, &argv);
-		if (result == TCL_OK) {
-		    if ((argc == 3) || (argc > 4)) {
-			Tcl_SetResult(interp,
-				"1, 2 or 4 values must be specified to -borderwidth",
-				TCL_STATIC);
-			result = TCL_ERROR;
-		    } else {
-			tagPtr->borders = argc;
-			for (i = 0; i < argc; i++) {
-			    if (Tk_GetPixels(interp, tablePtr->tkwin,
-				    argv[i], &(tagPtr->bd[i])) != TCL_OK) {
-				result = TCL_ERROR;
-				break;
-			    }
-			    tagPtr->bd[i] = MAX(0, tagPtr->bd[i]);
-			}
-		    }
-		    ckfree ((char *) argv);
-		}
-		if (result != TCL_OK) {
-		    ckfree ((char *) tagPtr->borderStr);
-		    tagPtr->borderStr	= (char *) NULL;
-		    tagPtr->borders	= 0;
-		}
-	    }
 
 	    /* 
 	     * If there were less than 6 args, we need

@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id:  $
+ * RCS: @(#) $Id: tkTableWin.c,v 1.2 2000/08/18 03:34:11 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -69,8 +69,10 @@ enum winCommand {
  * Done like this to make the command line parsing easy
  */
 
-static Tk_CustomOption stickyOption = {StickyParseProc, StickyPrintProc,
-				       (ClientData) NULL};
+static Tk_CustomOption stickyOption	= { StickyParseProc, StickyPrintProc,
+					    (ClientData) NULL };
+static Tk_CustomOption tagBdOpt		= { TableOptionBdSet, TableOptionBdGet,
+					    (ClientData) BD_TABLE_WIN };
 
 static Tk_ConfigSpec winConfigSpecs[] = {
   {TK_CONFIG_BORDER, "-background", "background", "Background", NULL,
@@ -78,9 +80,9 @@ static Tk_ConfigSpec winConfigSpecs[] = {
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 0, 0},
-  {TK_CONFIG_STRING, "-borderwidth", "borderWidth", "BorderWidth", "",
-   Tk_Offset(TableEmbWindow, borderStr),
-   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+  {TK_CONFIG_CUSTOM, "-borderwidth", "borderWidth", "BorderWidth", "",
+   0 /* no offset */,
+   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK, &tagBdOpt },
   {TK_CONFIG_STRING, "-create", (char *)NULL, (char *)NULL, (char *)NULL,
    Tk_Offset(TableEmbWindow, create),
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
@@ -628,41 +630,6 @@ EmbWinConfigure(tablePtr, ewPtr, objc, objv)
     ckfree((char *) argv);
     if (result != TCL_OK) {
 	return TCL_ERROR;
-    }
-
-    /*
-     * Handle change of border style
-     */
-    ewPtr->borders = 0;
-    if (ewPtr->borderStr) {
-	int argc;
-
-	result = Tcl_SplitList(interp, ewPtr->borderStr, &argc, &argv);
-	if (result == TCL_OK) {
-	    if ((argc == 3) || (argc > 4)) {
-		Tcl_SetResult(interp,
-			"1, 2 or 4 values must be specified to -borderwidth",
-			TCL_STATIC);
-		result = TCL_ERROR;
-	    } else {
-		ewPtr->borders = argc;
-		for (i = 0; i < argc; i++) {
-		    if (Tk_GetPixels(interp, tablePtr->tkwin,
-			    argv[i], &(ewPtr->bd[i])) != TCL_OK) {
-			result = TCL_ERROR;
-			break;
-		    }
-		    ewPtr->bd[i] = MAX(0, ewPtr->bd[i]);
-		}
-	    }
-	    ckfree ((char *) argv);
-	}
-	if (result != TCL_OK) {
-	    ckfree ((char *) ewPtr->borderStr);
-	    ewPtr->borderStr	= (char *) NULL;
-	    ewPtr->borders	= 0;
-	    return TCL_ERROR;
-	}
     }
 
     if (oldWindow != ewPtr->tkwin) {

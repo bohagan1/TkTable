@@ -19,7 +19,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.8 2000/08/19 00:01:32 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.9 2000/08/21 17:53:06 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -174,6 +174,8 @@ static Tk_CustomOption selTypeOpt	= { Cmd_OptionSet, Cmd_OptionGet,
 					    (ClientData)(&sel_vals) };
 static Tk_CustomOption stateTypeOpt	= { Cmd_OptionSet, Cmd_OptionGet,
 					    (ClientData)(&state_vals) };
+static Tk_CustomOption bdOpt		= { TableOptionBdSet, TableOptionBdGet,
+					    (ClientData) BD_TABLE };
 
 Tk_ConfigSpec tableSpecs[] = {
     {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor", "center",
@@ -186,8 +188,8 @@ Tk_ConfigSpec tableSpecs[] = {
     {TK_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 0, 0},
     {TK_CONFIG_CURSOR, "-bordercursor", "borderCursor", "Cursor", "crosshair",
      Tk_Offset(Table, bdcursor), TK_CONFIG_NULL_OK },
-    {TK_CONFIG_STRING, "-borderwidth", "borderWidth", "BorderWidth", "1",
-     Tk_Offset(Table, defaultTag.borderStr), TK_CONFIG_NULL_OK },
+    {TK_CONFIG_CUSTOM, "-borderwidth", "borderWidth", "BorderWidth", "1",
+     Tk_Offset(Table, defaultTag), TK_CONFIG_NULL_OK, &bdOpt },
     {TK_CONFIG_STRING, "-browsecommand", "browseCommand", "BrowseCommand", "",
      Tk_Offset(Table, browseCmd), TK_CONFIG_NULL_OK},
     {TK_CONFIG_SYNONYM, "-browsecmd", "browseCommand", (char *)NULL,
@@ -265,7 +267,7 @@ Tk_ConfigSpec tableSpecs[] = {
      Tk_Offset(Table, defaultTag.relief), 0},
     {TK_CONFIG_CUSTOM, "-resizeborders", "resizeBorders", "ResizeBorders",
      "both", Tk_Offset(Table, resize), 0, &resizeTypeOpt },
-    {TK_CONFIG_PIXELS, "-rowheight", "rowHeight", "RowHeight", "1",
+    {TK_CONFIG_INT, "-rowheight", "rowHeight", "RowHeight", "1",
      Tk_Offset(Table, defRowHeight), 0},
     {TK_CONFIG_INT, "-roworigin", "rowOrigin", "Origin", "0",
      Tk_Offset(Table, rowOffset), 0},
@@ -466,10 +468,10 @@ Tk_ClassOptionObjCmd(Tk_Window tkwin, char *defaultclass,
  */
 static int
 Tk_TableObjCmd(clientData, interp, objc, objv)
-     ClientData clientData;	/* Main window associated with interpreter. */
-     Tcl_Interp *interp;
-     int objc;			/* Number of arguments. */
-     Tcl_Obj *CONST objv[];	/* Argument objects. */
+    ClientData clientData;	/* Main window associated with interpreter. */
+    Tcl_Interp *interp;
+    int objc;			/* Number of arguments. */
+    Tcl_Obj *CONST objv[];	/* Argument objects. */
 {
     register Table *tablePtr;
     Tk_Window tkwin, mainWin = (Tk_Window) clientData;
@@ -1007,7 +1009,7 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     Tcl_HashSearch search;
     int oldUse, oldCaching, oldExport, oldTitleRows, oldTitleCols;
     int result = TCL_OK;
-    char *oldVar, *oldBorders, **argv;
+    char *oldVar, **argv;
     Tcl_DString error;
     Tk_FontMetrics fm;
 
@@ -1015,7 +1017,6 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     oldCaching	= tablePtr->caching;
     oldUse	= tablePtr->useCmd;
     oldVar	= tablePtr->arrayVar;
-    oldBorders	= tablePtr->defaultTag.borderStr;
     oldTitleRows	= tablePtr->titleRows;
     oldTitleCols	= tablePtr->titleCols;
 
@@ -1133,55 +1134,25 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     tablePtr->ipadY		= MAX(0, tablePtr->ipadY);
     tablePtr->maxReqCols	= MAX(0, tablePtr->maxReqCols);
     tablePtr->maxReqRows	= MAX(0, tablePtr->maxReqRows);
-    tablePtr->defaultTag.bd[0]	= MAX(0, tablePtr->defaultTag.bd[0]);
     CONSTRAIN(tablePtr->titleRows, 0, tablePtr->rows);
     CONSTRAIN(tablePtr->titleCols, 0, tablePtr->cols);
 
     /*
      * Handle change of default border style
-     * When drawing fast or single, the border must be <= 1.
      * The default borderwidth must be >= 0.
      */
     if (tablePtr->drawMode & (DRAW_MODE_SINGLE|DRAW_MODE_FAST)) {
+	/*
+	 * When drawing fast or single, the border must be <= 1.
+	 * We have to do this after the normal configuration
+	 * to base the borders off the first value given.
+	 */
 	tablePtr->defaultTag.bd[0]	= MIN(1, tablePtr->defaultTag.bd[0]);
 	tablePtr->defaultTag.borders	= 1;
-    } else if (tablePtr->defaultTag.borderStr
-	    && ((oldBorders == NULL) ||
-		    strcmp(tablePtr->defaultTag.borderStr, oldBorders))) {
-	int argc, i, res;
-
-	res = Tcl_SplitList(interp, tablePtr->defaultTag.borderStr,
-		&argc, &argv);
-	if (res == TCL_OK) {
-	    if ((argc == 0) || (argc == 3) || (argc > 4)) {
-		Tcl_SetResult(interp,
-			"1, 2 or 4 values must be specified to -borderwidth",
-			TCL_STATIC);
-		ckfree ((char *) argv);
-		res = TCL_ERROR;
-	    } else {
-		tablePtr->defaultTag.borders = argc;
-		for (i = 0; i < argc; i++) {
-		    if (Tk_GetPixels(interp, tablePtr->tkwin, argv[i],
-			    &(tablePtr->defaultTag.bd[i])) != TCL_OK) {
-			res = TCL_ERROR;
-			break;
-		    }
-		    tablePtr->defaultTag.bd[i] =
-			MAX(0, tablePtr->defaultTag.bd[i]);
-		}
-	    }
-	    ckfree ((char *) argv);
-	}
-	if (res != TCL_OK) {
-	    Tcl_DStringGetResult(interp, &error);
-	    ckfree ((char *) tablePtr->defaultTag.borderStr);
-	    tablePtr->defaultTag.borderStr	= (char *) NULL;
-	    tablePtr->defaultTag.borders	= 0;
-	    result = TCL_ERROR;
-	}
-    } else if (tablePtr->defaultTag.borderStr == NULL) {
-	tablePtr->defaultTag.borders		= 0;
+	ckfree((char *) tablePtr->defaultTag.borderStr);
+	tablePtr->defaultTag.borderStr	= (char *) ckalloc(2);
+	strcpy(tablePtr->defaultTag.borderStr,
+		tablePtr->defaultTag.bd[0] ? "1" : "0");
     }
 
     /*

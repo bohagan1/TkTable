@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id:  $
+ * RCS: @(#) $Id: tkTable.h,v 1.4 2000/08/18 03:34:11 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -45,8 +45,6 @@
 #else
 # define TCL_STORAGE_CLASS DLLIMPORT
 #endif
-
-#include "mm.h"
 
 #ifdef WIN32
 #   define WIN32_LEAN_AND_MEAN
@@ -175,19 +173,41 @@
 #define	DATA_ARRAY	(1<<2)
 #define DATA_COMMAND	(1<<3)
 
+/*
+ * Definitions for configuring -borderwidth
+ */
+#define BD_TABLE	0
+#define BD_TABLE_TAG	(1<<1)
+#define BD_TABLE_WIN	(1<<2)
+
+/*
+ * Possible state values for tags
+ */
 typedef enum {
     STATE_UNUSED, STATE_UNKNOWN, STATE_HIDDEN,
-    STATE_NORMAL, STATE_DISABLED, STATE_ACTIVE,
-    STATE_LAST
+    STATE_NORMAL, STATE_DISABLED, STATE_ACTIVE, STATE_LAST
 } TableState;
 
-/* The tag structure */
+/*
+ * Structure for use in parsing table commands/values.
+ * Accessor functions defined in tkTableUtil.c
+ */
+typedef struct {
+  char *name;		/* name of the command/value */
+  int value;		/* >0 because 0 represents an error or proc */
+} Cmd_Struct;
+
+/*
+ * The tag structure
+ */
 typedef struct {
     Tk_3DBorder	bg;		/* background color */
     Tk_3DBorder	fg;		/* foreground color */
+
     char *	borderStr;	/* border style */
-    int		bd[4];		/* cell border width */
     int		borders;	/* number of borders specified (1, 2 or 4) */
+    int		bd[4];		/* cell border width */
+
     int		relief;		/* relief type */
     Tk_Font	tkfont;		/* Information about text font, or NULL. */
     Tk_Anchor	anchor;		/* default anchor point */
@@ -373,13 +393,15 @@ typedef struct TableEmbWindow {
     Tk_Window tkwin;		/* Window for this segment.  NULL means that
 				 * the window hasn't been created yet. */
     Tcl_HashEntry *hPtr;	/* entry into winTable */
-    Tk_3DBorder bg;		/* background color */
     char *create;		/* Script to create window on-demand.
 				 * NULL means no such script.
 				 * Malloc-ed. */
+    Tk_3DBorder bg;		/* background color */
+
     char *borderStr;		/* border style */
-    int bd[4];			/* border width for cell around window */
     int borders;		/* number of borders specified (1, 2 or 4) */
+    int bd[4];			/* border width for cell around window */
+
     int relief;			/* relief type */
     int sticky;			/* How to align window in space */
     int padX, padY;		/* Padding to leave around each side
@@ -409,7 +431,7 @@ extern void	TableLostSelection _ANSI_ARGS_((ClientData clientData));
 extern void	TableSetActiveIndex _ANSI_ARGS_((register Table *tablePtr));
 
 /*
- * HEADERS IN TKTABLECMDS
+ * HEADERS IN tkTableCmds.c
  */
 
 extern int	Table_ActivateCmd _ANSI_ARGS_((ClientData clientData,
@@ -444,7 +466,7 @@ extern int	Table_ViewCmd _ANSI_ARGS_((ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 
 /*
- * HEADERS IN tkTableEdit
+ * HEADERS IN tkTableEdit.c
  */
 
 extern int	Table_EditCmd _ANSI_ARGS_((ClientData clientData,
@@ -455,7 +477,7 @@ extern void	TableInsertChars _ANSI_ARGS_((register Table *tablePtr,
 			int index, char *string));
 
 /*
- * HEADERS IN TKTABLETAG
+ * HEADERS IN tkTableTag.c
  */
 
 extern TableTag *TableNewTag _ANSI_ARGS_((void));
@@ -473,7 +495,28 @@ extern int	Table_TagCmd _ANSI_ARGS_((ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 
 /*
- * HEADERS IN TKTABLECELL
+ * HEADERS IN tkTableUtil.c
+ */
+
+extern int	TableOptionBdSet _ANSI_ARGS_((ClientData clientData,
+			Tcl_Interp *interp, Tk_Window tkwin,
+			char *value, char *widgRec, int offset));
+extern char *	TableOptionBdGet _ANSI_ARGS_((ClientData clientData,
+			Tk_Window tkwin, char *widgRec, int offset,
+			Tcl_FreeProc **freeProcPtr));
+extern int	TableTagConfigureBd _ANSI_ARGS_((Table *tablePtr,
+			TableTag *tagPtr, char *oldValue, int nullOK));
+extern int	Cmd_OptionSet _ANSI_ARGS_((ClientData clientData,
+					   Tcl_Interp *interp,
+					   Tk_Window unused, char *value,
+					   char *widgRec, int offset));
+extern char *	Cmd_OptionGet _ANSI_ARGS_((ClientData clientData,
+					   Tk_Window unused, char *widgRec,
+					   int offset,
+					   Tcl_FreeProc **freeProcPtr));
+
+/*
+ * HEADERS IN tkTableCell.c
  */
 
 extern int	TableTrueCell _ANSI_ARGS_((Table *tablePtr, int row, int col,
