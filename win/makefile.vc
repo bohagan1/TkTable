@@ -94,7 +94,7 @@ DLLOBJS = $(TMP_DIR)\tkTable.obj \
 	$(TMP_DIR)\tkTableCell.obj \
 	$(TMP_DIR)\tkTableCellSort.obj \
 	$(TMP_DIR)\tkTableCmds.obj \
-	$(TMP_DIR)\cmd.obj
+	$(TMP_DIR)\tkTableUtil.obj
 # $(TMP_DIR)\tkTablePs.obj
 
 DLL=$(PROJECT).dll

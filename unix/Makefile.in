@@ -2,7 +2,7 @@
 # If you change this, then the demos won't work, but it might be necessary
 # for those with another built-in "table" command
 #
-# RCS: @(#) $Id:  $
+# RCS: @(#) $Id: Makefile.in,v 1.7 2000/08/18 02:45:00 hobbs Exp $
 #
 
 TBL_COMMAND	= table
@@ -31,7 +31,7 @@ OBJS		= tkTable.o \
 		tkTableCell.o \
 		tkTableCellSort.o \
 		tkTableCmds.o \
-		cmd.o
+		tkTableUtil.o
 
 ## PostScript is on the drawing board
 #OBJS		+= tkTablePs.o
@@ -91,9 +91,12 @@ TBL_CFLAGS	= -O
 #TBL_CFLAGS	+= -DPROCS
 
 ## I use this for helping hunt down the slightest error
-#TBL_CFLAGS	+= -DDEBUG -g -Wall -Wno-implicit -Wshadow \
+#TBL_CFLAGS	+= -g -Wall -Wno-implicit -Wshadow -pedantic \
 		   -Wpointer-arith -Wmissing-prototypes \
 		   -Wmissing-declarations -Wnested-externs -Winline
+
+## Jeff's magic extra debug flag
+#TBL_CFLAGS	+= -DDEBUG
 
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
@@ -180,7 +183,7 @@ tkTablePs.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTablePs.c
 tkTableWin.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTableWin.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
 
-cmd.o:		$(GENERIC_DIR)/mm.h $(GENERIC_DIR)/cmd.c
+tkTableUtil.o:	$(GENERIC_DIR)/tkTable.h $(GENERIC_DIR)/tkTableUtil.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(GENERIC_DIR)/$*.c -o $@
 
 tkTable.tcl.h: $(LIB_DIR)/tkTable.tcl
@@ -218,7 +221,11 @@ uninstall:
 	$(RM) "$(DLL_DIR)/$(DLL).$(TBL_VERSION)" "$(DLL_DIR)/pkgIndex.tcl" "$(RUN_DIR)/tkTable.tcl" $(MAN_INSTALL_DIR)/$(MANS)
 
 test: all
-	$(WISH) $(DEMO_DIR)/basic.tcl
+	LD_LIBRARY_PATH=`pwd`:${LD_LIBRARY_PATH}; export LD_LIBRARY_PATH; \
+	LIBPATH=`pwd`:${TCL_BIN_DIR}:${LIBPATH}; export LIBPATH; \
+	SHLIB_PATH=`pwd`:${TCL_BIN_DIR}:${SHLIB_PATH}; export SHLIB_PATH; \
+	TK_TABLE_LIBRARY=$(LIB_DIR); export TK_TABLE_LIBRARY; \
+	$(WISH) $(TEST_DIR)/all.tcl -geometry +100+100 $(TESTFLAGS)
 
 clean: 
 	$(RM) $(OBJS) $(DLL) $(STATIC_LIB) $(STATIC_EXEC) core pkgIndex.tcl tkTable.tcl.h
