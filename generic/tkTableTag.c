@@ -3,30 +3,31 @@
  *
  *	This module implements tags for table widgets.
  *
- * Copyright (c) 1998-2000 Jeffrey Hobbs
+ * Copyright (c) 1998-2001 Jeffrey Hobbs
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableTag.c,v 1.3 2000/08/31 02:09:17 hobbs Exp $
+ * RCS: @(#) $Id: tkTableTag.c,v 1.4 2001/06/22 07:17:59 hobbs Exp $
  */
 
 #include "tkTable.h"
 
-static void	CreateTagEntry _ANSI_ARGS_((Table *tablePtr, char *name,
-					    int objc, char **argv));
+static TableTag *TableTagGetEntry _ANSI_ARGS_((Table *tablePtr, char *name,
+	int objc, char **argv));
+static int	TableTagGetPriority _ANSI_ARGS_((Table *tablePtr,
+	TableTag *tagPtr));
 static void	TableImageProc _ANSI_ARGS_((ClientData clientData, int x,
-					    int y, int width, int height,
-					    int imageWidth, int imageHeight));
+	int y, int width, int height, int imageWidth, int imageHeight));
 
 static char *tagCmdNames[] = {
-    "celltag", "cget", "coltag", "configure", "delete",
-    "exists", "includes", "names", "rowtag", (char *) NULL
+    "celltag", "cget", "coltag", "configure", "delete", "exists",
+    "includes", "lower", "names", "raise", "rowtag", (char *) NULL
 };
 
 enum tagCmd {
-    TAG_CELLTAG, TAG_CGET, TAG_COLTAG, TAG_CONFIGURE, TAG_DELETE,
-    TAG_EXISTS, TAG_INCLUDES, TAG_NAMES, TAG_ROWTAG
+    TAG_CELLTAG, TAG_CGET, TAG_COLTAG, TAG_CONFIGURE, TAG_DELETE, TAG_EXISTS,
+    TAG_INCLUDES, TAG_LOWER, TAG_NAMES, TAG_RAISE, TAG_ROWTAG
 };
 
 static Cmd_Struct tagState_vals[]= {
@@ -78,6 +79,17 @@ static Tk_ConfigSpec tagConfig[] = {
    Tk_Offset(TableTag, wrap), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, 0, 0}
 };
+
+/*
+ * The join tag structure is used to create a combined tag, so it
+ * keeps priority info.
+ */
+typedef struct {
+    TableTag	tag;		/* must be first */
+    unsigned int magic;
+    unsigned int pbg, pfg, pborders, prelief, ptkfont, panchor, pimage;
+    unsigned int pstate, pjustify, pmultiline, pwrap, pshowtext;
+} TableJoinTag;
 
 /* 
  *----------------------------------------------------------------------
@@ -152,9 +164,113 @@ TableNewTag(void)
  *
  *----------------------------------------------------------------------
  */
-void
-TableMergeTag(TableTag *baseTag, TableTag *addTag)
+TableTag *
+TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag)
 {
+    TableJoinTag *tagPtr = (TableJoinTag *) baseTag;
+    int prio;
+
+    if (tagPtr == NULL) {
+	/*
+	 * TableNewTag for JoinTags
+	 */
+	TableJoinTag *tagPtr = (TableJoinTag *) ckalloc(sizeof(TableJoinTag));
+	memset((VOID *) tagPtr, 0, sizeof(TableJoinTag));
+	baseTag = (TableTag *) tagPtr;
+
+	baseTag->anchor		= (Tk_Anchor)-1;
+	baseTag->justify	= (Tk_Justify)-1;
+	baseTag->multiline	= -1;
+	baseTag->relief		= -1;
+	baseTag->showtext	= -1;
+	baseTag->state		= STATE_UNKNOWN;
+	baseTag->wrap		= -1;
+	tagPtr->magic		= 0x99ABCDEF;
+	tagPtr->pbg		= -1;
+	tagPtr->pfg		= -1;
+	tagPtr->pborders	= -1;
+	tagPtr->prelief		= -1;
+	tagPtr->ptkfont		= -1;
+	tagPtr->panchor		= -1;
+	tagPtr->pimage		= -1;
+	tagPtr->pstate		= -1;
+	tagPtr->pjustify	= -1;
+	tagPtr->pmultiline	= -1;
+	tagPtr->pwrap		= -1;
+	tagPtr->pshowtext	= -1;
+
+	/*
+	 * Merge in the default tag and return.
+	 */
+	memcpy((VOID *) tagPtr, (VOID *) &(tablePtr->defaultTag),
+		sizeof(TableTag));
+	return (TableTag *) tagPtr;
+    }
+    if (tagPtr->magic != 0x99ABCDEF) {
+	panic("bad mojo in TableMergeTag");
+    }
+
+#ifndef NO_TAG_PRIORITIES
+    /*
+     * Find priority for the tag to merge
+     */
+    prio = TableTagGetPriority(tablePtr, addTag);
+
+    if ((addTag->anchor != -1) && (prio < tagPtr->panchor)) {
+	baseTag->anchor		= addTag->anchor;
+	tagPtr->panchor		= prio;
+    }
+    if ((addTag->bg != NULL) && (prio < tagPtr->pbg)) {
+	baseTag->bg		= addTag->bg;
+	tagPtr->pbg		= prio;
+    }
+    if ((addTag->fg != NULL) && (prio < tagPtr->pfg)) {
+	baseTag->fg		= addTag->fg;
+	tagPtr->pfg		= prio;
+    }
+    if ((addTag->tkfont != NULL) && (prio < tagPtr->ptkfont)) {
+	baseTag->tkfont		= addTag->tkfont;
+	tagPtr->ptkfont		= prio;
+    }
+    if ((addTag->imageStr != NULL) && (prio < tagPtr->pimage)) {
+	baseTag->imageStr	= addTag->imageStr;
+	baseTag->image		= addTag->image;
+	tagPtr->pimage		= prio;
+    }
+    if ((addTag->multiline >= 0) && (prio < tagPtr->pmultiline)) {
+	baseTag->multiline	= addTag->multiline;
+	tagPtr->pmultiline	= prio;
+    }
+    if ((addTag->relief != -1) && (prio < tagPtr->prelief)) {
+	baseTag->relief		= addTag->relief;
+	tagPtr->prelief		= prio;
+    }
+    if ((addTag->showtext >= 0) && (prio < tagPtr->pshowtext)) {
+	baseTag->showtext	= addTag->showtext;
+	tagPtr->pshowtext	= prio;
+    }
+    if ((addTag->state != STATE_UNKNOWN) && (prio < tagPtr->pstate)) {
+	baseTag->state		= addTag->state;
+	tagPtr->pstate		= prio;
+    }
+    if ((addTag->justify != -1) && (prio < tagPtr->pjustify)) {
+	baseTag->justify	= addTag->justify;
+	tagPtr->pjustify	= prio;
+    }
+    if ((addTag->wrap >= 0) && (prio < tagPtr->pwrap)) {
+	baseTag->wrap		= addTag->wrap;
+	tagPtr->pwrap		= prio;
+    }
+    if ((addTag->borders) && (prio < tagPtr->pborders)) {
+	baseTag->borderStr	= addTag->borderStr;
+	baseTag->borders	= addTag->borders;
+	baseTag->bd[0]		= addTag->bd[0];
+	baseTag->bd[1]		= addTag->bd[1];
+	baseTag->bd[2]		= addTag->bd[2];
+	baseTag->bd[3]		= addTag->bd[3];
+	tagPtr->pborders	= prio;
+    }
+#else
     if (addTag->anchor != -1)	baseTag->anchor = addTag->anchor;
     if (addTag->bg != NULL)	baseTag->bg	= addTag->bg;
     if (addTag->fg != NULL)	baseTag->fg	= addTag->fg;
@@ -177,6 +293,8 @@ TableMergeTag(TableTag *baseTag, TableTag *addTag)
 	baseTag->bd[2]		= addTag->bd[2];
 	baseTag->bd[3]		= addTag->bd[3];
     }
+#endif
+    return (TableTag *) tagPtr;
 }
 
 /*
@@ -257,29 +375,80 @@ TableGetTagBorders(TableTag *tagPtr,
 /*
  *----------------------------------------------------------------------
  *
- * CreateTagEntry --
- *	Takes a name and optional args and create a tag entry in the
+ * TableTagGetEntry --
+ *	Takes a name and optional args and creates a tag entry in the
  *	table's tag table.
  *
  * Results:
- *	A new tag entry will be created.
+ *	A new tag entry will be created and returned.
  *
  * Side effects:
  *	None.
  *
  *----------------------------------------------------------------------
  */
-static void
-CreateTagEntry(Table *tablePtr, char *name, int objc, char **argv)
+static TableTag *
+TableTagGetEntry(Table *tablePtr, char *name, int objc, char **argv)
 {
     Tcl_HashEntry *entryPtr;
-    TableTag *tagPtr = TableNewTag();
-    int dummy;
+    TableTag *tagPtr = NULL;
+    int new;
 
-    Tk_ConfigureWidget(tablePtr->interp, tablePtr->tkwin, tagConfig,
-		       objc, argv, (char *)tagPtr, TK_CONFIG_ARGV_ONLY);
-    entryPtr = Tcl_CreateHashEntry(tablePtr->tagTable, name, &dummy);
-    Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
+    entryPtr = Tcl_CreateHashEntry(tablePtr->tagTable, name, &new);
+    if (new) {
+	tagPtr = TableNewTag();
+	Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
+	if (tablePtr->tagPrioSize >= tablePtr->tagPrioMax) {
+	    int i;
+	    /*
+	     * Increase the priority list size in blocks of 10
+	     */
+	    tablePtr->tagPrioMax += 10;
+	    tablePtr->tagPrioNames = (char **) ckrealloc(
+		(char *) tablePtr->tagPrioNames,
+		sizeof(TableTag *) * tablePtr->tagPrioMax);
+	    tablePtr->tagPrios = (TableTag **) ckrealloc(
+		(char *) tablePtr->tagPrios,
+		sizeof(TableTag *) * tablePtr->tagPrioMax);
+	    for (i = tablePtr->tagPrioSize; i < tablePtr->tagPrioMax; i++) {
+		tablePtr->tagPrioNames[i] = (char *) NULL;
+		tablePtr->tagPrios[i] = (TableTag *) NULL;
+	    }
+	}
+	tablePtr->tagPrioNames[tablePtr->tagPrioSize] =
+	    (char *) Tcl_GetHashKey(tablePtr->tagTable, entryPtr);
+	tablePtr->tagPrios[tablePtr->tagPrioSize] = tagPtr;
+	tablePtr->tagPrioSize++;
+    } else {
+	tagPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
+    }
+    if (objc) {
+	Tk_ConfigureWidget(tablePtr->interp, tablePtr->tkwin, tagConfig,
+		objc, argv, (char *)tagPtr, TK_CONFIG_ARGV_ONLY);
+    }
+    return tagPtr;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TableTagGetPriority --
+ *	Get the priority value for a tag.
+ *
+ * Results:
+ *	returns the priority.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+static int
+TableTagGetPriority(Table *tablePtr, TableTag *tagPtr)
+{
+    int prio = 0;
+    while (tagPtr != tablePtr->tagPrios[prio]) { prio++; }
+    return prio;
 }
 
 /*
@@ -305,12 +474,15 @@ TableInitTags(Table *tablePtr)
     static char *titleArgs[]	= {"-bg", DISABLED, "-fg", "white",
 				   "-relief", "flat", "-state", "disabled" };
     static char *flashArgs[]	= {"-bg", "red" };
-    CreateTagEntry(tablePtr, "active", ARSIZE(activeArgs), activeArgs);
-    CreateTagEntry(tablePtr, "sel", ARSIZE(selArgs), selArgs);
-    CreateTagEntry(tablePtr, "title", ARSIZE(titleArgs), titleArgs);
-    CreateTagEntry(tablePtr, "flash", ARSIZE(flashArgs), flashArgs);
+    /*
+     * The order of creation is important to priority.
+     */
+    TableTagGetEntry(tablePtr, "flash", ARSIZE(flashArgs), flashArgs);
+    TableTagGetEntry(tablePtr, "active", ARSIZE(activeArgs), activeArgs);
+    TableTagGetEntry(tablePtr, "sel", ARSIZE(selArgs), selArgs);
+    TableTagGetEntry(tablePtr, "title", ARSIZE(titleArgs), titleArgs);
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -370,7 +542,7 @@ FindRowColTag(Table *tablePtr, int cell, int mode)
     }
     return tagPtr;
 }
-
+
 /* 
  *----------------------------------------------------------------------
  *
@@ -397,7 +569,7 @@ TableCleanupTag(Table *tablePtr, TableTag *tagPtr)
 
     Tk_FreeOptions(tagConfig, (char *) tagPtr, tablePtr->display, 0);
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -455,18 +627,10 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		tagPtr = NULL;
 	    } else {
 		/*
-		 * Check to see if the tag actually exists
+		 * Get the pointer to the tag structure.  If it doesn't
+		 * exist, it will be created.
 		 */
-		entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
-		if (entryPtr == NULL) {
-		    Tcl_AppendStringsToObj(resultPtr, "invalid tag name \"",
-			    tagname, "\"", (char *) NULL);
-		    return TCL_ERROR;
-		}
-		/*
-		 * Get the pointer to the tag structure
-		 */
-		tagPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
+		tagPtr = TableTagGetEntry(tablePtr, tagname, 0, NULL);
 	    }
 
 	    if (objc == 4) {
@@ -603,15 +767,10 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		tagPtr = NULL;
 	    } else {
 		/*
-		 * Check to see if the tag actually exists
+		 * Get the pointer to the tag structure.  If it doesn't
+		 * exist, it will be created.
 		 */
-		entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
-		if (entryPtr == NULL) {
-		    Tcl_AppendStringsToObj(resultPtr, "invalid tag name \"",
-			    tagname, "\"", (char *) NULL);
-		    return TCL_ERROR;
-		}
-		tagPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
+		tagPtr = TableTagGetEntry(tablePtr, tagname, 0, NULL);
 	    }
 
 	    /*
@@ -739,95 +898,76 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	    tagname  = Tcl_GetString(objv[3]);
 	    entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
 	    if (entryPtr == NULL) {
-		Tcl_AppendStringsToObj(resultPtr, "invalid tag name \"",
-			tagname, "\"", (char *) NULL);
-		return TCL_ERROR;
+		goto invalidtag;
 	    } else {
 		tagPtr = (TableTag *) Tcl_GetHashValue (entryPtr);
 		result = Tk_ConfigureValue(interp, tablePtr->tkwin, tagConfig,
 			(char *) tagPtr, Tcl_GetString(objv[4]), 0);
-	}
-	return result;	/* CGET */
+	    }
+	    return result;	/* CGET */
 
-	case TAG_CONFIGURE: {
-	    char **argv;
-
+	case TAG_CONFIGURE:
 	    if (objc < 4) {
 		Tcl_WrongNumArgs(interp, 3, objv, "tagName ?arg arg  ...?");
 		return TCL_ERROR;
 	    }
-	    /* first see if this is a reconfiguration */
-	    tagname  = Tcl_GetString(objv[3]);
-	    entryPtr = Tcl_CreateHashEntry(tablePtr->tagTable, tagname,
-		    &newEntry);
-
-	    /* Stringify */
-	    argv = (char **) ckalloc((objc + 1) * sizeof(char *));
-	    for (i = 0; i < objc; i++)
-		argv[i] = Tcl_GetString(objv[i]);
-	    argv[objc] = NULL;
-
-	    if (newEntry) {
-		/* create the structure */
-		tagPtr = TableNewTag();
-
-		/* insert it into the table */
-		Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
-
-		/* configure the tag structure */
-		result = Tk_ConfigureWidget(interp, tablePtr->tkwin,
-			tagConfig, objc-4, argv+4, (char *) tagPtr, 0);
-	    } else {
-		/* pointer wasn't null, do a reconfig if we have enough args */
-		/* get the tag pointer from the table */
-		tagPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
-
-		/* 5 args means that there are values to replace */
-		if (objc > 5) {
-		    /* and do a reconfigure */
-		    result = Tk_ConfigureWidget(interp, tablePtr->tkwin,
-			    tagConfig, objc-4, argv+4, (char *) tagPtr,
-			    TK_CONFIG_ARGV_ONLY);
-		}
-	    }
-	    ckfree((char *) argv);
-	    if (result == TCL_ERROR) {
-		return TCL_ERROR;
-	    }
 
 	    /*
-	     * Handle change of image name
+	     * Get the pointer to the tag structure.  If it doesn't
+	     * exist, it will be created.
 	     */
-	    if (tagPtr->imageStr) {
-		image = Tk_GetImage(interp, tablePtr->tkwin, tagPtr->imageStr,
-			TableImageProc, (ClientData)tablePtr);
-		if (image == NULL) {
-		    result = TCL_ERROR;
-		}
-	    } else {
-		image = NULL;
-	    }
-	    if (tagPtr->image) {
-		Tk_FreeImage(tagPtr->image);
-	    }
-	    tagPtr->image = image;
+	    tagPtr = TableTagGetEntry(tablePtr, Tcl_GetString(objv[3]),
+		    0, NULL);
 
 	    /* 
-	     * If there were less than 6 args, we need
-	     * to do a printout of the config, even for new tags
+	     * If there were less than 6 args, we return the configuration
+	     * (for all or just one option), even for new tags
 	     */
 	    if (objc < 6) {
 		result = Tk_ConfigureInfo(interp, tablePtr->tkwin, tagConfig,
 			(char *) tagPtr, (objc == 5) ?
 			Tcl_GetString(objv[4]) : NULL, 0);
 	    } else {
+		char **argv;
+
+		/* Stringify */
+		argv = (char **) ckalloc((objc + 1) * sizeof(char *));
+		for (i = 0; i < objc; i++)
+		    argv[i] = Tcl_GetString(objv[i]);
+		argv[objc] = NULL;
+
+		result = Tk_ConfigureWidget(interp, tablePtr->tkwin,
+			tagConfig, objc-4, argv+4, (char *) tagPtr,
+			TK_CONFIG_ARGV_ONLY);
+		ckfree((char *) argv);
+		if (result == TCL_ERROR) {
+		    return TCL_ERROR;
+		}
+
 		/*
-		 * Otherwise we reconfigured so invalidate the table to redraw
+		 * Handle change of image name
+		 */
+		if (tagPtr->imageStr) {
+		    image = Tk_GetImage(interp, tablePtr->tkwin,
+			    tagPtr->imageStr,
+			    TableImageProc, (ClientData)tablePtr);
+		    if (image == NULL) {
+			result = TCL_ERROR;
+		    }
+		} else {
+		    image = NULL;
+		}
+		if (tagPtr->image) {
+		    Tk_FreeImage(tagPtr->image);
+		}
+		tagPtr->image = image;
+
+		/*
+		 * We reconfigured, so invalidate the table to redraw
 		 */
 		TableInvalidateAll(tablePtr, 0);
 	    }
 	    return result;
-	}
 
 	case TAG_DELETE:
 	    /* delete a tag */
@@ -877,11 +1017,26 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 			    Tcl_DeleteHashEntry(scanPtr);
 		    }
 
-		    /* release the structure */
+		    /*
+		     * Remove the tag from the prio list and collapse
+		     * the rest of the tags.  We could check for shrinking
+		     * the prio list as well.
+		     */
+		    for (i = 0; i < tablePtr->tagPrioSize; i++) {
+			if (tablePtr->tagPrios[i] == tagPtr) break;
+		    }
+		    for ( ; i < tablePtr->tagPrioSize; i++) {
+			tablePtr->tagPrioNames[i] =
+			    tablePtr->tagPrioNames[i+1];
+			tablePtr->tagPrios[i] = tablePtr->tagPrios[i+1];
+		    }
+		    tablePtr->tagPrioSize--;
+
+		    /* Release the tag structure */
 		    TableCleanupTag(tablePtr, tagPtr);
 		    ckfree((char *) tagPtr);
 
-		    /* and free the hash table entry */
+		    /* And free the hash table entry */
 		    Tcl_DeleteHashEntry(entryPtr);
 		}
 	    }
@@ -952,24 +1107,151 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 	    Tcl_SetObjResult(interp, Tcl_NewBooleanObj(result));
 	    return TCL_OK;
 
-	case TAG_NAMES:		/* print out the tag names */
+	case TAG_LOWER: {
+	    int tagPrio, lowerPrio;
+	    TableTag *lowerPtr;
+	    /*
+	     * Lower out the named tag
+	     */
+	    if (objc != 4 && objc != 5) {
+		Tcl_WrongNumArgs(interp, 3, objv, "tagName ?belowThis?");
+		return TCL_ERROR;
+	    }
+	    tagname  = Tcl_GetString(objv[3]);
+	    /* check to see if the tag actually exists */
+	    entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
+	    if (entryPtr == NULL) {
+		goto invalidtag;
+	    }
+	    tagPtr  = (TableTag *) Tcl_GetHashValue(entryPtr);
+	    tagPrio = TableTagGetPriority(tablePtr, tagPtr);
+	    keybuf  = tablePtr->tagPrioNames[tagPrio];
+	    if (objc == 5) {
+		tagname  = Tcl_GetString(objv[4]);
+		entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
+		if (entryPtr == NULL) {
+		    goto invalidtag;
+		}
+		lowerPtr  = (TableTag *) Tcl_GetHashValue(entryPtr);
+		lowerPrio = TableTagGetPriority(tablePtr, lowerPtr);
+	    } else {
+		/*
+		 * Lower this tag's priority to the bottom.
+		 */
+		lowerPrio = tablePtr->tagPrioSize - 1;
+	    }
+	    if (lowerPrio < tagPrio) {
+		/*
+		 * Move tag up in priority.
+		 */
+		for (i = tagPrio; i > lowerPrio; i--) {
+		    tablePtr->tagPrioNames[i] = tablePtr->tagPrioNames[i-1];
+		    tablePtr->tagPrios[i]     = tablePtr->tagPrios[i-1];
+		}
+		i++;
+		tablePtr->tagPrioNames[i] = keybuf;
+		tablePtr->tagPrios[i]     = tagPtr;
+	    } else if (lowerPrio > tagPrio) {
+		/*
+		 * Move tag down in priority.
+		 */
+		for (i = tagPrio; i < lowerPrio; i++) {
+		    tablePtr->tagPrioNames[i] = tablePtr->tagPrioNames[i+1];
+		    tablePtr->tagPrios[i]     = tablePtr->tagPrios[i+1];
+		}
+		tablePtr->tagPrioNames[i] = keybuf;
+		tablePtr->tagPrios[i]     = tagPtr;
+	    }
+	    /* since we deleted a tag, redraw the screen */
+	    TableInvalidateAll(tablePtr, 0);
+	    return TCL_OK;
+	}
+
+	case TAG_NAMES:
+	    /*
+	     * Print out the tag names in priority order
+	     */
 	    if (objc < 3 || objc > 4) {
 		Tcl_WrongNumArgs(interp, 3, objv, "?pattern?");
 		return TCL_ERROR;
 	    }
 	    tagname = (objc == 4) ? Tcl_GetString(objv[3]) : NULL;
-	    entryPtr = Tcl_FirstHashEntry(tablePtr->tagTable, &search);
-	    while (entryPtr != NULL) {
-		keybuf = Tcl_GetHashKey(tablePtr->tagTable, entryPtr);
+	    for (i = 0; i < tablePtr->tagPrioSize; i++) {
+		keybuf = tablePtr->tagPrioNames[i];
 		if (objc == 3 || Tcl_StringMatch(keybuf, tagname)) {
 		    objPtr = Tcl_NewStringObj(keybuf, -1);
 		    Tcl_ListObjAppendElement(NULL, resultPtr, objPtr);
 		}
-		entryPtr = Tcl_NextHashEntry(&search);
 	    }
 	    return TCL_OK;
 
+	case TAG_RAISE: {
+	    int tagPrio, raisePrio;
+	    TableTag *raisePtr;
+	    /*
+	     * Raise out the named tag
+	     */
+	    if (objc != 4 && objc != 5) {
+		Tcl_WrongNumArgs(interp, 3, objv, "tagName ?aboveThis?");
+		return TCL_ERROR;
+	    }
+	    tagname  = Tcl_GetString(objv[3]);
+	    /* check to see if the tag actually exists */
+	    entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
+	    if (entryPtr == NULL) {
+		goto invalidtag;
+	    }
+	    tagPtr  = (TableTag *) Tcl_GetHashValue(entryPtr);
+	    tagPrio = TableTagGetPriority(tablePtr, tagPtr);
+	    keybuf  = tablePtr->tagPrioNames[tagPrio];
+	    if (objc == 5) {
+		tagname  = Tcl_GetString(objv[4]);
+		entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
+		if (entryPtr == NULL) {
+		    goto invalidtag;
+		}
+		raisePtr  = (TableTag *) Tcl_GetHashValue(entryPtr);
+		raisePrio = TableTagGetPriority(tablePtr, raisePtr) - 1;
+	    } else {
+		/*
+		 * Raise this tag's priority to the bottom.
+		 */
+		raisePrio = -1;
+	    }
+	    if (raisePrio < tagPrio) {
+		/*
+		 * Move tag up in priority.
+		 */
+		for (i = tagPrio; i > raisePrio; i--) {
+		    tablePtr->tagPrioNames[i] = tablePtr->tagPrioNames[i-1];
+		    tablePtr->tagPrios[i]     = tablePtr->tagPrios[i-1];
+		}
+		i++;
+		tablePtr->tagPrioNames[i] = keybuf;
+		tablePtr->tagPrios[i]     = tagPtr;
+	    } else if (raisePrio > tagPrio) {
+		/*
+		 * Move tag down in priority.
+		 */
+		for (i = tagPrio; i < raisePrio; i++) {
+		    tablePtr->tagPrioNames[i] = tablePtr->tagPrioNames[i+1];
+		    tablePtr->tagPrios[i]     = tablePtr->tagPrios[i+1];
+		}
+		tablePtr->tagPrioNames[i] = keybuf;
+		tablePtr->tagPrios[i]     = tagPtr;
+	    }
+	    /* since we deleted a tag, redraw the screen */
+	    TableInvalidateAll(tablePtr, 0);
+	    return TCL_OK;
+	}
     }
-
     return TCL_OK;
+
+    invalidtag:
+    /*
+     * When jumping here, ensure the invalid 'tagname' is set already.
+     */
+    Tcl_AppendStringsToObj(resultPtr, "invalid tag name \"",
+	    tagname, "\"", (char *) NULL);
+    return TCL_ERROR;
 }

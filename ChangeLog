@@ -1,4 +1,25 @@
+2001-06-23  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c:
+	* generic/tkTable.h:
+	* generic/tkTableTag.c: added support for priorities in tags.
+	There are new 'tag lower' and 'tag raise' methods.  This may lead
+	to different view characteristics because the default priority
+	order is creation order, starting with flash, active, sel, title,
+	followed by whatever the user creates.  The old order was fixed at
+	flash, active, sel, <celltag>, title, <rowtag>, <coltag>
+		**** POTENTIAL INCOMPATABILITY ****
+
+	* tests/tkTable.test: makings of an initial test suite
+
+	* generic/tkTableCmds.c (Table_CurvalueCmd): removed extra curvalue
+	in error message.
+
 2001-06-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableTag.c (Table_TagCmd): made adding tags to
+	cell/row/col create the tag if it didn't exist.  This was
+	previously an error.
 
 	* generic/tkTable.c (TableDisplay): changed use of NO_XSETCLIP to
 	only operate on Macintosh, added new Windows code that is the

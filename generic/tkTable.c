@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.11 2000/10/19 18:26:47 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.12 2001/06/22 23:23:12 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -549,6 +549,20 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     tablePtr->selCells = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
     Tcl_InitHashTable(tablePtr->selCells, TCL_STRING_KEYS);
 
+    /*
+     * List of tags in priority order.  30 is a good default number to alloc.
+     */
+    tablePtr->tagPrioMax = 30;
+    tablePtr->tagPrioNames = (char **) ckalloc(
+	sizeof(char *) * tablePtr->tagPrioMax);
+    tablePtr->tagPrios = (TableTag **) ckalloc(
+	sizeof(TableTag *) * tablePtr->tagPrioMax);
+    tablePtr->tagPrioSize = 0;
+    for (offset = 0; offset < tablePtr->tagPrioMax; offset++) {
+	tablePtr->tagPrioNames[offset] = (char *) NULL;
+	tablePtr->tagPrios[offset] = (TableTag *) NULL;
+    }
+
 #ifdef PROCS
     tablePtr->inProc = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
     Tcl_InitHashTable(tablePtr->inProc, TCL_STRING_KEYS);
@@ -687,7 +701,7 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 
 	case CMD_ICURSOR:
 	    if (objc != 2 && objc != 3) {
-		Tcl_WrongNumArgs(interp, 2, objv, "?arg?");
+		Tcl_WrongNumArgs(interp, 2, objv, "?cursorPos?");
 		result = TCL_ERROR;
 		goto done;
 	    }
@@ -717,7 +731,7 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 	    if ((objc < 3 || objc > 4) ||
 		    ((objc == 4) && (strcmp(which, "row")
 			    && strcmp(which, "col")))) {
-		Tcl_WrongNumArgs(interp, 2, objv, "index ?row|col?");
+		Tcl_WrongNumArgs(interp, 2, objv, "<index> ?row|col?");
 		result = TCL_ERROR;
 	    } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col)
 		    != TCL_OK) {
@@ -743,7 +757,7 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 
 	case CMD_REREAD:
 	    if (objc != 2) {
-		Tcl_WrongNumArgs(interp, 2, objv, "");
+		Tcl_WrongNumArgs(interp, 2, objv, NULL);
 		result = TCL_ERROR;
 	    } else if ((tablePtr->flags & HAS_ACTIVE) &&
 		    !(tablePtr->flags & ACTIVE_DISABLED) &&
@@ -846,7 +860,7 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
 
 	case CMD_VERSION:
 	    if (objc != 2) {
-		Tcl_WrongNumArgs(interp, 2, objv, "");
+		Tcl_WrongNumArgs(interp, 2, objv, NULL);
 		result = TCL_ERROR;
 	    } else {
 		Tcl_SetStringObj(resultPtr, TBL_VERSION, -1);
@@ -960,6 +974,8 @@ TableDestroy(ClientData clientdata)
     /* And delete the actual hash table */
     Tcl_DeleteHashTable(tablePtr->tagTable);
     ckfree((char *) (tablePtr->tagTable));
+    ckfree((char *) (tablePtr->tagPrios));
+    ckfree((char *) (tablePtr->tagPrioNames));
 
     /* Now free up all the embedded window info */
     for (entryPtr = Tcl_FirstHashEntry(tablePtr->winTable, &search);
@@ -1742,10 +1758,12 @@ TableDisplay(ClientData clientdata)
 		Tcl_CreateHashEntry(drawnCache, buf, &new);
 	    }
 
-	    /* Create the tag here */
-	    tagPtr = TableNewTag();
-	    /* First, merge in the default tag */
-	    TableMergeTag(tagPtr, &(tablePtr->defaultTag));
+	    /*
+	     * Create the tag here.  This will actually create a JoinTag
+	     * That will handle the priority management of merging for us.
+	     */
+	    tagPtr = TableMergeTag(tablePtr,
+		    (TableTag *) NULL, (TableTag *) NULL);
 
 	    /*
 	     * Check to see if we have an embedded window in this cell.
@@ -1802,7 +1820,7 @@ TableDisplay(ClientData clientdata)
 	     * get the combined tag structure for the cell
 	     * first clear out a new tag structure that we will build in
 	     * then add tags as we realize they belong.
-	     * Tags with the highest priority are added first
+	     * Tags with the highest priority are added last
 	     */
 
 	    /*
@@ -1818,27 +1836,28 @@ TableDisplay(ClientData clientdata)
 		colPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
 	    }
 	    if (colPtr != (TableTag *) NULL) {
-		TableMergeTag(tagPtr, colPtr);
+		TableMergeTag(tablePtr, tagPtr, colPtr);
 	    }
 	    /* Merge rowPtr if it exists */
 	    if (rowPtr != (TableTag *) NULL) {
-		TableMergeTag(tagPtr, rowPtr);
+		TableMergeTag(tablePtr, tagPtr, rowPtr);
 	    }
 	    /* Am I in the titles */
 	    if (row < tablePtr->titleRows || col < tablePtr->titleCols) {
-		TableMergeTag(tagPtr, titlePtr);
+		TableMergeTag(tablePtr, tagPtr, titlePtr);
 	    }
 	    /* Does this have a cell tag */
 	    entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf);
 	    if (entryPtr != NULL) {
-		TableMergeTag(tagPtr, (TableTag *) Tcl_GetHashValue(entryPtr));
+		TableMergeTag(tablePtr, tagPtr,
+			(TableTag *) Tcl_GetHashValue(entryPtr));
 	    }
 	    /* is this cell selected? */
 	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL) {
 		if (tablePtr->invertSelected && !activeCell) {
 		    shouldInvert = 1;
 		} else {
-		    TableMergeTag(tagPtr, selPtr);
+		    TableMergeTag(tablePtr, tagPtr, selPtr);
 		}
 	    }
 	    /* is this cell active? */
@@ -1848,7 +1867,7 @@ TableDisplay(ClientData clientdata)
 		if (tagPtr->state == STATE_DISABLED) {
 		    tablePtr->flags |= ACTIVE_DISABLED;
 		} else {
-		    TableMergeTag(tagPtr, activePtr);
+		    TableMergeTag(tablePtr, tagPtr, activePtr);
 		    activeCell = 1;
 		    tablePtr->flags &= ~ACTIVE_DISABLED;
 		}
@@ -1856,7 +1875,7 @@ TableDisplay(ClientData clientdata)
 	    /* if flash mode is on, is this cell flashing */
 	    if (tablePtr->flashMode &&
 		    Tcl_FindHashEntry(tablePtr->flashCells, buf) != NULL) {
-		TableMergeTag(tagPtr, flashPtr);
+		TableMergeTag(tablePtr, tagPtr, flashPtr);
 	    }
 
 	    if (shouldInvert) {

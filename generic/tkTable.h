@@ -9,7 +9,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.7 2001/03/28 23:58:01 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.8 2001/06/22 23:15:43 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -357,8 +357,12 @@ typedef struct {
     Tcl_TimerToken flashTimer;	/* timer token for the cell flashing */
     char *activeBuf;		/* buffer where the selection is kept
 				 * for editing the active cell */
+    char **tagPrioNames;	/* list of tag names in priority order */
+    TableTag **tagPrios;	/* list of tag pointers in priority order */
     TableTag *activeTagPtr;	/* cache of active composite tag */
     int activeX, activeY;	/* cache offset of active layout in cell */
+    int tagPrioSize;		/* size of tagPrios list */
+    int tagPrioMax;		/* max allocated size of tagPrios list */
 
     /* The invalid rectangle if there is an update pending */
     int invalidX, invalidY, invalidWidth, invalidHeight;
@@ -481,7 +485,7 @@ extern void	TableInsertChars _ANSI_ARGS_((register Table *tablePtr,
  */
 
 extern TableTag *TableNewTag _ANSI_ARGS_((void));
-extern void	TableMergeTag _ANSI_ARGS_((TableTag *baseTag,
+extern TableTag *TableMergeTag _ANSI_ARGS_((Table *tablePtr, TableTag *baseTag,
 			TableTag *addTag));
 extern void	TableInvertTag _ANSI_ARGS_((TableTag *baseTag));
 extern int	TableGetTagBorders _ANSI_ARGS_((TableTag *tagPtr,
