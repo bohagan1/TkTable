@@ -4,7 +4,7 @@
 # This file defines the default bindings for Tk table widgets
 # and provides procedures that help in implementing those bindings.
 #
-# RCS: @(#) $Id: tkTable.tcl,v 1.11 2004/02/13 22:41:57 hobbs Exp $
+# RCS: @(#) $Id: tkTable.tcl,v 1.12 2004/02/13 22:45:20 hobbs Exp $
 
 #--------------------------------------------------------------------------
 # ::tk::table::Priv elements used in this file:
@@ -656,8 +656,7 @@ proc ::tk::table::DataExtend {w el} {
 proc ::tk::table::SelectAll {w} {
     if {[regexp {^(single|browse)$} [$w cget -selectmode]]} {
 	$w selection clear all
-	$w selection set active
-	::tk::table::HandleType $w [$w index active]
+	catch {$w selection set active}
     } elseif {[$w cget -selecttitles]} {
 	$w selection set [$w cget -roworigin],[$w cget -colorigin] end
     } else {

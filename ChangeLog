@@ -1,3 +1,8 @@
+2004-11-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/tkTable.tcl (::tk::table::SelectAll): remove invalid ref
+	to HandleType proc. [Bug 1068874] (ade)
+
 2004-07-22  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	**** 2.9 TAGGED FOR RELEASE ****
