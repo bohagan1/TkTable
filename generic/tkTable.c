@@ -341,6 +341,38 @@ static char *updateOpts[] = {
  * END HEADER INFORMATION
  */
 
+#if defined(__WIN32__) && defined(USE_TK_STUBS)
+/*
+ *  The following code is a workaround for the lack of the function
+ *  XFillRectangle in Tk 8.1's stub table. It's the same implementation as in
+ *  Tk 8.2 and higher, so the only side effect of this workaround is making
+ *  the library a few bytes larger.
+ */
+
+/* Just to prevent some compiler warnings */
+#undef XFillRectangle
+#define XFillRectangle fillrectangle
+
+static void
+XFillRectangle(display, d, gc, x, y, width, height)
+    Display* display;
+    Drawable d;
+    GC gc;
+    int x;
+    int y;
+    unsigned int width;
+    unsigned int height;
+{
+    XRectangle rectangle;
+    rectangle.x = x;
+    rectangle.y = y;
+    rectangle.width = width;
+    rectangle.height = height;
+    XFillRectangles(display, d, gc, &rectangle, 1);
+}
+#endif
+
+
 /*
  *---------------------------------------------------------------------------
  *
@@ -1091,7 +1123,8 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
 	       (oldVar?oldVar:""))) {
 	/* only do the following if arrayVar is our data source */
 	if (tablePtr->dataSource & DATA_ARRAY) {
-	    /* ensure that the cache will flush later
+	    /*
+	     * ensure that the cache will flush later
 	     * so it gets the new values
 	     */
 	    oldCaching = !(tablePtr->caching);
@@ -1227,8 +1260,10 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
 	/* invalidate the whole table */
 	TableInvalidateAll(tablePtr, INV_HIGHLIGHT);
     }
-    /* FIX this is goofy because the result could be munged by other
-     * functions.  Could be improved */
+    /*
+     * FIX this is goofy because the result could be munged by other
+     * functions.  Could be improved.
+     */
     Tcl_ResetResult(interp);
     if (result == TCL_ERROR) {
 	Tcl_AddErrorInfo(interp, "\t(configuring table widget)");
@@ -1708,7 +1743,6 @@ TableDisplay(ClientData clientdata)
 	     * to spanning cells */
 
 	    /* get the coordinates for the cell */
-	    TableCellCoords(tablePtr, row, col, &x, &y, &width, &height);
 	    cellType = TableCellCoords(tablePtr, row, col,
 				       &x, &y, &width, &height);
 	    if (cellType == CELL_HIDDEN) {
@@ -2687,28 +2721,32 @@ void
 TableAdjustParams(register Table *tablePtr)
 {
     int topRow, leftCol, row, col, total, i, value, x, y, width, height;
-    int w, h, bd, hl, recalc = 0;
+    int w, h, bd, hl, px, py, recalc = 0;
     int diff, unpreset, lastUnpreset, pad, lastPad, numPixels;
     int defColWidth, defRowHeight;
     Tcl_HashEntry *entryPtr;
 
-    /* cache the borderwidth (doubled) for many upcoming calculations */
-    bd = 2*tablePtr->defaultTag.bd;
+    /*
+     * Cache some values for many upcoming calculations
+     */
+    px = 2 * tablePtr->padX;
+    py = 2 * tablePtr->padY;
+    bd = 2 * tablePtr->defaultTag.bd;
     hl = tablePtr->highlightWidth;
-    w = Tk_Width(tablePtr->tkwin)-2*hl;
-    h = Tk_Height(tablePtr->tkwin)-2*hl;
+    w  = Tk_Width(tablePtr->tkwin) - (2 * hl);
+    h  = Tk_Height(tablePtr->tkwin) - (2 * hl);
 
     /* account for whether defColWidth is in chars (>=0) or pixels (<0) */
     /* bd is added in here for convenience */
     if (tablePtr->defColWidth > 0) {
-	defColWidth = tablePtr->charWidth * tablePtr->defColWidth + bd;
+	defColWidth = tablePtr->charWidth * tablePtr->defColWidth + bd + px;
     } else {
-	defColWidth = -(tablePtr->defColWidth) + bd;
+	defColWidth = -(tablePtr->defColWidth) + bd + px;
     }
     if (tablePtr->defRowHeight > 0) {
-	defRowHeight = tablePtr->charHeight * tablePtr->defRowHeight + bd;
+	defRowHeight = tablePtr->charHeight * tablePtr->defRowHeight + bd + py;
     } else {
-	defRowHeight = -(tablePtr->defRowHeight) + bd;
+	defRowHeight = -(tablePtr->defRowHeight) + bd + py;
     }
 
     /* Set up the arrays to hold the col pixels and starts */
@@ -2730,9 +2768,9 @@ TableAdjustParams(register Table *tablePtr)
 	} else {
 	    value = (int) Tcl_GetHashValue(entryPtr);
 	    if (value <= 0) {
-		tablePtr->colPixels[i] = -value + bd;
+		tablePtr->colPixels[i] = -value + bd + px;
 	    } else {
-		tablePtr->colPixels[i] = value * tablePtr->charWidth + bd;
+		tablePtr->colPixels[i] = value * tablePtr->charWidth + bd + px;
 	    }
 	    numPixels += tablePtr->colPixels[i];
 	}
@@ -2813,9 +2851,10 @@ TableAdjustParams(register Table *tablePtr)
 	    } else {
 		value = (int) Tcl_GetHashValue(entryPtr);
 		if (value <= 0) {
-		    tablePtr->rowPixels[i] = -value + bd;
+		    tablePtr->rowPixels[i] = -value + bd + py;
 		} else {
-		    tablePtr->rowPixels[i] = value * tablePtr->charHeight + bd;
+		    tablePtr->rowPixels[i] = value * tablePtr->charHeight
+			+ bd + py;
 		}
 		numPixels += tablePtr->rowPixels[i];
 	    }
@@ -3041,19 +3080,21 @@ TableCursorEvent(ClientData clientData)
 	return;
     }
 
-    if (tablePtr->cursorTimer != NULL)
+    if (tablePtr->cursorTimer != NULL) {
 	Tcl_DeleteTimerHandler(tablePtr->cursorTimer);
+    }
 
     tablePtr->cursorTimer =
 	Tcl_CreateTimerHandler((tablePtr->flags & CURSOR_ON) ?
-			       tablePtr->insertOffTime : tablePtr->insertOnTime,
-			       TableCursorEvent, (ClientData) tablePtr);
+		tablePtr->insertOffTime : tablePtr->insertOnTime,
+		TableCursorEvent, (ClientData) tablePtr);
+
     /* Toggle the cursor */
     tablePtr->flags ^= CURSOR_ON;
 
     /* invalidate the cell */
     TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
-		 CELL|INV_FORCE);
+	    CELL|INV_FORCE);
 }
 
 /*
@@ -3088,8 +3129,7 @@ TableConfigCursor(register Table *tablePtr)
 	    Tcl_DeleteTimerHandler(tablePtr->cursorTimer);
 	    tablePtr->cursorTimer =
 		Tcl_CreateTimerHandler(tablePtr->insertOnTime,
-				       TableCursorEvent,
-				       (ClientData) tablePtr);
+			TableCursorEvent, (ClientData) tablePtr);
 	}
     } else {
 	/* turn the cursor off */
@@ -3106,7 +3146,7 @@ TableConfigCursor(register Table *tablePtr)
 
     /* Invalidate the selection window to show or hide the cursor */
     TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol,
-		 CELL|INV_FORCE);
+	    CELL|INV_FORCE);
 }
 
 /*

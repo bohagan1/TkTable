@@ -1054,7 +1054,7 @@ Table_SelSetCmd(ClientData clientData, register Tcl_Interp *interp,
     Tcl_HashSearch search;
     Tcl_HashEntry *entryPtr;
 
-    int clo=0, chi=0, r1, c1, r2, c2, titleRows, titleCols;
+    int clo=0, chi=0, r1, c1, r2, c2, firstRow, firstCol, lastRow, lastCol;
     if (objc < 4 || objc > 5) {
 	Tcl_WrongNumArgs(interp, 3, objv, "first ?last?");
 	return TCL_ERROR;
@@ -1065,46 +1065,48 @@ Table_SelSetCmd(ClientData clientData, register Tcl_Interp *interp,
 	return TCL_ERROR;
     }
     key = 0;
+    lastRow = tablePtr->rows-1+tablePtr->rowOffset;
+    lastCol = tablePtr->cols-1+tablePtr->colOffset;
     if (tablePtr->selectTitles) {
-	titleRows = 0;
-	titleCols = 0;
+	firstRow = tablePtr->rowOffset;
+	firstCol = tablePtr->colOffset;
     } else {
-	titleRows = tablePtr->titleRows;
-	titleCols = tablePtr->titleCols;
+	firstRow = tablePtr->titleRows+tablePtr->rowOffset;
+	firstCol = tablePtr->titleCols+tablePtr->colOffset;
     }
     /* maintain appropriate user index */
-    row = MIN(MAX(titleRows+tablePtr->rowOffset, row),
-	      tablePtr->rows-1+tablePtr->rowOffset);
-    col = MIN(MAX(titleCols+tablePtr->colOffset, col),
-	      tablePtr->cols-1+tablePtr->colOffset);
+    row = MIN(MAX(firstRow, row), lastRow);
+    col = MIN(MAX(firstCol, col), lastCol);
     if (objc == 4) {
 	r1 = r2 = row;
 	c1 = c2 = col;
     } else {
-	r2 = MIN(MAX(titleRows+tablePtr->rowOffset, r2),
-		 tablePtr->rows-1+tablePtr->rowOffset);
-	c2 = MIN(MAX(titleCols+tablePtr->colOffset, c2),
-		 tablePtr->cols-1+tablePtr->colOffset);
+	r2 = MIN(MAX(firstRow, r2), lastRow);
+	c2 = MIN(MAX(firstCol, c2), lastCol);
 	r1 = MIN(row,r2); r2 = MAX(row,r2);
 	c1 = MIN(col,c2); c2 = MAX(col,c2);
     }
     switch (tablePtr->selectType) {
     case SEL_BOTH:
+	if (firstCol > lastCol) c2--; /* No selectable columns in table */
+	if (firstRow > lastRow) r2--; /* No selectable rows in table */
 	clo = c1; chi = c2;
-	c1 = titleCols+tablePtr->colOffset;
-	c2 = tablePtr->cols-1+tablePtr->colOffset;
+	c1 = firstCol;
+	c2 = lastCol;
 	key = 1;
 	goto SET_CELLS;
     SET_BOTH:
 	key = 0;
 	c1 = clo; c2 = chi;
     case SEL_COL:
-	r1 = titleRows+tablePtr->rowOffset;
-	r2 = tablePtr->rows-1+tablePtr->rowOffset;
+	r1 = firstRow;
+	r2 = lastRow;
+	if (firstCol > lastCol) c2--; /* No selectable columns in table */
 	break;
     case SEL_ROW:
-	c1 = titleCols+tablePtr->colOffset;
-	c2 = tablePtr->cols-1+tablePtr->colOffset;
+	c1 = firstCol;
+	c2 = lastCol;
+	if (firstRow>lastRow) r2--; /* No selectable rows in table */
 	break;
     }
 SET_CELLS:

@@ -1,3 +1,27 @@
+2000-08-01  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* generic/tkTable.c (XFillRectangle): added compat XFillRectangle
+	to make up for lack of one in Tk8.1.  (Nijtmans)
+	(TableAdjustParams): Made -padx and -pady actually work as
+	intended for each cell.  This actually affects the default size
+	for a table, as more spacing is given to each cell by default.
+	Use -padx/y to control this. (Lennard, Hobbs)
+	(TableDisplay): removed extra call to TableCellCoords (leftover
+	from NO_SPANS).  (Deich)
+
+	* generic/tkTableCmds.c (Table_SelSetCmd): Corrected the selection
+	of title cells when only title cells are available. (Brutti)
+
+	* library/tkTable.tcl (tkTableChangeWidth): changed -$a to
+	[expr {-$a}]. (Dubiner)
+	(tkTableBeginSelect): Changed behavior for extended selectmode to
+	select in the topleft title area when appropriate. (Dubiner)
+	(tkTableSelectAll): Changed behavior to select *all* cells
+	(including title cells) when -selecttitles is 1.
+
+	* demos/loadtable.tcl: corrected to search better in new directory
+	structure.
+
 2000-03-22  Jeff Hobbs  <hobbs@scriptics.com>
 
 	* */*: complete restructure of tktable sources
@@ -10,7 +34,7 @@
 ## Release dates between "****"s.
 ##
 ## changes by Hobbs COPYRIGHT 1996-1997 Jeffrey Hobbs, CADIX International
-## changes by Hobbs COPYRIGHT 1998-1999 Jeffrey Hobbs
+## changes by Hobbs COPYRIGHT 1998-2000 Jeffrey Hobbs
 ## jeff.hobbs@acm.org
 ##
 # * tkTable v0.55-1.x includes additions contributed by:
