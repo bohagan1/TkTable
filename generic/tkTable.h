@@ -9,7 +9,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.6 2000/10/19 18:26:48 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.7 2001/03/28 23:58:01 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -533,6 +533,10 @@ extern int	TableAtBorder _ANSI_ARGS_((Table *tablePtr, int x, int y,
 extern char *	TableGetCellValue _ANSI_ARGS_((Table *tablePtr, int r, int c));
 extern int	TableSetCellValue _ANSI_ARGS_((Table *tablePtr, int r, int c,
 			char *value));
+extern int    TableMoveCellValue _ANSI_ARGS_((Table *tablePtr,
+			int fromr, int fromc, char *frombuf,
+			int tor, int toc, char *tobuf, int outOfBounds));
+
 extern int	TableGetIcursor _ANSI_ARGS_((Table *tablePtr, char *arg,
 			int *posn));
 #define TableGetIcursorObj(tablePtr, objPtr, posnPtr) \

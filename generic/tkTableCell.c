@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableCell.c,v 1.3 2000/08/18 03:34:11 hobbs Exp $
+ * RCS: @(#) $Id: tkTableCell.c,v 1.4 2000/10/19 18:25:32 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -128,8 +128,11 @@ TableCellCoords(Table *tablePtr, int row, int col,
 	    cell = (char *) Tcl_GetHashValue(entryPtr);
 	    TableParseArrayIndex(&rs, &cs, cell);
 	    if (rs > 0) {
+		/*
+		 * Make sure we don't overflow our space
+		 */
 		if (row < tablePtr->titleRows) {
-		    rs = MIN(tablePtr->titleRows-1-row, rs);
+		    rs = MIN(tablePtr->titleRows-1, row+rs);
 		} else {
 		    rs = MIN(tablePtr->rows-1, row+rs);
 		}
@@ -139,8 +142,11 @@ TableCellCoords(Table *tablePtr, int row, int col,
 		/* currently negative spans are not supported */
 	    }
 	    if (cs > 0) {
+		/*
+		 * Make sure we don't overflow our space
+		 */
 		if (col < tablePtr->titleCols) {
-		    cs = MIN(tablePtr->titleCols-1-col, cs);
+		    cs = MIN(tablePtr->titleCols-1, col+cs);
 		} else {
 		    cs = MIN(tablePtr->cols-1, col+cs);
 		}
@@ -191,19 +197,25 @@ TableCellVCoords(Table *tablePtr, int row, int col,
 
     if (tablePtr->tkwin == NULL) return 0;
 
-    /* Necessary to use separate vars in case dummies are passed in */
+    /*
+     * Necessary to use separate vars in case dummies are passed in
+     */
     cellType = TableCellCoords(tablePtr, row, col, &x, &y, &w, &h);
     *rx = x; *ry = y; *rw = w; *rh = h;
     if (cellType == CELL_OK) {
 	if ((row < tablePtr->topRow && row >= tablePtr->titleRows) ||
 	    (col < tablePtr->leftCol && col >= tablePtr->titleCols)) {
-	    /* non-spanning cell hiding in "dead" space
-	     * between title areas and visible cells */
+	    /*
+	     * A non-spanning cell hiding in "dead" space
+	     * between title areas and visible cells
+	     */
 	    return 0;
 	}
     } else if (cellType == CELL_SPAN) {
-	/* we might need to treat full better is CELL_SPAN but primary
-	 * cell is visible */
+	/*
+	 * we might need to treat full better is CELL_SPAN but primary
+	 * cell is visible
+	 */
 	int topX = tablePtr->colStarts[tablePtr->titleCols]+hl;
 	int topY = tablePtr->rowStarts[tablePtr->titleRows]+hl;
 	if ((col < tablePtr->leftCol) && (col >= tablePtr->titleCols)) {
@@ -222,26 +234,35 @@ TableCellVCoords(Table *tablePtr, int row, int col,
 		y = topY;
 	    }
 	}
-	/* re-set these according to changed coords */
+	/*
+	 * re-set these according to changed coords
+	 */
 	*rx = x; *ry = y; *rw = w; *rh = h;
     } else {
-	/* If it is a hidden cell, then w,h is the row,col in user coords
-	 * of the cell that spans over this one */
+	/*
+	 * If it is a hidden cell, then w,h is the row,col in user coords
+	 * of the cell that spans over this one
+	 */
 	return 0;
     }
-    /* At this point, we know it is on the screen,
+    /*
+     * At this point, we know it is on the screen,
      * but not if we can see 100% of it (if we care)
      */
     if (full) {
 	w0 = w; h0 = h;
     } else {
-	/* if we don't care about seeing the whole thing, then
-	 * make sure we at least see a pixel worth */
+	/*
+	 * if we don't care about seeing the whole thing, then
+	 * make sure we at least see a pixel worth
+	 */
 	w0 = h0 = 1;
     }
-    /* Is the cell visible? */
-    if (x<hl || y<hl || (x+w0)>(Tk_Width(tablePtr->tkwin)-hl)
-	|| (y+h0)>(Tk_Height(tablePtr->tkwin)-hl)) {
+    /*
+     * Is the cell visible?
+     */
+    if ((x < hl) || (y < hl) || ((x+w0) > (Tk_Width(tablePtr->tkwin)-hl))
+	    || ((y+h0) > (Tk_Height(tablePtr->tkwin)-hl))) {
 	/* definitely off the screen */
 	return 0;
     } else {
@@ -443,6 +464,9 @@ TableGetCellValue(Table *tablePtr, int r, int c)
 	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
 	if (!new) {
 	    result = (char *) Tcl_GetHashValue(entryPtr);
+	    if (result == NULL) {
+		result = "";
+	    }
 	    goto VALUE;
 	}
     }
@@ -588,9 +612,13 @@ TableSetCellValue(Table *tablePtr, int r, int c, char *value)
 	int new;
 	char *val;
 
+	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
+	if (!new) {
+	    val = (char *) Tcl_GetHashValue(entryPtr);
+	    if (val) ckfree(val);
+	}
 	val = (char *)ckalloc(strlen(value)+1);
 	strcpy(val, value);
-	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
 	Tcl_SetHashValue(entryPtr, val);
 	flash = 1;
     }
@@ -603,6 +631,92 @@ TableSetCellValue(Table *tablePtr, int r, int c, char *value)
 	TableRefresh(tablePtr, r, c, CELL);
     }
     return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TableMoveCellValue --
+ *	To move cells faster on delete/insert line or col when cache is on
+ *	and variable, command is off.
+ *	To avoid another call to TableMakeArrayIndex(r, c, buf),
+ *	we optionally provide the buffers.
+ *	outOfBounds means we will just set the cell value to ""
+ *
+ * Results:
+ *	Returns TCL_ERROR or TCL_OK, depending on whether an error
+ *	occured during set (ie: during evaluation of -command).
+ *
+ * Side effects:
+ *	If the value is NULL (empty string), it will be unset from
+ *	an array rather than set to the empty string.
+ *
+ *----------------------------------------------------------------------
+ */
+int
+TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf,
+	int tor, int toc, char *tobuf, int outOfBounds)
+{
+    int new;
+    char *result = NULL;
+    Tcl_Interp *interp = tablePtr->interp;
+
+    if (outOfBounds) {
+	return TableSetCellValue(tablePtr, tor, toc, "");
+    }
+
+    if (tablePtr->caching && (!(tablePtr->command && tablePtr->useCmd))) {
+	Tcl_HashEntry *entryPtr;
+	/*
+	 * if we are caching, let's see if we have the value cached
+	 */
+	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, frombuf, &new);
+	if (!new) {
+	    char *val;
+	    result = (char *) Tcl_GetHashValue(entryPtr);
+	    /*
+	     * we set tho old value to NULL
+	     */
+	    Tcl_SetHashValue(entryPtr, NULL);
+
+	    /*
+	     * set the destination to the source pointer without new mallocing!
+	     */
+	    entryPtr = Tcl_CreateHashEntry(tablePtr->cache, tobuf, &new);
+	    /*
+	     * free old value
+	     */
+	    if (!new) {
+		val = (char *) Tcl_GetHashValue(entryPtr);
+		if (val) ckfree(val);
+	    }
+	    Tcl_SetHashValue(entryPtr, result);
+	    if (tablePtr->arrayVar) {
+		/*
+		 * first, delete from var.
+		 */
+		Tcl_UnsetVar2(interp, tablePtr->arrayVar, frombuf,
+			TCL_GLOBAL_ONLY);
+		/*
+		 * Warning: checking for \0 as the first char could invalidate
+		 * allowing it as a valid first char
+		 */
+		if (Tcl_SetVar2(interp, tablePtr->arrayVar, tobuf, result,
+			TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG) == NULL) {
+		    return TCL_ERROR;
+		}
+	    }     
+      
+
+	    return TCL_OK;
+	}
+    }
+    /*
+     * We have to do it the old way
+     */
+    return TableSetCellValue(tablePtr, tor, toc,
+	    TableGetCellValue(tablePtr, fromr, fromc));
+
 }
 
 /*
@@ -672,11 +786,11 @@ TableGetIcursor(Table *tablePtr, char *arg, int *posn)
  */
 int
 TableGetIndex(tablePtr, str, row_p, col_p)
-     register Table *tablePtr;	/* Table for which the index is being
+    register Table *tablePtr;	/* Table for which the index is being
 				 * specified. */
-     char *str;			/* Symbolic specification of cell in table. */
-     int *row_p;		/* Where to store converted row. */
-     int *col_p;		/* Where to store converted col. */
+    char *str;			/* Symbolic specification of cell in table. */
+    int *row_p;		/* Where to store converted row. */
+    int *col_p;		/* Where to store converted col. */
 {
     int r, c, len = strlen(str);
     char dummy;
@@ -732,6 +846,11 @@ TableGetIndex(tablePtr, str, row_p, col_p)
 	r = tablePtr->topRow+tablePtr->rowOffset;
 	c = tablePtr->leftCol+tablePtr->colOffset;
     } else if (strncmp(str, "bottomright", len) == 0) {	/* bottomright */
+	/*
+	 * FIX: Should this avoid spans, or consider them in the bottomright?
+	 tablePtr->flags |= AVOID_SPANS;
+	 tablePtr->flags &= ~AVOID_SPANS;
+	 */
 	TableGetLastCell(tablePtr, &r, &c);
 	r += tablePtr->rowOffset;
 	c += tablePtr->colOffset;
@@ -772,7 +891,6 @@ Table_SetCmd(ClientData clientData, register Tcl_Interp *interp,
     register Table *tablePtr = (Table *)clientData;
     int row, col, len, i, j, max;
     char *str;
-    Tcl_Obj *resultPtr;
 
     /* sets any number of tags/indices to a given value */
     if (objc < 3) {
@@ -787,9 +905,9 @@ Table_SetCmd(ClientData clientData, register Tcl_Interp *interp,
 	return TCL_OK;
     }
 
-    resultPtr = Tcl_GetObjResult(interp);
     str = Tcl_GetStringFromObj(objv[2], &len);
     if (strncmp(str, "row", len) == 0 || strncmp(str, "col", len) == 0) {
+	Tcl_Obj *resultPtr = Tcl_GetObjResult(interp);
 	/* set row index list ?index list ...? */
 	if (objc < 4) {
 	    goto CMD_SET_USAGE;
@@ -867,8 +985,12 @@ Table_SetCmd(ClientData clientData, register Tcl_Interp *interp,
 	if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
 	    return TCL_ERROR;
 	} else {
-	    Tcl_SetStringObj(resultPtr,
-			     TableGetCellValue(tablePtr, row, col), -1);
+	    /*
+	     * Cannot use Tcl_GetObjResult here because TableGetCellValue
+	     * can corrupt the resultPtr.
+	     */
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		TableGetCellValue(tablePtr, row, col),-1));
 	}
     } else {
 	/* set index val ?index val ...? */
@@ -909,20 +1031,24 @@ Table_SetCmd(ClientData clientData, register Tcl_Interp *interp,
  *--------------------------------------------------------------
  */
 static int
-Table_SpanSet(register Table *tablePtr, int row, int col, int rs, int cs)
+Table_SpanSet(register Table *tablePtr, int urow, int ucol, int rs, int cs)
 {
     Tcl_Interp *interp = tablePtr->interp;
     int i, j, new, ors, ocs, result = TCL_OK;
+    int row, col;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
     char *dbuf, buf[INDEX_BUFSIZE], cell[INDEX_BUFSIZE], span[INDEX_BUFSIZE];
 
-    TableMakeArrayIndex(row, col, cell);
+    row = urow - tablePtr->rowOffset;
+    col = ucol - tablePtr->colOffset;
+
+    TableMakeArrayIndex(urow, ucol, cell);
 
     if (tablePtr->spanTbl == NULL) {
-	tablePtr->spanTbl = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
+	tablePtr->spanTbl = (Tcl_HashTable *)ckalloc(sizeof(Tcl_HashTable));
 	Tcl_InitHashTable(tablePtr->spanTbl, TCL_STRING_KEYS);
-	tablePtr->spanAffTbl = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
+	tablePtr->spanAffTbl = (Tcl_HashTable *)ckalloc(sizeof(Tcl_HashTable));
 	Tcl_InitHashTable(tablePtr->spanAffTbl, TCL_STRING_KEYS);
     }
 
@@ -941,13 +1067,13 @@ Table_SpanSet(register Table *tablePtr, int row, int col, int rs, int cs)
      * title cells must not expand beyond the titles
      * other cells can't expand negatively into title area
      */
-    if ((row-tablePtr->rowOffset < tablePtr->titleRows) &&
-	(row-tablePtr->rowOffset+rs >= tablePtr->titleRows)) {
-	rs = tablePtr->titleRows-(row-tablePtr->rowOffset)-1;
+    if ((row < tablePtr->titleRows) &&
+	(row + rs >= tablePtr->titleRows)) {
+	rs = tablePtr->titleRows - row - 1;
     }
-    if ((col-tablePtr->colOffset < tablePtr->titleCols) &&
-	(col-tablePtr->colOffset+cs >= tablePtr->titleCols)) {
-	cs = tablePtr->titleCols-(col-tablePtr->colOffset)-1;
+    if ((col < tablePtr->titleCols) &&
+	(col + cs >= tablePtr->titleCols)) {
+	cs = tablePtr->titleCols - col - 1;
     }
     rs = MAX(0, rs);
     cs = MAX(0, cs);
@@ -958,8 +1084,8 @@ Table_SpanSet(register Table *tablePtr, int row, int col, int rs, int cs)
 	TableParseArrayIndex(&ors, &ocs, (char *)Tcl_GetHashValue(entryPtr));
 	ckfree((char *) Tcl_GetHashValue(entryPtr));
 	Tcl_DeleteHashEntry(entryPtr);
-	for (i = row; i <= row+ors; i++) {
-	    for (j = col; j <= col+ocs; j++) {
+	for (i = urow; i <= urow+ors; i++) {
+	    for (j = ucol; j <= ucol+ocs; j++) {
 		TableMakeArrayIndex(i, j, buf);
 		entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
 		if (entryPtr != NULL) {
@@ -974,14 +1100,14 @@ Table_SpanSet(register Table *tablePtr, int row, int col, int rs, int cs)
     }
 
     /* calc to make sure that span is OK */
-    for (i = row; i <= row+rs; i++) {
-	for (j = col; j <= col+cs; j++) {
+    for (i = urow; i <= urow+rs; i++) {
+	for (j = ucol; j <= ucol+cs; j++) {
 	    TableMakeArrayIndex(i, j, buf);
 	    entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
 	    if (entryPtr != NULL) {
 		/* Something already spans here */
 		Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-				       "cannot overlap already spanning cell ",
+				       "cannot overlap already spanned cell ",
 				       buf, (char *) NULL);
 		result = TCL_ERROR;
 		rs = ors;
@@ -1030,10 +1156,9 @@ Table_SpanSet(register Table *tablePtr, int row, int col, int rs, int cs)
     Tcl_SetHashValue(entryPtr, dbuf);
     dbuf = Tcl_GetHashKey(tablePtr->spanTbl, entryPtr);
     /* Set other affected cells */
-    EmbWinUnmap(tablePtr, row-tablePtr->rowOffset, row+rs-tablePtr->rowOffset,
-		col-tablePtr->colOffset, col+cs-tablePtr->colOffset);
-    for (i = row; i <= row+rs; i++) {
-	for (j = col; j <= col+cs; j++) {
+    EmbWinUnmap(tablePtr, row, row + rs, col, col + cs);
+    for (i = urow; i <= urow+rs; i++) {
+	for (j = ucol; j <= ucol+cs; j++) {
 	    TableMakeArrayIndex(i, j, buf);
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->spanAffTbl, buf, &new);
 	    if (!(i == row && j == col)) {
@@ -1041,8 +1166,7 @@ Table_SpanSet(register Table *tablePtr, int row, int col, int rs, int cs)
 	    }
 	}
     }
-    TableRefresh(tablePtr, row-tablePtr->rowOffset,
-		 col-tablePtr->colOffset, CELL);
+    TableRefresh(tablePtr, row, col, CELL);
     return result;
 }
 
