@@ -1,6 +1,6 @@
 #! /bin/bash -norc
 #
-# RCS: @(#) $Id: configure.in,v 1.4 2002/03/28 02:41:14 hobbs Exp $
+# RCS: @(#) $Id: configure.in,v 1.5 2002/04/02 02:21:27 hobbs Exp $
 #
 #--------------------------------------------------------------------
 # Sample configure.in for Tcl Extensions.  The only places you should
@@ -239,7 +239,7 @@ SC_MAKE_LIB
 #--------------------------------------------------------------------
 
 if test "${TEA_PLATFORM}" = "windows" ; then
-    SHLIB_LD_LIBS="${SHLIB_LD_LIBS} gdi32.lib"
+    LIBS="${LIBS} gdi32.lib user32.lib"
 fi
 
 #--------------------------------------------------------------------
