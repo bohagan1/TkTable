@@ -19,7 +19,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.7 2000/08/18 23:03:17 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.8 2000/08/19 00:01:32 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -1145,8 +1145,9 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     if (tablePtr->drawMode & (DRAW_MODE_SINGLE|DRAW_MODE_FAST)) {
 	tablePtr->defaultTag.bd[0]	= MIN(1, tablePtr->defaultTag.bd[0]);
 	tablePtr->defaultTag.borders	= 1;
-    } else if (tablePtr->defaultTag.borderStr &&
-	    strcmp(tablePtr->defaultTag.borderStr, oldBorders)) {
+    } else if (tablePtr->defaultTag.borderStr
+	    && ((oldBorders == NULL) ||
+		    strcmp(tablePtr->defaultTag.borderStr, oldBorders))) {
 	int argc, i, res;
 
 	res = Tcl_SplitList(interp, tablePtr->defaultTag.borderStr,
