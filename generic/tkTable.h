@@ -9,7 +9,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.15 2003/01/30 21:01:35 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.16 2003/12/10 20:06:32 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <tk.h>
 #ifdef MAC_TCL
 # include <Xatom.h>

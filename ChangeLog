@@ -1,5 +1,7 @@
 2004-07-20  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* generic/tkTable.h: add #include <ctype.h>
+
 	* generic/tkTableCell.c (TableGetCellValue, TableSetCellValue): 
 	Do faster cache checks when DATA_CACHE is the only data source.
 	In fallback from command that errors to array var, retrieve array
