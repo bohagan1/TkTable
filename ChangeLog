@@ -1,3 +1,14 @@
+2000-10-19  Jeff Hobbs  <jeff.hobbs@acm.org>
+
+	* tests/all.tcl: new file
+	* tests/tkTable.test: copied listbox.test in to serve as a base
+	for tests on the table widget.  Conversion still needs to be done.
+
+	* generic/tkTableCmds.c: #if 0'd stub function Table_Cmd
+
+	* generic/tkTable.h:
+	* generic/tkTable.c: corrected headers, made TableConfigure static
+
 2000-08-30  Jeff Hobbs  <hobbs@scriptics.com>
 
 	* generic/tkTable.h:
