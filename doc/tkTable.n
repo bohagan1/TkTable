@@ -2,7 +2,7 @@
 '\" The definitions below are for supplemental macros used in Tcl/Tk
 '\" manual entries.
 '\"
-'\" RCS: @(#) $Id: tkTable.n,v 1.10 2004/06/11 00:23:57 hobbs Exp $
+'\" RCS: @(#) $Id: tkTable.n,v 1.11 2005/03/19 00:15:12 hobbs Exp $
 '\"
 '\" .AP type name in/out ?indent?
 '\"	Start paragraph describing an argument to a library procedure.
@@ -769,8 +769,8 @@ the selection will be the values of the selected cells in nested Tcl list
 form where each row is a list and each column is an element of a row list.
 You can change the way this value is interpreted by setting the
 \fB\-rowseparator\fR and \fB\-colseparator\fR options.  For example,
-default Excel format would be to set \fB\-rowseparator\fR to "\\n" and
-\fB\-colseparator\fR to "\\t".  Changing these values affects both how the
+default Excel format would be to set \fB\-rowseparator\fR to '\\n' and
+\fB\-colseparator\fR to '\\t'.  Changing these values affects both how the
 table sends out the selection and reads in pasted data, ensuring that the
 table should always be able to cut and paste to itself.  It is possible to
 change how pastes are handled by editing the table library procedure

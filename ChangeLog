@@ -1,3 +1,9 @@
+2005-05-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in (html): switch to groff to fix botched html output.
+	* doc/tkTable.html: regen [Bug 1198478]
+	* doc/tkTable.n: use '' around \\ items.
+
 2005-03-18  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* Makefile.in (AR): use @AR@, improve html doc target
