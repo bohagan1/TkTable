@@ -7,7 +7,7 @@ exec wish "$0" ${1+"$@"}
 ## demonstrates the simulation of a button array
 ##
 ## ellson@lucent.com
-## modifications made by jeff.hobbs@acm.org
+## modifications made by jeff at hobbs org
 
 source [file join [file dirname [info script]] loadtable.tcl]
 

@@ -6,7 +6,7 @@ exec wish "$0" ${1+"$@"}
 ##
 ## This demo shows the basic use of the table widget
 ##
-## jeff.hobbs@acm.org
+## jeff at hobbs org
 
 source [file join [file dirname [info script]] loadtable.tcl]
 

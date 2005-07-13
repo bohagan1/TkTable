@@ -8,7 +8,7 @@
  * Based on Tk3 table widget written by Roland King
  *
  * Updates 1996 by:
- * Jeffrey Hobbs	jeff.hobbs@acm.org
+ * Jeffrey Hobbs	jeff at hobbs org
  * John Ellson		ellson@lucent.com
  * Peter Bruecker	peter@bj-ig.de
  * Tom Moore		tmoore@spatial.ca
@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.30 2004/06/11 00:24:29 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.31 2004/07/20 20:34:54 hobbs Exp $
  */
 
 #include "tkTable.h"

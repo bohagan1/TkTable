@@ -7,7 +7,7 @@ exec wish "$0" ${1+"$@"}
 ## This demos shows the use of the validation mechanism of the table
 ## and uses the table's cache (no -command or -variable)
 ##
-## jeff.hobbs@acm.org
+## jeff at hobbs org
 
 source [file join [file dirname [info script]] loadtable.tcl]
 

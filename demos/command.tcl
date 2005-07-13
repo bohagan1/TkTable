@@ -6,7 +6,7 @@
 ##
 ## This demo shows the use of the table widget's -command options
 ##
-## jeff.hobbs@acm.org
+## jeff at hobbs org
 
 source [file join [file dirname [info script]] loadtable.tcl]
 

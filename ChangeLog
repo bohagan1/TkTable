@@ -478,7 +478,7 @@
 	* generic/tkTable.h: change 'char *new' -> 'char *newVal' to not
 	stump C++ compilers
 
-2000-10-19  Jeff Hobbs  <jeff.hobbs@acm.org>
+2000-10-19  Jeff Hobbs  <jeff at hobbs org>
 
 	* tests/all.tcl: new file
 	* tests/tkTable.test: copied listbox.test in to serve as a base
@@ -665,14 +665,14 @@
 ##
 ## changes by Hobbs COPYRIGHT 1996-1997 Jeffrey Hobbs, CADIX International
 ## changes by Hobbs COPYRIGHT 1998-2000 Jeffrey Hobbs
-## jeff.hobbs@acm.org
+## jeff at hobbs org
 ##
 # * tkTable v0.55-1.x includes additions contributed by:
 # *        tmoore@spatial.ca (Tom Moore)
 # *        sebastian.wangnick@eurocontrol.de (Sebastian Wangnick)
 # *        paulf@lamont.ldgo.columbia.edu
 # *        peter@bj-ig.de (Peter Brueckner)
-# *        jeff.hobbs@acm.org (Jeffrey Hobbs)
+# *        jeff at hobbs org (Jeffrey Hobbs)
 # *        ellson@lucent.com (John Ellson)
 ##
 ## Mac support provided by Chuck Houpt (choupt@als.com). (v2.3+)

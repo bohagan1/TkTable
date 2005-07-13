@@ -7,7 +7,7 @@ exec wish "$0" ${1+"$@"}
 ## This demo uses a really big table.  The big startup time is in
 ## filling the table's Tcl array var.
 ##
-## jeff.hobbs@acm.org
+## jeff at hobbs org
 
 source [file join [file dirname [info script]] loadtable.tcl]
 

@@ -1,6 +1,6 @@
 ## TODO LIST
 ##
-## updated 1 June 1999, jeff.hobbs@acm.org
+## updated 1 June 1999, jeff at hobbs org
 ##
 ## Any information in here may be out of date.  For up-to-date info see:
 ##	http://tktable.sourceforge.net/

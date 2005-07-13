@@ -1,7 +1,7 @@
 ##
 ## UPGRADING
 ##
-## Jeffrey Hobbs, jeff.hobbs@acm.org
+## Jeffrey Hobbs, jeff at hobbs org
 ## 23 April 1998
 ##
 

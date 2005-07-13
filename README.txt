@@ -3,7 +3,7 @@
  *
  * see ChangeLog file for details
  *
- * current maintainer: jeff.hobbs@acm.org
+ * current maintainer: jeff at hobbs org
  *
  * Copyright 1997-2002, Jeffrey Hobbs (jeff@hobbs.org)
  */

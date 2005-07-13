@@ -7,7 +7,7 @@
 ## This demos shows how you can simulate a 3D table
 ## and has other basic features to begin a basic spreadsheet
 ##
-## jeff.hobbs@acm.org
+## jeff at hobbs org
 
 source [file join [file dirname [info script]] loadtable.tcl]
 
