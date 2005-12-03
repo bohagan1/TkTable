@@ -1,6 +1,6 @@
 #! /bin/bash -norc
 #
-# RCS: @(#) $Id: configure.in,v 1.12 2004/07/20 20:49:06 hobbs Exp $
+# RCS: @(#) $Id: configure.in,v 1.13 2005/02/02 05:21:17 hobbs Exp $
 #
 #--------------------------------------------------------------------
 # Sample configure.in for Tcl Extensions.  The only places you should
@@ -24,7 +24,7 @@ AC_INIT([Tktable], [2.9])
 # as well as PKG_LIB_FILE and PKG_STUB_LIB_FILE.
 #--------------------------------------------------------------------
 
-TEA_INIT([3.2])
+TEA_INIT([3.4])
 
 AC_CONFIG_AUX_DIR(tclconfig)
 

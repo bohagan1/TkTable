@@ -1,3 +1,7 @@
+2005-12-02  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tclconfig/tcl.m4, configure.in, configure: update to TEA 3.4
+
 2005-05-11  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* Makefile.in (html): switch to groff to fix botched html output.
