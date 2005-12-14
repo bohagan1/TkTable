@@ -118,7 +118,8 @@ Table_ActivateCmd(ClientData clientData, register Tcl_Interp *interp,
 		/* no error checking because GetIndex did it for us */
 		p++;
 		x = strtol(p, &p, 0) - x - tablePtr->activeX;
-		y = strtol(++p, &p, 0) - y - tablePtr->activeY;
+		p++;
+		y = strtol(p, &p, 0) - y - tablePtr->activeY;
 
 		textLayout = Tk_ComputeTextLayout(tagPtr->tkfont,
 					tablePtr->activeBuf, -1,

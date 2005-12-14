@@ -1,3 +1,8 @@
+2005-12-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableCmds.c (Table_ActivateCmd): remove potential
+	undefined behavior warning.
+
 2005-12-02  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tclconfig/tcl.m4, configure.in, configure: update to TEA 3.4
