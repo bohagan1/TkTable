@@ -1,3 +1,7 @@
+2006-01-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tclconfig/tcl.m4, configure: update to TEA 3.4 interim
+
 2005-12-13  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* generic/tkTableCmds.c (Table_ActivateCmd): remove potential
