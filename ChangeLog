@@ -1,5 +1,10 @@
 2008-11-14  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* demos/tktable.py: note that this version is outdated
+	* library/tktable.py (NEW): Added new version of tktable wrapper
+	for Python/Tkinter from GPolo.  Not 100% compatible with previous
+	version. [Patch 2244167]
+
 	* generic/tkTableTag.c (Table_TagCmd): remove interp->result set
 	work-around for old bug as i->result is no longer exposed in 8.6.
 
