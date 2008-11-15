@@ -1,3 +1,9 @@
+2008-11-14  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c:     Use safe Tcl_SetObjResult instead of trying
+	* generic/tkTableCell.c: to set existing objResult value.
+	* generic/tkTableCmds.c: 
+
 2006-07-10  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* license.txt (bourbon_ware): Be less restrictive in the
