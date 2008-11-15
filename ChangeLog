@@ -1,5 +1,8 @@
 2008-11-14  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* generic/tkTableTag.c (Table_TagCmd): remove interp->result set
+	work-around for old bug as i->result is no longer exposed in 8.6.
+
 	* generic/tkTable.c:     Use safe Tcl_SetObjResult instead of trying
 	* generic/tkTableCell.c: to set existing objResult value.
 	* generic/tkTableCmds.c: 

@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableTag.c,v 1.13 2002/10/16 07:31:23 hobbs Exp $
+ * RCS: @(#) $Id: tkTableTag.c,v 1.14 2003/01/30 21:01:36 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -971,15 +971,6 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		tagPtr = (TableTag *) Tcl_GetHashValue (entryPtr);
 		result = Tk_ConfigureValue(interp, tablePtr->tkwin, tagConfig,
 			(char *) tagPtr, Tcl_GetString(objv[4]), 0);
-		/*
-		 * This is a work-around to fix a bug in Tk_ConfigureValue
-		 * that would set interp->result to NULL for -borderwidth
-		 * which has no associated tag offset value.  This was fixed
-		 * in 8.3.5 and 8.4b1. [Bug #522882]
-		 */
-		if (interp->result == NULL) {
-		    interp->result = "";
-		}
 	    }
 	    return result;	/* CGET */
 
