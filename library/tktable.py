@@ -37,19 +37,21 @@ __all__ = ["ArrayVar", "Table"]
 
 import Tkinter
 
+def _setup_master(master):
+    if master is None:
+        if Tkinter._support_default_root:
+            master = Tkinter._default_root or Tkinter.Tk()
+        else:
+            raise RuntimeError("No master specified and Tkinter is "
+                "configured to not support default master")
+    return master
+
 class ArrayVar(Tkinter.Variable):
     def __init__(self, master=None, name=None):
         # Tkinter.Variable.__init__ is not called on purpose! I don't wanna
         # see an ugly _default value in the pretty array.
-        if master is None:
-            if Tkinter._support_default_root:
-                master = Tkinter._default_root or Tkinter.Tk()
-            else:
-                raise RuntimeError("No master specified and Tkinter is "
-                    "configured to not support default master")
-
-        self._master = master
-        self._tk = master.tk
+        self._master = _setup_master(master)
+        self._tk = self._master.tk
         if name:
             self._name = name
         else:
@@ -82,13 +84,7 @@ class Table(Tkinter.Widget):
                           'validatecommand', 'valcmd')
 
     def __init__(self, master=None, **kw):
-        if master is None:
-            if Tkinter._support_default_root:
-                master = Tkinter._default_root or Tkinter.Tk()
-            else:
-                raise RuntimeError("No master specified and Tkinter is "
-                    "configured to not support default master")
-
+        master = _setup_master(master)
         try:
             master.tk.call('package', 'require', 'Tktable')
         except Tkinter.TclError:
@@ -244,9 +240,7 @@ class Table(Tkinter.Widget):
         elif row:
             return int(self.tk.call(self._w, 'height', str(row)))
 
-        args = ()
-        for key, val in kwargs.iteritems():
-            args += (key, val)
+        args = Tkinter._flatten(kwargs.items())
         self.tk.call(self._w, 'height', *args)
 
 
@@ -370,9 +364,7 @@ class Table(Tkinter.Widget):
             return self.tk.call(self._w, 'set', *args)
 
         if rc is None:
-            args = ()
-            for key, val in kwargs.iteritems():
-                args += (key, val)
+            args = Tkinter._flatten(kwargs.items())
             self.tk.call(self._w, 'set', *args)
         else:
             self.tk.call(self._w, 'set', rc, index, args)
@@ -388,9 +380,7 @@ class Table(Tkinter.Widget):
         and continues for the specified number of rows,cols specified by
         its value. A span of 0,0 unsets any span on that cell."""
         if kwargs:
-            args = ()
-            for key, val in kwargs.iteritems():
-                args += (key, val)
+            args = Tkinter._flatten(kwargs.items())
             self.tk.call(self._w, 'spans', *args)
         else:
             return self.tk.call(self._w, 'spans', index)
@@ -493,10 +483,7 @@ class Table(Tkinter.Widget):
         elif column:
             return int(self.tk.call(self._w, 'width', str(column)))
 
-        args = ()
-        for key, val in kwargs.iteritems():
-            args += (key, val)
-
+        args = Tkinter._flatten(kwargs.items())
         self.tk.call(self._w, 'width', *args)
 
 
@@ -506,7 +493,8 @@ class Table(Tkinter.Widget):
 
     def window_configure(self, index, option=None, **kwargs):
         """Query or modify options associated with the embedded window given
-        by index.
+        by index. This should also be used to add a new embedded window into
+        the table.
 
         If no option is specified, a dict describing all of the available
         options for index is returned. If option is specified, then the
