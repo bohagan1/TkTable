@@ -1,5 +1,9 @@
 2008-11-14  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* generic/tkTable.c: Set NO_XSETCLIP universally as Tk 8.5/Xft
+	seems to ignore XSetClipRectangles.  This may slow things down a
+	little, but draws correctly. [Bug 1805350]
+
 	* UPGRADING.txt (removed): no longer need this old v1 upgrade doc.
 
 	* README.txt: remove refs to mac classic stuff, update notes
