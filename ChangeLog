@@ -1,6 +1,7 @@
 2010-08-05  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* win/makefile.vc (LIBS): add ""s where needed [Bug 2305395] (oehhar)
+	(VERSION): add VERSION var [Bug 2305448] (oehhar)
 
 	* library/tktable.py (Table.width): handle empty colum
 	(Table._tabsubst): improve substitutions [Bug 2293127] (ggpolo)

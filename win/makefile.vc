@@ -13,6 +13,7 @@
 MACHINE		= IX86
 
 PROJECT	= Tktable
+VERSION = 2.10
 TBL_COMMAND = table
 TBL_RUNTIME = tkTable.tcl
 
