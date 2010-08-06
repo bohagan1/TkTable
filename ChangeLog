@@ -3,6 +3,7 @@
 	* library/tktable.py (Table.width): handle empty colum
 	(Table._tabsubst): improve substitutions [Bug 2293127] (ggpolo)
 	(ArrayVar): improve py integration [Bug 2333824] (ggpolo)
+	(Table.__init__): support TKTABLE_LIBRARY env var [Bug 2334490) (ggpolo)
 
 	* generic/tkTable.c (TableFetchSelection): significant performance
 	improvement in large table selection retrieval. [Bug 2901813] (cerney)

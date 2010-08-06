@@ -35,6 +35,7 @@ __author__ = "Guilherme Polo <ggpolo@gmail.com>"
 
 __all__ = ["ArrayVar", "Table"]
 
+import os
 import Tkinter
 
 def _setup_master(master):
@@ -95,6 +96,8 @@ class ArrayVar(Tkinter.Variable):
         self._tk.call('array', 'unset', str(self), pattern)
 
 
+_TKTABLE_LOADED = False
+
 class Table(Tkinter.Widget):
     """Create and manipulate tables."""
 
@@ -107,13 +110,14 @@ class Table(Tkinter.Widget):
 
     def __init__(self, master=None, **kw):
         master = _setup_master(master)
-        try:
+        global _TKTABLE_LOADED
+        if not _TKTABLE_LOADED:
+            tktable_lib = os.environ.get('TKTABLE_LIBRARY')
+            if tktable_lib:
+                master.tk.eval('global auto_path; '
+                                'lappend auto_path {%s}' % tktable_lib)
             master.tk.call('package', 'require', 'Tktable')
-        except Tkinter.TclError:
-            try:
-                master.tk.call('load', 'Tktable.dll', 'Tktable')
-            except Tkinter.TclError:
-                master.tk.call('load', '', 'Tktable')
+            _TKTABLE_LOADED = True
 
         Tkinter.Widget.__init__(self, master, 'table', kw)
 
