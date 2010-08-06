@@ -1,5 +1,8 @@
 2010-08-05  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* generic/tkTable.h (CONSTRAIN): handle constraints where max<min.
+	[Bug 2672726] (becroft)
+
 	* win/makefile.vc (LIBS): add ""s where needed [Bug 2305395] (oehhar)
 	(VERSION): add VERSION var [Bug 2305448] (oehhar)
 
