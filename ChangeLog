@@ -1,3 +1,13 @@
+2010-08-05  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c (TableFetchSelection): significant performance
+	improvement in large table selection retrieval. [Bug 2901813] (cerney)
+
+2010-04-15  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* license.txt: update wording and clause reference in government
+	use clause to clarify license allowances.
+
 2008-11-14  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	**** 2.10 TAGGED FOR RELEASE ****
