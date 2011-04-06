@@ -1,3 +1,8 @@
+2011-04-05  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c (TableDisplay): fix window clipping to use
+	large enough clip window.
+
 2010-08-05  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* generic/tkTable.h (CONSTRAIN): handle constraints where max<min.

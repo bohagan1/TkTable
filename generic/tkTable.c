@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.34 2008/11/14 23:43:35 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.35 2010/08/05 20:41:57 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -1758,8 +1758,8 @@ TableDisplay(ClientData clientdata)
     pady  = tablePtr->padY;
 
 #ifndef WIN32
-    /* 
-     * if we are using the slow drawing mode with a pixmap 
+    /*
+     * if we are using the slow drawing mode with a pixmap
      * create the pixmap and adjust x && y for offset in pixmap
      * FIX: Ignore slow mode for Win32 as the fast ClipRgn trick
      * below does not work for bitmaps.
@@ -1771,8 +1771,11 @@ TableDisplay(ClientData clientdata)
 #endif
 	window = Tk_WindowId(tkwin);
 #ifdef NO_XSETCLIP
-    clipWind = Tk_GetPixmap(display, window,
-	    invalidWidth, invalidHeight, Tk_Depth(tkwin));
+    /*
+     * Ensure clipWind is large enough for changed cell, which at the
+     * extreme is the full displayed window size.
+     */
+    clipWind = Tk_GetPixmap(display, window, boundW, boundH, Tk_Depth(tkwin));
 #endif
 
     /* set up the permanent tag styles */
@@ -1794,9 +1797,10 @@ TableDisplay(ClientData clientdata)
     tablePtr->flags &= ~AVOID_SPANS;
 
 #ifdef DEBUG
-    tcl_dprintf(tablePtr->interp, "%d,%d => %d,%d",
+    tcl_dprintf(tablePtr->interp, "%d,%d => %d,%d  X,Y %d,%d W,H %dx%d",
 	    rowFrom+tablePtr->rowOffset, colFrom+tablePtr->colOffset,
-	    rowTo+tablePtr->rowOffset, colTo+tablePtr->colOffset);
+	    rowTo+tablePtr->rowOffset, colTo+tablePtr->colOffset,
+	    invalidX, invalidY, invalidWidth, invalidHeight);
 #endif
 
     /* 
@@ -2267,7 +2271,6 @@ TableDisplay(ClientData clientdata)
 		     */
 #ifdef NO_XSETCLIP
 		    /*
-		     * This code is basically for the Macintosh.
 		     * Copy the the current contents of the cell into the
 		     * clipped window area.  This keeps any fg/bg and image
 		     * data intact.
