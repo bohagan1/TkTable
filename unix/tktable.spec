@@ -1,7 +1,7 @@
 # RPM specfile provided by Jean-Luc Fontaine
-# $Id: tktable.spec,v 1.2 2004/07/20 22:58:51 hobbs Exp $
+# $Id: tktable.spec,v 1.3 2008/11/14 23:16:52 hobbs Exp $
 
-%define	version	2.10
+%define	version	2.11
 %define	directory /usr
 
 Summary: table/matrix widget extension to Tcl/Tk.

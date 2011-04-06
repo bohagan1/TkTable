@@ -12,7 +12,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: Makefile.in,v 1.14 2005/05/11 21:50:28 hobbs Exp $
+# RCS: @(#) $Id: Makefile.in,v 1.15 2008/11/14 23:16:52 hobbs Exp $
 
 #========================================================================
 # Nothing of the variables below this line need to be changed.  Please
@@ -102,7 +102,6 @@ RANLIB		= @RANLIB@
 RANLIB_STUB	= @RANLIB_STUB@
 SHLIB_CFLAGS	= @SHLIB_CFLAGS@
 SHLIB_LD	= @SHLIB_LD@
-SHLIB_LD_FLAGS	= @SHLIB_LD_FLAGS@
 SHLIB_LD_LIBS	= @SHLIB_LD_LIBS@
 STLIB_LD	= @STLIB_LD@
 TCL_DEFS	= @TCL_DEFS@
@@ -259,6 +258,14 @@ shell: binaries libraries
 
 gdb:
 	$(TCLSH_ENV) gdb $(WISH_PROG) $(SCRIPT)
+
+VALGRINDARGS=--tool=memcheck --num-callers=8 --leak-resolution=high --leak-check=yes --show-reachable=yes -v
+
+valgrind: binaries libraries
+	$(TCLSH_ENV) valgrind $(VALGRINDARGS) $(TCLSH_PROG) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) | cat
+
+valgrindshell: binaries libraries
+	$(TCLSH_ENV) valgrind $(VALGRINDARGS) $(TCLSH_PROG) $(SCRIPT)
 
 depend:
 

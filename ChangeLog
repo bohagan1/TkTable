@@ -1,5 +1,10 @@
 2011-04-05  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* tests/tkTable.test, unix/tktable.spec, generic/version.h:
+	* win/makefile.vc, demos/loadtable.tcl: Update version to 2.11
+	* configure, configure.in, tclconfig/tcl.m4: Update to TEA 3.9
+	* Makefile.in: add valgrind targets
+
 	* generic/tkTable.c (TableDisplay): fix window clipping to use
 	large enough clip window.
 
