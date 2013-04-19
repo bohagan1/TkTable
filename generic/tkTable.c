@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.35 2010/08/05 20:41:57 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.36 2011/04/06 00:32:36 hobbs Exp $
  */
 
 #include "tkTable.h"
@@ -3836,9 +3836,11 @@ TableValidateChange(tablePtr, r, c, old, new, index)
 	return TCL_OK;
     }
 
+#if !defined(WIN32) && !defined(MAC_OSX_TK)
     /* Magic code to make this bit of code UI synchronous in the face of
      * possible new key events */
     XSync(tablePtr->display, False);
+#endif
     rstrct = Tk_RestrictEvents(TableRestrictProc, (ClientData)
 				 NextRequest(tablePtr->display), &cdata);
 

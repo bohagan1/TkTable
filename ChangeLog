@@ -1,3 +1,10 @@
+2013-04-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c (TableValidateChange): don't call XSync on
+	* generic/tkTable.h (XSync): Win32 or OS X.  Removes need to check
+	function def, which changed to tkIntStubsPtr ref in later Tk 8.5.
+	Ref Tk bug 3541305
+
 2011-04-05  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tests/tkTable.test, unix/tktable.spec, generic/version.h:

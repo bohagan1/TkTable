@@ -9,7 +9,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.h,v 1.17 2004/07/20 20:46:21 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.h,v 1.18 2010/08/05 23:23:20 hobbs Exp $
  */
 
 #ifndef _TKTABLE_H_
@@ -68,13 +68,6 @@
 #	define DllEntryPoint DllMain
 #   endif
 #endif
-
-#if defined(WIN32) || defined(MAC_TCL) || defined(MAC_OSX_TK)
-/* XSync call defined in the internals for some reason */
-#   ifndef XSync
-#	define XSync(display, bool) {display->request++;}
-#   endif
-#endif /* defn of XSync */
 
 #ifndef NORMAL_BG
 #   ifdef WIN32
