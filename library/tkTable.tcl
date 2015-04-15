@@ -4,7 +4,7 @@
 # This file defines the default bindings for Tk table widgets
 # and provides procedures that help in implementing those bindings.
 #
-# RCS: @(#) $Id: tkTable.tcl,v 1.13 2004/11/19 04:27:11 hobbs Exp $
+# RCS: @(#) $Id: tkTable.tcl,v 1.14 2005/07/12 23:26:28 hobbs Exp $
 
 #--------------------------------------------------------------------------
 # ::tk::table::Priv elements used in this file:

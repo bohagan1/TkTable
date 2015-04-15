@@ -9,7 +9,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tcl.m4,v 1.152 2010/09/16 20:45:41 hobbs Exp $
+# RCS: @(#) $Id: tcl.m4,v 1.27 2011/04/06 00:48:54 hobbs Exp $
 
 AC_PREREQ(2.57)
 

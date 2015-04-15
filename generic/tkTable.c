@@ -19,7 +19,7 @@
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTable.c,v 1.36 2011/04/06 00:32:36 hobbs Exp $
+ * RCS: @(#) $Id: tkTable.c,v 1.37 2013/04/18 23:59:59 hobbs Exp $
  */
 
 #include "tkTable.h"

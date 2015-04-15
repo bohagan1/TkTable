@@ -10,7 +10,7 @@
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # 
-# RCS: @(#) $Id: all.tcl,v 1.1 2000/10/19 18:29:28 hobbs Exp $
+# RCS: @(#) $Id: all.tcl,v 1.2 2002/06/21 18:16:39 hobbs Exp $
 
 package require tcltest
 namespace import -force ::tcltest::*

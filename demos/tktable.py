@@ -16,7 +16,7 @@
 #
 # CREATED:	Roethemeyer, 20.01.98
 #
-# VERSION:	$Id: tktable.py,v 1.1 2002/10/09 21:23:23 hobbs Exp $
+# VERSION:	$Id: tktable.py,v 1.2 2008/11/14 22:49:35 hobbs Exp $
 # 
 #============================================================================
 

@@ -1,5 +1,5 @@
 # RPM specfile provided by Jean-Luc Fontaine
-# $Id: tktable.spec,v 1.3 2008/11/14 23:16:52 hobbs Exp $
+# $Id: tktable.spec,v 1.4 2011/04/06 00:48:54 hobbs Exp $
 
 %define	version	2.11
 %define	directory /usr
