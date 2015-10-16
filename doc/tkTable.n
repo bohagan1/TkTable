@@ -233,9 +233,7 @@ Database Class:	\\fB\\$3\\fR
 .de UL
 \\$1\l'|0\(ul'\\$2
 ..
-.TH table n 2.8 Tk "Tk Table Extension"
-.HS table tk
-.BS
+.TH table "3tk" "2.10 Tk" "Tk Table Extension"
 .SH NAME
 table \- Create and manipulate tables
 .SH SYNOPSIS
@@ -1016,7 +1014,7 @@ active cell.  With one argument, sets the cursor to that point in the
 string.  0 is before the first character, you can also use \fBinsert\fR or
 \fBend\fR for the current insertion point or the end of the text.  If
 there is no active cell, or the cell or table is disabled, this will
-return -1.
+return \-1.
 .TP
 \fIpathName \fBindex\fR \fIindex\fR ?\fIrow|col\fR?
 Returns the integer cell coordinate that corresponds to \fIindex\fR in the
@@ -1420,12 +1418,12 @@ Set the topleft title area to be one spanning cell.  This overestimates
 both row and column span by one, but the command does all the constraining
 for us.
 .CS
-$table span [$table cget -roworigin],[$table cget -colorigin] [$table cget -titlerows],[$table cget -titlecols]
+$table span [$table cget \-roworigin],[$table cget \-colorigin] [$table cget \-titlerows],[$table cget \-titlecols]
 .CE
 Force a table window refresh (useful for the slight chance that a bug
 in the table is not causing proper refresh):
 .CS
-$table configure -padx [$table cget -padx]
+$table configure \-padx [$table cget \-padx]
 .CE
 
 .SH KEYWORDS
