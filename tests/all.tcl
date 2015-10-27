@@ -12,6 +12,7 @@
 # 
 # RCS: @(#) $Id: all.tcl,v 1.2 2002/06/21 18:16:39 hobbs Exp $
 
+package require Tk
 package require tcltest
 namespace import -force ::tcltest::*
 
@@ -55,4 +56,4 @@ foreach file [lsort [::tcltest::getMatchingFiles]] {
 # cleanup
 puts $chan "\nTests ended at [eval $timeCmd]"
 ::tcltest::cleanupTests 1
-exit
+#exit
