@@ -93,6 +93,45 @@ bind Table <ButtonRelease-2> {
     if {!$::tk::table::Priv(mouseMoved)} { tk_tablePaste %W [%W index @%x,%y] }
 }
 
+## Mouse wheel events
+
+if {[tk windowingsystem] eq "aqua"} {
+    bind Table <MouseWheel> {
+	%W yview scroll [expr {- (%D)}] units
+    }
+    bind Table <Option-MouseWheel> {
+	%W yview scroll [expr {-10 * (%D)}] units
+    }
+    bind Table <Shift-MouseWheel> {
+	%W xview scroll [expr {- (%D)}] units
+    }
+    bind Table <Shift-Option-MouseWheel> {
+	%W xview scroll [expr {-10 * (%D)}] units
+    }
+} else {
+    bind Table <MouseWheel> {
+	%W yview scroll [expr {- (%D / 120) * 4}] units
+    }
+    bind Table <Shift-MouseWheel> {
+	%W xview scroll [expr {- (%D / 120) * 4}] units
+    }
+}
+
+if {[tk windowingsystem] eq "x11"} {
+    bind Table <4> {
+	%W yview scroll -5 units
+    }
+    bind Table <Shift-4> {
+	%W xview scroll -5 units
+    }
+    bind Table <5> {
+	%W yview scroll 5 units
+    }
+    bind Table <Shift-5> {
+	%W xview scroll 5 units
+    }
+}
+
 ## Key events
 
 # This forces a cell commit if an active cell exists
