@@ -208,17 +208,6 @@
 .LP
 See the \\fBoptions\\fR manual entry for details on the standard options.
 ..
-'\"	# OP - start of full description for a single option
-.de OP
-.LP
-.nf
-.ta 4c
-Command-Line Name:	\\fB\\$1\\fR
-Database Name:	\\fB\\$2\\fR
-Database Class:	\\fB\\$3\\fR
-.fi
-.IP
-..
 '\"	# CS - begin code excerpt
 .de CS
 .RS
@@ -234,6 +223,17 @@ Database Class:	\\fB\\$3\\fR
 \\$1\l'|0\(ul'\\$2
 ..
 .TH table "3tk" "2.10 Tk" "Tk Table Extension"
+'\"	# OP - start of full description for a single option
+.de OP
+.LP
+.nf
+.ta 4c
+Command-Line Name:	\\fB\\$1\\fR
+Database Name:	\\fB\\$2\\fR
+Database Class:	\\fB\\$3\\fR
+.fi
+.IP
+..
 .SH NAME
 table \- Create and manipulate tables
 .SH SYNOPSIS
