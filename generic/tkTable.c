@@ -589,6 +589,9 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     Tcl_InitHashTable(tablePtr->inProc, TCL_STRING_KEYS);
 #endif
 
+    tablePtr->haveSelection = 0;
+    Tcl_DStringInit(&tablePtr->selection);
+
     /*
      * Handle class name and selection handlers
      */
@@ -1003,6 +1006,8 @@ TableDestroy(ClientData clientdata)
 
     /* free the configuration options in the widget */
     Tk_FreeOptions(tableSpecs, (char *) tablePtr, tablePtr->display, 0);
+
+    Tcl_DStringFree(&tablePtr->selection);
 
     /* and free the widget memory at last! */
     ckfree((char *) (tablePtr));
@@ -1728,7 +1733,7 @@ TableDisplay(ClientData clientdata)
     TableTag *tagPtr = NULL, *titlePtr, *selPtr, *activePtr, *flashPtr,
 	*rowPtr, *colPtr;
     Tcl_HashEntry *entryPtr;
-    static XPoint rect[3] = { {0, 0}, {0, 0}, {0, 0} };
+    XPoint rect[3];
     Tcl_HashTable *colTagsCache = NULL;
     Tcl_HashTable *drawnCache = NULL;
     Tk_TextLayout textLayout = NULL;
@@ -1737,6 +1742,7 @@ TableDisplay(ClientData clientdata)
     Tk_Font ellFont = NULL;
     char *ellipsis = NULL;
     int ellLen = 0, useEllLen = 0, ellEast = 0;
+    int leftoverWidth, leftoverHeight;
 
     tablePtr->flags &= ~REDRAW_PENDING;
     if ((tkwin == NULL) || !Tk_IsMapped(tkwin)) {
@@ -2396,9 +2402,11 @@ TableDisplay(ClientData clientdata)
 		/* draw a line with single pixel width */
 		rect[0].x = x;
 		rect[0].y = y + height - 1;
-		rect[1].y = -height + 1;
-		rect[2].x = width - 1;
-		XDrawLines(display, window, topGc, rect, 3, CoordModePrevious);
+		rect[1].x = x;
+		rect[1].y = y;
+		rect[2].x = x + width - 1;
+		rect[2].y = y;
+		XDrawLines(display, window, topGc, rect, 3, CoordModeOrigin);
 	    } else if (tablePtr->drawMode == DRAW_MODE_FAST) {
 		/*
 		 * This depicts a full 1 pixel border.
@@ -2429,16 +2437,19 @@ TableDisplay(ClientData clientdata)
 		/* draw a line with single pixel width */
 		rect[0].x = x + width - 1;
 		rect[0].y = y;
-		rect[1].y = height - 1;
-		rect[2].x = -width + 1;
-		XDrawLines(display, window, bottomGc, rect, 3,
-			CoordModePrevious);
+		rect[1].x = x + width - 1;
+		rect[1].y = y + height - 1;
+		rect[2].x = x;
+		rect[2].y = y + height - 1;
+		XDrawLines(display, window, bottomGc, rect, 3, CoordModeOrigin);
+
 		rect[0].x = x;
 		rect[0].y = y + height - 1;
-		rect[1].y = -height + 1;
-		rect[2].x = width - 1;
-		XDrawLines(display, window, topGc, rect, 3,
-			CoordModePrevious);
+		rect[1].x = x;
+		rect[1].y = y;
+		rect[2].x = x + width - 1;
+		rect[2].y = y;
+		XDrawLines(display, window, topGc, rect, 3, CoordModeOrigin);
 	    } else {
 		if (borders > 1) {
 		    if (bd[0]) {
@@ -2498,19 +2509,6 @@ TableDisplay(ClientData clientdata)
     /* Take care of removing embedded windows that are no longer in view */
     TableUndisplay(tablePtr);
 
-#ifndef WIN32
-    /* copy over and delete the pixmap if we are in slow mode */
-    if (tablePtr->drawMode == DRAW_MODE_SLOW) {
-	/* Get a default valued GC */
-	TableGetGc(display, window, &(tablePtr->defaultTag), &tagGc);
-	XCopyArea(display, window, Tk_WindowId(tkwin), tagGc, 0, 0,
-		(unsigned) invalidWidth, (unsigned) invalidHeight,
-		invalidX, invalidY);
-	Tk_FreePixmap(display, window);
-	window = Tk_WindowId(tkwin);
-    }
-#endif
-
     /* 
      * If we are at the end of the table, clear the area after the last
      * row/col.  We discount spans here because we just need the coords
@@ -2520,6 +2518,8 @@ TableDisplay(ClientData clientdata)
     TableCellCoords(tablePtr, tablePtr->rows-1, tablePtr->cols-1,
 	    &x, &y, &width, &height);
     tablePtr->flags &= ~AVOID_SPANS;
+    leftoverWidth = invalidWidth;
+    leftoverHeight = invalidHeight;
 
     /* This should occur before moving pixmap, but this simplifies things
      *
@@ -2528,18 +2528,31 @@ TableDisplay(ClientData clientdata)
      * for best speed, so this is the compromise w/o #ifdef's
      */
     if (x+width < invalidX+invalidWidth) {
-	XFillRectangle(display, window,
-		Tk_3DBorderGC(tkwin, tablePtr->defaultTag.bg, TK_3D_FLAT_GC),
+	Tk_Fill3DRectangle(tkwin, Tk_WindowId(tkwin), tablePtr->defaultTag.bg,
 		x+width, invalidY, (unsigned) invalidX+invalidWidth-x-width,
-		(unsigned) invalidHeight);
+		(unsigned) invalidHeight, 0, TK_RELIEF_FLAT);
+        leftoverWidth = x+width;
     }
 
     if (y+height < invalidY+invalidHeight) {
-	XFillRectangle(display, window,
-		Tk_3DBorderGC(tkwin, tablePtr->defaultTag.bg, TK_3D_FLAT_GC),
+	Tk_Fill3DRectangle(tkwin, Tk_WindowId(tkwin), tablePtr->defaultTag.bg,
 		invalidX, y+height, (unsigned) invalidWidth,
-		(unsigned) invalidY+invalidHeight-y-height);
+		(unsigned) invalidY+invalidHeight-y-height, 0, TK_RELIEF_FLAT);
+        leftoverHeight = y+height;
     }
+
+#ifndef WIN32
+    /* copy over and delete the pixmap if we are in slow mode */
+    if (tablePtr->drawMode == DRAW_MODE_SLOW) {
+	/* Get a default valued GC */
+	TableGetGc(display, window, &(tablePtr->defaultTag), &tagGc);
+	XCopyArea(display, window, Tk_WindowId(tkwin), tagGc, 0, 0,
+		(unsigned) leftoverWidth, (unsigned) leftoverHeight,
+		invalidX, invalidY);
+	Tk_FreePixmap(display, window);
+	window = Tk_WindowId(tkwin);
+    }
+#endif
 
     if (tagGc != NULL) {
 	TableFreeGc(display, tagGc);
@@ -3595,16 +3608,6 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
     int numcols, numrows;
     CONST84 char **listArgv;
 
-    /*
-     * We keep a static selection around so we don't have to remake the
-     * selection if we are getting the selection in chunks (i.e. offset != 0).
-     * Not thread-safe, but selection happens sequentially in practice.
-     * Otherwise could move them to per-table, but then more cleanup and
-     * tracking is needed (flag bit + extended table struct).
-     */
-    static int haveSelection = 0;
-    static Tcl_DString selection;
-
     /* if we are not exporting the selection ||
      * we have no data source, return */
     if (!tablePtr->exportSelection ||
@@ -3612,25 +3615,25 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	return -1;
     }
 
-    if ((offset == 0) || !haveSelection) {
+    if ((offset == 0) || !tablePtr->haveSelection) {
 	/* First Time thru, get the selection, otherwise, just use the
 	 * selection obtained before */
 
-	if (haveSelection) {
+	if (tablePtr->haveSelection) {
 	    /* If we have fetched a selection before, free it */
-	    Tcl_DStringFree(&selection);
+	    Tcl_DStringFree(&tablePtr->selection);
 	}
-	haveSelection = 1;
+	tablePtr->haveSelection = 1;
 
 	/* First get a sorted list of the selected elements */
-	Tcl_DStringInit(&selection);
+	Tcl_DStringInit(&tablePtr->selection);
 	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
 	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	    Tcl_DStringAppendElement(&selection,
+	    Tcl_DStringAppendElement(&tablePtr->selection,
 		    Tcl_GetHashKey(tablePtr->selCells, entryPtr));
 	}
-	value = TableCellSort(tablePtr, Tcl_DStringValue(&selection));
-	Tcl_DStringFree(&selection);
+	value = TableCellSort(tablePtr, Tcl_DStringValue(&tablePtr->selection));
+	Tcl_DStringFree(&tablePtr->selection);
 
 	if (value == NULL ||
 		Tcl_SplitList(interp, value, &listArgc, &listArgv) != TCL_OK) {
@@ -3638,7 +3641,7 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	}
 	Tcl_Free(value);
 
-	Tcl_DStringInit(&selection);
+	Tcl_DStringInit(&tablePtr->selection);
 	rslen = (rowsep?(strlen(rowsep)):0);
 	cslen = (colsep?(strlen(colsep)):0);
 	numrows = numcols = 0;
@@ -3649,10 +3652,10 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 		    lastrow = r;
 		    needcs = 0;
 		    if (rslen) {
-			Tcl_DStringAppend(&selection, rowsep, rslen);
+			Tcl_DStringAppend(&tablePtr->selection, rowsep, rslen);
 		    } else {
-			Tcl_DStringEndSublist(&selection);
-			Tcl_DStringStartSublist(&selection);
+			Tcl_DStringEndSublist(&tablePtr->selection);
+			Tcl_DStringStartSublist(&tablePtr->selection);
 		    }
 		    ++numrows;
 		} else {
@@ -3663,21 +3666,21 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 		lastrow = r;
 		needcs = 0;
 		if (!rslen) {
-		    Tcl_DStringStartSublist(&selection);
+		    Tcl_DStringStartSublist(&tablePtr->selection);
 		}
 	    }
 	    data = TableGetCellValue(tablePtr, r, c);
 	    if (cslen) {
 		if (needcs) {
-		    Tcl_DStringAppend(&selection, colsep, cslen);
+		    Tcl_DStringAppend(&tablePtr->selection, colsep, cslen);
 		}
-		Tcl_DStringAppend(&selection, data, -1);
+		Tcl_DStringAppend(&tablePtr->selection, data, -1);
 	    } else {
-		Tcl_DStringAppendElement(&selection, data);
+		Tcl_DStringAppendElement(&tablePtr->selection, data);
 	    }
 	}
 	if (!rslen && count) {
-	    Tcl_DStringEndSublist(&selection);
+	    Tcl_DStringEndSublist(&tablePtr->selection);
 	}
 	Tcl_Free((char *) listArgv);
 
@@ -3685,7 +3688,7 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	    Tcl_DString script;
 	    Tcl_DStringInit(&script);
 	    ExpandPercents(tablePtr, tablePtr->selCmd, numrows+1, numcols+1,
-		    Tcl_DStringValue(&selection), (char *)NULL,
+		    Tcl_DStringValue(&tablePtr->selection), (char *)NULL,
 		    listArgc, &script, CMD_ACTIVATE);
 	    if (Tcl_EvalEx(interp, Tcl_DStringValue(&script), -1,
 			TCL_EVAL_GLOBAL) == TCL_ERROR) {
@@ -3693,16 +3696,16 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 			"\n    (error in table selection command)");
 		Tcl_BackgroundError(interp);
 		Tcl_DStringFree(&script);
-		Tcl_DStringFree(&selection);
-		haveSelection = 0;
+		Tcl_DStringFree(&tablePtr->selection);
+		tablePtr->haveSelection = 0;
 		return -1;
 	    } else {
-		Tcl_DStringGetResult(interp, &selection);
+		Tcl_DStringGetResult(interp, &tablePtr->selection);
 	    }
 	    Tcl_DStringFree(&script);
 	}
     }
-    length = Tcl_DStringLength(&selection);
+    length = Tcl_DStringLength(&tablePtr->selection);
 
     if (length == 0) {
 	return -1;
@@ -3717,7 +3720,7 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	    count = maxBytes;
 	}
 	memcpy((VOID *) buffer,
-	       (VOID *) (Tcl_DStringValue(&selection) + offset),
+	       (VOID *) (Tcl_DStringValue(&tablePtr->selection) + offset),
 	       (size_t) count);
     }
     buffer[count] = '\0';
@@ -3725,8 +3728,8 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	/*
 	 * This should be the last call in this range, so free selection now.
 	 */
-	Tcl_DStringFree(&selection);
-	haveSelection = 0;
+	Tcl_DStringFree(&tablePtr->selection);
+	tablePtr->haveSelection = 0;
     }
     return count;
 }

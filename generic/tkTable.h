@@ -382,6 +382,9 @@ typedef struct {
     int invalidX, invalidY, invalidWidth, invalidHeight;
     int seen[4];			/* see TableUndisplay */
 
+    int haveSelection;
+    Tcl_DString selection;
+
 #ifdef POSTSCRIPT
     /* Pointer to information used for generating Postscript for the canvas.
      * NULL means no Postscript is currently being generated. */
