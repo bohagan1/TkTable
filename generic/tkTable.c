@@ -2521,24 +2521,22 @@ TableDisplay(ClientData clientdata)
     leftoverWidth = invalidWidth;
     leftoverHeight = invalidHeight;
 
-    /* This should occur before moving pixmap, but this simplifies things
-     *
-     * Could use Tk_Fill3DRectangle instead of XFillRectangle
-     * for best compatibility, and XClearArea could be used on Unix
-     * for best speed, so this is the compromise w/o #ifdef's
-     */
     if (x+width < invalidX+invalidWidth) {
 	Tk_Fill3DRectangle(tkwin, Tk_WindowId(tkwin), tablePtr->defaultTag.bg,
-		x+width, invalidY, (unsigned) invalidX+invalidWidth-x-width,
-		(unsigned) invalidHeight, 0, TK_RELIEF_FLAT);
-        leftoverWidth = x+width;
+		x+width, invalidY, (unsigned) (invalidX+invalidWidth-x-width),
+		(unsigned) invalidHeight,
+		0, TK_RELIEF_FLAT);
+	leftoverWidth = x+width-invalidX;
+	if (leftoverWidth < 0) leftoverWidth = 0;
     }
 
     if (y+height < invalidY+invalidHeight) {
 	Tk_Fill3DRectangle(tkwin, Tk_WindowId(tkwin), tablePtr->defaultTag.bg,
 		invalidX, y+height, (unsigned) invalidWidth,
-		(unsigned) invalidY+invalidHeight-y-height, 0, TK_RELIEF_FLAT);
-        leftoverHeight = y+height;
+		(unsigned) (invalidY+invalidHeight-y-height),
+		0, TK_RELIEF_FLAT);
+	leftoverHeight = y+height-invalidY;
+	if (leftoverHeight < 0) leftoverHeight = 0;
     }
 
 #ifndef WIN32
