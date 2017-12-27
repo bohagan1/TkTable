@@ -47,6 +47,7 @@ PRJ_OBJS = $(TMP_DIR)\tkTable.obj \
 
 DISABLE_TARGET_test = 1
 !include "$(_RULESDIR)\targets.vc"
+install: default-install-docs-html
 pkgindex: default-pkgindex
 
 test: $(OUT_DIR)\pkgIndex.tcl
