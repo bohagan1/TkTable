@@ -2551,7 +2551,6 @@ TableDisplay(ClientData clientdata)
 	window = Tk_WindowId(tkwin);
     }
 #endif
-
     if (tagGc != NULL) {
 	TableFreeGc(display, tagGc);
     }
@@ -3605,6 +3604,7 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
     int length, count, lastrow=0, needcs=0, r, c, listArgc, rslen=0, cslen=0;
     int numcols, numrows;
     CONST84 char **listArgv;
+
 
     /* if we are not exporting the selection ||
      * we have no data source, return */
