@@ -1732,7 +1732,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    ])
 	    CC_SEARCH_FLAGS=""
 	    LD_SEARCH_FLAGS=""
-	    LD_LIBRARY_PATH_VAR="DYLD_LIBRARY_PATH"
+	    LD_LIBRARY_PATH_VAR="DYLD_FALLBACK_LIBRARY_PATH"
 	    # TEA specific: for combined 32 & 64 bit fat builds of Tk
 	    # extensions, verify that 64-bit build is possible.
 	    AS_IF([test "$fat_32_64" = yes && test -n "${TK_BIN_DIR}"], [
