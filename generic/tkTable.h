@@ -19,11 +19,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <tk.h>
-#ifdef MAC_TCL
-# include <Xatom.h>
+#ifdef MAC_OSX_TK
+# include <X11_tk/Xatom.h>
 #else
 # include <X11/Xatom.h>
-#endif /* MAC_TCL */
+#endif /* MAC_OSX_TK */
 
 #if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION == 0) /* Tcl8.0 stuff */
 #define Tcl_GetString(objPtr)	Tcl_GetStringFromObj(objPtr, (int *)NULL)
