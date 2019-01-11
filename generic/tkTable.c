@@ -534,8 +534,8 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     tablePtr->activeBuf		= ckalloc(1);
     *(tablePtr->activeBuf)	= '\0';
 
-    tablePtr->cursor		= None;
-    tablePtr->bdcursor		= None;
+    tablePtr->cursor		= NULL;
+    tablePtr->bdcursor		= NULL;
 
     tablePtr->defaultTag.justify	= TK_JUSTIFY_LEFT;
     tablePtr->defaultTag.state		= STATE_UNKNOWN;
@@ -1337,7 +1337,7 @@ TableEventProc(clientData, eventPtr)
     switch (eventPtr->type) {
 	case MotionNotify:
 	    if (!(tablePtr->resize & SEL_NONE)
-		    && (tablePtr->bdcursor != None) &&
+		    && (tablePtr->bdcursor != NULL) &&
 		    TableAtBorder(tablePtr, eventPtr->xmotion.x,
 			    eventPtr->xmotion.y, &row, &col) &&
 		    ((row>=0 && (tablePtr->resize & SEL_ROW)) ||
@@ -1353,7 +1353,7 @@ TableEventProc(clientData, eventPtr)
 		}
 	    } else if (tablePtr->flags & OVER_BORDER) {
 		tablePtr->flags &= ~OVER_BORDER;
-		if (tablePtr->cursor != None) {
+		if (tablePtr->cursor != NULL) {
 		    Tk_DefineCursor(tablePtr->tkwin, tablePtr->cursor);
 		} else {
 		    Tk_UndefineCursor(tablePtr->tkwin);
@@ -1364,7 +1364,7 @@ TableEventProc(clientData, eventPtr)
 
 		//tablePtr->flags &= ~(OVER_BORDER|OVER_TITLE);
 
-		if (tablePtr->titleCursor != None) {
+		if (tablePtr->titleCursor != NULL) {
 		    TableWhatCell(tablePtr, eventPtr->xmotion.x,
 			    eventPtr->xmotion.y, &row, &col);
 		    if ((row < tablePtr->titleRows) ||
@@ -1376,12 +1376,12 @@ TableEventProc(clientData, eventPtr)
 			cursor = tablePtr->titleCursor;
 		    }
 		}
-		if (cursor != None) {
+		if (cursor != NULL) {
 		    Tk_DefineCursor(tablePtr->tkwin, cursor);
 		} else {
 		    Tk_UndefineCursor(tablePtr->tkwin);
 		}
-	    } else if (tablePtr->titleCursor != None) {
+	    } else if (tablePtr->titleCursor != NULL) {
 		Tk_Cursor cursor = tablePtr->cursor;
 
 		TableWhatCell(tablePtr, eventPtr->xmotion.x,
@@ -2442,7 +2442,6 @@ TableDisplay(ClientData clientdata)
 		rect[2].x = x;
 		rect[2].y = y + height - 1;
 		XDrawLines(display, window, bottomGc, rect, 3, CoordModeOrigin);
-
 		rect[0].x = x;
 		rect[0].y = y + height - 1;
 		rect[1].x = x;
