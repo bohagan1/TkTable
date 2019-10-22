@@ -1882,8 +1882,24 @@ TableDisplay(ClientData clientdata)
 	    }
 
 	    /* Constrain drawn size to the visual boundaries */
-	    if (width > boundW-x)	{ width  = boundW-x; }
-	    if (height > boundH-y)	{ height = boundH-y; }
+	    if (tablePtr->colStretch == STRETCH_MODE_NONE) {
+		if (x >= boundW && width > boundW - x) {
+		    width = boundW - x;
+		}
+	    } else {
+		if (width > boundW - x) {
+		    width = boundW - x;
+		}
+	    }
+	    if (tablePtr->rowStretch == STRETCH_MODE_NONE) {
+		if (y >= boundH && height > boundH - y) {
+		    height = boundH - y;
+		}
+	    } else {
+		if (height > boundH - y) {
+		    height = boundH - y;
+		}
+	    }
 
 	    /* Cache the col in user terms */
 	    ucol = col+tablePtr->colOffset;
