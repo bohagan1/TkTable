@@ -3843,7 +3843,7 @@ TableValidateChange(tablePtr, r, c, old, new, index)
      int index;			/* index of insert/delete, -1 otherwise */
 {
     register Tcl_Interp *interp = tablePtr->interp;
-    int code, bool;
+    int code, flag;
     Tk_RestrictProc *rstrct;
     ClientData cdata;
     Tcl_DString script;
@@ -3884,13 +3884,13 @@ TableValidateChange(tablePtr, r, c, old, new, index)
 	Tcl_BackgroundError(interp);
 	code = TCL_ERROR;
     } else if (Tcl_GetBooleanFromObj(interp, Tcl_GetObjResult(interp),
-				     &bool) != TCL_OK) {
+				     &flag) != TCL_OK) {
 	Tcl_AddErrorInfo(interp,
 			 "\n\tboolean not returned by validation command");
 	Tcl_BackgroundError(interp);
 	code = TCL_ERROR;
     } else {
-	code = (bool) ? TCL_OK : TCL_BREAK;
+	code = (flag) ? TCL_OK : TCL_BREAK;
     }
     Tcl_SetObjResult(interp, Tcl_NewObj());
 
