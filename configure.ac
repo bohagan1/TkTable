@@ -150,6 +150,13 @@ TEA_CONFIG_CFLAGS
 TEA_ENABLE_SYMBOLS
 
 #--------------------------------------------------------------------
+# Integer pointer types used by the (U)INT2PTR / PTR2(U)INT macros.
+#--------------------------------------------------------------------
+
+AC_TYPE_INTPTR_T
+AC_TYPE_UINTPTR_T
+
+#--------------------------------------------------------------------
 # This macro generates a line to use when building a library.  It
 # depends on values set by the TEA_ENABLE_SHARED, TEA_ENABLE_SYMBOLS,
 # and TEA_LOAD_TCLCONFIG macros above.

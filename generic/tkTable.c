@@ -1990,7 +1990,7 @@ TableDisplay(ClientData clientdata)
 	     * let's see if we have the value cached already
 	     * if not, run the findColTag routine and cache the value
 	     */
-	    entryPtr = Tcl_CreateHashEntry(colTagsCache, (char *)ucol, &new);
+	    entryPtr = Tcl_CreateHashEntry(colTagsCache, INT2PTR(ucol), &new);
 	    if (new) {
 		colPtr = FindRowColTag(tablePtr, ucol, COL);
 		Tcl_SetHashValue(entryPtr, colPtr);
@@ -2685,7 +2685,7 @@ TableFlashEvent(ClientData clientdata)
     entries = 0;
     for (entryPtr = Tcl_FirstHashEntry(tablePtr->flashCells, &search);
 	 entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	count = (int) Tcl_GetHashValue(entryPtr);
+	count = PTR2INT(Tcl_GetHashValue(entryPtr));
 	if (--count <= 0) {
 	    /* get the cell address and invalidate that region only */
 	    TableParseArrayIndex(&row, &col,
@@ -2697,7 +2697,7 @@ TableFlashEvent(ClientData clientdata)
 	    TableRefresh(tablePtr, row-tablePtr->rowOffset,
 		    col-tablePtr->colOffset, CELL);
 	} else {
-	    Tcl_SetHashValue(entryPtr, (ClientData) count);
+	    Tcl_SetHashValue(entryPtr, INT2PTR(count));
 	    entries++;
 	}
     }
@@ -2742,7 +2742,7 @@ TableAddFlash(Table *tablePtr, int row, int col)
 
     /* add the flash to the hash table */
     entryPtr = Tcl_CreateHashEntry(tablePtr->flashCells, buf, &dummy);
-    Tcl_SetHashValue(entryPtr, tablePtr->flashTime);
+    Tcl_SetHashValue(entryPtr, INT2PTR(tablePtr->flashTime));
 
     /* now set the timer if it's not already going and invalidate the area */
     if (tablePtr->flashTimer == NULL) {
@@ -3141,13 +3141,13 @@ TableAdjustParams(register Table *tablePtr)
     numPixels = 0;
     unpreset = 0;
     for (i = 0; i < tablePtr->cols; i++) {
-	entryPtr = Tcl_FindHashEntry(tablePtr->colWidths, (char *) i);
+	entryPtr = Tcl_FindHashEntry(tablePtr->colWidths, INT2PTR(i));
 	if (entryPtr == NULL) {
 	    tablePtr->colPixels[i] = -1;
 	    unpreset++;
 	    lastUnpreset = i;
 	} else {
-	    value = (int) Tcl_GetHashValue(entryPtr);
+	    value = PTR2INT(Tcl_GetHashValue(entryPtr));
 	    if (value > 0) {
 		tablePtr->colPixels[i] = value * tablePtr->charWidth + px;
 	    } else {
@@ -3235,13 +3235,13 @@ TableAdjustParams(register Table *tablePtr)
 	numPixels	= 0;
 	unpreset	= 0;
 	for (i = 0; i < tablePtr->rows; i++) {
-	    entryPtr = Tcl_FindHashEntry(tablePtr->rowHeights, (char *) i);
+	    entryPtr = Tcl_FindHashEntry(tablePtr->rowHeights, INT2PTR(i));
 	    if (entryPtr == NULL) {
 		tablePtr->rowPixels[i] = -1;
 		unpreset++;
 		lastUnpreset = i;
 	    } else {
-		value = (int) Tcl_GetHashValue(entryPtr);
+		value = PTR2INT(Tcl_GetHashValue(entryPtr));
 		if (value > 0) {
 		    tablePtr->rowPixels[i] = value * tablePtr->charHeight + py;
 		} else {
@@ -3808,7 +3808,7 @@ TableRestrictProc(serial, eventPtr)
      XEvent *eventPtr;
 {
     if ((eventPtr->type == KeyRelease || eventPtr->type == KeyPress) &&
-	((eventPtr->xany.serial-(unsigned int)serial) > 0)) {
+	((eventPtr->xany.serial-PTR2UINT(serial)) > 0)) {
 	return TK_DEFER_EVENT;
     } else {
 	return TK_PROCESS_EVENT;

@@ -80,7 +80,7 @@ TableOptionBdSet(clientData, interp, tkwin, value, widgRec, offset)
 {
     char **borderStr;
     int *bordersPtr, *bdPtr;
-    int type	= (int) clientData;
+    int type	= PTR2INT(clientData);
     int result	= TCL_OK;
     int argc;
     CONST84 char **argv;
@@ -179,7 +179,7 @@ TableOptionBdGet(clientData, tkwin, widgRec, offset, freeProcPtr)
 					 * information about how to reclaim
 					 * storage for return string. */
 {
-    register int type	= (int) clientData;
+    register int type	= PTR2INT(clientData);
 
     if (type == BD_TABLE) {
 	return ((TableTag *) (widgRec + offset))->borderStr;

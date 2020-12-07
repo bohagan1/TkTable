@@ -183,8 +183,8 @@ Table_AdjustCmd(ClientData clientData, register Tcl_Interp *interp,
 	/* print out all the preset column widths or row heights */
 	entryPtr = Tcl_FirstHashEntry(hashTablePtr, &search);
 	while (entryPtr != NULL) {
-	    posn = ((int) Tcl_GetHashKey(hashTablePtr, entryPtr)) + offset;
-	    value = (int) Tcl_GetHashValue(entryPtr);
+	    posn = PTR2INT(Tcl_GetHashKey(hashTablePtr, entryPtr)) + offset;
+	    value = PTR2INT(Tcl_GetHashValue(entryPtr));
 	    sprintf(buf1, "%d %d", posn, value);
 	    /* OBJECTIFY */
 	    Tcl_AppendElement(interp, buf1);
@@ -197,10 +197,10 @@ Table_AdjustCmd(ClientData clientData, register Tcl_Interp *interp,
 	}
 	/* no range check is done, why bother? */
 	posn -= offset;
-	entryPtr = Tcl_FindHashEntry(hashTablePtr, (char *) posn);
+	entryPtr = Tcl_FindHashEntry(hashTablePtr, INT2PTR(posn));
 	if (entryPtr != NULL) {
 	    Tcl_SetIntObj(Tcl_GetObjResult(interp),
-			  (int) Tcl_GetHashValue(entryPtr));
+			  PTR2INT(Tcl_GetHashValue(entryPtr)));
 	} else {
 	    Tcl_SetIntObj(Tcl_GetObjResult(interp), widthType ?
 			  tablePtr->defColWidth : tablePtr->defRowHeight);
@@ -217,14 +217,14 @@ Table_AdjustCmd(ClientData clientData, register Tcl_Interp *interp,
 	    posn -= offset;
 	    if (value == -999999) {
 		/* reset that field */
-		entryPtr = Tcl_FindHashEntry(hashTablePtr, (char *) posn);
+		entryPtr = Tcl_FindHashEntry(hashTablePtr, INT2PTR(posn));
 		if (entryPtr != NULL) {
 		    Tcl_DeleteHashEntry(entryPtr);
 		}
 	    } else {
 		entryPtr = Tcl_CreateHashEntry(hashTablePtr,
-					       (char *) posn, &dummy);
-		Tcl_SetHashValue(entryPtr, (ClientData) value);
+					       INT2PTR(posn), &dummy);
+		Tcl_SetHashValue(entryPtr, INT2PTR(value));
 	    }
 	}
 	TableAdjustParams(tablePtr);
@@ -413,10 +413,10 @@ Table_BorderCmd(ClientData clientData, register Tcl_Interp *interp,
 	    if (value < -1) value = -1;
 	    if (value != tablePtr->scanMarkY) {
 		entryPtr = Tcl_CreateHashEntry(tablePtr->rowHeights,
-					       (char *) row, &dummy);
+					       INT2PTR(row), &dummy);
 		/* -value means rowHeight will be interp'd as pixels, not
                    lines */
-		Tcl_SetHashValue(entryPtr, (ClientData) MIN(0,-value));
+		Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
 		tablePtr->scanMarkY = value;
 		key++;
 	    }
@@ -427,10 +427,10 @@ Table_BorderCmd(ClientData clientData, register Tcl_Interp *interp,
 	    if (value < -1) value = -1;
 	    if (value != tablePtr->scanMarkX) {
 		entryPtr = Tcl_CreateHashEntry(tablePtr->colWidths,
-					       (char *) col, &dummy);
+					       INT2PTR(col), &dummy);
 		/* -value means colWidth will be interp'd as pixels, not
                    chars */
-		Tcl_SetHashValue(entryPtr, (ClientData) MIN(0,-value));
+		Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
 		tablePtr->scanMarkX = value;
 		key++;
 	    }
@@ -549,14 +549,14 @@ Table_ClearCmd(ClientData clientData, register Tcl_Interp *interp,
 	     * while size entries are 0-based (real) */
 	    if ((cmdIndex == CLEAR_TAGS || cmdIndex == CLEAR_ALL) &&
 		(entryPtr = Tcl_FindHashEntry(tablePtr->rowStyles,
-					      (char *) row))) {
+					      INT2PTR(row)))) {
 		Tcl_DeleteHashEntry(entryPtr);
 		redraw = 1;
 	    }
 
 	    if ((cmdIndex == CLEAR_SIZES || cmdIndex == CLEAR_ALL) &&
 		(entryPtr = Tcl_FindHashEntry(tablePtr->rowHeights,
-					      (char *) row-tablePtr->rowOffset))) {
+					      INT2PTR(row-tablePtr->rowOffset)))) {
 		Tcl_DeleteHashEntry(entryPtr);
 		redraw = 1;
 	    }
@@ -567,7 +567,7 @@ Table_ClearCmd(ClientData clientData, register Tcl_Interp *interp,
 		if (cmdIndex == CLEAR_TAGS || cmdIndex == CLEAR_ALL) {
 		    if ((row == r1) &&
 			(entryPtr = Tcl_FindHashEntry(tablePtr->colStyles,
-						      (char *) col))) {
+						      INT2PTR(col)))) {
 			Tcl_DeleteHashEntry(entryPtr);
 			redraw = 1;
 		    }
@@ -590,8 +590,8 @@ Table_ClearCmd(ClientData clientData, register Tcl_Interp *interp,
 
 		if ((cmdIndex == CLEAR_SIZES || cmdIndex == CLEAR_ALL) &&
 		    row == r1 &&
-		    (entryPtr = Tcl_FindHashEntry(tablePtr->colWidths, (char *)
-						  col-tablePtr->colOffset))) {
+		    (entryPtr = Tcl_FindHashEntry(tablePtr->colWidths,
+						  INT2PTR(col-tablePtr->colOffset)))) {
 		    Tcl_DeleteHashEntry(entryPtr);
 		    redraw = 1;
 		}

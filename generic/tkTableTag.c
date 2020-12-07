@@ -575,7 +575,7 @@ FindRowColTag(Table *tablePtr, int cell, int mode)
     TableTag *tagPtr = NULL;
 
     entryPtr = Tcl_FindHashEntry((mode == ROW) ? tablePtr->rowStyles
-				 : tablePtr->colStyles, (char *) cell);
+				 : tablePtr->colStyles, INT2PTR(cell));
     if (entryPtr == NULL) {
 	char *cmd = (mode == ROW) ? tablePtr->rowTagCmd : tablePtr->colTagCmd;
 	if (cmd) {
@@ -871,7 +871,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 				Tcl_GetHashKey(hashTblPtr, scanPtr));
 			value = forRows ? row : col;
 			entryPtr = Tcl_CreateHashEntry(cacheTblPtr,
-				(char *)value, &newEntry);
+				INT2PTR(value), &newEntry);
 			if (newEntry) {
 			    Tcl_ListObjAppendElement(NULL, resultPtr,
 				    Tcl_NewIntObj(value));
@@ -904,7 +904,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 			/* is this the tag pointer on this row */
 			if ((TableTag *) Tcl_GetHashValue(scanPtr) == tagPtr) {
 			    objPtr = Tcl_NewIntObj(
-				(int) Tcl_GetHashKey(hashTblPtr, scanPtr));
+				PTR2INT(Tcl_GetHashKey(hashTblPtr, scanPtr)));
 			    Tcl_ListObjAppendElement(NULL, resultPtr, objPtr);
 			}
 		    }
@@ -926,7 +926,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		    /*
 		     * This is a deletion
 		     */
-		    entryPtr = Tcl_FindHashEntry(hashTblPtr, (char *)value);
+		    entryPtr = Tcl_FindHashEntry(hashTblPtr, INT2PTR(value));
 		    if (entryPtr != NULL) {
 			Tcl_DeleteHashEntry(entryPtr);
 			refresh = 1;
@@ -937,7 +937,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 		     * Tag structure if it wasn't the same as an existing one
 		     */
 		    entryPtr = Tcl_CreateHashEntry(hashTblPtr,
-			    (char *) value, &newEntry);
+			    INT2PTR(value), &newEntry);
 		    if (newEntry || (tagPtr !=
 			    (TableTag *) Tcl_GetHashValue(entryPtr))) {
 			Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
