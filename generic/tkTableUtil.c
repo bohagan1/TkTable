@@ -169,7 +169,7 @@ TableOptionBdSet(clientData, interp, tkwin, value, widgRec, offset)
  *----------------------------------------------------------------------
  */
 
-char *
+CONST86 char *
 TableOptionBdGet(clientData, tkwin, widgRec, offset, freeProcPtr)
     ClientData clientData;		/* Type of struct being set. */
     Tk_Window tkwin;			/* Window containing canvas widget. */
@@ -329,13 +329,13 @@ Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp,
  *----------------------------------------------------------------------
  */
 
-char *
+CONST86 char *
 Cmd_OptionGet(ClientData clientData, Tk_Window unused,
 	      char *widgRec, int offset, Tcl_FreeProc **freeProcPtr)
 {
   Cmd_Struct *p = (Cmd_Struct *)clientData;
   int mode = *((int*)(widgRec+offset));
-  return Cmd_GetName(p,mode);
+  return (CONST86 char *) Cmd_GetName(p,mode);
 }
 
 /*

@@ -40,11 +40,14 @@
 #endif
 
 /*
- * Tcl/Tk 8.4 introduced better CONST-ness in the APIs, but we use CONST84 in
+ * Tcl/Tk 8.4 and 8.6 introduced better CONST-ness in the APIs, but we use CONST84/CONST86 in
  * some cases for compatibility with earlier Tcl headers to prevent warnings.
  */
 #ifndef CONST84
 #  define CONST84
+#endif
+#ifndef CONST86
+#  define CONST86 CONST84
 #endif
 
 /* This EXTERN declaration is needed for Tcl < 8.0.3 */
@@ -528,7 +531,7 @@ extern void	Table_ClearHashTable(Tcl_HashTable *hashTblPtr);
 extern int	TableOptionBdSet(ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
 			CONST84 char *value, char *widgRec, int offset);
-extern char *	TableOptionBdGet(ClientData clientData,
+extern CONST86 char *	TableOptionBdGet(ClientData clientData,
 			Tk_Window tkwin, char *widgRec, int offset,
 			Tcl_FreeProc **freeProcPtr);
 extern int	TableTagConfigureBd(Table *tablePtr,
@@ -537,7 +540,7 @@ extern int	Cmd_OptionSet(ClientData clientData,
 			Tcl_Interp *interp,
 			Tk_Window unused, CONST84 char *value,
 			char *widgRec, int offset);
-extern char *	Cmd_OptionGet(ClientData clientData,
+extern CONST86 char *	Cmd_OptionGet(ClientData clientData,
 			Tk_Window unused, char *widgRec,
 			int offset, Tcl_FreeProc **freeProcPtr);
 
