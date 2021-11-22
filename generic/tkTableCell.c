@@ -1415,6 +1415,8 @@ TableSpanSanCheck(register Table *tablePtr)
 	}
 	if (reset) {
 	    Table_SpanSet(tablePtr, row, col, rs, cs);
+	    if (!tablePtr->spanTbl)
+	       return;
 	}
     }
 }

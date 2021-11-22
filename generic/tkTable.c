@@ -3966,7 +3966,6 @@ ExpandPercents(tablePtr, before, r, c, old, new, index, dsPtr, cmdType)
 	 * to the result string.
 	 */
 
-	string = before;
 #ifdef TCL_UTF_MAX
 	/* No need to convert '%', as it is in ascii range */
 	string = (char *) Tcl_UtfFindFirst(before, '%');
