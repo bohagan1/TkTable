@@ -1,4 +1,4 @@
-/* 
+/*
  * tkTable.c --
  *
  *	This module implements table widgets for the Tk
@@ -60,7 +60,7 @@ static Tk_RestrictAction TableRestrictProc(ClientData arg, XEvent *eventPtr);
 
 /*
  * The following tables define the widget commands (and sub-
- * commands) and map the indexes into the string tables into 
+ * commands) and map the indexes into the string tables into
  * enumerated types used to dispatch the widget command.
  */
 
@@ -336,7 +336,7 @@ Tk_ConfigSpec tableSpecs[] = {
  */
 
 static CONST84 char *updateOpts[] = {
-    "-anchor",		"-background",	"-bg",		"-bd",	
+    "-anchor",		"-background",	"-bg",		"-bd",
     "-borderwidth",	"-cache",	"-command",	"-colorigin",
     "-cols",		"-colstretchmode",		"-coltagcommand",
     "-drawmode",	"-fg",		"-font",	"-foreground",
@@ -348,7 +348,7 @@ static CONST84 char *updateOpts[] = {
     "-padx",		"-pady",	"-relief",	"-roworigin",
     "-rows",		"-rowstretchmode",		"-rowtagcommand",
     "-showprocs",	"-state",	"-titlecols",	"-titlerows",
-    "-usecommand",	"-variable",	"-width",	"-wrap",	
+    "-usecommand",	"-variable",	"-width",	"-wrap",
     "-xscrollcommand",	"-yscrollcommand", (char *) NULL
 };
 
@@ -408,7 +408,7 @@ typedef union {
  *
  *	Helper function to bridge the gap between an object-based procedure
  *	and an older string-based procedure.
- * 
+ *
  *	Given an array of objects, allocate an array that consists of the
  *	string representations of those objects.
  *
@@ -439,7 +439,7 @@ StringifyObjects(objc, objv)
 {
     int i;
     char **argv;
-    
+
     argv = (char **) ckalloc((objc + 1) * sizeof(char *));
     for (i = 0; i < objc; i++) {
     	argv[i] = Tcl_GetString(objv[i]);
@@ -1239,9 +1239,9 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
 	}
     }
     if (forceUpdate) {
-	/* 
-	 * Calculate the row and column starts 
-	 * Adjust the top left corner of the internal display 
+	/*
+	 * Calculate the row and column starts
+	 * Adjust the top left corner of the internal display
 	 */
 	TableAdjustParams(tablePtr);
 	/* reset the cursor */
@@ -1284,7 +1284,7 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
  *
  *---------------------------------------------------------------------------
  */
- 
+
 static void
 TableWorldChanged(instanceData)
     ClientData instanceData;	/* Information about widget. */
@@ -1495,7 +1495,7 @@ TableCmdDeletedProc(ClientData clientData)
     }
 }
 
-/* 
+/*
  *----------------------------------------------------------------------
  *
  * TableRedrawHighlight --
@@ -1579,7 +1579,7 @@ TableRefresh(register Table *tablePtr, int row, int col, int mode)
     }
 }
 
-/* 
+/*
  *----------------------------------------------------------------------
  *
  * TableGetGc --
@@ -1686,7 +1686,7 @@ TableUndisplay(register Table *tablePtr)
  * are known to be respected. [Bug 1805350]
  */
 #if !defined(MAC_OSX_TK)
- #define NO_XSETCLIP
+#define NO_XSETCLIP
 #endif
 /*
  *--------------------------------------------------------------
@@ -1809,12 +1809,12 @@ TableDisplay(ClientData clientdata)
 	    invalidX, invalidY, invalidWidth, invalidHeight);
 #endif
 
-    /* 
+    /*
      * Initialize colTagsCache hash table to cache column tag names.
      */
     colTagsCache = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
     Tcl_InitHashTable(colTagsCache, TCL_ONE_WORD_KEYS);
-    /* 
+    /*
      * Initialize drawnCache hash table to cache drawn cells.
      * This is necessary to prevent spanning cells being drawn multiple times.
      */
@@ -1830,9 +1830,9 @@ TableDisplay(ClientData clientdata)
 
     /* Cycle through the cells and display them */
     for (row = rowFrom; row <= rowTo; row++) {
-	/* 
+	/*
 	 * are we in the 'dead zone' between the
-	 * title rows and the first displayed row 
+	 * title rows and the first displayed row
 	 */
 	if (row < tablePtr->topRow && row >= tablePtr->titleRows) {
 	    row = tablePtr->topRow;
@@ -1846,7 +1846,7 @@ TableDisplay(ClientData clientdata)
 
 	for (col = colFrom; col <= colTo; col++) {
 	    activeCell = 0;
-	    /* 
+	    /*
 	     * Adjust to first viewable column if we are in the 'dead zone'
 	     * between the title cols and the first displayed column.
 	     */
@@ -1963,7 +1963,7 @@ TableDisplay(ClientData clientdata)
 
 	    /*
 	     * Don't draw what won't be seen.
-	     * Embedded windows handle this in EmbWinDisplay. 
+	     * Embedded windows handle this in EmbWinDisplay.
 	     */
 	    if ((width <= 0) || (height <= 0)) { continue; }
 
@@ -2449,7 +2449,7 @@ TableDisplay(ClientData clientdata)
 				TK_3D_DARK_GC);
 			break;
 		}
-	
+
 		/* draw a line with single pixel width */
 		rect[0].x = x + width - 1;
 		rect[0].y = y;
@@ -2524,7 +2524,7 @@ TableDisplay(ClientData clientdata)
     /* Take care of removing embedded windows that are no longer in view */
     TableUndisplay(tablePtr);
 
-    /* 
+    /*
      * If we are at the end of the table, clear the area after the last
      * row/col.  We discount spans here because we just need the coords
      * for the area that would be the last physical cell.
@@ -2571,7 +2571,7 @@ TableDisplay(ClientData clientdata)
 	TableFreeGc(display, tagGc);
     }
     TableRedrawHighlight(tablePtr);
-    /* 
+    /*
      * Free the hash table used to cache evaluations.
      */
     Tcl_DeleteHashTable(colTagsCache);
@@ -2580,7 +2580,7 @@ TableDisplay(ClientData clientdata)
     ckfree((char *) (drawnCache));
 }
 
-/* 
+/*
  *----------------------------------------------------------------------
  *
  * TableInvalidate --
@@ -2658,7 +2658,7 @@ TableInvalidate(Table * tablePtr, int x, int y,
     }
 }
 
-/* 
+/*
  *----------------------------------------------------------------------
  *
  * TableFlashEvent --
@@ -2711,7 +2711,7 @@ TableFlashEvent(ClientData clientdata)
     }
 }
 
-/* 
+/*
  *----------------------------------------------------------------------
  *
  * TableAddFlash --
@@ -2819,7 +2819,7 @@ TableGetActiveBuf(register Table *tablePtr)
     TableSetActiveIndex(tablePtr);
 }
 
-/* 
+/*
  *----------------------------------------------------------------------
  *
  * TableVarProc --
@@ -3028,7 +3028,7 @@ TableAdjustActive(tablePtr)
     }
 
     if (tablePtr->oldActRow >= 0 && tablePtr->oldActCol >= 0) {
-	/* 
+	/*
 	 * Set the value of the old active cell to the active buffer
 	 * SetCellValue will check if the value actually changed
 	 */
@@ -3338,9 +3338,9 @@ TableAdjustParams(register Table *tablePtr)
     leftCol = tablePtr->leftCol;
     w += hl;
     h += hl;
-    /* 
+    /*
      * If we use this value of topRow, will we fill the window?
-     * if not, decrease it until we will, or until it gets to titleRows 
+     * if not, decrease it until we will, or until it gets to titleRows
      * make sure we don't cut off the bottom row
      */
     for (; topRow > tablePtr->titleRows; topRow--) {
@@ -3349,9 +3349,9 @@ TableAdjustParams(register Table *tablePtr)
 	    break;
 	}
     }
-    /* 
+    /*
      * If we use this value of topCol, will we fill the window?
-     * if not, decrease it until we will, or until it gets to titleCols 
+     * if not, decrease it until we will, or until it gets to titleCols
      * make sure we don't cut off the left column
      */
     for (; leftCol > tablePtr->titleCols; leftCol--) {
@@ -3847,7 +3847,7 @@ TableValidateChange(tablePtr, r, c, old, new, index)
     Tk_RestrictProc *rstrct;
     ClientData cdata;
     Tcl_DString script;
-    
+
     if (tablePtr->valCmd == NULL || tablePtr->validate == 0) {
 	return TCL_OK;
     }

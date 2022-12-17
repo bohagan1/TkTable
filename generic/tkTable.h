@@ -1,4 +1,4 @@
-/* 
+/*
  * tkTable.h --
  *
  *	This is the header file for the module that implements
@@ -53,15 +53,10 @@
 #  define CONST86 CONST84
 #endif
 
-/* This EXTERN declaration is needed for Tcl < 8.0.3 */
 #ifndef EXTERN
-# ifdef __cplusplus
-#  define EXTERN extern "C"
-# else
-#  define EXTERN extern
-# endif
+#   define EXTERN extern TCL_STORAGE_CLASS
 #endif
- 
+
 /*
  * Macros used to cast between pointers and integers (e.g. when storing an int
  * in ClientData), on 64-bit architectures they avoid gcc warning about "cast
@@ -87,13 +82,9 @@
 #   endif
 #endif
 
-#ifdef TCL_STORAGE_CLASS
-# undef TCL_STORAGE_CLASS
-#endif
 #ifdef BUILD_Tktable
-# define TCL_STORAGE_CLASS DLLEXPORT
-#else
-# define TCL_STORAGE_CLASS DLLIMPORT
+#undef TCL_STORAGE_CLASS
+#define TCL_STORAGE_CLASS	DLLEXPORT
 #endif
 
 #ifdef WIN32
