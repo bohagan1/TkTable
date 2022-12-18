@@ -372,7 +372,7 @@ TableDeleteChars(tablePtr, index, count)
     char *new, *string;
 
     string = tablePtr->activeBuf;
-    numBytes = strlen(string);
+    numBytes = (int) strlen(string);
     numChars = Tcl_NumUtfChars(string, numBytes);
     if ((index + count) > numChars) {
 	count = numChars - index;
@@ -381,9 +381,9 @@ TableDeleteChars(tablePtr, index, count)
 	return;
     }
 
-    byteIndex = Tcl_UtfAtIndex(string, index) - string;
-    byteCount = Tcl_UtfAtIndex(string + byteIndex, count)
-	- (string + byteIndex);
+    byteIndex = (int) (Tcl_UtfAtIndex(string, index) - string);
+    byteCount = (int) (Tcl_UtfAtIndex(string + byteIndex, count)
+	- (string + byteIndex));
 
     newByteCount = numBytes + 1 - byteCount;
     new = (char *) ckalloc((unsigned) newByteCount);
@@ -462,7 +462,7 @@ TableInsertChars(tablePtr, index, value)
     int oldlen, byteIndex, byteCount;
     char *new, *string;
 
-    byteCount = strlen(value);
+    byteCount = (int) strlen(value);
     if (byteCount == 0) {
 	return;
     }
@@ -479,9 +479,9 @@ TableInsertChars(tablePtr, index, value)
     }
 
     string = tablePtr->activeBuf;
-    byteIndex = Tcl_UtfAtIndex(string, index) - string;
+    byteIndex = (int) (Tcl_UtfAtIndex(string, index) - string);
 
-    oldlen = strlen(string);
+    oldlen = (int) strlen(string);
     new = (char *) ckalloc((unsigned)(oldlen + byteCount + 1));
     memcpy(new, string, (size_t) byteIndex);
     strcpy(new + byteIndex, value);
@@ -519,7 +519,7 @@ TableInsertChars(tablePtr, index, value)
     int oldlen, newlen;
     char *new;
 
-    newlen = strlen(value);
+    newlen = (int) strlen(value);
     if (newlen == 0) return;
 
     /* Is this an autoclear and this is the first update */
@@ -531,7 +531,7 @@ TableInsertChars(tablePtr, index, value)
 	/* the insert position now has to be 0 */
 	index = 0;
     }
-    oldlen = strlen(tablePtr->activeBuf);
+    oldlen = (int) strlen(tablePtr->activeBuf);
     /* get the buffer to at least the right length */
     new = (char *) ckalloc((unsigned)(oldlen+newlen+1));
     strncpy(new, tablePtr->activeBuf, (size_t) index);

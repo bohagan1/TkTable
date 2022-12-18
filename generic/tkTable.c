@@ -3655,8 +3655,8 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	Tcl_Free(value);
 
 	Tcl_DStringInit(&tablePtr->selection);
-	rslen = (rowsep?(strlen(rowsep)):0);
-	cslen = (colsep?(strlen(colsep)):0);
+	rslen = (rowsep?((int) strlen(rowsep)):0);
+	cslen = (colsep?((int) strlen(colsep)):0);
 	numrows = numcols = 0;
 	for (count = 0; count < listArgc; count++) {
 	    TableParseArrayIndex(&r, &c, listArgv[count]);
@@ -3976,7 +3976,7 @@ ExpandPercents(tablePtr, before, r, c, old, new, index, dsPtr, cmdType)
 	    Tcl_DStringAppend(dsPtr, before, -1);
 	    break;
 	} else if (string != before) {
-	    Tcl_DStringAppend(dsPtr, before, string-before);
+	    Tcl_DStringAppend(dsPtr, before, (int) (string-before));
 	    before = string;
 	}
 

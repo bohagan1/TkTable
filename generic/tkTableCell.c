@@ -778,7 +778,7 @@ TableGetIcursor(Table *tablePtr, char *arg, int *posn)
 {
     int tmp, len;
 
-    len = strlen(tablePtr->activeBuf);
+    len = (int) strlen(tablePtr->activeBuf);
 #ifdef TCL_UTF_MAX
     /* Need to base it off strlen to account for \x00 (Unicode null) */
     len = Tcl_NumUtfChars(tablePtr->activeBuf, len);
@@ -830,7 +830,8 @@ TableGetIndex(tablePtr, str, row_p, col_p)
     int *row_p;		/* Where to store converted row. */
     int *col_p;		/* Where to store converted col. */
 {
-    int r, c, len = strlen(str);
+    int r, c;
+    size_t len = strlen(str);
     char dummy;
 
     /*

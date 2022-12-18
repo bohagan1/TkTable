@@ -354,7 +354,7 @@ Cmd_GetName(const Cmd_Struct *cmds, int val)
 int
 Cmd_GetValue(const Cmd_Struct *cmds, const char *arg)
 {
-  unsigned int len = strlen(arg);
+  size_t len = strlen(arg);
   for(;cmds->name && cmds->name[0];cmds++) {
     if (!strncmp(cmds->name, arg, len)) return cmds->value;
   }
