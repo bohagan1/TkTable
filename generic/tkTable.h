@@ -99,29 +99,44 @@
 
 #ifndef NORMAL_BG
 #   ifdef WIN32
-#	define NORMAL_BG	"SystemButtonFace"
+#	define NORMAL_BG	"SystemWindow"
+#	define NORMAL_FG	"SystemWindowText"
 #	define ACTIVE_BG	NORMAL_BG
+#	define ACTIVE_FG	NORMAL_FG
 #	define SELECT_BG	"SystemHighlight"
 #	define SELECT_FG	"SystemHighlightText"
-#	define DISABLED		"SystemDisabledText"
+#	define DISABLED_BG	NORMAL_BG
+#	define DISABLED_FG	"SystemDisabledText"
+#	define HIGHLIGHT_BG	NORMAL_BG
 #	define HIGHLIGHT	"SystemWindowFrame"
-#	define DEF_TABLE_FONT	"{MS Sans Serif} 8"
+#	define DEF_TABLE_FONT	"TkTextFont"
+#	define DEF_HEADER_FONT	"TkHeadingFont"
 #   elif defined(MAC_TCL) || defined(MAC_OSX_TK)
-#	define NORMAL_BG	"systemWindowBody"
-#	define ACTIVE_BG	"#ececec"
-#	define SELECT_BG	"systemHighlight"
-#	define SELECT_FG	"systemHighlightText"
-#	define DISABLED		"#a3a3a3"
-#	define HIGHLIGHT	"Black"
-#	define DEF_TABLE_FONT	"Helvetica 12"
+#	define NORMAL_BG	"systemTextBackgroundColor"
+#	define NORMAL_FG	"systemTextColor"
+#	define ACTIVE_BG	"systemWindowBackgroundColor"
+#	define ACTIVE_FG	NORMAL_FG
+#	define SELECT_BG	"systemSelectedTextBackgroundColor"
+#	define SELECT_FG	"systemSelectedTextColor"
+#	define DISABLED_BG	"systemTextBackgroundColor"
+#	define DISABLED_FG	"systemDisabledControlTextColor"
+#	define HIGHLIGHT_BG	NORMAL_BG
+#	define HIGHLIGHT	NORMAL_FG
+#	define DEF_TABLE_FONT	"TkTextFont"
+#	define DEF_HEADER_FONT	"TkHeadingFont"
 #   else
-#	define NORMAL_BG	"#d9d9d9"
-#	define ACTIVE_BG	"#fcfcfc"
+#	define NORMAL_BG	"white"	
+#	define NORMAL_FG	"black"
+#	define ACTIVE_BG	"#ececec"
+#	define ACTIVE_FG	NORMAL_FG
 #	define SELECT_BG	"#c3c3c3"
-#	define SELECT_FG	"Black"
-#	define DISABLED		"#a3a3a3"
-#	define HIGHLIGHT	"Black"
-#	define DEF_TABLE_FONT	"Helvetica -12"
+#	define SELECT_FG	"black"
+#	define DISABLED_BG	NORMAL_BG
+#	define DISABLED_FG	"#a3a3a3"
+#	define HIGHLIGHT_BG	NORMAL_BG
+#	define HIGHLIGHT	NORMAL_FG
+#	define DEF_TABLE_FONT	"TkTextFont"
+#	define DEF_HEADER_FONT	"TkHeadingFont"
 #   endif
 #endif /* NORMAL_BG */
 

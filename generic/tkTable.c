@@ -222,7 +222,7 @@ Tk_ConfigSpec tableSpecs[] = {
      Tk_Offset(Table, flashTime), 0},
     {TK_CONFIG_FONT, "-font", "font", "Font",  DEF_TABLE_FONT,
      Tk_Offset(Table, defaultTag.tkfont), 0},
-    {TK_CONFIG_BORDER, "-foreground", "foreground", "Foreground", "black",
+    {TK_CONFIG_BORDER, "-foreground", "foreground", "Foreground", NORMAL_FG,
      Tk_Offset(Table, defaultTag.fg), 0},
 #ifdef PROCS
     {TK_CONFIG_BOOLEAN, "-hasprocs", "hasProcs", "hasProcs", "0",
@@ -231,7 +231,7 @@ Tk_ConfigSpec tableSpecs[] = {
     {TK_CONFIG_INT, "-height", "height", "Height", "0",
      Tk_Offset(Table, maxReqRows), 0},
     {TK_CONFIG_COLOR, "-highlightbackground", "highlightBackground",
-     "HighlightBackground", NORMAL_BG, Tk_Offset(Table, highlightBgColorPtr), 0},
+     "HighlightBackground", HIGHLIGHT_BG, Tk_Offset(Table, highlightBgColorPtr), 0},
     {TK_CONFIG_COLOR, "-highlightcolor", "highlightColor", "HighlightColor",
      HIGHLIGHT, Tk_Offset(Table, highlightColorPtr), 0},
     {TK_CONFIG_PIXELS, "-highlightthickness", "highlightThickness",

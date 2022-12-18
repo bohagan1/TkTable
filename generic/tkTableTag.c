@@ -535,12 +535,13 @@ TableTagGetPriority(Table *tablePtr, TableTag *tagPtr)
 void
 TableInitTags(Table *tablePtr)
 {
-    static CONST char *activeArgs[] = {"-bg", ACTIVE_BG, "-relief", "flat" };
+    static CONST char *activeArgs[] = {"-bg", ACTIVE_BG, "-fg", ACTIVE_FG,
+					"-relief", "solid" };
     static CONST char *selArgs[]    = {"-bg", SELECT_BG, "-fg", SELECT_FG,
-				       "-relief", "sunken" };
-    static CONST char *titleArgs[]  = {"-bg", DISABLED, "-fg", "white",
-				       "-relief", "flat",
-				       "-state", "disabled" };
+					"-relief", "sunken" };
+    static CONST char *titleArgs[]  = {"-bg", DISABLED_BG, "-fg", DISABLED_FG,
+					"-font", DEF_HEADER_FONT,
+					"-relief", "ridge", "-state", "disabled" };
     static CONST char *flashArgs[]  = {"-bg", "red" };
     /*
      * The order of creation is important to priority.
