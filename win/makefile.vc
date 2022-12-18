@@ -1,38 +1,36 @@
-# Makefile.vc
+#------------------------------------------------------------- -*- makefile -*-
 #
-# This makefile builds Tktable.dll, a table widget as a dynamically
-# loadable Tk extension.  This makefile is suitable for use with VC++ 5+.
+# Sample makefile for building Tcl extensions.
 #
-# TkTable assumes that Tcl/Tk has already been installed on Windows.
+# Basic build, test and install
+#   nmake /f makefile.vc INSTALLDIR=c:\path\to\tcl
+#   nmake /f makefile.vc INSTALLDIR=c:\path\to\tcl test
+#   nmake /f makefile.vc INSTALLDIR=c:\path\to\tcl install
 #
-# This does not provide support for static builds on Windows
+# For other build options (debug, static etc.),
+# See TIP 477 (https://core.tcl-lang.org/tips/doc/main/tip/477.md) for
+# detailed documentation.
 #
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+#------------------------------------------------------------------------------
 
-PROJECT	    = Tktable
+#-------------------------------------------------------------------------
+# Project specific information (EDIT)
+#-------------------------------------------------------------------------
+
+PROJECT = Tktable
 TBL_COMMAND = table
 TBL_RUNTIME = tkTable.tcl
-NEED_TK     = 1
-!include "rules-ext.vc"
+PROJECT_REQUIRES_TK=1
 
-#Get version info (this is in Makefile and C format)
+!include "rules-ext.vc"
+INST_RUNTIMEU = "$(PRJ_INSTALL_DIR:\=/)"
+
+# Get version
 !include "$(GENERICDIR)\version.h"
 
-INST_RUNTIME	= $(DEST_DIR)\lib\$(PROJECT)$(VERSION)
-INST_RUNTIMEU	= $(DEST_DIRU)/lib/$(PROJECT)$(VERSION)
-
-# NO_EMBEDDED_RUNTIME means that the tkTable.tcl file will not be embedded
-# into the executable, thus the default tkTable.tcl library file will not
-# be available when the library is loaded.
-# If this is defined, the tkTable.tcl file must be available in a
-# predefined set of directories (see docs).
-#TBL_CFLAGS	+= -DNO_EMBEDDED_RUNTIME
-
-PRJ_DEFINES = -DDLL_BUILD $(TBL_CFLAGS) \
-	  -DTBL_COMMAND=\"$(TBL_COMMAND)\" \
-	  -DTBL_RUNTIME="\"$(TBL_RUNTIME)\"" \
-	  -D_CRT_SECURE_NO_WARNINGS
-
-PRJ_INCLUDES = -I"$(TMP_DIR)"
 PRJ_OBJS = $(TMP_DIR)\tkTable.obj \
 	$(TMP_DIR)\tkTableWin.obj \
 	$(TMP_DIR)\tkTableTag.obj \
@@ -43,29 +41,42 @@ PRJ_OBJS = $(TMP_DIR)\tkTable.obj \
 	$(TMP_DIR)\tkTableUtil.obj
 # $(TMP_DIR)\tkTablePs.obj
 
+PRJ_INCLUDES = -I"$(TMP_DIR)"
+PRJ_DEFINES = -DDLL_BUILD -DBUILD_$(PROJECT) -D_WIN32 \
+		-DTBL_COMMAND=\"$(TBL_COMMAND)\" \
+		-DTBL_RUNTIME="\"$(TBL_RUNTIME)\"" \
+		-DTBL_RUNTIME_DIR="\"$(INST_RUNTIMEU)\"" \
+		-D_CRT_SECURE_NO_WARNINGS
+PRJ_LIBS = 
 
+# NO_EMBEDDED_RUNTIME means that the tkTable.tcl file will not be embedded
+# into the executable, thus the default tkTable.tcl library file will not
+# be available when the library is loaded.
+# If this is defined, the tkTable.tcl file must be available in a
+# predefined set of directories (see docs).
+#PRJ_DEFINES	+= -DNO_EMBEDDED_RUNTIME
 
-DISABLE_TARGET_test = 1
-!include "$(_RULESDIR)\targets.vc"
-install: default-install-docs-html
+# Use standard rules
+!include "rules.vc"
+# Define the standard targets
+!include "targets.vc"
+
+#---------------------------------------------------------------------
+# Project specific targets (EDIT)
+#---------------------------------------------------------------------
+
+all: default-target
+
+# We must define a pkgindex target that will create a pkgIndex.tcl
+# file in the $(OUT_DIR) directory.
 pkgindex: default-pkgindex
 
-test: $(OUT_DIR)\pkgIndex.tcl
-	@"$(WISH)" <<
-	    lappend auto_path $(ROOT)
-	    set code [catch {
-		    package require $(PROJECT)
-		    pack [$(TBL_COMMAND) .t]
-		} msg]
-	    if {$$code != 0} {
-		tk_messageBox -type ok -message\
-		    "$(PROJECT) failed to load and run: $$msg"
-	    } else {
-		tk_messageBox -type ok -message\
-		    "everything seems OK for 'package require $(PROJECT)'"
-	    }
-	    exit $$code
-<<
+# The default install target only installs binaries and scripts so add
+# an additional target for our documentation. Note this *adds* a target
+# since no commands are listed after it. The original targets for
+# install (from targets.vc) will remain.
+install: default-install-docs-html default-install-docs-n default-install-demos
+
 
 $(PRJ_OBJS): $(TMP_DIR)\tkTable.tcl.h
 
