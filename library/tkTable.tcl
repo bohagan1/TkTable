@@ -804,7 +804,7 @@ proc tk_tablePasteHandler {w cell data} {
     set c	[$w index $cell col]
     set rsep	[$w cget -rowseparator]
     set csep	[$w cget -colseparator]
-    set vldCmdTplt [regsub -all {([^%])%W} [$w cget -validatecommand] \\1$w]
+    set vcmd	[$w cget -validatecommand]
 
     ## Assume separate rows are split by row separator if specified
     ## If you were to want multi-character row separators, you would need:
@@ -814,7 +814,6 @@ proc tk_tablePasteHandler {w cell data} {
     set row	$r
     foreach line $data {
 	if {$row > $rows} break
-	set vldCmdRow [regsub -all {([^%])%r} $vldCmdTplt \\1$row]
 	set col	$c
 	## Assume separate cols are split by col separator if specified
 	## Unless a -separator was specified
@@ -826,9 +825,7 @@ proc tk_tablePasteHandler {w cell data} {
 	    if {$col > $cols} break
 	    set oldTxt [$w get $row,$col]
 	    if {![string equal $item $oldTxt]} {
-		set vldCmd [regsub -all {([^%])%c} $vldCmdRow \\1$col]
-		set vldCmd [regsub -all {([^%])%s} $vldCmd \\1$oldTxt]
-		set vldCmd [regsub -all {([^%])%S} $vldCmd \\1$item]
+		set vldCmd [string map [list %W $w %r $row %c $col %s $oldTxt %S $item] $vcmd]
 		if {![eval $vldCmd]} {
 		    incr col
 		    continue ;# skip update
