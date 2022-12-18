@@ -50,6 +50,28 @@ Table_ActivateCmd(ClientData clientData, register Tcl_Interp *interp,
 	tablePtr->activeCol = -1;
 	TableAdjustActive(tablePtr);
 	TableConfigCursor(tablePtr);
+
+	/* Eval deactivate callback */
+	if (tablePtr->flags & HAS_ACTIVE && !(tablePtr->flags & BROWSE_CMD) &&
+	    tablePtr->browseCmd != NULL) {
+	    tablePtr->flags |= BROWSE_CMD;
+	    Tcl_DString script;
+	    char buf1[INDEX_BUFSIZE], buf2[1];
+	    row = tablePtr->activeRow+tablePtr->rowOffset;
+	    col = tablePtr->activeCol+tablePtr->colOffset;
+	    TableMakeArrayIndex(row, col, buf1);
+	    buf2[0] = '\0';
+	    Tcl_DStringInit(&script);
+	    ExpandPercents(tablePtr, tablePtr->browseCmd,
+			tablePtr->rowOffset - 1, tablePtr->colOffset - 1,
+			buf1, buf2, tablePtr->icursor, &script, 0);
+	    result = Tcl_GlobalEval(interp, Tcl_DStringValue(&script));
+	    if (result == TCL_OK || result == TCL_RETURN) {
+		 Tcl_ResetResult(interp);
+	    }
+	    Tcl_DStringFree(&script);
+	    tablePtr->flags &= ~BROWSE_CMD;
+	}
     } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
 	return TCL_ERROR;
     } else {
@@ -86,6 +108,8 @@ Table_ActivateCmd(ClientData clientData, register Tcl_Interp *interp,
 	    }
 	    TableAdjustActive(tablePtr);
 	    TableConfigCursor(tablePtr);
+
+	    /* Eval activate callback */
 	    if (!(tablePtr->flags & BROWSE_CMD) &&
 		tablePtr->browseCmd != NULL) {
 		Tcl_DString script;
@@ -415,7 +439,7 @@ Table_BorderCmd(ClientData clientData, register Tcl_Interp *interp,
 		entryPtr = Tcl_CreateHashEntry(tablePtr->rowHeights,
 					       INT2PTR(row), &dummy);
 		/* -value means rowHeight will be interp'd as pixels, not
-                   lines */
+		   lines */
 		Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
 		tablePtr->scanMarkY = value;
 		key++;
@@ -429,7 +453,7 @@ Table_BorderCmd(ClientData clientData, register Tcl_Interp *interp,
 		entryPtr = Tcl_CreateHashEntry(tablePtr->colWidths,
 					       INT2PTR(col), &dummy);
 		/* -value means colWidth will be interp'd as pixels, not
-                   chars */
+		   chars */
 		Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
 		tablePtr->scanMarkX = value;
 		key++;
