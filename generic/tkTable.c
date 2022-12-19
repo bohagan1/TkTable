@@ -1007,7 +1007,10 @@ TableDestroy(ClientData clientdata)
     /* free the configuration options in the widget */
     Tk_FreeOptions(tableSpecs, (char *) tablePtr, tablePtr->display, 0);
 
-    Tcl_DStringFree(&tablePtr->selection);
+    /* Free selection */
+    if (tablePtr->haveSelection) {
+	Tcl_DStringFree(&tablePtr->selection);
+    }
 
     /* and free the widget memory at last! */
     ckfree((char *) (tablePtr));
@@ -3632,11 +3635,11 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	/* First Time thru, get the selection, otherwise, just use the
 	 * selection obtained before */
 
+	/* If we have fetched a selection before, free it */
 	if (tablePtr->haveSelection) {
-	    /* If we have fetched a selection before, free it */
 	    Tcl_DStringFree(&tablePtr->selection);
+	    tablePtr->haveSelection = 0;
 	}
-	tablePtr->haveSelection = 1;
 
 	/* First get a sorted list of the selected elements */
 	Tcl_DStringInit(&tablePtr->selection);
@@ -3648,13 +3651,16 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	value = TableCellSort(tablePtr, Tcl_DStringValue(&tablePtr->selection));
 	Tcl_DStringFree(&tablePtr->selection);
 
+	/* Abort if no data or conversion to list fails */
 	if (value == NULL ||
 		Tcl_SplitList(interp, value, &listArgc, &listArgv) != TCL_OK) {
 	    return -1;
 	}
 	Tcl_Free(value);
 
+	/* Add elements to selection */
 	Tcl_DStringInit(&tablePtr->selection);
+	tablePtr->haveSelection = 1;
 	rslen = (rowsep?((int) strlen(rowsep)):0);
 	cslen = (colsep?((int) strlen(colsep)):0);
 	numrows = numcols = 0;
@@ -3718,9 +3724,20 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	    Tcl_DStringFree(&script);
 	}
     }
-    length = Tcl_DStringLength(&tablePtr->selection);
 
+    /* Get selection length */
+    if (tablePtr->haveSelection) {
+	length = Tcl_DStringLength(&tablePtr->selection);
+    } else {
+	length = 0;
+    }
+
+    /* If no selection, abort */
     if (length == 0) {
+	if (tablePtr->haveSelection) {
+	    Tcl_DStringFree(&tablePtr->selection);
+	    tablePtr->haveSelection = 0;
+	}
 	return -1;
     }
 
