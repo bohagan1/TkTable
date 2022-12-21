@@ -490,6 +490,7 @@ extern int	Table_WindowCmd(ClientData clientData,
 extern int	TableValidateChange(Table *tablePtr, int r,
 			int c, char *oldVal, char *newVal, int idx);
 extern void	TableLostSelection(ClientData clientData);
+extern void	GenerateTableSelectEvent(ClientData clientData);
 extern void	TableSetActiveIndex(register Table *tablePtr);
 
 /*

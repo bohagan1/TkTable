@@ -3800,7 +3800,68 @@ TableLostSelection(clientData)
 	    TableRefresh(tablePtr, row-tablePtr->rowOffset,
 			 col-tablePtr->colOffset, CELL);
 	}
+	GenerateTableSelectEvent(clientData);
     }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkSendVirtualEvent --
+ *
+ * 	Send a virtual event notification to the specified target window.
+ * 	Equivalent to:
+ * 	    "event generate $target <<$eventName>> -data $detail"
+ *
+ * 	Note that we use Tk_QueueWindowEvent, not Tk_HandleEvent, so this
+ * 	routine does not reenter the interpreter.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkSendVirtualEvent(
+    Tk_Window target,
+    const char *eventName,
+    Tcl_Obj *detail)
+{
+    union {XEvent general; XVirtualEvent virt;} event;
+
+    memset(&event, 0, sizeof(event));
+    event.general.xany.type = VirtualEvent;
+    event.general.xany.serial = NextRequest(Tk_Display(target));
+    event.general.xany.send_event = False;
+    event.general.xany.window = Tk_WindowId(target);
+    event.general.xany.display = Tk_Display(target);
+    event.virt.name = Tk_GetUid(eventName);
+    event.virt.user_data = detail;
+    if (detail) Tcl_IncrRefCount(detail); // Event code will DecrRefCount
+
+    Tk_QueueWindowEvent(&event.general, TCL_QUEUE_TAIL);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * GenerateTableSelectEvent --
+ *
+ *	Send an event that the table selection was updated. This is
+ *	equivalent to event generate $tableWidget <<TableSelect>>
+ *
+ * Results:
+ *	None
+ *
+ * Side effects:
+ *	Any side effect possible, depending on bindings to this event.
+ *
+ *----------------------------------------------------------------------
+ */
+static void
+GenerateTableSelectEvent(clientData)
+     ClientData clientData;	/* Information about table widget. */
+{
+    register Table *tablePtr = (Table *) clientData;
+    TkSendVirtualEvent(tablePtr->tkwin, "TableSelect", NULL);
 }
 
 /*
