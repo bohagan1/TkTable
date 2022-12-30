@@ -9,9 +9,6 @@ dnl	to configure the system for the local environment.
 #-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
-# __CHANGE__
-# Set your package name and version numbers here.
-#
 # This initializes the environment with PACKAGE_NAME and PACKAGE_VERSION
 # set as provided.  These will also be added as -D defs in your Makefile
 # so you can encode the package version directly into the source files.
@@ -62,7 +59,6 @@ TEA_PREFIX
 TEA_SETUP_COMPILER
 
 #-----------------------------------------------------------------------
-# __CHANGE__
 # Specify the C source files to compile in TEA_ADD_SOURCES,
 # public headers that need to be installed in TEA_ADD_HEADERS,
 # stub library C source files to compile in TEA_ADD_STUB_SOURCES,
@@ -81,8 +77,6 @@ TEA_ADD_STUB_SOURCES([])
 TEA_ADD_TCL_SOURCES([library/tkTable.tcl library/tktable.py])
 
 #--------------------------------------------------------------------
-# __CHANGE__
-#
 # You can add more files to clean if your extension creates any extra
 # files by extending CLEANFILES.
 # Add pkgIndex.tcl if it is generated in the Makefile instead of ./configure
@@ -196,4 +190,4 @@ AC_CONFIG_FILES([tktableConfig.sh])
 # specified with AC_CONFIG_FILES.
 #--------------------------------------------------------------------
 
-AC_OUTPUT()
+AC_OUTPUT
