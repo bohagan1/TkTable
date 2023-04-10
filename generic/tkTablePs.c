@@ -128,7 +128,7 @@ static Tk_ConfigSpec configSpecs[] = {
  * Comments, and stuff pertaining to stipples and other unused entities
  * have been removed
  */
-static CONST char * CONST  prolog[]= {
+static const char * const  prolog[]= {
 	/* Start of part 1 */
 	"%%BeginProlog\n\
 50 dict begin\n\
@@ -377,16 +377,16 @@ systemdict /ISOLatin1Encoding known not {\n\
  * Forward declarations for procedures defined later in this file:
  */
 
-static int	GetPostscriptPoints _ANSI_ARGS_((Tcl_Interp *interp,
-			char *string, double *doublePtr));
-int		Tk_TablePsFont _ANSI_ARGS_((Tcl_Interp *interp,
-			Table *tablePtr, Tk_Font tkfont));
-int		Tk_TablePsColor _ANSI_ARGS_((Tcl_Interp *interp,
-			Table *tablePtr, XColor *colorPtr));
-static int	TextToPostscript _ANSI_ARGS_((Tcl_Interp *interp,
+static int	GetPostscriptPoints (Tcl_Interp *interp,
+			char *string, double *doublePtr);
+int		Tk_TablePsFont (Tcl_Interp *interp,
+			Table *tablePtr, Tk_Font tkfont);
+int		Tk_TablePsColor (Tcl_Interp *interp,
+			Table *tablePtr, XColor *colorPtr);
+static int	TextToPostscript (Tcl_Interp *interp,
 			Table *tablePtr, TableTag *tagPtr, int tagX, int tagY,
 			int width, int height, int row, int col,
-			Tk_TextLayout textLayout));
+			Tk_TextLayout textLayout);
 
 /*
  * Tcl could really use some more convenience routines...
@@ -394,13 +394,13 @@ static int	TextToPostscript _ANSI_ARGS_((Tcl_Interp *interp,
  * the full text of each line
  */
 void
-Tcl_DStringAppendAll TCL_VARARGS_DEF(Tcl_DString *, arg1)
+Tcl_DStringAppendAll(Tcl_DString *dstringPtr, ...)
 {
     va_list argList;
     Tcl_DString *dstringPtr;
     char *string;
 
-    dstringPtr = TCL_VARARGS_START(Tcl_DString *, arg1, argList);
+    va_start(argList, dstringPtr);
     while ((string = va_arg(argList, char *)) != NULL) {
       Tcl_DStringAppend(dstringPtr, string, -1);
     }
@@ -431,7 +431,7 @@ Table_PostscriptCmd(clientData, interp, objc, objv)
      ClientData clientData;	/* Information about table widget. */
      Tcl_Interp *interp;	/* Current interpreter. */
      int objc;			/* Number of argument objects. */
-     Tcl_Obj *CONST objv[];
+     Tcl_Obj *const objv[];
 {
 #ifdef _WIN32
     /*
@@ -457,7 +457,7 @@ Table_PostscriptCmd(clientData, interp, objc, objv)
 				 * warnings. */
     Tcl_HashSearch search;
     Tcl_HashEntry *hPtr;
-    CONST char * CONST *chunk;
+    const char * const *chunk;
     Tk_TextLayout textLayout = NULL;
     char *value;
     int rowHeight, total, *colWidths, iW, iH;

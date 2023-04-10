@@ -13,14 +13,14 @@
 
 #include "tkTable.h"
 
-static void	TableModifyRC _ANSI_ARGS_((register Table *tablePtr,
+static void	TableModifyRC (register Table *tablePtr,
 			int doRows, int movetag,
 			Tcl_HashTable *tagTblPtr, Tcl_HashTable *dimTblPtr,
 			int offset, int from, int to, int lo, int hi,
-			int outOfBounds));
+			int outOfBounds);
 
 /* insert/delete subcommands */
-static CONST84 char *modCmdNames[] = {
+static const char *modCmdNames[] = {
     "active", "cols", "rows", (char *)NULL
 };
 enum modCmd {
@@ -28,7 +28,7 @@ enum modCmd {
 };
 
 /* insert/delete row/col switches */
-static CONST84 char *rcCmdNames[] = {
+static const char *rcCmdNames[] = {
     "-keeptitles",	"-holddimensions",	"-holdselection",
     "-holdtags",	"-holdwindows",	"--",
     (char *) NULL
@@ -63,7 +63,7 @@ enum rcCmd {
  */
 int
 Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
-	      int objc, Tcl_Obj *CONST objv[])
+	      int objc, Tcl_Obj *const objv[])
 {
     register Table *tablePtr = (Table *) clientData;
     int doInsert, cmdIndex, first, last;

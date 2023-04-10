@@ -43,13 +43,10 @@ typedef struct SortElement {
 					 * NULL for end of list. */
 } SortElement;
 
-static int		TableSortCompareProc _ANSI_ARGS_((CONST VOID *first,
-							  CONST VOID *second));
-static SortElement *    MergeSort _ANSI_ARGS_((SortElement *headPt));
-static SortElement *    MergeLists _ANSI_ARGS_((SortElement *leftPtr,
-						SortElement *rightPtr));
-static int		DictionaryCompare _ANSI_ARGS_((char *left,
-						       char *right));
+static int		TableSortCompareProc (const void *first, const void *second);
+static SortElement *    MergeSort (SortElement *headPt);
+static SortElement *    MergeLists (SortElement *leftPtr, SortElement *rightPtr);
+static int		DictionaryCompare (char *left, char *right);
 
 /*
  *----------------------------------------------------------------------
@@ -71,7 +68,7 @@ static int		DictionaryCompare _ANSI_ARGS_((char *left,
  */
 static int
 TableSortCompareProc(first, second)
-    CONST VOID *first, *second;		/* Elements to be compared. */
+    const void *first, *second;		/* Elements to be compared. */
 {
     char *str1 = *((char **) first);
     char *str2 = *((char **) second);
@@ -98,14 +95,14 @@ char *
 TableCellSort(Table *tablePtr, char *str)
 {
     int listArgc;
-    CONST84 char **listArgv;
+    const char **listArgv;
     char *result;
 
     if (Tcl_SplitList(tablePtr->interp, str, &listArgc, &listArgv) != TCL_OK) {
 	return str;
     }
     /* Thread safety: qsort is reportedly not thread-safe... */
-    qsort((VOID *) listArgv, (size_t) listArgc, sizeof (char *),
+    qsort((void *) listArgv, (size_t) listArgc, sizeof (char *),
 	  TableSortCompareProc);
     result = Tcl_Merge(listArgc, listArgv);
     ckfree((char *) listArgv);

@@ -567,7 +567,7 @@ VALUE:
 	     * XXX FIX: Can't free result that we still need.
 	     * Use ref-counted objects instead.
 	     */
-	    Tcl_FreeResult(interp);
+	    Tcl_ResetResult(interp);
 	    Tcl_DStringFree(&script);      
 	    Tcl_DeleteHashEntry(entryPtr);
 	}
@@ -927,7 +927,7 @@ TableGetIndex(tablePtr, str, row_p, col_p)
  */
 int
 Table_SetCmd(ClientData clientData, register Tcl_Interp *interp,
-	     int objc, Tcl_Obj *CONST objv[])
+	     int objc, Tcl_Obj *const objv[])
 {
     register Table *tablePtr = (Table *)clientData;
     int row, col, len, i, j, max;
@@ -1229,7 +1229,7 @@ Table_SpanSet(register Table *tablePtr, int urow, int ucol, int rs, int cs)
  */
 int
 Table_SpanCmd(ClientData clientData, register Tcl_Interp *interp,
-	      int objc, Tcl_Obj *CONST objv[])
+	      int objc, Tcl_Obj *const objv[])
 {
     register Table *tablePtr = (Table *) clientData;
     int rs, cs, row, col, i;
@@ -1301,7 +1301,7 @@ Table_SpanCmd(ClientData clientData, register Tcl_Interp *interp,
  */
 int
 Table_HiddenCmd(ClientData clientData, register Tcl_Interp *interp,
-		int objc, Tcl_Obj *CONST objv[])
+		int objc, Tcl_Obj *const objv[])
 {
     register Table *tablePtr = (Table *) clientData;
     int i, row, col;

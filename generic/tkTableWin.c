@@ -14,27 +14,21 @@
 
 #include "tkTable.h"
 
-static int	StickyParseProc _ANSI_ARGS_((ClientData clientData,
+static int	StickyParseProc (ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
-			CONST84 char *value, char *widgRec, int offset));
-static CONST86 char *	StickyPrintProc _ANSI_ARGS_((ClientData clientData,
+			const char *value, char *widgRec, int offset);
+static CONST86 char *	StickyPrintProc (ClientData clientData,
 			Tk_Window tkwin, char *widgRec, int offset,
-			Tcl_FreeProc **freeProcPtr));
+			Tcl_FreeProc **freeProcPtr);
 
-static void	EmbWinLostSlaveProc _ANSI_ARGS_((ClientData clientData,
-						Tk_Window tkwin));
-static void	EmbWinRequestProc _ANSI_ARGS_((ClientData clientData,
-					       Tk_Window tkwin));
+static void	EmbWinLostSlaveProc (ClientData clientData, Tk_Window tkwin);
+static void	EmbWinRequestProc (ClientData clientData, Tk_Window tkwin);
 
-static void	EmbWinCleanup _ANSI_ARGS_((Table *tablePtr,
-					   TableEmbWindow *ewPtr));
-static int	EmbWinConfigure _ANSI_ARGS_((Table *tablePtr,
-					     TableEmbWindow *ewPtr,
-					     int objc, Tcl_Obj *CONST objv[]));
-static void	EmbWinStructureProc _ANSI_ARGS_((ClientData clientData,
-						 XEvent *eventPtr));
-static void	EmbWinUnmapNow _ANSI_ARGS_((Tk_Window ewTkwin,
-					    Tk_Window tkwin));
+static void	EmbWinCleanup (Table *tablePtr, TableEmbWindow *ewPtr);
+static int	EmbWinConfigure (Table *tablePtr, TableEmbWindow *ewPtr,
+					     int objc, Tcl_Obj *const objv[]);
+static void	EmbWinStructureProc (ClientData clientData, XEvent *eventPtr);
+static void	EmbWinUnmapNow (Tk_Window ewTkwin, Tk_Window tkwin);
 
 static Tk_GeomMgr tableGeomType = {
     "table",			/* name */
@@ -43,7 +37,7 @@ static Tk_GeomMgr tableGeomType = {
 };
 
 /* windows subcommands */
-static CONST84 char *winCmdNames[] = {
+static const char *winCmdNames[] = {
     "cget", "configure", "delete", "move", "names", (char *) NULL
 };
 enum winCommand {
@@ -163,7 +157,7 @@ StickyParseProc(clientData, interp, tkwin, value, widgRec, offset)
     ClientData clientData;		/* Not used.*/
     Tcl_Interp *interp;			/* Used for reporting errors. */
     Tk_Window tkwin;			/* Window for text widget. */
-    CONST84 char *value;		/* Value of option. */
+    const char *value;		/* Value of option. */
     char *widgRec;			/* Pointer to TkTextEmbWindow
 					 * structure. */
     int offset;				/* Offset into item (ignored). */
@@ -199,7 +193,7 @@ static TableEmbWindow *
 TableNewEmbWindow(Table *tablePtr)
 {
     TableEmbWindow *ewPtr = (TableEmbWindow *) ckalloc(sizeof(TableEmbWindow));
-    memset((VOID *) ewPtr, 0, sizeof(TableEmbWindow));
+    memset((void *) ewPtr, 0, sizeof(TableEmbWindow));
 
     /*
      * Set the values that aren't 0/NULL by default
@@ -610,17 +604,17 @@ EmbWinConfigure(tablePtr, ewPtr, objc, objv)
 				 * contains embedded window. */
      TableEmbWindow *ewPtr;	/* Embedded window to be configured. */
      int objc;			/* Number of objs in objv. */
-     Tcl_Obj *CONST objv[];	/* Obj type options. */
+     Tcl_Obj *const objv[];	/* Obj type options. */
 {
     Tcl_Interp *interp = tablePtr->interp;
     Tk_Window oldWindow;
     int i, result;
-    CONST84 char **argv;
+    const char **argv;
 
     oldWindow = ewPtr->tkwin;
 
     /* Stringify */
-    argv = (CONST84 char **) ckalloc((objc + 1) * sizeof(char *));
+    argv = (const char **) ckalloc((objc + 1) * sizeof(char *));
     for (i = 0; i < objc; i++)
 	argv[i] = Tcl_GetString(objv[i]);
     argv[i] = NULL;
@@ -702,8 +696,8 @@ EmbWinConfigure(tablePtr, ewPtr, objc, objv)
  *--------------------------------------------------------------
  */
 int
-Table_WinMove(register Table *tablePtr, char *CONST srcPtr,
-	   char *CONST destPtr, int flags)
+Table_WinMove(register Table *tablePtr, char *const srcPtr,
+	   char *const destPtr, int flags)
 {
     int srow, scol, row, col, new;
     Tcl_HashEntry *entryPtr;
@@ -777,7 +771,7 @@ Table_WinMove(register Table *tablePtr, char *CONST srcPtr,
  *--------------------------------------------------------------
  */
 int
-Table_WinDelete(register Table *tablePtr, char *CONST idxPtr)
+Table_WinDelete(register Table *tablePtr, char *const idxPtr)
 {
     Tcl_HashEntry *entryPtr;
 
@@ -807,7 +801,7 @@ Table_WinDelete(register Table *tablePtr, char *CONST idxPtr)
  */
 int
 Table_WindowCmd(ClientData clientData, register Tcl_Interp *interp,
-		int objc, Tcl_Obj *CONST objv[])
+		int objc, Tcl_Obj *const objv[])
 {
     register Table *tablePtr = (Table *)clientData;
     int result = TCL_OK, cmdIndex, row, col, x, y, width, height, i, new;

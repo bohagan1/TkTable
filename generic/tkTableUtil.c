@@ -13,11 +13,9 @@
 
 #include "tkTable.h"
 
-static char *	Cmd_GetName _ANSI_ARGS_((const Cmd_Struct *cmds, int val));
-static int	Cmd_GetValue _ANSI_ARGS_((const Cmd_Struct *cmds,
-			const char *arg));
-static void	Cmd_GetError _ANSI_ARGS_((Tcl_Interp *interp,
-			const Cmd_Struct *cmds, const char *arg));
+static char *	Cmd_GetName (const Cmd_Struct *cmds, int val);
+static int	Cmd_GetValue (const Cmd_Struct *cmds, const char *arg);
+static void	Cmd_GetError (Tcl_Interp *interp, const Cmd_Struct *cmds, const char *arg);
 
 /*
  *--------------------------------------------------------------
@@ -74,7 +72,7 @@ TableOptionBdSet(clientData, interp, tkwin, value, widgRec, offset)
     ClientData clientData;		/* Type of struct being set. */
     Tcl_Interp *interp;			/* Used for reporting errors. */
     Tk_Window tkwin;			/* Window containing table widget. */
-    CONST84 char *value;		/* Value of option. */
+    const char *value;		/* Value of option. */
     char *widgRec;			/* Pointer to record for item. */
     int offset;				/* Offset into item. */
 {
@@ -83,7 +81,7 @@ TableOptionBdSet(clientData, interp, tkwin, value, widgRec, offset)
     int type	= PTR2INT(clientData);
     int result	= TCL_OK;
     int argc;
-    CONST84 char **argv;
+    const char **argv;
 
     if ((type == BD_TABLE) && (value[0] == '\0')) {
 	/*
@@ -215,7 +213,7 @@ TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr,
 	char *oldValue, int nullOK)
 {
     int i, argc, result = TCL_OK;
-    CONST84 char **argv;
+    const char **argv;
 
     /*
      * First check to see if the value really changed.
@@ -302,7 +300,7 @@ TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr,
 
 int
 Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp,
-	Tk_Window unused, CONST84 char *value, char *widgRec, int offset)
+	Tk_Window unused, const char *value, char *widgRec, int offset)
 {
   Cmd_Struct *p = (Cmd_Struct *)clientData;
   int mode = Cmd_GetValue(p,value);

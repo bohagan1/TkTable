@@ -28,15 +28,15 @@
 #include "dprint.h"
 #endif
 
-static char **	StringifyObjects(int objc, Tcl_Obj *CONST objv[]);
+static char **	StringifyObjects(int objc, Tcl_Obj *const objv[]);
 
 static int	Tk_TableObjCmd(ClientData clientData, Tcl_Interp *interp,
-			int objc, Tcl_Obj *CONST objv[]);
+			int objc, Tcl_Obj *const objv[]);
 
 static int	TableWidgetObjCmd(ClientData clientData, Tcl_Interp *interp,
-			int objc, Tcl_Obj *CONST objv[]);
+			int objc, Tcl_Obj *const objv[]);
 static int	TableConfigure(Tcl_Interp *interp, Table *tablePtr,
-			int objc, Tcl_Obj *CONST objv[],
+			int objc, Tcl_Obj *const objv[],
 			int flags, int forceUpdate);
 #ifdef HAVE_TCL84
 static void	TableWorldChanged(ClientData instanceData);
@@ -64,7 +64,7 @@ static Tk_RestrictAction TableRestrictProc(ClientData arg, XEvent *eventPtr);
  * enumerated types used to dispatch the widget command.
  */
 
-static CONST84 char *selCmdNames[] = {
+static const char *selCmdNames[] = {
     "anchor", "clear", "includes", "present", "set", (char *)NULL
 };
 enum selCommand {
@@ -72,7 +72,7 @@ enum selCommand {
     CMD_SEL_SET
 };
 
-static CONST84 char *commandNames[] = {
+static const char *commandNames[] = {
     "activate", "bbox", "border", "cget", "clear", "configure",
     "curselection", "curvalue", "delete", "get", "height",
     "hidden", "icursor", "index", "insert",
@@ -335,7 +335,7 @@ Tk_ConfigSpec tableSpecs[] = {
  * Keep this in sync with the above values.
  */
 
-static CONST84 char *updateOpts[] = {
+static const char *updateOpts[] = {
     "-anchor",		"-background",	"-bg",		"-bd",
     "-borderwidth",	"-cache",	"-command",	"-colorigin",
     "-cols",		"-colstretchmode",		"-coltagcommand",
@@ -366,7 +366,7 @@ static Tk_ClassProcs tableClass = {
 };
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 /*
  * Some code from TkWinInt.h that we use to correct and speed up
  * drawing of cells that need clipping in TableDisplay.
@@ -435,7 +435,7 @@ typedef union {
 static char **
 StringifyObjects(objc, objv)
      int objc;			/* Number of arguments. */
-     Tcl_Obj *CONST objv[];	/* Argument objects. */
+     Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int i;
     char **argv;
@@ -455,7 +455,7 @@ StringifyObjects(objc, objv)
  */
 static int
 Tk_ClassOptionObjCmd(Tk_Window tkwin, char *defaultclass,
-		     int objc, Tcl_Obj *CONST objv[])
+		     int objc, Tcl_Obj *const objv[])
 {
     char *classname = defaultclass;
     int offset = 0;
@@ -489,7 +489,7 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register Table *tablePtr;
     Tk_Window tkwin, mainWin = (Tk_Window) clientData;
@@ -507,7 +507,7 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     }
 
     tablePtr			= (Table *) ckalloc(sizeof(Table));
-    memset((VOID *) tablePtr, 0, sizeof(Table));
+    memset((void *) tablePtr, 0, sizeof(Table));
 
     /*
      * Set the structure elments that aren't 0/NULL by default,
@@ -638,7 +638,7 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
      ClientData clientData;
      Tcl_Interp *interp;
      int objc;			/* Number of arguments. */
-     Tcl_Obj *CONST objv[];	/* Argument objects. */
+     Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register Table *tablePtr = (Table *) clientData;
     int row, col, i, cmdIndex, result = TCL_OK;
@@ -1041,7 +1041,7 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
      register Table *tablePtr;	/* Information about widget;  may or may
 				 * not already have values for some fields. */
      int objc;			/* Number of arguments. */
-     Tcl_Obj *CONST objv[];	/* Argument objects. */
+     Tcl_Obj *const objv[];	/* Argument objects. */
      int flags;			/* Flags to pass to Tk_ConfigureWidget. */
      int forceUpdate;		/* Whether to force an update - required
 				 * for initial configuration */
@@ -1066,7 +1066,7 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     /* Do the configuration */
     argv = StringifyObjects(objc, objv);
     result = Tk_ConfigureWidget(interp, tablePtr->tkwin, tableSpecs,
-	    objc, (CONST84 char **) argv, (char *) tablePtr, flags);
+	    objc, (const char **) argv, (char *) tablePtr, flags);
     ckfree((char *) argv);
     if (result != TCL_OK) {
 	return TCL_ERROR;
@@ -1717,7 +1717,7 @@ TableDisplay(ClientData clientdata)
     Drawable window;
 #ifdef NO_XSETCLIP
     Drawable clipWind;
-#elif defined(WIN32)
+#elif defined(_WIN32)
     TkWinDrawable *twdPtr;
     HDC dc;
     HRGN clipR;
@@ -1766,7 +1766,7 @@ TableDisplay(ClientData clientdata)
     padx  = tablePtr->padX;
     pady  = tablePtr->padY;
 
-#ifndef WIN32
+#ifndef _WIN32
     /*
      * if we are using the slow drawing mode with a pixmap
      * create the pixmap and adjust x && y for offset in pixmap
@@ -1943,7 +1943,7 @@ TableDisplay(ClientData clientdata)
 		    EmbWinDisplay(tablePtr, window, ewPtr, tagPtr,
 			    x, y, width, height);
 
-#ifndef WIN32
+#ifndef _WIN32
 		    if (tablePtr->drawMode == DRAW_MODE_SLOW) {
 			/* Correctly adjust x && y with the offset */
 			x -= invalidX;
@@ -1970,7 +1970,7 @@ TableDisplay(ClientData clientdata)
 	     */
 	    if ((width <= 0) || (height <= 0)) { continue; }
 
-#ifndef WIN32
+#ifndef _WIN32
 	    if (tablePtr->drawMode == DRAW_MODE_SLOW) {
 		/* Correctly adjust x && y with the offset */
 		x -= invalidX;
@@ -2330,7 +2330,7 @@ TableDisplay(ClientData clientdata)
 		     */
 		    XCopyArea(display, clipWind, window, tagGc,
 			    x0 - x, y0 - y, width, height, x0, y0);
-#elif defined(WIN32)
+#elif defined(_WIN32)
 		    /*
 		     * This is evil, evil evil! but the XCopyArea
 		     * doesn't work in all cases - Michael Teske.
@@ -2503,8 +2503,8 @@ TableDisplay(ClientData clientdata)
 		 * We buffer the active tag for the 'activate' command.
 		 */
 		tablePtr->activeTagPtr = TableNewTag(NULL);
-		memcpy((VOID *) tablePtr->activeTagPtr,
-			(VOID *) tagPtr, sizeof(TableTag));
+		memcpy((void *) tablePtr->activeTagPtr,
+			(void *) tagPtr, sizeof(TableTag));
 	    }
 	    if (textLayout) {
 		Tk_FreeTextLayout(textLayout);
@@ -2557,7 +2557,7 @@ TableDisplay(ClientData clientdata)
 	if (leftoverHeight < 0) leftoverHeight = 0;
     }
 
-#ifndef WIN32
+#ifndef _WIN32
     /* copy over and delete the pixmap if we are in slow mode */
     if (tablePtr->drawMode == DRAW_MODE_SLOW) {
 	/* Get a default valued GC */
@@ -2841,8 +2841,8 @@ TableGetActiveBuf(register Table *tablePtr)
 static char *
 TableVarProc(clientData, interp, name, index, flags)
      ClientData clientData;	/* Information about table. */
-     Tcl_Interp *interp;		/* Interpreter containing variable. */
-     char *name;			/* Not used. */
+     Tcl_Interp *interp;	/* Interpreter containing variable. */
+     char *name;		/* Not used. */
      char *index;		/* Not used. */
      int flags;			/* Information about what happened. */
 {
@@ -2855,7 +2855,7 @@ TableVarProc(clientData, interp, name, index, flags)
     /* is this the whole var being destroyed or just one cell being deleted */
     if ((flags & TCL_TRACE_UNSETS) && index == NULL) {
 	/* if this isn't the interpreter being destroyed reinstate the trace */
-	if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
+	if ((flags & TCL_TRACE_DESTROYED) && !Tcl_InterpDeleted(interp)) {
 	    Tcl_SetVar2(interp, name, TEST_KEY, "", TCL_GLOBAL_ONLY);
 	    Tcl_UnsetVar2(interp, name, TEST_KEY, TCL_GLOBAL_ONLY);
 	    Tcl_ResetResult(interp);
@@ -2891,7 +2891,7 @@ TableVarProc(clientData, interp, name, index, flags)
 	    update = 0;
 	} else {
 	    /* modified TableGetActiveBuf */
-	    CONST char *data = "";
+	    const char *data = "";
 
 	    row = tablePtr->activeRow;
 	    col = tablePtr->activeCol;
@@ -3622,7 +3622,7 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
     Tcl_HashSearch search;
     int length, count, lastrow=0, needcs=0, r, c, listArgc, rslen=0, cslen=0;
     int numcols, numrows;
-    CONST84 char **listArgv;
+    const char **listArgv;
 
     /* if we are not exporting the selection ||
      * we have no data source, return */
@@ -3749,8 +3749,8 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	if (count > maxBytes) {
 	    count = maxBytes;
 	}
-	memcpy((VOID *) buffer,
-	       (VOID *) (Tcl_DStringValue(&tablePtr->selection) + offset),
+	memcpy((void *) buffer,
+	       (void *) (Tcl_DStringValue(&tablePtr->selection) + offset),
 	       (size_t) count);
     }
     buffer[count] = '\0';
@@ -3930,7 +3930,7 @@ TableValidateChange(tablePtr, r, c, old, new, index)
 	return TCL_OK;
     }
 
-#if !defined(WIN32) && !defined(MAC_OSX_TK)
+#if !defined(_WIN32) && !defined(MAC_OSX_TK)
     /* Magic code to make this bit of code UI synchronous in the face of
      * possible new key events */
     XSync(tablePtr->display, False);
@@ -4142,7 +4142,7 @@ Tktable_Init(interp)
 #ifdef USE_TCL_STUBS
 	Tcl_InitStubs(interp, "8.0", 0)
 #else
-	Tcl_PkgRequire(interp, "Tcl", "8.0", 0)
+	Tcl_PkgRequire(interp, "Tcl", "8.0-", 0)
 #endif
 	== NULL) {
 	return TCL_ERROR;
@@ -4155,7 +4155,7 @@ Tktable_Init(interp)
 	/* We require 8.0 exact because of the Unicode in 8.1+ */
 	Tcl_PkgRequire(interp, "Tk", "8.0", 1)
 #    else
-	Tcl_PkgRequire(interp, "Tk", "8.0", 0)
+	Tcl_PkgRequire(interp, "Tk", "8.0-", 0)
 #    endif
 #endif
 	== NULL) {
@@ -4186,7 +4186,7 @@ Tktable_SafeInit(interp)
 #pragma export reset
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 /*
  *----------------------------------------------------------------------
  *
