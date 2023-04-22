@@ -3389,6 +3389,7 @@ TableAdjustParams(register Table *tablePtr)
 	Tcl_Interp *interp = tablePtr->interp;
 	char buf[INDEX_BUFSIZE];
 	double first, last;
+	int code;
 
 	/*
 	 * We must hold onto the interpreter because the data referred to at
@@ -3413,11 +3414,9 @@ TableAdjustParams(register Table *tablePtr)
 		}
 	    }
 	    sprintf(buf, " %g %g", first, last);
-	    if (Tcl_VarEval(interp, tablePtr->yScrollCmd,
-		    buf, (char *)NULL) != TCL_OK) {
-		Tcl_AddErrorInfo(interp,
-			"\n\t(vertical scrolling command executed by table)");
-		Tcl_BackgroundError(interp);
+	    if ((code = Tcl_VarEval(interp, tablePtr->yScrollCmd, buf, (char *)NULL)) != TCL_OK) {
+		Tcl_AddErrorInfo(interp, "\n\t(vertical scrolling command executed by table)");
+		Tcl_BackgroundException(interp, code);
 	    }
 	}
 	/* Do we have a X-scrollbar and cols to scroll? */
@@ -3437,11 +3436,9 @@ TableAdjustParams(register Table *tablePtr)
 		}
 	    }
 	    sprintf(buf, " %g %g", first, last);
-	    if (Tcl_VarEval(interp, tablePtr->xScrollCmd,
-		    buf, (char *)NULL) != TCL_OK) {
-		Tcl_AddErrorInfo(interp,
-			"\n\t(horizontal scrolling command executed by table)");
-		Tcl_BackgroundError(interp);
+	    if ((code = Tcl_VarEval(interp, tablePtr->xScrollCmd, buf, (char *)NULL)) != TCL_OK) {
+		Tcl_AddErrorInfo(interp, "\n\t(horizontal scrolling command executed by table)");
+		Tcl_BackgroundException(interp, code);
 	    }
 	}
 
@@ -3621,7 +3618,7 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
     int length, count, lastrow=0, needcs=0, r, c, listArgc, rslen=0, cslen=0;
-    int numcols, numrows;
+    int numcols, numrows, code;
     const char **listArgv;
 
     /* if we are not exporting the selection ||
@@ -3709,11 +3706,9 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	    ExpandPercents(tablePtr, tablePtr->selCmd, numrows+1, numcols+1,
 		    Tcl_DStringValue(&tablePtr->selection), (char *)NULL,
 		    listArgc, &script, CMD_ACTIVATE);
-	    if (Tcl_EvalEx(interp, Tcl_DStringValue(&script), -1,
-			TCL_EVAL_GLOBAL) == TCL_ERROR) {
-		Tcl_AddErrorInfo(interp,
-			"\n    (error in table selection command)");
-		Tcl_BackgroundError(interp);
+	    if ((code = Tcl_EvalEx(interp, Tcl_DStringValue(&script), -1, TCL_EVAL_GLOBAL)) == TCL_ERROR) {
+		Tcl_AddErrorInfo(interp, "\n    (error in table selection command)");
+		Tcl_BackgroundException(interp, code);
 		Tcl_DStringFree(&script);
 		Tcl_DStringFree(&tablePtr->selection);
 		tablePtr->haveSelection = 0;
@@ -3959,13 +3954,13 @@ TableValidateChange(tablePtr, r, c, old, new, index)
     if (code != TCL_OK && code != TCL_RETURN) {
 	Tcl_AddErrorInfo(interp,
 			 "\n\t(in validation command executed by table)");
-	Tcl_BackgroundError(interp);
+	Tcl_BackgroundException(interp, code);
 	code = TCL_ERROR;
     } else if (Tcl_GetBooleanFromObj(interp, Tcl_GetObjResult(interp),
 				     &flag) != TCL_OK) {
 	Tcl_AddErrorInfo(interp,
 			 "\n\tboolean not returned by validation command");
-	Tcl_BackgroundError(interp);
+	Tcl_BackgroundException(interp, code);
 	code = TCL_ERROR;
     } else {
 	code = (flag) ? TCL_OK : TCL_BREAK;

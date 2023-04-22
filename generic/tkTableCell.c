@@ -473,7 +473,7 @@ TableGetCellValue(Table *tablePtr, int r, int c)
     char *result = NULL;
     char buf[INDEX_BUFSIZE];
     Tcl_HashEntry *entryPtr = NULL;
-    int new;
+    int new, code;
 
     TableMakeArrayIndex(r, c, buf);
 
@@ -504,14 +504,14 @@ TableGetCellValue(Table *tablePtr, int r, int c)
 	Tcl_DStringInit(&script);
 	ExpandPercents(tablePtr, tablePtr->command, r, c, "", (char *)NULL,
 		       0, &script, 0);
-	if (Tcl_GlobalEval(interp, Tcl_DStringValue(&script)) == TCL_ERROR) {
+	if ((code = Tcl_GlobalEval(interp, Tcl_DStringValue(&script))) == TCL_ERROR) {
 	    tablePtr->useCmd = 0;
 	    tablePtr->dataSource &= ~DATA_COMMAND;
 	    if (tablePtr->arrayVar)
 		tablePtr->dataSource |= DATA_ARRAY;
 	    Tcl_AddErrorInfo(interp, "\n\t(in -command evaled by table)");
 	    Tcl_AddErrorInfo(interp, Tcl_DStringValue(&script));
-	    Tcl_BackgroundError(interp);
+	    Tcl_BackgroundException(interp, code);
 	    TableInvalidateAll(tablePtr, 0);
 	} else {
 	    result = (char *) Tcl_GetStringResult(interp);
@@ -555,11 +555,11 @@ VALUE:
 	    Tcl_DStringInit(&script);
 	    ExpandPercents(tablePtr, result+1, r, c, result+1, (char *)NULL,
 			   0, &script, 0);
-	    if (Tcl_GlobalEval(interp, Tcl_DStringValue(&script)) != TCL_OK ||
+	    if ((code = Tcl_GlobalEval(interp, Tcl_DStringValue(&script))) != TCL_OK ||
 		Tcl_GetHashValue(entryPtr) == 1) {
 		Tcl_AddErrorInfo(interp, "\n\tin proc evaled by table:\n");
 		Tcl_AddErrorInfo(interp, Tcl_DStringValue(&script));
-		Tcl_BackgroundError(interp);
+		Tcl_BackgroundException(interp, TCL_ERROR);
 	    } else {
 		result = Tcl_GetStringResult(interp);
 	    }
@@ -612,7 +612,7 @@ TableSetCellValue(Table *tablePtr, int r, int c, char *value)
 	Tcl_DStringInit(&script);
 	ExpandPercents(tablePtr, tablePtr->command, r, c, value, (char *)NULL,
 		       1, &script, 0);
-	if (Tcl_GlobalEval(interp, Tcl_DStringValue(&script)) == TCL_ERROR) {
+	if ((code = Tcl_GlobalEval(interp, Tcl_DStringValue(&script))) == TCL_ERROR) {
 	    /* An error resulted.  Prevent further triggering of the command
 	     * and set up the error message. */
 	    tablePtr->useCmd = 0;
@@ -620,8 +620,7 @@ TableSetCellValue(Table *tablePtr, int r, int c, char *value)
 	    if (tablePtr->arrayVar)
 		tablePtr->dataSource |= DATA_ARRAY;
 	    Tcl_AddErrorInfo(interp, "\n\t(in command executed by table)");
-	    Tcl_BackgroundError(interp);
-	    code = TCL_ERROR;
+	    Tcl_BackgroundException(interp, code);
 	} else {
 	    flash = 1;
 	}
