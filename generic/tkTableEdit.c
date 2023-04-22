@@ -13,7 +13,7 @@
 
 #include "tkTable.h"
 
-static void	TableModifyRC (register Table *tablePtr,
+static void	TableModifyRC(Table *tablePtr,
 			int doRows, int movetag,
 			Tcl_HashTable *tagTblPtr, Tcl_HashTable *dimTblPtr,
 			int offset, int from, int to, int lo, int hi,
@@ -61,11 +61,10 @@ enum rcCmd {
  *
  *--------------------------------------------------------------
  */
-int
-Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
-	      int objc, Tcl_Obj *const objv[])
+int Table_EditCmd(ClientData clientData, Tcl_Interp *interp,
+	int objc, Tcl_Obj *const objv[])
 {
-    register Table *tablePtr = (Table *) clientData;
+    Table *tablePtr = (Table *) clientData;
     int doInsert, cmdIndex, first, last;
 
     if (objc < 4) {
@@ -361,13 +360,11 @@ Table_EditCmd(ClientData clientData, register Tcl_Interp *interp,
  *
  *----------------------------------------------------------------------
  */
-void
-TableDeleteChars(tablePtr, index, count)
-    register Table *tablePtr;	/* Table widget to modify. */
-    int index;			/* Index of first character to delete. */
-    int count;			/* How many characters to delete. */
+void TableDeleteChars(
+    Table *tablePtr,		/* Table widget to modify. */
+    int index,			/* Index of first character to delete. */
+    int count)			/* How many characters to delete. */
 {
-#ifdef TCL_UTF_MAX
     int byteIndex, byteCount, newByteCount, numBytes, numChars;
     char *new, *string;
 
@@ -389,25 +386,7 @@ TableDeleteChars(tablePtr, index, count)
     new = (char *) ckalloc((unsigned) newByteCount);
     memcpy(new, string, (size_t) byteIndex);
     strcpy(new + byteIndex, string + byteIndex + byteCount);
-#else
-    int oldlen;
-    char *new;
 
-    /* this gets the length of the string, as well as ensuring that
-     * the cursor isn't beyond the end char */
-    TableGetIcursor(tablePtr, "end", &oldlen);
-
-    if ((index+count) > oldlen)
-	count = oldlen-index;
-    if (count <= 0)
-	return;
-
-    new = (char *) ckalloc((unsigned)(oldlen-count+1));
-    strncpy(new, tablePtr->activeBuf, (size_t) index);
-    strcpy(new+index, tablePtr->activeBuf+index+count);
-    /* make sure this string is null terminated */
-    new[oldlen-count] = '\0';
-#endif
     /* This prevents deletes on BREAK or validation error. */
     if (tablePtr->validate &&
 	TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
@@ -451,14 +430,12 @@ TableDeleteChars(tablePtr, index, count)
  *
  *----------------------------------------------------------------------
  */
-void
-TableInsertChars(tablePtr, index, value)
-    register Table *tablePtr;	/* Table that is to get the new elements. */
-    int index;			/* Add the new elements before this element. */
-    char *value;		/* New characters to add (NULL-terminated
+void TableInsertChars(
+    Table *tablePtr,		/* Table that is to get the new elements. */
+    int index,			/* Add the new elements before this element. */
+    char *value)		/* New characters to add (NULL-terminated
 				 * string). */
 {
-#ifdef TCL_UTF_MAX
     int oldlen, byteIndex, byteCount;
     char *new, *string;
 
@@ -515,48 +492,6 @@ TableInsertChars(tablePtr, index, value)
     ckfree(string);
     tablePtr->activeBuf = new;
 
-#else
-    int oldlen, newlen;
-    char *new;
-
-    newlen = (int) strlen(value);
-    if (newlen == 0) return;
-
-    /* Is this an autoclear and this is the first update */
-    /* Note that this clears without validating */
-    if (tablePtr->autoClear && !(tablePtr->flags & TEXT_CHANGED)) {
-	/* set the buffer to be empty */
-	tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf, 1);
-	tablePtr->activeBuf[0] = '\0';
-	/* the insert position now has to be 0 */
-	index = 0;
-    }
-    oldlen = (int) strlen(tablePtr->activeBuf);
-    /* get the buffer to at least the right length */
-    new = (char *) ckalloc((unsigned)(oldlen+newlen+1));
-    strncpy(new, tablePtr->activeBuf, (size_t) index);
-    strcpy(new+index, value);
-    strcpy(new+index+newlen, (tablePtr->activeBuf)+index);
-    /* make sure this string is null terminated */
-    new[oldlen+newlen] = '\0';
-
-    /* validate potential new active buffer */
-    /* This prevents inserts on either BREAK or validation error. */
-    if (tablePtr->validate &&
-	TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
-			    tablePtr->activeCol+tablePtr->colOffset,
-			    tablePtr->activeBuf, new, index) != TCL_OK) {
-	ckfree(new);
-	return;
-    }
-    ckfree(tablePtr->activeBuf);
-    tablePtr->activeBuf = new;
-
-    if (tablePtr->icursor >= index) {
-	tablePtr->icursor += newlen;
-    }
-#endif
-
     /* mark the text as changed */
     tablePtr->flags |= TEXT_CHANGED;
 
@@ -580,18 +515,16 @@ TableInsertChars(tablePtr, index, value)
  *
  *----------------------------------------------------------------------
  */
-static void
-TableModifyRC(tablePtr, doRows, flags, tagTblPtr, dimTblPtr,
-	      offset, from, to, lo, hi, outOfBounds)
-    Table *tablePtr;	/* Information about text widget. */
-    int doRows;		/* rows (1) or cols (0) */
-    int flags;		/* flags indicating what to move */
-    Tcl_HashTable *tagTblPtr, *dimTblPtr; /* Pointers to the row/col tags
-					   * and width/height tags */
-    int offset;		/* appropriate offset */
-    int from, to;	/* the from and to row/col */
-    int lo, hi;		/* the lo and hi col/row */
-    int outOfBounds;	/* the boundary check for shifting items */
+static void TableModifyRC(
+    Table *tablePtr,	/* Information about text widget. */
+    int doRows,		/* rows (1) or cols (0) */
+    int flags,		/* flags indicating what to move */
+    Tcl_HashTable *tagTblPtr, Tcl_HashTable *dimTblPtr,
+	/* Pointers to the row/col tags and width/height tags */
+    int offset,		/* appropriate offset */
+    int from, int to,	/* the from and to row/col */
+    int lo, int hi,	/* the lo and hi col/row */
+    int outOfBounds)	/* the boundary check for shifting items */
 {
     int j, new;
     char buf[INDEX_BUFSIZE], buf1[INDEX_BUFSIZE];

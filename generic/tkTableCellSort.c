@@ -43,10 +43,10 @@ typedef struct SortElement {
 					 * NULL for end of list. */
 } SortElement;
 
-static int		TableSortCompareProc (const void *first, const void *second);
-static SortElement *    MergeSort (SortElement *headPt);
-static SortElement *    MergeLists (SortElement *leftPtr, SortElement *rightPtr);
-static int		DictionaryCompare (char *left, char *right);
+static int		TableSortCompareProc(const void *first, const void *second);
+static SortElement *    MergeSort(SortElement *headPt);
+static SortElement *    MergeLists(SortElement *leftPtr, SortElement *rightPtr);
+static int		DictionaryCompare(char *left, char *right);
 
 /*
  *----------------------------------------------------------------------
@@ -66,9 +66,8 @@ static int		DictionaryCompare (char *left, char *right);
  *
  *----------------------------------------------------------------------
  */
-static int
-TableSortCompareProc(first, second)
-    const void *first, *second;		/* Elements to be compared. */
+static int TableSortCompareProc(
+    const void *first, const void *second)		/* Elements to be compared. */
 {
     char *str1 = *((char **) first);
     char *str2 = *((char **) second);
@@ -91,8 +90,7 @@ TableSortCompareProc(first, second)
  *
  *----------------------------------------------------------------------
  */
-char *
-TableCellSort(Table *tablePtr, char *str)
+char * TableCellSort(Table *tablePtr, char *str)
 {
     int listArgc;
     const char **listArgv;
@@ -133,9 +131,8 @@ TableCellSort(Table *tablePtr, char *str)
  *----------------------------------------------------------------------
  */
 
-static int
-DictionaryCompare(left, right)
-    char *left, *right;          /* The strings to compare */
+static int DictionaryCompare(
+    char *left, char *right)          /* The strings to compare */
 {
     int diff, zeros;
     int secondaryDiff = 0;
@@ -247,11 +244,10 @@ DictionaryCompare(left, right)
  *----------------------------------------------------------------------
  */
 
-static SortElement *
-MergeLists(leftPtr, rightPtr)
-    SortElement *leftPtr;               /* First list to be merged; may be
+static SortElement * MergeLists(
+    SortElement *leftPtr,               /* First list to be merged; may be
 					 * NULL. */
-    SortElement *rightPtr;              /* Second list to be merged; may be
+    SortElement *rightPtr)              /* Second list to be merged; may be
 					 * NULL. */
 {
     SortElement *headPtr;
@@ -310,9 +306,8 @@ MergeLists(leftPtr, rightPtr)
  *----------------------------------------------------------------------
  */
 
-static SortElement *
-MergeSort(headPtr)
-    SortElement *headPtr;               /* First element on the list */
+static SortElement * MergeSort(
+    SortElement *headPtr)               /* First element on the list */
 {
     /*
      * The subList array below holds pointers to temporary lists built
@@ -363,8 +358,7 @@ MergeSort(headPtr)
  *
  *----------------------------------------------------------------------
  */
-Tcl_Obj *
-TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr)
+Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr)
 {
     int length, i;
     Tcl_Obj *sortedObjPtr, **listObjPtrs;

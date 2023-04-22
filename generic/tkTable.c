@@ -38,9 +38,7 @@ static int	TableWidgetObjCmd(ClientData clientData, Tcl_Interp *interp,
 static int	TableConfigure(Tcl_Interp *interp, Table *tablePtr,
 			int objc, Tcl_Obj *const objv[],
 			int flags, int forceUpdate);
-#ifdef HAVE_TCL84
 static void	TableWorldChanged(ClientData instanceData);
-#endif
 static void	TableDestroy(ClientData clientdata);
 static void	TableEventProc(ClientData clientData, XEvent *eventPtr);
 static void	TableCmdDeletedProc(ClientData clientData);
@@ -352,7 +350,6 @@ static const char *updateOpts[] = {
     "-xscrollcommand",	"-yscrollcommand", (char *) NULL
 };
 
-#ifdef HAVE_TCL84
 /*
  * The structure below defines widget class behavior by means of procedures
  * that can be invoked from generic window code.
@@ -364,7 +361,6 @@ static Tk_ClassProcs tableClass = {
     NULL,			/* createProc */
     NULL			/* modalProc */
 };
-#endif
 
 #ifdef _WIN32
 /*
@@ -432,10 +428,9 @@ typedef union {
  *---------------------------------------------------------------------------
  */
 
-static char **
-StringifyObjects(objc, objv)
-     int objc;			/* Number of arguments. */
-     Tcl_Obj *const objv[];	/* Argument objects. */
+static char ** StringifyObjects(
+     int objc,			/* Number of arguments. */
+     Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int i;
     char **argv;
@@ -453,9 +448,10 @@ StringifyObjects(objc, objv)
  *
  * This parses the "-class" option for the table.
  */
-static int
-Tk_ClassOptionObjCmd(Tk_Window tkwin, char *defaultclass,
-		     int objc, Tcl_Obj *const objv[])
+static int Tk_ClassOptionObjCmd(
+    Tk_Window tkwin,
+    char *defaultclass,
+    int objc, Tcl_Obj *const objv[])
 {
     char *classname = defaultclass;
     int offset = 0;
@@ -484,14 +480,13 @@ Tk_ClassOptionObjCmd(Tk_Window tkwin, char *defaultclass,
  *
  *--------------------------------------------------------------
  */
-static int
-Tk_TableObjCmd(clientData, interp, objc, objv)
-    ClientData clientData;	/* Main window associated with interpreter. */
-    Tcl_Interp *interp;
-    int objc;			/* Number of arguments. */
-    Tcl_Obj *const objv[];	/* Argument objects. */
+static int Tk_TableObjCmd(
+    ClientData clientData,	/* Main window associated with interpreter. */
+    Tcl_Interp *interp,
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    register Table *tablePtr;
+    Table *tablePtr;
     Tk_Window tkwin, mainWin = (Tk_Window) clientData;
     int offset;
 
@@ -510,7 +505,7 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     memset((void *) tablePtr, 0, sizeof(Table));
 
     /*
-     * Set the structure elments that aren't 0/NULL by default,
+     * Set the structure elements that aren't 0/NULL by default,
      * and that won't be set by the initial configure call.
      */
     tablePtr->tkwin		= tkwin;
@@ -596,9 +591,7 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
      * Handle class name and selection handlers
      */
     offset = 2 + Tk_ClassOptionObjCmd(tkwin, "Table", objc, objv);
-#ifdef HAVE_TCL84
     Tk_SetClassProcs(tkwin, &tableClass, (ClientData) tablePtr);
-#endif
     Tk_CreateEventHandler(tablePtr->tkwin,
 	    PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask,
 	    TableEventProc, (ClientData) tablePtr);
@@ -633,14 +626,13 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
  *
  *--------------------------------------------------------------
  */
-static int
-TableWidgetObjCmd(clientData, interp, objc, objv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int objc;			/* Number of arguments. */
-     Tcl_Obj *const objv[];	/* Argument objects. */
+static int TableWidgetObjCmd(
+     ClientData clientData,
+     Tcl_Interp *interp,
+     int objc,			/* Number of arguments. */
+     Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    register Table *tablePtr = (Table *) clientData;
+    Table *tablePtr = (Table *) clientData;
     int row, col, i, cmdIndex, result = TCL_OK;
 
     if (objc < 2) {
@@ -916,10 +908,9 @@ TableWidgetObjCmd(clientData, interp, objc, objv)
  *
  *----------------------------------------------------------------------
  */
-static void
-TableDestroy(ClientData clientdata)
+static void TableDestroy(ClientData clientdata)
 {
-    register Table *tablePtr = (Table *) clientdata;
+    Table *tablePtr = (Table *) clientdata;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
 
@@ -1035,15 +1026,14 @@ TableDestroy(ClientData clientdata)
  *
  *----------------------------------------------------------------------
  */
-static int
-TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
-     Tcl_Interp *interp;	/* Used for error reporting. */
-     register Table *tablePtr;	/* Information about widget;  may or may
+static int TableConfigure(
+     Tcl_Interp *interp,	/* Used for error reporting. */
+     Table *tablePtr,		/* Information about widget;  may or may
 				 * not already have values for some fields. */
-     int objc;			/* Number of arguments. */
-     Tcl_Obj *const objv[];	/* Argument objects. */
-     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
-     int forceUpdate;		/* Whether to force an update - required
+     int objc,			/* Number of arguments. */
+     Tcl_Obj *const objv[],	/* Argument objects. */
+     int flags,			/* Flags to pass to Tk_ConfigureWidget. */
+     int forceUpdate)		/* Whether to force an update - required
 				 * for initial configuration */
 {
     Tcl_HashSearch search;
@@ -1269,7 +1259,7 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
     Tcl_DStringFree(&error);
     return result;
 }
-#ifdef HAVE_TCL84
+
 /*
  *---------------------------------------------------------------------------
  *
@@ -1288,9 +1278,8 @@ TableConfigure(interp, tablePtr, objc, objv, flags, forceUpdate)
  *---------------------------------------------------------------------------
  */
 
-static void
-TableWorldChanged(instanceData)
-    ClientData instanceData;	/* Information about widget. */
+static void TableWorldChanged(
+    ClientData instanceData)	/* Information about widget. */
 {
     Table *tablePtr = (Table *) instanceData;
     Tk_FontMetrics fm;
@@ -1312,7 +1301,7 @@ TableWorldChanged(instanceData)
     /* invalidate the whole table */
     TableInvalidateAll(tablePtr, INV_HIGHLIGHT);
 }
-#endif
+
 /*
  *--------------------------------------------------------------
  *
@@ -1329,10 +1318,9 @@ TableWorldChanged(instanceData)
  *
  *--------------------------------------------------------------
  */
-static void
-TableEventProc(clientData, eventPtr)
-    ClientData clientData;	/* Information about window. */
-    XEvent *eventPtr;		/* Information about event. */
+static void TableEventProc(
+    ClientData clientData,	/* Information about window. */
+    XEvent *eventPtr)		/* Information about event. */
 {
     Table *tablePtr = (Table *) clientData;
     int row, col;
@@ -1478,8 +1466,7 @@ TableEventProc(clientData, eventPtr)
  *
  *----------------------------------------------------------------------
  */
-static void
-TableCmdDeletedProc(ClientData clientData)
+static void TableCmdDeletedProc(ClientData clientData)
 {
     Table *tablePtr = (Table *) clientData;
     Tk_Window tkwin;
@@ -1512,8 +1499,7 @@ TableCmdDeletedProc(ClientData clientData)
  *
  *----------------------------------------------------------------------
  */
-static void
-TableRedrawHighlight(Table *tablePtr)
+static void TableRedrawHighlight(Table *tablePtr)
 {
     if ((tablePtr->flags & REDRAW_BORDER) && tablePtr->highlightWidth > 0) {
 	GC gc = Tk_GCForColor((tablePtr->flags & HAS_FOCUS)
@@ -1540,8 +1526,7 @@ TableRedrawHighlight(Table *tablePtr)
  *
  *----------------------------------------------------------------------
  */
-void
-TableRefresh(register Table *tablePtr, int row, int col, int mode)
+void TableRefresh(Table *tablePtr, int row, int col, int mode)
 {
     int x, y, w, h;
 
@@ -1596,8 +1581,7 @@ TableRefresh(register Table *tablePtr, int row, int col, int mode)
  *
  *----------------------------------------------------------------------
  */
-static void
-TableGetGc(Display *display, Drawable d, TableTag *tagPtr, GC *tagGc)
+static void TableGetGc(Display *display, Drawable d, TableTag *tagPtr, GC *tagGc)
 {
     XGCValues gcValues;
     gcValues.foreground = Tk_3DBorderColor(tagPtr->fg)->pixel;
@@ -1631,10 +1615,9 @@ TableGetGc(Display *display, Drawable d, TableTag *tagPtr, GC *tagGc)
  *
  *--------------------------------------------------------------
  */
-static void
-TableUndisplay(register Table *tablePtr)
+static void TableUndisplay(Table *tablePtr)
 {
-    register int *seen = tablePtr->seen;
+    int *seen = tablePtr->seen;
     int row, col;
 
     /* We need to find out the true last cell, not considering spans */
@@ -1708,10 +1691,9 @@ TableUndisplay(register Table *tablePtr)
  *
  *--------------------------------------------------------------
  */
-static void
-TableDisplay(ClientData clientdata)
+static void TableDisplay(ClientData clientdata)
 {
-    register Table *tablePtr = (Table *) clientdata;
+    Table *tablePtr = (Table *) clientdata;
     Tk_Window tkwin = tablePtr->tkwin;
     Display *display = tablePtr->display;
     Drawable window;
@@ -1728,7 +1710,7 @@ TableDisplay(ClientData clientdata)
 	invalidX, invalidY, invalidWidth, invalidHeight,
 	x, y, width, height, itemX, itemY, itemW, itemH,
 	row, col, urow, ucol, hrow=0, hcol=0, cx, cy, cw, ch, borders, bd[6],
-	numBytes, new, boundW, boundH, maxW, maxH, cellType,
+	numChars, new, boundW, boundH, maxW, maxH, cellType,
 	originX, originY, activeCell, shouldInvert, ipadx, ipady, padx, pady;
     GC tagGc = NULL, topGc, bottomGc;
     char *string = NULL;
@@ -2149,25 +2131,21 @@ TableDisplay(ClientData clientdata)
 		string = TableGetCellValue(tablePtr, urow, ucol);
 	    }
 
-#ifdef TCL_UTF_MAX
 	    /*
 	     * We have to use strlen here because otherwise it stops
 	     * at the first \x00 unicode char it finds (!= '\0'),
 	     * although there can be more to the string than that
 	     */
-	    numBytes = Tcl_NumUtfChars(string, (int) strlen(string));
-#else
-	    numBytes = strlen(string);
-#endif
+	    numChars = Tcl_NumUtfChars(string, (int) strlen(string));
 
 	    /* If there is a string, show it */
-	    if (activeCell || numBytes) {
-		register int x0 = x + bd[0] + padx;
-		register int y0 = y + bd[2] + pady;
+	    if (activeCell || numChars) {
+		int x0 = x + bd[0] + padx;
+		int y0 = y + bd[2] + pady;
 
 		/* get the dimensions of the string */
 		textLayout = Tk_ComputeTextLayout(tagPtr->tkfont,
-			string, numBytes,
+			string, numChars,
 			(tagPtr->wrap > 0) ? width : 0, tagPtr->justify,
 			(tagPtr->multiline > 0) ? 0 : TK_IGNORE_NEWLINES,
 			&itemW, &itemH);
@@ -2599,9 +2577,8 @@ TableDisplay(ClientData clientdata)
  *
  *----------------------------------------------------------------------
  */
-void
-TableInvalidate(Table * tablePtr, int x, int y,
-		int w, int h, int flags)
+void TableInvalidate(Table * tablePtr, int x, int y,
+	int w, int h, int flags)
 {
     Tk_Window tkwin = tablePtr->tkwin;
     int hl	= tablePtr->highlightWidth;
@@ -2677,8 +2654,7 @@ TableInvalidate(Table * tablePtr, int x, int y,
  *
  *----------------------------------------------------------------------
  */
-static void
-TableFlashEvent(ClientData clientdata)
+static void TableFlashEvent(ClientData clientdata)
 {
     Table *tablePtr = (Table *) clientdata;
     Tcl_HashEntry *entryPtr;
@@ -2729,8 +2705,7 @@ TableFlashEvent(ClientData clientdata)
  *
  *----------------------------------------------------------------------
  */
-void
-TableAddFlash(Table *tablePtr, int row, int col)
+void TableAddFlash(Table *tablePtr, int row, int col)
 {
     char buf[INDEX_BUFSIZE];
     int dummy;
@@ -2769,8 +2744,7 @@ TableAddFlash(Table *tablePtr, int row, int col)
  *
  *----------------------------------------------------------------------
  */
-void
-TableSetActiveIndex(register Table *tablePtr)
+void TableSetActiveIndex(Table *tablePtr)
 {
     if (tablePtr->arrayVar) {
 	tablePtr->flags |= SET_ACTIVE;
@@ -2795,8 +2769,7 @@ TableSetActiveIndex(register Table *tablePtr)
  *
  *----------------------------------------------------------------------
  */
-void
-TableGetActiveBuf(register Table *tablePtr)
+void TableGetActiveBuf(Table *tablePtr)
 {
     char *data = "";
 
@@ -2838,13 +2811,12 @@ TableGetActiveBuf(register Table *tablePtr)
  *
  *----------------------------------------------------------------------
  */
-static char *
-TableVarProc(clientData, interp, name, index, flags)
-     ClientData clientData;	/* Information about table. */
-     Tcl_Interp *interp;	/* Interpreter containing variable. */
-     char *name;		/* Not used. */
-     char *index;		/* Not used. */
-     int flags;			/* Information about what happened. */
+static char * TableVarProc(
+     ClientData clientData,	/* Information about table. */
+     Tcl_Interp *interp,	/* Interpreter containing variable. */
+     char *name,		/* Not used. */
+     char *index,		/* Not used. */
+     int flags)			/* Information about what happened. */
 {
     Table *tablePtr = (Table *) clientData;
     int row, col, update = 1;
@@ -2971,9 +2943,8 @@ TableVarProc(clientData, interp, name, index, flags)
  *
  *----------------------------------------------------------------------
  */
-void
-TableGeometryRequest(tablePtr)
-     register Table *tablePtr;
+void TableGeometryRequest(
+     Table *tablePtr)
 {
     int x, y;
 
@@ -3009,9 +2980,8 @@ TableGeometryRequest(tablePtr)
  *
  *----------------------------------------------------------------------
  */
-void
-TableAdjustActive(tablePtr)
-     register Table *tablePtr;		/* Widget record for table */
+void TableAdjustActive(
+     Table *tablePtr)		/* Widget record for table */
 {
     if (tablePtr->flags & HAS_ACTIVE) {
 	/*
@@ -3090,8 +3060,7 @@ TableAdjustActive(tablePtr)
  *
  *----------------------------------------------------------------------
  */
-void
-TableAdjustParams(register Table *tablePtr)
+void TableAdjustParams(Table *tablePtr)
 {
     int topRow, leftCol, row, col, total, i, value, x, y, width, height,
 	w, h, hl, px, py, recalc, bd[4],
@@ -3494,10 +3463,9 @@ TableAdjustParams(register Table *tablePtr)
  *
  *----------------------------------------------------------------------
  */
-static void
-TableCursorEvent(ClientData clientData)
+static void TableCursorEvent(ClientData clientData)
 {
-    register Table *tablePtr = (Table *) clientData;
+    Table *tablePtr = (Table *) clientData;
 
     if (!(tablePtr->flags & HAS_FOCUS) || (tablePtr->insertOffTime == 0)
 	    || (tablePtr->flags & ACTIVE_DISABLED)
@@ -3536,8 +3504,7 @@ TableCursorEvent(ClientData clientData)
  *
  *----------------------------------------------------------------------
  */
-void
-TableConfigCursor(register Table *tablePtr)
+void TableConfigCursor(Table *tablePtr)
 {
     /*
      * To have a cursor, we have to have focus and allow edits
@@ -3603,16 +3570,15 @@ TableConfigCursor(register Table *tablePtr)
  *----------------------------------------------------------------------
  */
 
-static int
-TableFetchSelection(clientData, offset, buffer, maxBytes)
-     ClientData clientData;	/* Information about table widget. */
-     int offset;		/* Offset within selection of first
+static int TableFetchSelection(
+     ClientData clientData,	/* Information about table widget. */
+     int offset,		/* Offset within selection of first
 				 * character to be returned. */
-     char *buffer;		/* Location in which to place selection. */
-     int maxBytes;		/* Maximum number of bytes to place at buffer,
+     char *buffer,		/* Location in which to place selection. */
+     int maxBytes)		/* Maximum number of bytes to place at buffer,
 				 * not including terminating NULL. */
 {
-    register Table *tablePtr = (Table *) clientData;
+    Table *tablePtr = (Table *) clientData;
     Tcl_Interp *interp = tablePtr->interp;
     char *value, *data, *rowsep = tablePtr->rowSep, *colsep = tablePtr->colSep;
     Tcl_HashEntry *entryPtr;
@@ -3629,7 +3595,7 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
     }
 
     if ((offset == 0) || !tablePtr->haveSelection) {
-	/* First Time thru, get the selection, otherwise, just use the
+	/* First Time through, get the selection, otherwise, just use the
 	 * selection obtained before */
 
 	/* If we have fetched a selection before, free it */
@@ -3775,11 +3741,10 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
  *
  *----------------------------------------------------------------------
  */
-void
-TableLostSelection(clientData)
-     ClientData clientData;	/* Information about table widget. */
+void TableLostSelection(
+     ClientData clientData)	/* Information about table widget. */
 {
-    register Table *tablePtr = (Table *) clientData;
+    Table *tablePtr = (Table *) clientData;
 
     if (tablePtr->exportSelection) {
 	Tcl_HashEntry *entryPtr;
@@ -3814,8 +3779,7 @@ TableLostSelection(clientData)
  *----------------------------------------------------------------------
  */
 
-void
-TkSendVirtualEvent(
+void TkSendVirtualEvent(
     Tk_Window target,
     const char *eventName,
     Tcl_Obj *detail)
@@ -3851,11 +3815,10 @@ TkSendVirtualEvent(
  *
  *----------------------------------------------------------------------
  */
-static void
-GenerateTableSelectEvent(clientData)
-     ClientData clientData;	/* Information about table widget. */
+static void GenerateTableSelectEvent(
+     ClientData clientData)	/* Information about table widget. */
 {
-    register Table *tablePtr = (Table *) clientData;
+    Table *tablePtr = (Table *) clientData;
     TkSendVirtualEvent(tablePtr->tkwin, "TableSelect", NULL);
 }
 
@@ -3875,10 +3838,9 @@ GenerateTableSelectEvent(clientData)
  *
  *----------------------------------------------------------------------
  */
-static Tk_RestrictAction
-TableRestrictProc(serial, eventPtr)
-     ClientData serial;
-     XEvent *eventPtr;
+static Tk_RestrictAction TableRestrictProc(
+     ClientData serial,
+     XEvent *eventPtr)
 {
     if ((eventPtr->type == KeyRelease || eventPtr->type == KeyPress) &&
 	((eventPtr->xany.serial-PTR2UINT(serial)) > 0)) {
@@ -3898,7 +3860,7 @@ TableRestrictProc(serial, eventPtr)
  * Results:
  *	TCL_OK    if the validatecommand accepts the new string,
  *	TCL_BREAK if the validatecommand rejects the new string,
- *      TCL_ERROR if any problems occured with validatecommand.
+ *      TCL_ERROR if any problems occurred with validatecommand.
  *
  * Side effects:
  *      The insertion/deletion may be aborted, and the
@@ -3907,15 +3869,14 @@ TableRestrictProc(serial, eventPtr)
  *
  *--------------------------------------------------------------
  */
-int
-TableValidateChange(tablePtr, r, c, old, new, index)
-     register Table *tablePtr;	/* Table that needs validation. */
-     int r, c;			/* row,col index of cell in user coords */
-     char *old;			/* current value of cell */
-     char *new;			/* potential new value of cell */
-     int index;			/* index of insert/delete, -1 otherwise */
+int TableValidateChange(
+     Table *tablePtr,		/* Table that needs validation. */
+     int r, int c,		/* row,col index of cell in user coords */
+     char *old,			/* current value of cell */
+     char *new,			/* potential new value of cell */
+     int index)			/* index of insert/delete, -1 otherwise */
 {
-    register Tcl_Interp *interp = tablePtr->interp;
+    Tcl_Interp *interp = tablePtr->interp;
     int code, flag;
     Tk_RestrictProc *rstrct;
     ClientData cdata;
@@ -3945,6 +3906,7 @@ TableValidateChange(tablePtr, r, c, old, new, index)
     tablePtr->flags |= VALIDATING;
 
     /* Now form command string and run through the -validatecommand */
+    Tcl_Preserve((ClientData) tablePtr);
     Tcl_DStringInit(&script);
     ExpandPercents(tablePtr, tablePtr->valCmd, r, c, old, new, index, &script,
 		   CMD_VALIDATE);
@@ -3969,7 +3931,7 @@ TableValidateChange(tablePtr, r, c, old, new, index)
 
     /*
      * If ->validate has become VALIDATE_NONE during the validation,
-     * it means that a loop condition almost occured.  Do not allow
+     * it means that a loop condition almost occurred.  Do not allow
      * this validation result to finish.
      */
     if (tablePtr->validate == 0) {
@@ -3983,7 +3945,7 @@ TableValidateChange(tablePtr, r, c, old, new, index)
 
     Tk_RestrictEvents(rstrct, cdata, &cdata);
     tablePtr->flags &= ~VALIDATING;
-
+    Tcl_Release((ClientData) tablePtr);
     return code;
 }
 
@@ -4004,25 +3966,20 @@ TableValidateChange(tablePtr, r, c, old, new, index)
  *
  *--------------------------------------------------------------
  */
-void
-ExpandPercents(tablePtr, before, r, c, old, new, index, dsPtr, cmdType)
-     Table *tablePtr;		/* Table that needs validation. */
-     char *before;		/* Command containing percent
+void ExpandPercents(
+     Table *tablePtr,		/* Table that needs validation. */
+     char *before,		/* Command containing percent
 				 * expressions to be replaced. */
-     int r, c;			/* row,col index of cell */
-     char *old;                 /* current value of cell */
-     char *new;                 /* potential new value of cell */
-     int index;                 /* index of insert/delete */
-     Tcl_DString *dsPtr;        /* Dynamic string in which to append
+     int r, int c,			/* row,col index of cell */
+     char *old,                 /* current value of cell */
+     char *new,                 /* potential new value of cell */
+     int index,                 /* index of insert/delete */
+     Tcl_DString *dsPtr,        /* Dynamic string in which to append
 				 * new command. */
-     int cmdType;		/* type of command to make %-subs for */
+     int cmdType)		/* type of command to make %-subs for */
 {
     int length, spaceNeeded, cvtFlags;
-#ifdef TCL_UTF_MAX
     Tcl_UniChar ch;
-#else
-    char ch;
-#endif
     char *string, buf[INDEX_BUFSIZE];
 
     /* This returns the static value of the string as set in the array */
@@ -4039,12 +3996,8 @@ ExpandPercents(tablePtr, before, r, c, old, new, index, dsPtr, cmdType)
 	 * to the result string.
 	 */
 
-#ifdef TCL_UTF_MAX
-	/* No need to convert '%', as it is in ascii range */
+	/* No need to convert '%', as it is in ASCII range */
 	string = (char *) Tcl_UtfFindFirst(before, '%');
-#else
-	string = strchr(before, '%');
-#endif
 	if (string == (char *) NULL) {
 	    Tcl_DStringAppend(dsPtr, before, -1);
 	    break;
@@ -4059,12 +4012,7 @@ ExpandPercents(tablePtr, before, r, c, old, new, index, dsPtr, cmdType)
 
 	before++; /* skip over % */
 	if (*before != '\0') {
-#ifdef TCL_UTF_MAX
 	    before += Tcl_UtfToUniChar(before, &ch);
-#else
-	    ch = before[0];
-	    before++;
-#endif
 	} else {
 	    ch = '%';
 	}
@@ -4095,12 +4043,7 @@ ExpandPercents(tablePtr, before, r, c, old, new, index, dsPtr, cmdType)
 	    string = Tk_PathName(tablePtr->tkwin);
 	    break;
 	default:
-#ifdef TCL_UTF_MAX
 	    length = Tcl_UniCharToUtf(ch, buf);
-#else
-	    buf[0] = ch;
-	    length = 1;
-#endif
 	    buf[length] = '\0';
 	    string = buf;
 	    break;
@@ -4126,32 +4069,25 @@ ExpandPercents(tablePtr, before, r, c, old, new, index, dsPtr, cmdType)
 #ifdef MAC_TCL
 #pragma export on
 #endif
-EXTERN int
-Tktable_Init(interp)
-     Tcl_Interp *interp;
+EXTERN int Tktable_Init(Tcl_Interp *interp)
 {
     /* This defines the static chars tkTable(Safe)InitScript */
 #include "tkTableInitScript.h"
 
     if (
 #ifdef USE_TCL_STUBS
-	Tcl_InitStubs(interp, "8.0", 0)
+	Tcl_InitStubs(interp, "8.6", 0)
 #else
-	Tcl_PkgRequire(interp, "Tcl", "8.0-", 0)
+	Tcl_PkgRequire(interp, "Tcl", "8.6-", 0)
 #endif
 	== NULL) {
 	return TCL_ERROR;
     }
     if (
 #ifdef USE_TK_STUBS
-	Tk_InitStubs(interp, "8.0", 0)
+	Tk_InitStubs(interp, "8.6", 0)
 #else
-#    if (TK_MAJOR_VERSION == 8) && (TK_MINOR_VERSION == 0)
-	/* We require 8.0 exact because of the Unicode in 8.1+ */
-	Tcl_PkgRequire(interp, "Tk", "8.0", 1)
-#    else
-	Tcl_PkgRequire(interp, "Tk", "8.0-", 0)
-#    endif
+	Tcl_PkgRequire(interp, "Tk", "8.6-", 0)
 #endif
 	== NULL) {
 	return TCL_ERROR;
@@ -4171,9 +4107,7 @@ Tktable_Init(interp)
 	    tkTableSafeInitScript : tkTableInitScript);
 }
 
-EXTERN int
-Tktable_SafeInit(interp)
-     Tcl_Interp *interp;
+EXTERN int Tktable_SafeInit(Tcl_Interp *interp)
 {
     return Tktable_Init(interp);
 }
@@ -4201,11 +4135,10 @@ Tktable_SafeInit(interp)
  *----------------------------------------------------------------------
  */
 
-BOOL APIENTRY
-DllEntryPoint(hInst, reason, reserved)
-     HINSTANCE hInst;		/* Library instance handle. */
-     DWORD reason;		/* Reason this function is being called. */
-     LPVOID reserved;		/* Not used. */
+BOOL APIENTRY DllEntryPoint(
+     HINSTANCE hInst,		/* Library instance handle. */
+     DWORD reason,		/* Reason this function is being called. */
+     LPVOID reserved)		/* Not used. */
 {
     return TRUE;
 }

@@ -32,8 +32,7 @@
  *
  *----------------------------------------------------------------------
  */
-int
-TableTrueCell(Table *tablePtr, int r, int c, int *row, int *col)
+int TableTrueCell(Table *tablePtr, int r, int c, int *row, int *col)
 {
     *row = r; *col = c;
     /*
@@ -79,11 +78,10 @@ TableTrueCell(Table *tablePtr, int r, int c, int *row, int *col)
  *
  *----------------------------------------------------------------------
  */
-int
-TableCellCoords(Table *tablePtr, int row, int col,
-		int *x, int *y, int *w, int *h)
+int TableCellCoords(Table *tablePtr, int row, int col,
+	int *x, int *y, int *w, int *h)
 {
-    register int hl = tablePtr->highlightWidth;
+    int hl = tablePtr->highlightWidth;
     int result = CELL_OK;
 
     if (tablePtr->rows <= 0 || tablePtr->cols <= 0) {
@@ -92,7 +90,7 @@ TableCellCoords(Table *tablePtr, int row, int col,
     }
     /*
      * Real coords required, always should be passed acceptable values,
-     * but this is a possible seg fault otherwise
+     * but this is a possible segmentation fault otherwise
      */
     CONSTRAIN(row, 0, tablePtr->rows-1);
     CONSTRAIN(col, 0, tablePtr->cols-1);
@@ -189,9 +187,8 @@ setxy:
  *
  *----------------------------------------------------------------------
  */
-int
-TableCellVCoords(Table *tablePtr, int row, int col,
-		 int *rx, int *ry, int *rw, int *rh, int full)
+int TableCellVCoords(Table *tablePtr, int row, int col,
+	int *rx, int *ry, int *rw, int *rh, int full)
 {
     int x, y, w, h, w0, h0, cellType, hl = tablePtr->highlightWidth;
 
@@ -291,8 +288,7 @@ TableCellVCoords(Table *tablePtr, int row, int col,
  *
  *----------------------------------------------------------------------
  */
-void
-TableWhatCell(register Table *tablePtr, int x, int y, int *row, int *col)
+void TableWhatCell(Table *tablePtr, int x, int y, int *row, int *col)
 {
     int i;
     x = MAX(0, x); y = MAX(0, y);
@@ -350,8 +346,7 @@ TableWhatCell(register Table *tablePtr, int x, int y, int *row, int *col)
  *
  *----------------------------------------------------------------------
  */
-int
-TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col)
+int TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col)
 {
     int i, brow, bcol, borders = 2, bd[6];
 
@@ -466,10 +461,9 @@ TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col)
  *
  *----------------------------------------------------------------------
  */
-char *
-TableGetCellValue(Table *tablePtr, int r, int c)
+char * TableGetCellValue(Table *tablePtr, int r, int c)
 {
-    register Tcl_Interp *interp = tablePtr->interp;
+    Tcl_Interp *interp = tablePtr->interp;
     char *result = NULL;
     char buf[INDEX_BUFSIZE];
     Tcl_HashEntry *entryPtr = NULL;
@@ -594,8 +588,7 @@ VALUE:
  *
  *----------------------------------------------------------------------
  */
-int
-TableSetCellValue(Table *tablePtr, int r, int c, char *value)
+int TableSetCellValue(Table *tablePtr, int r, int c, char *value)
 {
     char buf[INDEX_BUFSIZE];
     int code = TCL_OK, flash = 0;
@@ -694,8 +687,7 @@ TableSetCellValue(Table *tablePtr, int r, int c, char *value)
  *
  *----------------------------------------------------------------------
  */
-int
-TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf,
+int TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf,
 	int tor, int toc, char *tobuf, int outOfBounds)
 {
     if (outOfBounds) {
@@ -761,7 +753,7 @@ TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf,
  *
  * TableGetIcursor --
  *	Parses the argument as an index into the active cell string.
- *	Recognises 'end', 'insert' or an integer.  Constrains it to the
+ *	Recognizes 'end', 'insert' or an integer.  Constrains it to the
  *	size of the buffer.  This acts like a "SetIcursor" when *posn is NULL.
  *
  * Results:
@@ -772,16 +764,14 @@ TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf,
  *
  *----------------------------------------------------------------------
  */
-int
-TableGetIcursor(Table *tablePtr, char *arg, int *posn)
+int TableGetIcursor(Table *tablePtr, char *arg, int *posn)
 {
     int tmp, len;
 
     len = (int) strlen(tablePtr->activeBuf);
-#ifdef TCL_UTF_MAX
     /* Need to base it off strlen to account for \x00 (Unicode null) */
     len = Tcl_NumUtfChars(tablePtr->activeBuf, len);
-#endif
+
     /* ensure icursor didn't get out of sync */
     if (tablePtr->icursor > len) tablePtr->icursor = len;
     /* is this end */
@@ -821,13 +811,12 @@ TableGetIcursor(Table *tablePtr, char *arg, int *posn)
  *
  *--------------------------------------------------------------
  */
-int
-TableGetIndex(tablePtr, str, row_p, col_p)
-    register Table *tablePtr;	/* Table for which the index is being
+int TableGetIndex(
+    Table *tablePtr,	/* Table for which the index is being
 				 * specified. */
-    char *str;			/* Symbolic specification of cell in table. */
-    int *row_p;		/* Where to store converted row. */
-    int *col_p;		/* Where to store converted col. */
+    char *str,			/* Symbolic specification of cell in table. */
+    int *row_p,		/* Where to store converted row. */
+    int *col_p)		/* Where to store converted col. */
 {
     int r, c;
     size_t len = strlen(str);
@@ -924,11 +913,10 @@ TableGetIndex(tablePtr, str, row_p, col_p)
  *
  *--------------------------------------------------------------
  */
-int
-Table_SetCmd(ClientData clientData, register Tcl_Interp *interp,
-	     int objc, Tcl_Obj *const objv[])
+int Table_SetCmd(ClientData clientData, Tcl_Interp *interp,
+	int objc, Tcl_Obj *const objv[])
 {
-    register Table *tablePtr = (Table *)clientData;
+    Table *tablePtr = (Table *)clientData;
     int row, col, len, i, j, max;
     char *str;
 
@@ -1070,8 +1058,7 @@ Table_SetCmd(ClientData clientData, register Tcl_Interp *interp,
  *
  *--------------------------------------------------------------
  */
-static int
-Table_SpanSet(register Table *tablePtr, int urow, int ucol, int rs, int cs)
+static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs)
 {
     Tcl_Interp *interp = tablePtr->interp;
     int i, j, new, ors, ocs, result = TCL_OK;
@@ -1226,11 +1213,10 @@ Table_SpanSet(register Table *tablePtr, int urow, int ucol, int rs, int cs)
  *
  *--------------------------------------------------------------
  */
-int
-Table_SpanCmd(ClientData clientData, register Tcl_Interp *interp,
-	      int objc, Tcl_Obj *const objv[])
+int Table_SpanCmd(ClientData clientData, Tcl_Interp *interp,
+	int objc, Tcl_Obj *const objv[])
 {
-    register Table *tablePtr = (Table *) clientData;
+    Table *tablePtr = (Table *) clientData;
     int rs, cs, row, col, i;
     Tcl_HashEntry *entryPtr;
 
@@ -1298,11 +1284,10 @@ Table_SpanCmd(ClientData clientData, register Tcl_Interp *interp,
  *
  *--------------------------------------------------------------
  */
-int
-Table_HiddenCmd(ClientData clientData, register Tcl_Interp *interp,
-		int objc, Tcl_Obj *const objv[])
+int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp,
+	int objc, Tcl_Obj *const objv[])
 {
-    register Table *tablePtr = (Table *) clientData;
+    Table *tablePtr = (Table *) clientData;
     int i, row, col;
     Tcl_HashEntry *entryPtr;
     char *span;
@@ -1381,12 +1366,11 @@ Table_HiddenCmd(ClientData clientData, register Tcl_Interp *interp,
  *	void.
  *
  * Side effects:
- *	Spans in title areas can be reconstrained.
+ *	Spans in title areas can be re-constrained.
  *
  *--------------------------------------------------------------
  */
-void
-TableSpanSanCheck(register Table *tablePtr)
+void TableSpanSanCheck(Table *tablePtr)
 {
     int rs, cs, row, col, reset;
     Tcl_HashEntry *entryPtr;

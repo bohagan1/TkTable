@@ -21,13 +21,10 @@
  * Sun shared libraries to be used for Tcl.
  */
 
-extern int matherr();
-int *tclDummyMathPtr = (int *) matherr;
-
-EXTERN int		Tktable_Init (Tcl_Interp *interp);
+EXTERN int		Tktable_Init(Tcl_Interp *interp);
 #ifdef TK_TEST
-EXTERN int		Tcltest_Init (Tcl_Interp *interp);
-EXTERN int		Tktest_Init (Tcl_Interp *interp);
+EXTERN int		Tcltest_Init(Tcl_Interp *interp);
+EXTERN int		Tktest_Init(Tcl_Interp *interp);
 #endif /* TK_TEST */
 
 /*
@@ -47,10 +44,9 @@ EXTERN int		Tktest_Init (Tcl_Interp *interp);
  *----------------------------------------------------------------------
  */
 
-int
-main(argc, argv)
-    int argc;			/* Number of command-line arguments. */
-    char **argv;		/* Values of command-line arguments. */
+int main(
+    int argc,			/* Number of command-line arguments. */
+    char **argv)		/* Values of command-line arguments. */
 {
     Tk_Main(argc, argv, Tcl_AppInit);
     return 0;			/* Needed only to prevent compiler warning. */
@@ -75,9 +71,8 @@ main(argc, argv)
  *----------------------------------------------------------------------
  */
 
-int
-Tcl_AppInit(interp)
-    Tcl_Interp *interp;		/* Interpreter for application. */
+int Tcl_AppInit(
+    Tcl_Interp *interp)		/* Interpreter for application. */
 {
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;

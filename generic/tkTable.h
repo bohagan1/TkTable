@@ -34,14 +34,6 @@
 # include <X11/Xatom.h>
 #endif /* MAC_OSX_TK */
 
-#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION == 0) /* Tcl8.0 stuff */
-#define Tcl_GetString(objPtr)	Tcl_GetStringFromObj(objPtr, (int *)NULL)
-#endif
-
-#if (TCL_MAJOR_VERSION > 8) || ((TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION >= 4))
-#   define HAVE_TCL84
-#endif
-
 /*
  * Tcl/Tk 8.6 introduced more CONST-ness in the APIs, but we use CONST86 in
  * some cases for compatibility with earlier Tcl headers to prevent warnings.
@@ -476,19 +468,19 @@ extern Tk_ConfigSpec tableSpecs[];
 extern void	EmbWinDisplay(Table *tablePtr, Drawable window,
 			TableEmbWindow *ewPtr, TableTag *tagPtr,
 			int x, int y, int width, int height);
-extern void	EmbWinUnmap(register Table *tablePtr,
+extern void	EmbWinUnmap(Table *tablePtr,
 			int rlo, int rhi, int clo, int chi);
-extern void	EmbWinDelete(register Table *tablePtr, TableEmbWindow *ewPtr);
-extern int	Table_WinMove(register Table *tablePtr,
+extern void	EmbWinDelete(Table *tablePtr, TableEmbWindow *ewPtr);
+extern int	Table_WinMove(Table *tablePtr,
 			char *const srcPtr, char *const destPtr, int flags);
-extern int	Table_WinDelete(register Table *tablePtr, char *const idxPtr);
+extern int	Table_WinDelete(Table *tablePtr, char *const idxPtr);
 extern int	Table_WindowCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 extern int	TableValidateChange(Table *tablePtr, int r,
 			int c, char *oldVal, char *newVal, int idx);
 extern void	TableLostSelection(ClientData clientData);
 extern void	GenerateTableSelectEvent(ClientData clientData);
-extern void	TableSetActiveIndex(register Table *tablePtr);
+extern void	TableSetActiveIndex(Table *tablePtr);
 
 /*
  * HEADERS IN tkTableCmds.c
@@ -531,9 +523,9 @@ extern int	Table_ViewCmd(ClientData clientData,
 
 extern int	Table_EditCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern void	TableDeleteChars(register Table *tablePtr,
+extern void	TableDeleteChars(Table *tablePtr,
 			int idx, int count);
-extern void	TableInsertChars(register Table *tablePtr,
+extern void	TableInsertChars(Table *tablePtr,
 			int idx, char *string);
 
 /*
@@ -587,7 +579,7 @@ extern int	TableCellCoords(Table *tablePtr, int row,
 extern int	TableCellVCoords(Table *tablePtr, int row,
 			int col, int *rx, int *ry,
 			int *rw, int *rh, int full);
-extern void	TableWhatCell(register Table *tablePtr,
+extern void	TableWhatCell(Table *tablePtr,
 			int x, int y, int *row, int *col);
 extern int	TableAtBorder(Table *tablePtr, int x, int y,
 			int *row, int *col);
@@ -602,7 +594,7 @@ extern int	TableGetIcursor(Table *tablePtr, char *arg,
 			int *posn);
 #define TableGetIcursorObj(tablePtr, objPtr, posnPtr) \
 	TableGetIcursor(tablePtr, Tcl_GetString(objPtr), posnPtr)
-extern int	TableGetIndex(register Table *tablePtr,
+extern int	TableGetIndex(Table *tablePtr,
 			char *str, int *row_p, int *col_p);
 #define TableGetIndexObj(tablePtr, objPtr, rowPtr, colPtr) \
 	TableGetIndex(tablePtr, Tcl_GetString(objPtr), rowPtr, colPtr)
@@ -612,7 +604,7 @@ extern int	Table_HiddenCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 extern int	Table_SpanCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern void	TableSpanSanCheck(register Table *tablePtr);
+extern void	TableSpanSanCheck(Table *tablePtr);
 
 /*
  * HEADERS IN TKTABLECELLSORT
@@ -645,18 +637,18 @@ extern void	Tcl_DStringAppendAll(Tcl_DString *, arg1, ...);
 EXTERN int Tktable_Init(Tcl_Interp *interp);
 EXTERN int Tktable_SafeInit(Tcl_Interp *interp);
 
-extern void	TableGetActiveBuf(register Table *tablePtr);
+extern void	TableGetActiveBuf(Table *tablePtr);
 extern void	ExpandPercents(Table *tablePtr, char *before,
 			int r, int c, char *oldVal, char *newVal, int idx,
 			Tcl_DString *dsPtr, int cmdType);
 extern void	TableInvalidate(Table *tablePtr, int x, int y,
 			int width, int height, int force);
-extern void	TableRefresh(register Table *tablePtr,
+extern void	TableRefresh(Table *tablePtr,
 			int arg1, int arg2, int mode);
 extern void	TableGeometryRequest(Table *tablePtr);
-extern void	TableAdjustActive(register Table *tablePtr);
-extern void	TableAdjustParams(register Table *tablePtr);
-extern void	TableConfigCursor(register Table *tablePtr);
+extern void	TableAdjustActive(Table *tablePtr);
+extern void	TableAdjustParams(Table *tablePtr);
+extern void	TableConfigCursor(Table *tablePtr);
 extern void	TableAddFlash(Table *tablePtr, int row, int col);
 
 

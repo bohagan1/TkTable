@@ -13,15 +13,15 @@
 
 #include "tkTable.h"
 
-static TableTag *TableTagGetEntry (Table *tablePtr, char *name,
+static TableTag *TableTagGetEntry(Table *tablePtr, char *name,
 			int objc, const char **argv);
-static unsigned int	TableTagGetPriority (Table *tablePtr, TableTag *tagPtr);
-static void	TableImageProc (ClientData clientData, int x, int y, int width,
+static unsigned int	TableTagGetPriority(Table *tablePtr, TableTag *tagPtr);
+static void	TableImageProc(ClientData clientData, int x, int y, int width,
 			int height, int imageWidth, int imageHeight);
-static int	TableOptionReliefSet (ClientData clientData,
+static int	TableOptionReliefSet(ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
 			const char *value, char *widgRec, int offset);
-static CONST86 char *	TableOptionReliefGet (ClientData clientData,
+static CONST86 char *	TableOptionReliefGet(ClientData clientData,
 			Tk_Window tkwin, char *widgRec, int offset,
 			Tcl_FreeProc **freeProcPtr);
 
@@ -117,9 +117,8 @@ typedef struct {
  *
  *----------------------------------------------------------------------
  */
-static void
-TableImageProc(ClientData clientData, int x, int y, int width, int height,
-	       int imageWidth, int imageHeight)
+static void TableImageProc(ClientData clientData, int x, int y, int width, int height,
+	int imageWidth, int imageHeight)
 {
     TableInvalidateAll((Table *)clientData, 0);
 }
@@ -138,8 +137,7 @@ TableImageProc(ClientData clientData, int x, int y, int width, int height,
  *
  *----------------------------------------------------------------------
  */
-TableTag *
-TableNewTag(Table *tablePtr)
+TableTag * TableNewTag(Table *tablePtr)
 {
     TableTag *tagPtr;
 
@@ -205,8 +203,7 @@ TableNewTag(Table *tablePtr)
  *
  *----------------------------------------------------------------------
  */
-void
-TableResetTag(Table *tablePtr, TableTag *tagPtr)
+void TableResetTag(Table *tablePtr, TableTag *tagPtr)
 {
     TableJoinTag *jtagPtr = (TableJoinTag *) tagPtr;
 
@@ -261,8 +258,7 @@ TableResetTag(Table *tablePtr, TableTag *tagPtr)
  *
  *----------------------------------------------------------------------
  */
-void
-TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag)
+void TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag)
 {
     TableJoinTag *jtagPtr = (TableJoinTag *) baseTag;
     unsigned int prio;
@@ -376,8 +372,7 @@ TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag)
  *
  *----------------------------------------------------------------------
  */
-void
-TableInvertTag(TableTag *baseTag)
+void TableInvertTag(TableTag *baseTag)
 {
     Tk_3DBorder tmpBg;
 
@@ -401,8 +396,7 @@ TableInvertTag(TableTag *baseTag)
  *
  *----------------------------------------------------------------------
  */
-int
-TableGetTagBorders(TableTag *tagPtr,
+int TableGetTagBorders(TableTag *tagPtr,
 	int *left, int *right, int *top, int *bottom)
 {
     switch (tagPtr->borders) {
@@ -452,8 +446,8 @@ TableGetTagBorders(TableTag *tagPtr,
  *
  *----------------------------------------------------------------------
  */
-static TableTag *
-TableTagGetEntry(Table *tablePtr, char *name, int objc, const char **argv)
+static TableTag * TableTagGetEntry(Table *tablePtr, char *name,
+	int objc, const char **argv)
 {
     Tcl_HashEntry *entryPtr;
     TableTag *tagPtr = NULL;
@@ -509,8 +503,7 @@ TableTagGetEntry(Table *tablePtr, char *name, int objc, const char **argv)
  *
  *----------------------------------------------------------------------
  */
-static unsigned int
-TableTagGetPriority(Table *tablePtr, TableTag *tagPtr)
+static unsigned int TableTagGetPriority(Table *tablePtr, TableTag *tagPtr)
 {
     unsigned int prio = 0;
     while (tagPtr != tablePtr->tagPrios[prio]) { prio++; }
@@ -531,8 +524,7 @@ TableTagGetPriority(Table *tablePtr, TableTag *tagPtr)
  *
  *----------------------------------------------------------------------
  */
-void
-TableInitTags(Table *tablePtr)
+void TableInitTags(Table *tablePtr)
 {
     static const char *activeArgs[] = {"-bg", ACTIVE_BG, "-fg", ACTIVE_FG,
 					"-relief", "solid" };
@@ -568,8 +560,7 @@ TableInitTags(Table *tablePtr)
  *
  *----------------------------------------------------------------------
  */
-TableTag *
-FindRowColTag(Table *tablePtr, int cell, int mode)
+TableTag * FindRowColTag(Table *tablePtr, int cell, int mode)
 {
     Tcl_HashEntry *entryPtr;
     TableTag *tagPtr = NULL;
@@ -579,7 +570,7 @@ FindRowColTag(Table *tablePtr, int cell, int mode)
     if (entryPtr == NULL) {
 	char *cmd = (mode == ROW) ? tablePtr->rowTagCmd : tablePtr->colTagCmd;
 	if (cmd) {
-	    register Tcl_Interp *interp = tablePtr->interp;
+	    Tcl_Interp *interp = tablePtr->interp;
 	    char buf[INDEX_BUFSIZE];
 	    /*
 	     * Since no specific row/col tag exists, eval the given command
@@ -625,8 +616,7 @@ FindRowColTag(Table *tablePtr, int cell, int mode)
  *
  *----------------------------------------------------------------------
  */
-void
-TableCleanupTag(Table *tablePtr, TableTag *tagPtr)
+void TableCleanupTag(Table *tablePtr, TableTag *tagPtr)
 {
     /*
      * Free resources that the optionSpec doesn't specifically know about
@@ -654,11 +644,10 @@ TableCleanupTag(Table *tablePtr, TableTag *tagPtr)
  *
  *--------------------------------------------------------------
  */
-int
-Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
-	    int objc, Tcl_Obj *const objv[])
+int Table_TagCmd(ClientData clientData, Tcl_Interp *interp,
+	int objc, Tcl_Obj *const objv[])
 {
-    register Table *tablePtr = (Table *)clientData;
+    Table *tablePtr = (Table *)clientData;
     int result = TCL_OK, cmdIndex, i, newEntry, value, len;
     int row, col, tagPrio, refresh = 0;
     TableTag *tagPtr, *tag2Ptr;
@@ -1307,14 +1296,13 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
  *----------------------------------------------------------------------
  */
 
-static int
-TableOptionReliefSet(clientData, interp, tkwin, value, widgRec, offset)
-    ClientData clientData;		/* Type of struct being set. */
-    Tcl_Interp *interp;			/* Used for reporting errors. */
-    Tk_Window tkwin;			/* Window containing table widget. */
-    const char *value;		/* Value of option. */
-    char *widgRec;			/* Pointer to record for item. */
-    int offset;				/* Offset into item. */
+static int TableOptionReliefSet(
+    ClientData clientData,		/* Type of struct being set. */
+    Tcl_Interp *interp,			/* Used for reporting errors. */
+    Tk_Window tkwin,			/* Window containing table widget. */
+    const char *value,		/* Value of option. */
+    char *widgRec,			/* Pointer to record for item. */
+    int offset)				/* Offset into item. */
 {
     TableTag *tagPtr = (TableTag *) widgRec;
 
@@ -1340,13 +1328,12 @@ TableOptionReliefSet(clientData, interp, tkwin, value, widgRec, offset)
  *----------------------------------------------------------------------
  */
 
-static CONST86 char *
-TableOptionReliefGet(clientData, tkwin, widgRec, offset, freeProcPtr)
-    ClientData clientData;		/* Type of struct being set. */
-    Tk_Window tkwin;			/* Window containing canvas widget. */
-    char *widgRec;			/* Pointer to record for item. */
-    int offset;				/* Offset into item. */
-    Tcl_FreeProc **freeProcPtr;		/* Pointer to variable to fill in with
+static CONST86 char * TableOptionReliefGet(
+    ClientData clientData,		/* Type of struct being set. */
+    Tk_Window tkwin,			/* Window containing canvas widget. */
+    char *widgRec,			/* Pointer to record for item. */
+    int offset,				/* Offset into item. */
+    Tcl_FreeProc **freeProcPtr)		/* Pointer to variable to fill in with
 					 * information about how to reclaim
 					 * storage for return string. */
 {
