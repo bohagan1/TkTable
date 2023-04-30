@@ -17,7 +17,7 @@
 #------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------
-# Project specific information (EDIT)
+# Project specific information
 #-------------------------------------------------------------------------
 
 PROJECT = Tktable
@@ -62,21 +62,10 @@ PRJ_LIBS =
 !include "targets.vc"
 
 #---------------------------------------------------------------------
-# Project specific targets (EDIT)
+# Project specific targets
 #---------------------------------------------------------------------
 
 all: default-target
-
-# We must define a pkgindex target that will create a pkgIndex.tcl
-# file in the $(OUT_DIR) directory.
-pkgindex: default-pkgindex
-
-# The default install target only installs binaries and scripts so add
-# an additional target for our documentation. Note this *adds* a target
-# since no commands are listed after it. The original targets for
-# install (from targets.vc) will remain.
-install: default-install-docs-html default-install-docs-n default-install-demos
-
 
 $(PRJ_OBJS): $(TMP_DIR)\tkTable.tcl.h
 
@@ -91,3 +80,16 @@ $(TMP_DIR)\tkTable.tcl.h: $(LIBDIR)\tkTable.tcl
 	}
 <<
 
+# We must define a pkgindex target that will create a pkgIndex.tcl
+# file in the $(OUT_DIR) directory.
+#pkgindex: default-pkgindex
+pkgindex: default-pkgindex-tea
+
+# The default install target only installs binaries and scripts so add
+# an additional target for our documentation. Note this *adds* a target
+# since no commands are listed after it. The original targets for
+# install (from targets.vc) will remain.
+#install: default-install-docs-html default-install-docs-n default-install-demos
+install: pkgindex default-install default-install-docs-html default-install-docs-n default-install-demos
+
+test: default-test
