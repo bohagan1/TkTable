@@ -67,7 +67,7 @@ tk_optionMenu .page table(page) AA BB CC DD
 fill $table(page)
 fill BB [expr {$table(rows)/2}] [expr {$table(cols)/2}]
 
-trace var table(page) w [list changepage $table(table) .active]
+trace add variable table(page) write [list changepage $table(table) .active]
 
 set t $table(table)
 table $t \
