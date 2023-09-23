@@ -1,16 +1,23 @@
-if {[package vsatisfies [package present Tcl] 8.5-]} {
-	package ifneeded @PACKAGE_NAME@ @PACKAGE_VERSION@ [list apply {{dir} {
-		if {[string tolower [file extension @PKG_LIB_FILE8@]] in [list ".dll" ".so"]} {
-			load [file join $dir @EXTENSION_TARGET@] [string totitle @PACKAGE_NAME@]
-		} else {
-			load {} [string totitle @PACKAGE_NAME@]
-		}
-
-		set initScript [file join $dir tkTable.tcl]
-		if {[file exists $initScript]} {
-			source $initScript
-		}
-	}} $dir]
-} elseif {[package vsatisfies [package present Tcl] 8.4]} {
-	package ifneeded @PACKAGE_NAME@ @PACKAGE_VERSION@ [list load [file join $dir @EXTENSION_TARGET@] [string totitle @PACKAGE_NAME@]]
+# -*- tcl -*-
+# Tcl package index file, version 1.1
+#
+if {[package vsatisfies [package provide Tcl] 9.0-]} {
+    package ifneeded @PACKAGE_NAME@ @PACKAGE_VERSION@ \
+	    [list load [file join $dir @PKG_LIB_FILE9@] [string totitle @PACKAGE_NAME@]]
+    set initScript [file join $dir tkTable.tcl]
+    if {[file exists $initScript]} {
+	source $initScript
+    }
+} else {
+    package ifneeded @PACKAGE_NAME@ @PACKAGE_VERSION@ [list apply {{dir} {
+	if {[string tolower [file extension @PKG_LIB_FILE8@]] in [list ".dll" ".so"]} {
+	    load [file join $dir @PKG_LIB_FILE8@] [string totitle @PACKAGE_NAME@]
+	} else {
+	    load {} [string totitle @PACKAGE_NAME@]
+	}
+	set initScript [file join $dir tkTable.tcl]
+	if {[file exists $initScript]} {
+	    source $initScript
+	}
+    }} $dir]
 }

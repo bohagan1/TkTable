@@ -370,7 +370,7 @@ void TableDeleteChars(
 
     string = tablePtr->activeBuf;
     numBytes = (int) strlen(string);
-    numChars = Tcl_NumUtfChars(string, numBytes);
+    numChars = (int) Tcl_NumUtfChars(string, numBytes);
     if ((index + count) > numChars) {
 	count = numChars - index;
     }
@@ -485,8 +485,8 @@ void TableInsertChars(
      */
 
     if (tablePtr->icursor >= index) {
-	tablePtr->icursor += Tcl_NumUtfChars(new, oldlen+byteCount)
-	    - Tcl_NumUtfChars(tablePtr->activeBuf, oldlen);
+	tablePtr->icursor += (int) (Tcl_NumUtfChars(new, oldlen+byteCount)
+	    - Tcl_NumUtfChars(tablePtr->activeBuf, oldlen));
     }
 
     ckfree(string);

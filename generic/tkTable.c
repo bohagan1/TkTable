@@ -1710,8 +1710,9 @@ static void TableDisplay(ClientData clientdata)
 	invalidX, invalidY, invalidWidth, invalidHeight,
 	x, y, width, height, itemX, itemY, itemW, itemH,
 	row, col, urow, ucol, hrow=0, hcol=0, cx, cy, cw, ch, borders, bd[6],
-	numChars, new, boundW, boundH, maxW, maxH, cellType,
+	new, boundW, boundH, maxW, maxH, cellType,
 	originX, originY, activeCell, shouldInvert, ipadx, ipady, padx, pady;
+    Tcl_Size numChars;
     GC tagGc = NULL, topGc, bottomGc;
     char *string = NULL;
     char buf[INDEX_BUFSIZE];
@@ -3978,7 +3979,8 @@ void ExpandPercents(
 				 * new command. */
      int cmdType)		/* type of command to make %-subs for */
 {
-    int length, spaceNeeded, cvtFlags;
+    int length, cvtFlags;
+    Tcl_Size spaceNeeded;
     Tcl_UniChar ch;
     char *string, buf[INDEX_BUFSIZE];
 
@@ -4012,7 +4014,7 @@ void ExpandPercents(
 
 	before++; /* skip over % */
 	if (*before != '\0') {
-	    before += Tcl_UtfToUniChar(before, &ch);
+	    before += (int) Tcl_UtfToUniChar(before, &ch);
 	} else {
 	    ch = '%';
 	}
@@ -4043,7 +4045,7 @@ void ExpandPercents(
 	    string = Tk_PathName(tablePtr->tkwin);
 	    break;
 	default:
-	    length = Tcl_UniCharToUtf(ch, buf);
+	    length = (int) Tcl_UniCharToUtf(ch, buf);
 	    buf[length] = '\0';
 	    string = buf;
 	    break;
@@ -4074,37 +4076,51 @@ EXTERN int Tktable_Init(Tcl_Interp *interp)
     /* This defines the static chars tkTable(Safe)InitScript */
 #include "tkTableInitScript.h"
 
-    if (
+#if TCL_MAJOR_VERSION > 8
 #ifdef USE_TCL_STUBS
-	Tcl_InitStubs(interp, "8.6", 0)
-#else
-	Tcl_PkgRequire(interp, "Tcl", "8.6-", 0)
+    if (Tcl_InitStubs(interp, "9.0", 0) == NULL) {
+	return TCL_ERROR;
+    }
+    if (Tk_InitStubs(interp, "9.0", 0) == NULL) {
+	return TCL_ERROR;
+    }
 #endif
-	== NULL) {
+    if (Tcl_PkgRequire(interp, "Tcl", "9.0-", 0) == NULL) {
 	return TCL_ERROR;
     }
-    if (
-#ifdef USE_TK_STUBS
-	Tk_InitStubs(interp, "8.6", 0)
+    if (Tcl_PkgRequire(interp, "Tk", "9.0-", 0) == NULL) {
+	return TCL_ERROR;
+    }
 #else
-	Tcl_PkgRequire(interp, "Tk", "8.6-", 0)
+#ifdef USE_TCL_STUBS
+    if (Tcl_InitStubs(interp, "8.6", 0) == NULL) {
+	return TCL_ERROR;
+    }
+    if (Tk_InitStubs(interp, "8.6", 0) == NULL) {
+	return TCL_ERROR;
+    }
 #endif
-	== NULL) {
+    if (Tcl_PkgRequire(interp, "Tcl", "8.6-", 0) == NULL) {
 	return TCL_ERROR;
     }
-    if (Tcl_PkgProvide(interp, "Tktable", PACKAGE_VERSION) != TCL_OK) {
+    if (Tcl_PkgRequire(interp, "Tk", "8.6-", 0) == NULL) {
 	return TCL_ERROR;
     }
+#endif
+
     Tcl_CreateObjCommand(interp, TBL_COMMAND, Tk_TableObjCmd,
-			 (ClientData) Tk_MainWindow(interp),
-			 (Tcl_CmdDeleteProc *) NULL);
+	(ClientData) Tk_MainWindow(interp), (Tcl_CmdDeleteProc *) NULL);
 
     /*
      * The init script can't make certain calls in a safe interpreter,
      * so we always have to use the embedded runtime for it
      */
-    return Tcl_Eval(interp, Tcl_IsSafe(interp) ?
-	    tkTableSafeInitScript : tkTableInitScript);
+    if (Tcl_Eval(interp, Tcl_IsSafe(interp) ?
+	    tkTableSafeInitScript : tkTableInitScript) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+
+    return Tcl_PkgProvide(interp, PACKAGE_NAME, PACKAGE_VERSION);
 }
 
 EXTERN int Tktable_SafeInit(Tcl_Interp *interp)

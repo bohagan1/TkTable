@@ -34,12 +34,20 @@
 # include <X11/Xatom.h>
 #endif /* MAC_OSX_TK */
 
-/*
- * Tcl/Tk 8.6 introduced more CONST-ness in the APIs, but we use CONST86 in
- * some cases for compatibility with earlier Tcl headers to prevent warnings.
- */
+/* Handle TCL 8.6 CONST changes */
 #ifndef CONST86
-#  define CONST86
+#   if TCL_MAJOR_VERSION > 8
+#	define CONST86 const
+#   else
+#	define CONST86
+#   endif
+#endif
+
+/*
+ * Backwards compatibility for size type change
+ */
+#if TCL_MAJOR_VERSION < 9 && TCL_MINOR_VERSION < 7
+#   define Tcl_Size int
 #endif
 
 #ifndef EXTERN
