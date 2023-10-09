@@ -763,9 +763,9 @@ VERSION = $(TK_VERSION)
 # first from a configure.in file, and then from configure.ac
 !ifndef DOTVERSION
 !if [echo DOTVERSION = \> versions.vc] \
-   || [nmakehlp -V $(ROOT)\configure.in ^[$(PROJECT)^] >> versions.vc]
+   || [nmakehlp -V $(ROOT)\configure.in AC_INIT >> versions.vc]
 !if [echo DOTVERSION = \> versions.vc] \
-   || [nmakehlp -V $(ROOT)\configure.ac ^[$(PROJECT)^] >> versions.vc]
+   || [nmakehlp -V $(ROOT)\configure.ac AC_INIT >> versions.vc]
 !error *** Could not figure out extension version. Please define DOTVERSION in parent makefile before including rules.vc.
 !endif
 !endif
@@ -816,7 +816,6 @@ DOTSEPARATED=$(DOTSEPARATED:b=.)
 #           configuration (ignored for Tcl itself)
 # _USE_64BIT_TIME_T - forces a build using 64-bit time_t for 32-bit build
 #           (CRT library should support this, not needed for Tcl 9.x)
-# TCL_UTF_MAX=3 - forces a build using UTF-16 internally (not recommended).
 # Further, LINKERFLAGS are modified based on above.
 
 # Default values for all the above
@@ -886,11 +885,6 @@ TCL_BUILD_FOR = 8
 !if [nmakehlp -f $(OPTS) "time64bit"]
 !message *** Force 64-bit time_t
 _USE_64BIT_TIME_T = 1
-!endif
-
-!if [nmakehlp -f $(OPTS) "utf16"]
-!message *** Force UTF-16 internally
-TCL_UTF_MAX = 3
 !endif
 !endif
 
@@ -1237,8 +1231,15 @@ TCLSH_NATIVE	= $(TCLSH)
 !if $(DOING_TK) || $(NEED_TK)
 WISHNAMEPREFIX = wish
 WISHNAME = $(WISHNAMEPREFIX)$(TK_VERSION)$(SUFX).exe
+TKLIBNAME8	= tk$(TK_VERSION)$(SUFX).$(EXT)
+TKLIBNAME9	= tcl9tk$(TK_VERSION)$(SUFX).$(EXT)
+!if $(TCL_MAJOR_VERSION) == 8 || "$(TCL_BUILD_FOR)" == "8"
 TKLIBNAME	= tk$(TK_VERSION)$(SUFX).$(EXT)
 TKIMPLIBNAME	= tk$(TK_VERSION)$(SUFX).lib
+!else
+TKLIBNAME	= tcl9tk$(TK_VERSION)$(SUFX).$(EXT)
+TKIMPLIBNAME	= tcl9tk$(TK_VERSION)$(SUFX).lib
+!endif
 TKSTUBLIBNAME	= tkstub$(TK_VERSION).lib
 
 !if $(DOING_TK)
@@ -1287,9 +1288,20 @@ tklibs = "$(TKSTUBLIB)" "$(TKIMPLIB)"
 
 # Various output paths
 PRJIMPLIB	= $(OUT_DIR)\$(PROJECT)$(VERSION)$(SUFX).lib
-PRJLIBNAME	= $(PROJECT)$(VERSION)$(SUFX).$(EXT)
+PRJLIBNAME8	= $(PROJECT)$(VERSION)$(SUFX).$(EXT)
+PRJLIBNAME9	= tcl9$(PROJECT)$(VERSION)$(SUFX).$(EXT)
+!if $(TCL_MAJOR_VERSION) == 8 || "$(TCL_BUILD_FOR)" == "8"
+PRJLIBNAME	= $(PRJLIBNAME8)
+!else
+PRJLIBNAME	= $(PRJLIBNAME9)
+!endif
 PRJLIB		= $(OUT_DIR)\$(PRJLIBNAME)
+
+!if $(TCL_MAJOR_VERSION) == 8
 PRJSTUBLIBNAME	= $(STUBPREFIX)$(VERSION).lib
+!else
+PRJSTUBLIBNAME	= $(STUBPREFIX).lib
+!endif
 PRJSTUBLIB	= $(OUT_DIR)\$(PRJSTUBLIBNAME)
 
 # If extension parent makefile has not defined a resource definition file,
@@ -1351,7 +1363,7 @@ INCLUDE_INSTALL_DIR	= $(_INSTALLDIR)\..\include
 # and switches are specific to it.
 # The following macros are defined, names are for historical compatibility:
 # OPTDEFINES - /Dxxx C macro flags based on user-specified OPTS
-# COMPILERFLAGS - /Dxxx C macro flags independent of any configuration opttions
+# COMPILERFLAGS - /Dxxx C macro flags independent of any configuration options
 # crt - Compiler switch that selects the appropriate C runtime
 # cdebug - Compiler switches related to debug AND optimizations
 # cwarn - Compiler switches that set warning levels
@@ -1432,9 +1444,6 @@ OPTDEFINES	= $(OPTDEFINES) /D_USE_64BIT_TIME_T=1
 
 # _ATL_XP_TARGETING - Newer SDK's need this to build for XP
 COMPILERFLAGS  = /D_ATL_XP_TARGETING
-!endif
-!if "$(TCL_UTF_MAX)" == "3"
-OPTDEFINES	= $(OPTDEFINES) /DTCL_UTF_MAX=3
 !endif
 !if "$(TCL_BUILD_FOR)" == "8"
 OPTDEFINES	= $(OPTDEFINES) /DTCL_MAJOR_VERSION=8
@@ -1624,12 +1633,22 @@ default-target: $(DEFAULT_BUILD_TARGET)
 
 !if $(MULTIPLATFORM_INSTALL)
 default-pkgindex:
+	@echo if {[package vsatisfies [package provide Tcl] 9.0-]} { > $(OUT_DIR)\pkgIndex.tcl
 	@echo package ifneeded $(PRJ_PACKAGE_TCLNAME) $(DOTVERSION) \
-	    [list load [file join $$dir $(PLATFORM_IDENTIFY) $(PRJLIBNAME)]] > $(OUT_DIR)\pkgIndex.tcl
+	    [list load [file join $$dir $(PLATFORM_IDENTIFY) $(PRJLIBNAME9)]] >> $(OUT_DIR)\pkgIndex.tcl
+	@echo } else { >> $(OUT_DIR)\pkgIndex.tcl
+	@echo package ifneeded $(PRJ_PACKAGE_TCLNAME) $(DOTVERSION) \
+	    [list load [file join $$dir $(PLATFORM_IDENTIFY) $(PRJLIBNAME8)]] >> $(OUT_DIR)\pkgIndex.tcl
+	@echo } >> $(OUT_DIR)\pkgIndex.tcl
 !else
 default-pkgindex:
+	@echo if {[package vsatisfies [package provide Tcl] 9.0-]} { > $(OUT_DIR)\pkgIndex.tcl
 	@echo package ifneeded $(PRJ_PACKAGE_TCLNAME) $(DOTVERSION) \
-	    [list load [file join $$dir $(PRJLIBNAME)]] > $(OUT_DIR)\pkgIndex.tcl
+	    [list load [file join $$dir $(PRJLIBNAME9)]] >> $(OUT_DIR)\pkgIndex.tcl
+	@echo } else { >> $(OUT_DIR)\pkgIndex.tcl
+	@echo package ifneeded $(PRJ_PACKAGE_TCLNAME) $(DOTVERSION) \
+	    [list load [file join $$dir $(PRJLIBNAME8)]] >> $(OUT_DIR)\pkgIndex.tcl
+	@echo } >> $(OUT_DIR)\pkgIndex.tcl
 !endif
 
 default-pkgindex-tea:
@@ -1638,6 +1657,8 @@ default-pkgindex-tea:
 @PACKAGE_NAME@       $(PRJ_PACKAGE_TCLNAME)
 @PACKAGE_TCLNAME@    $(PRJ_PACKAGE_TCLNAME)
 @PKG_LIB_FILE@       $(PRJLIBNAME)
+@PKG_LIB_FILE8@      $(PRJLIBNAME8)
+@PKG_LIB_FILE9@      $(PRJLIBNAME9)
 <<
 
 default-install: default-install-binaries default-install-libraries
