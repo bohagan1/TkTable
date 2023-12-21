@@ -2175,7 +2175,7 @@ static void TableDisplay(ClientData clientdata) {
 			XCopyArea(display, window, clipWind, tagGc,
 				x0 + (ellEast ? width - useEllLen : 0), y0,
 				useEllLen, height,
-				x0 - x + (ellEast ? width - useEllLen : 0), 
+				x0 - x + (ellEast ? width - useEllLen : 0),
 				y0 - y);
 			Tk_DrawChars(display, clipWind, tagGc, ellFont,
 				ellipsis, (int) strlen(ellipsis),
@@ -2540,7 +2540,7 @@ static void TableFlashEvent(ClientData clientdata) {
 
     /* do I need to restart the timer */
     if (entries && tablePtr->flashMode) {
-	tablePtr->flashTimer = Tcl_CreateTimerHandler(250, TableFlashEvent, 
+	tablePtr->flashTimer = Tcl_CreateTimerHandler(250, TableFlashEvent,
 		(ClientData) tablePtr);
     } else {
 	tablePtr->flashTimer = 0;
@@ -3892,41 +3892,34 @@ void ExpandPercents(
 #ifdef MAC_TCL
 #pragma export on
 #endif
+
+#if TCL_MAJOR_VERSION > 8
+#define MIN_VERSION "9.0"
+#else
+#define MIN_VERSION "8.6"
+#endif
+
 EXTERN int Tktable_Init(Tcl_Interp *interp) {
     /* This defines the static chars tkTable(Safe)InitScript */
 #include "tkTableInitScript.h"
 
-#if TCL_MAJOR_VERSION > 8
 #ifdef USE_TCL_STUBS
-    if (Tcl_InitStubs(interp, "9.0", 0) == NULL) {
-	return TCL_ERROR;
-    }
-    if (Tk_InitStubs(interp, "9.0", 0) == NULL) {
+    if (Tcl_InitStubs(interp, MIN_VERSION, 0) == NULL) {
 	return TCL_ERROR;
     }
 #endif
-    if (Tcl_PkgRequire(interp, "Tcl", "9.0-", 0) == NULL) {
-	return TCL_ERROR;
-    }
-    if (Tcl_PkgRequire(interp, "Tk", "9.0-", 0) == NULL) {
-	return TCL_ERROR;
-    }
-#else
-#ifdef USE_TCL_STUBS
-    if (Tcl_InitStubs(interp, "8.6", 0) == NULL) {
-	return TCL_ERROR;
-    }
-    if (Tk_InitStubs(interp, "8.6", 0) == NULL) {
+#ifdef USE_TK_STUBS
+    if (Tk_InitStubs(interp, MIN_VERSION, 0) == NULL) {
 	return TCL_ERROR;
     }
 #endif
-    if (Tcl_PkgRequire(interp, "Tcl", "8.6-", 0) == NULL) {
+
+    if (Tcl_PkgRequire(interp, "Tcl", MIN_VERSION, 0) == NULL) {
 	return TCL_ERROR;
     }
-    if (Tcl_PkgRequire(interp, "Tk", "8.6-", 0) == NULL) {
+    if (Tcl_PkgRequire(interp, "Tk", MIN_VERSION, 0) == NULL) {
 	return TCL_ERROR;
     }
-#endif
 
     Tcl_CreateObjCommand(interp, TBL_COMMAND, Tk_TableObjCmd,
 	(ClientData) Tk_MainWindow(interp), (Tcl_CmdDeleteProc *) NULL);
@@ -3935,7 +3928,7 @@ EXTERN int Tktable_Init(Tcl_Interp *interp) {
      * The init script can't make certain calls in a safe interpreter,
      * so we always have to use the embedded runtime for it
      */
-    if (Tcl_Eval(interp, Tcl_IsSafe(interp) ? 
+    if (Tcl_Eval(interp, Tcl_IsSafe(interp) ?
 	    tkTableSafeInitScript : tkTableInitScript) == TCL_ERROR) {
 	return TCL_ERROR;
     }
