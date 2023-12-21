@@ -307,7 +307,7 @@ Tk_ConfigSpec tableSpecs[] = {
      Tk_Offset(Table, titleRows), TK_CONFIG_NULL_OK },
     {TK_CONFIG_BOOLEAN, "-usecommand", "useCommand", "UseCommand", "1",
      Tk_Offset(Table, useCmd), 0},
-    {TK_CONFIG_STRING, "-variable", "variable", "Variable", (char *)NULL,
+    {TK_CONFIG_STRING, "-variable", "variable", "Variable", "::tableData",
      Tk_Offset(Table, arrayVar), TK_CONFIG_NULL_OK },
     {TK_CONFIG_BOOLEAN, "-validate", "validate", "Validate", "0",
      Tk_Offset(Table, validate), 0},

@@ -692,6 +692,7 @@ Database Class: <b>Variable</b>
 <p><p>
 Global Tcl array variable to attach to the table's C array. It
 will be created if it doesn't already exist or is a simple variable.
+Defaults to ::tableData.
 Keys used by the table in the array are of the form
 <i>row</i>,<i>col</i> for cells and the special key <i>active</i> which contains the
 value of the active cell buffer. The Tcl array is managed as a
