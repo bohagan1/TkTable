@@ -46,8 +46,8 @@ EXTERN int		Tktest_Init(Tcl_Interp *interp);
 
 int main(
     int argc,			/* Number of command-line arguments. */
-    char **argv)		/* Values of command-line arguments. */
-{
+    char **argv) {		/* Values of command-line arguments. */
+
     Tk_Main(argc, argv, Tcl_AppInit);
     return 0;			/* Needed only to prevent compiler warning. */
 }
@@ -72,8 +72,8 @@ int main(
  */
 
 int Tcl_AppInit(
-    Tcl_Interp *interp)		/* Interpreter for application. */
-{
+    Tcl_Interp *interp) {		/* Interpreter for application. */
+
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }

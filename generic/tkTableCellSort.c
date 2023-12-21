@@ -1,4 +1,4 @@
-/* 
+/*
  * tkTableCell.c --
  *
  *	This module implements cell sort functions for table
@@ -67,8 +67,8 @@ static int		DictionaryCompare(char *left, char *right);
  *----------------------------------------------------------------------
  */
 static int TableSortCompareProc(
-    const void *first, const void *second)		/* Elements to be compared. */
-{
+    const void *first, const void *second) {		/* Elements to be compared. */
+
     char *str1 = *((char **) first);
     char *str2 = *((char **) second);
 
@@ -90,8 +90,7 @@ static int TableSortCompareProc(
  *
  *----------------------------------------------------------------------
  */
-char * TableCellSort(Table *tablePtr, char *str)
-{
+char * TableCellSort(Table *tablePtr, char *str) {
     int listArgc;
     const char **listArgv;
     char *result;
@@ -100,8 +99,7 @@ char * TableCellSort(Table *tablePtr, char *str)
 	return str;
     }
     /* Thread safety: qsort is reportedly not thread-safe... */
-    qsort((void *) listArgv, (size_t) listArgc, sizeof (char *),
-	  TableSortCompareProc);
+    qsort((void *) listArgv, (size_t) listArgc, sizeof (char *), TableSortCompareProc);
     result = Tcl_Merge(listArgc, listArgv);
     ckfree((char *) listArgv);
     return result;
@@ -132,8 +130,8 @@ char * TableCellSort(Table *tablePtr, char *str)
  */
 
 static int DictionaryCompare(
-    char *left, char *right)          /* The strings to compare */
-{
+    char *left, char *right) {         /* The strings to compare */
+
     int diff, zeros;
     int secondaryDiff = 0;
 
@@ -245,11 +243,9 @@ static int DictionaryCompare(
  */
 
 static SortElement * MergeLists(
-    SortElement *leftPtr,               /* First list to be merged; may be
-					 * NULL. */
-    SortElement *rightPtr)              /* Second list to be merged; may be
-					 * NULL. */
-{
+    SortElement *leftPtr,              /* First list to be merged; may be NULL. */
+    SortElement *rightPtr) {           /* Second list to be merged; may be NULL. */
+
     SortElement *headPtr;
     SortElement *tailPtr;
 
@@ -259,8 +255,8 @@ static SortElement * MergeLists(
     if (rightPtr == NULL) {
         return leftPtr;
     }
-    if (DictionaryCompare(Tcl_GetString(leftPtr->objPtr),
-			  Tcl_GetString(rightPtr->objPtr)) > 0) {
+    if (DictionaryCompare(Tcl_GetString(leftPtr->objPtr), 
+		Tcl_GetString(rightPtr->objPtr)) > 0) {
 	tailPtr = rightPtr;
 	rightPtr = rightPtr->nextPtr;
     } else {
@@ -270,7 +266,7 @@ static SortElement * MergeLists(
     headPtr = tailPtr;
     while ((leftPtr != NULL) && (rightPtr != NULL)) {
 	if (DictionaryCompare(Tcl_GetString(leftPtr->objPtr),
-			      Tcl_GetString(rightPtr->objPtr)) > 0) {
+		Tcl_GetString(rightPtr->objPtr)) > 0) {
 	    tailPtr->nextPtr = rightPtr;
 	    tailPtr = rightPtr;
 	    rightPtr = rightPtr->nextPtr;
@@ -307,8 +303,7 @@ static SortElement * MergeLists(
  */
 
 static SortElement * MergeSort(
-    SortElement *headPtr)               /* First element on the list */
-{
+    SortElement *headPtr) {            /* First element on the list */
     /*
      * The subList array below holds pointers to temporary lists built
      * during the merge sort.  Element i of the array holds a list of
@@ -358,15 +353,13 @@ static SortElement * MergeSort(
  *
  *----------------------------------------------------------------------
  */
-Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr)
-{
+Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
     int length, i;
     Tcl_Obj *sortedObjPtr, **listObjPtrs;
     SortElement *elementArray;
-    SortElement *elementPtr;        
+    SortElement *elementPtr;
 
-    if (Tcl_ListObjGetElements(interp, listObjPtr,
-			       &length, &listObjPtrs) != TCL_OK) {
+    if (Tcl_ListObjGetElements(interp, listObjPtr, &length, &listObjPtrs) != TCL_OK) {
 	return NULL;
     }
     if (length <= 0) {
@@ -381,7 +374,7 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr)
     elementArray[length-1].nextPtr = NULL;
     elementPtr = MergeSort(elementArray);
     sortedObjPtr = Tcl_NewObj();
-    for (; elementPtr != NULL; elementPtr = elementPtr->nextPtr){
+    for (; elementPtr != NULL; elementPtr = elementPtr->nextPtr) {
 	Tcl_ListObjAppendElement(NULL, sortedObjPtr, elementPtr->objPtr);
     }
     ckfree((char*) elementArray);

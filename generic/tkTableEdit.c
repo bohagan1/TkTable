@@ -1,4 +1,4 @@
-/* 
+/*
  * tkTableEdit.c --
  *
  *	This module implements editing functions of a table widget.
@@ -61,19 +61,15 @@ enum rcCmd {
  *
  *--------------------------------------------------------------
  */
-int Table_EditCmd(ClientData clientData, Tcl_Interp *interp,
-	int objc, Tcl_Obj *const objv[])
-{
+int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int doInsert, cmdIndex, first, last;
 
     if (objc < 4) {
-	Tcl_WrongNumArgs(interp, 2, objv,
-			 "option ?switches? arg ?arg?");
+	Tcl_WrongNumArgs(interp, 2, objv, "option ?switches? arg ?arg?");
 	return TCL_ERROR;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[2], modCmdNames,
-			    "option", 0, &cmdIndex) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, objv[2], modCmdNames, "option", 0, &cmdIndex) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -89,8 +85,7 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp,
 	    if (TableGetIcursorObj(tablePtr, objv[3], &first) != TCL_OK) {
 		return TCL_ERROR;
 	    } else if ((tablePtr->flags & HAS_ACTIVE) &&
-		       !(tablePtr->flags & ACTIVE_DISABLED) &&
-		       tablePtr->state == STATE_NORMAL) {
+		   !(tablePtr->flags & ACTIVE_DISABLED) && tablePtr->state == STATE_NORMAL) {
 		TableInsertChars(tablePtr, first, Tcl_GetString(objv[4]));
 	    }
 	} else {
@@ -104,13 +99,11 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp,
 	    }
 	    if (objc == 4) {
 		last = first+1;
-	    } else if (TableGetIcursorObj(tablePtr, objv[4],
-					  &last) != TCL_OK) {
+	    } else if (TableGetIcursorObj(tablePtr, objv[4], &last) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    if ((last >= first) && (tablePtr->flags & HAS_ACTIVE) &&
-		!(tablePtr->flags & ACTIVE_DISABLED) &&
-		tablePtr->state == STATE_NORMAL) {
+		!(tablePtr->flags & ACTIVE_DISABLED) && tablePtr->state == STATE_NORMAL) {
 		TableDeleteChars(tablePtr, first, last-first);
 	    }
 	}
@@ -190,8 +183,7 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp,
 	    tagTblPtr	= tablePtr->rowStyles;
 	    dimTblPtr	= tablePtr->rowHeights;
 	    dimPtr	= &(tablePtr->rows);
-	    lo		= tablePtr->colOffset
-		+ ((flags & HOLD_TITLES) ? tablePtr->titleCols : 0);
+	    lo		= tablePtr->colOffset+((flags & HOLD_TITLES) ? tablePtr->titleCols : 0);
 	    hi		= maxcol;
 	} else {
 	    maxkey	= maxcol;
@@ -201,8 +193,7 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp,
 	    tagTblPtr	= tablePtr->colStyles;
 	    dimTblPtr	= tablePtr->colWidths;
 	    dimPtr	= &(tablePtr->cols);
-	    lo		= tablePtr->rowOffset
-		+ ((flags & HOLD_TITLES) ? tablePtr->titleRows : 0);
+	    lo		= tablePtr->rowOffset+((flags & HOLD_TITLES) ? tablePtr->titleRows : 0);
 	    hi		= maxrow;
 	}
 
@@ -252,17 +243,13 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp,
 		 * stay do remap correctly. [Bug #551325]
 		 */
 		if (doRows) {
-		    EmbWinUnmap(tablePtr,
-			    first - tablePtr->rowOffset,
-			    maxkey - tablePtr->rowOffset,
-			    lo - tablePtr->colOffset,
-			    hi - tablePtr->colOffset);
+		    EmbWinUnmap(tablePtr, first - tablePtr->rowOffset,
+			maxkey - tablePtr->rowOffset, lo - tablePtr->colOffset,
+			hi - tablePtr->colOffset);
 		} else {
-		    EmbWinUnmap(tablePtr,
-			    lo - tablePtr->rowOffset,
-			    hi - tablePtr->rowOffset,
-			    first - tablePtr->colOffset,
-			    maxkey - tablePtr->colOffset);
+		    EmbWinUnmap(tablePtr, lo - tablePtr->rowOffset,
+			hi - tablePtr->rowOffset, first - tablePtr->colOffset,
+			maxkey - tablePtr->colOffset);
 		}
 	    }
 	} else {
@@ -363,8 +350,8 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp,
 void TableDeleteChars(
     Table *tablePtr,		/* Table widget to modify. */
     int index,			/* Index of first character to delete. */
-    int count)			/* How many characters to delete. */
-{
+    int count) {			/* How many characters to delete. */
+
     int byteIndex, byteCount, newByteCount, numBytes, numChars;
     char *new, *string;
 
@@ -379,8 +366,7 @@ void TableDeleteChars(
     }
 
     byteIndex = (int) (Tcl_UtfAtIndex(string, index) - string);
-    byteCount = (int) (Tcl_UtfAtIndex(string + byteIndex, count)
-	- (string + byteIndex));
+    byteCount = (int) (Tcl_UtfAtIndex(string + byteIndex, count) - (string + byteIndex));
 
     newByteCount = numBytes + 1 - byteCount;
     new = (char *) ckalloc((unsigned) newByteCount);
@@ -390,8 +376,7 @@ void TableDeleteChars(
     /* This prevents deletes on BREAK or validation error. */
     if (tablePtr->validate &&
 	TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
-			    tablePtr->activeCol+tablePtr->colOffset,
-			    tablePtr->activeBuf, new, index) != TCL_OK) {
+	tablePtr->activeCol+tablePtr->colOffset, tablePtr->activeBuf, new, index) != TCL_OK) {
 	ckfree(new);
 	return;
     }
@@ -433,9 +418,9 @@ void TableDeleteChars(
 void TableInsertChars(
     Table *tablePtr,		/* Table that is to get the new elements. */
     int index,			/* Add the new elements before this element. */
-    char *value)		/* New characters to add (NULL-terminated
+    char *value) {		/* New characters to add (NULL-terminated
 				 * string). */
-{
+
     int oldlen, byteIndex, byteCount;
     char *new, *string;
 
@@ -467,9 +452,9 @@ void TableInsertChars(
     /* validate potential new active buffer */
     /* This prevents inserts on either BREAK or validation error. */
     if (tablePtr->validate &&
-	TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
-			    tablePtr->activeCol+tablePtr->colOffset,
-			    tablePtr->activeBuf, new, byteIndex) != TCL_OK) {
+	    TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
+	    tablePtr->activeCol+tablePtr->colOffset, tablePtr->activeBuf, new,
+	    byteIndex) != TCL_OK) {
 	ckfree(new);
 	return;
     }
@@ -524,8 +509,8 @@ static void TableModifyRC(
     int offset,		/* appropriate offset */
     int from, int to,	/* the from and to row/col */
     int lo, int hi,	/* the lo and hi col/row */
-    int outOfBounds)	/* the boundary check for shifting items */
-{
+    int outOfBounds) {	/* the boundary check for shifting items */
+
     int j, new;
     char buf[INDEX_BUFSIZE], buf1[INDEX_BUFSIZE];
     Tcl_HashEntry *entryPtr, *newPtr;
@@ -555,8 +540,7 @@ static void TableModifyRC(
 	    }
 	    entryPtr = Tcl_FindHashEntry(dimTblPtr, INT2PTR(to-offset));
 	    if (entryPtr != NULL) {
-		newPtr = Tcl_CreateHashEntry(dimTblPtr, INT2PTR(from-offset),
-			&new);
+		newPtr = Tcl_CreateHashEntry(dimTblPtr, INT2PTR(from-offset), &new);
 		Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
 		Tcl_DeleteHashEntry(entryPtr);
 	    }
@@ -566,13 +550,11 @@ static void TableModifyRC(
 	if (doRows /* rows */) {
 	    TableMakeArrayIndex(from, j, buf);
 	    TableMakeArrayIndex(to, j, buf1);
-	    TableMoveCellValue(tablePtr, to, j, buf1, from, j, buf,
-		    outOfBounds);
+	    TableMoveCellValue(tablePtr, to, j, buf1, from, j, buf, outOfBounds);
 	} else {
 	    TableMakeArrayIndex(j, from, buf);
 	    TableMakeArrayIndex(j, to, buf1);
-	    TableMoveCellValue(tablePtr, j, to, buf1, j, from, buf,
-		    outOfBounds);
+	    TableMoveCellValue(tablePtr, j, to, buf1, j, from, buf, outOfBounds);
 	}
 	/*
 	 * If -holdselection is specified, we leave the selected cells in the
@@ -605,8 +587,7 @@ static void TableModifyRC(
 	    if (!outOfBounds) {
 		entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf1);
 		if (entryPtr != NULL) {
-		    newPtr = Tcl_CreateHashEntry(tablePtr->cellStyles, buf,
-			    &new);
+		    newPtr = Tcl_CreateHashEntry(tablePtr->cellStyles, buf, &new);
 		    Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
 		    Tcl_DeleteHashEntry(entryPtr);
 		}
@@ -640,8 +621,7 @@ static void TableModifyRC(
 		    /* and free the old hash table entry */
 		    Tcl_DeleteHashEntry(entryPtr);
 
-		    entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, buf,
-			    &new);
+		    entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, buf, &new);
 		    /*
 		     * We needn't check if a window was in buf, since the
 		     * Table_WinDelete above should guarantee that no window

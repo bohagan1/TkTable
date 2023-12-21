@@ -393,8 +393,7 @@ static int	TextToPostscript(Tcl_Interp *interp,
  * This is just Tcl_DStringAppend for multiple lines, including
  * the full text of each line
  */
-void Tcl_DStringAppendAll(Tcl_DString *dstringPtr, ...)
-{
+void Tcl_DStringAppendAll(Tcl_DString *dstringPtr, ...) {
     va_list argList;
     Tcl_DString *dstringPtr;
     char *string;
@@ -428,8 +427,7 @@ int Table_PostscriptCmd(
      ClientData clientData,	/* Information about table widget. */
      Tcl_Interp *interp,	/* Current interpreter. */
      int objc,			/* Number of argument objects. */
-     Tcl_Obj *const objv[])
-{
+     Tcl_Obj *const objv[]) {
 #ifdef _WIN32
     /*
      * At the moment, it just doesn't like this code...
@@ -1000,8 +998,8 @@ int Tk_TablePsColor(
      Tcl_Interp *interp,		/* Interpreter for returning Postscript
 					 * or error message. */
      Table *tablePtr,			/* Information about table. */
-     XColor *colorPtr)			/* Information about color. */
-{
+     XColor *colorPtr) {		/* Information about color. */
+
     TkPostscriptInfo *psInfoPtr = tablePtr->psInfoPtr;
     int tmp;
     double red, green, blue;
@@ -1076,9 +1074,9 @@ int Tk_TablePsFont(
      Tcl_Interp *interp,		/* Interpreter for returning Postscript
 					 * or error message. */
      Table *tablePtr,			/* Information about table. */
-     Tk_Font tkfont)			/* Information about font in which text
+     Tk_Font tkfont) {			/* Information about font in which text
 					 * is to be printed. */
-{
+
     TkPostscriptInfo *psInfoPtr = tablePtr->psInfoPtr;
     char *end;
     char pointString[TCL_INTEGER_SPACE];
@@ -1161,8 +1159,8 @@ findfont:
 static int GetPostscriptPoints(
      Tcl_Interp *interp,		/* Use this for error reporting. */
      char *string,		/* String describing a screen distance. */
-     double *doublePtr)		/* Place to store converted result. */
-{
+     double *doublePtr)	{	/* Place to store converted result. */
+
     char *end;
     double d;
 
@@ -1230,14 +1228,14 @@ static int GetPostscriptPoints(
  */
 
 static int TextToPostscript(
-     Tcl_Interp *interp,	/* Leave Postscript or error message here. */
-     Table *tablePtr,		/* Information about overall canvas. */
-     TableTag *tagPtr,		/*  */
-     int tagX, int tagY,	/*  */
-     int width, int height,	/*  */
-     int row, int col,		/*  */
-     Tk_TextLayout textLayout)	/*  */
-{
+     Tcl_Interp *interp,	 /* Leave Postscript or error message here. */
+     Table *tablePtr,		 /* Information about overall canvas. */
+     TableTag *tagPtr,		 /*  */
+     int tagX, int tagY,	 /*  */
+     int width, int height,	 /*  */
+     int row, int col,		 /*  */
+     Tk_TextLayout textLayout) { /*  */
+
     int x, y;
     Tk_FontMetrics fm;
     char *justify;
