@@ -6,9 +6,10 @@ if {[package vsatisfies [package provide Tcl] 9.0-]} {
 	    [list load [file join $dir @PKG_LIB_FILE9@] [string totitle @PACKAGE_NAME@]]
     set initScript [file join $dir tkTable.tcl]
     if {[file exists $initScript]} {
-	source $initScript
+	source -encoding utf-8 $initScript
     }
 } else {
+    if {![package vsatisfies [package provide Tcl] 8.5]} {return}
     package ifneeded @PACKAGE_NAME@ @PACKAGE_VERSION@ [list apply {{dir} {
 	if {[string tolower [file extension @PKG_LIB_FILE8@]] in [list ".dll" ".so"]} {
 	    load [file join $dir @PKG_LIB_FILE8@] [string totitle @PACKAGE_NAME@]
@@ -17,7 +18,7 @@ if {[package vsatisfies [package provide Tcl] 9.0-]} {
 	}
 	set initScript [file join $dir tkTable.tcl]
 	if {[file exists $initScript]} {
-	    source $initScript
+	    source -encoding utf-8 $initScript
 	}
     }} $dir]
 }
