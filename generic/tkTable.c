@@ -28,8 +28,6 @@
 #include "dprint.h"
 #endif
 
-static char **	StringifyObjects(int objc, Tcl_Obj *const objv[]);
-
 static int	Tk_TableObjCmd(ClientData clientData, Tcl_Interp *interp,
 			int objc, Tcl_Obj *const objv[]);
 
@@ -398,52 +396,6 @@ typedef union {
  */
 
 /*
- *---------------------------------------------------------------------------
- *
- * StringifyObjects -- (from tclCmdAH.c)
- *
- *	Helper function to bridge the gap between an object-based procedure
- *	and an older string-based procedure.
- *
- *	Given an array of objects, allocate an array that consists of the
- *	string representations of those objects.
- *
- * Results:
- *	The return value is a pointer to the newly allocated array of
- *	strings.  Elements 0 to (objc-1) of the string array point to the
- *	string representation of the corresponding element in the source
- *	object array; element objc of the string array is NULL.
- *
- * Side effects:
- *	Memory allocated.  The caller must eventually free this memory
- *	by calling ckfree() on the return value.
- *
-	    int result;
-	    char **argv;
-	    argv   = StringifyObjects(objc, objv);
-	    result = StringBasedCmd(interp, objc, argv);
-	    ckfree((char *) argv);
-	    return result;
- *
- *---------------------------------------------------------------------------
- */
-
-static char ** StringifyObjects(
-     int objc,			/* Number of arguments. */
-     Tcl_Obj *const objv[]) {	/* Argument objects. */
-
-    int i;
-    char **argv;
-
-    argv = (char **) ckalloc((objc + 1) * sizeof(char *));
-    for (i = 0; i < objc; i++) {
-    	argv[i] = Tcl_GetString(objv[i]);
-    }
-    argv[i] = NULL;
-    return argv;
-}
-
-/*
  * As long as we wait for the Function in general
  *
  * This parses the "-class" option for the table.
@@ -600,7 +552,10 @@ static int Tk_TableObjCmd(
 	Tk_DestroyWindow(tkwin);
 	return TCL_ERROR;
     }
-    TableInitTags(tablePtr);
+    if (TableInitTags(interp, tablePtr) != TCL_OK) {
+	Tk_DestroyWindow(tkwin);
+	return TCL_ERROR;
+    }
 
     Tcl_SetObjResult(interp, Tcl_NewStringObj(Tk_PathName(tablePtr->tkwin), -1));
     return TCL_OK;
@@ -1022,7 +977,7 @@ static int TableConfigure(
     Tcl_HashSearch search;
     int oldUse, oldCaching, oldExport, oldTitleRows, oldTitleCols;
     int result = TCL_OK;
-    char *oldVar = NULL, **argv;
+    char *oldVar = NULL;
     Tcl_DString error;
     Tk_FontMetrics fm;
 
@@ -1037,10 +992,8 @@ static int TableConfigure(
     }
 
     /* Do the configuration */
-    argv = StringifyObjects(objc, objv);
     result = Tk_ConfigureWidget(interp, tablePtr->tkwin, tableSpecs,
-	    objc, (const char **) argv, (char *) tablePtr, flags);
-    ckfree((char *) argv);
+	    objc, (void *) objv, (char *) tablePtr, flags|TK_CONFIG_OBJS);
     if (result != TCL_OK) {
 	return TCL_ERROR;
     }

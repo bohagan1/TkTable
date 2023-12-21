@@ -442,7 +442,7 @@ int Table_PostscriptCmd(
     int x0, y0, w0, h0, xn, yn, wn, hn;
     int x, y, w, h, i;
 #define STRING_LENGTH 400
-    char string[STRING_LENGTH+1], *p, **argv;
+    char string[STRING_LENGTH+1], *p;
     size_t length;
     int deltaX = 0, deltaY = 0;	/* Offset of lower-left corner of area to
 				 * be marked up, measured in table units
@@ -501,17 +501,10 @@ int Table_PostscriptCmd(
     Tcl_InitHashTable(&psInfo.fontTable, TCL_STRING_KEYS);
 
     /*
-     * The magic StringifyObjects
+     * Config widget
      */
-    argv = (char **) ckalloc((objc + 1) * sizeof(char *));
-    for (i = 0; i < objc; i++)
-	argv[i] = Tcl_GetString(objv[i]);
-    argv[i] = NULL;
-
-    result = Tk_ConfigureWidget(interp, tablePtr->tkwin, configSpecs,
-				objc-2, argv+2, (char *) &psInfo,
-				TK_CONFIG_ARGV_ONLY);
-    if (result != TCL_OK) {
+    if (Tk_ConfigureWidget(interp, tablePtr->tkwin, configSpecs,
+	objc-2, (void *) (objv+2), (char *) &psInfo, TK_CONFIG_OBJS) != TCL_OK) {
 	goto cleanup;
     }
 
@@ -926,7 +919,6 @@ int Table_PostscriptCmd(
    */
 
 cleanup:
-    ckfree((char *) argv);
     Tcl_DStringResult(interp, &postscript);
     Tcl_DStringFree(&postscript);
     Tcl_DStringFree(&buffer);

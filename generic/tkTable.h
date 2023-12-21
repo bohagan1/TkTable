@@ -547,7 +547,7 @@ extern void	TableMergeTag(Table *tablePtr, TableTag *baseTag,
 extern void	TableInvertTag(TableTag *baseTag);
 extern int	TableGetTagBorders(TableTag *tagPtr,
 			int *left, int *right, int *top, int *bottom);
-extern void	TableInitTags(Table *tablePtr);
+extern int	TableInitTags(Tcl_Interp *interp, Table *tablePtr);
 extern TableTag *FindRowColTag(Table *tablePtr,
 			int cell, int type);
 extern void	TableCleanupTag(Table *tablePtr,

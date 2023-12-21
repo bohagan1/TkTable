@@ -13,11 +13,7 @@
 
 #include "tkTable.h"
 
-static TableTag *TableTagGetEntry(Table *tablePtr, char *name,
-			int objc, const char **argv);
 static unsigned int	TableTagGetPriority(Table *tablePtr, TableTag *tagPtr);
-static void	TableImageProc(ClientData clientData, int x, int y, int width,
-			int height, int imageWidth, int imageHeight);
 static int	TableOptionReliefSet(ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
 			const char *value, char *widgRec, int offset);
@@ -439,7 +435,7 @@ int TableGetTagBorders(TableTag *tagPtr, int *left, int *right, int *top, int *b
  *
  *----------------------------------------------------------------------
  */
-static TableTag * TableTagGetEntry(Table *tablePtr, char *name, int objc, const char **argv) {
+static TableTag * TableTagGetEntry(Table *tablePtr, char *name, int objc, Tcl_Obj *const objv[]) {
     Tcl_HashEntry *entryPtr;
     TableTag *tagPtr = NULL;
     int new;
@@ -474,7 +470,7 @@ static TableTag * TableTagGetEntry(Table *tablePtr, char *name, int objc, const 
     }
     if (objc) {
 	Tk_ConfigureWidget(tablePtr->interp, tablePtr->tkwin, tagConfig,
-		objc, (const char **) argv, (char *)tagPtr, TK_CONFIG_ARGV_ONLY);
+		objc, (void *) objv, (char *)tagPtr, TK_CONFIG_OBJS);
     }
     return tagPtr;
 }
@@ -513,22 +509,68 @@ static unsigned int TableTagGetPriority(Table *tablePtr, TableTag *tagPtr) {
  *
  *----------------------------------------------------------------------
  */
-void TableInitTags(Table *tablePtr) {
-    static const char *activeArgs[] = {"-bg", ACTIVE_BG, "-fg", ACTIVE_FG,
-					"-relief", "solid" };
-    static const char *selArgs[]    = {"-bg", SELECT_BG, "-fg", SELECT_FG,
-					"-relief", "sunken" };
-    static const char *titleArgs[]  = {"-bg", DISABLED_BG, "-fg", DISABLED_FG,
-					"-font", DEF_HEADER_FONT,
-					"-relief", "ridge", "-state", "disabled" };
-    static const char *flashArgs[]  = {"-bg", "red" };
+int TableInitTags(Tcl_Interp *interp, Table *tablePtr)
+{
+    Tcl_Obj *activePtr = Tcl_NewListObj(0, NULL);
+    Tcl_Obj *selPtr = Tcl_NewListObj(0, NULL);
+    Tcl_Obj *titlePtr = Tcl_NewListObj(0, NULL);
+    Tcl_Obj *flashPtr = Tcl_NewListObj(0, NULL);
+    int objcPtr, res = TCL_OK;
+    Tcl_Obj **objvPtr;
+
+    if (Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj(ACTIVE_BG,-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("-fg",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj(ACTIVE_FG,-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("-relief",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("solid",-1)) != TCL_OK ||
+
+	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj(SELECT_BG,-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-fg",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj(SELECT_FG,-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-relief",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("sunken",-1)) != TCL_OK ||
+
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj(DISABLED_BG,-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-fg",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj(DISABLED_FG,-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-font",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj(DEF_HEADER_FONT,-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-relief",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("ridge",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-state",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("disabled",-1)) != TCL_OK ||
+
+	Tcl_ListObjAppendElement(interp, flashPtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, flashPtr, Tcl_NewStringObj("red",-1)) != TCL_OK) {
+	res = TCL_ERROR;
+	goto done;
+    }
+
     /*
      * The order of creation is important to priority.
      */
-    TableTagGetEntry(tablePtr, "flash", ARSIZE(flashArgs), flashArgs);
-    TableTagGetEntry(tablePtr, "active", ARSIZE(activeArgs), activeArgs);
-    TableTagGetEntry(tablePtr, "sel", ARSIZE(selArgs), selArgs);
-    TableTagGetEntry(tablePtr, "title", ARSIZE(titleArgs), titleArgs);
+    if (Tcl_ListObjGetElements(interp, flashPtr, &objcPtr, &objvPtr) != TCL_OK ||
+	TableTagGetEntry(tablePtr, "flash", objcPtr, objvPtr) == NULL ||
+	Tcl_ListObjGetElements(interp, activePtr, &objcPtr, &objvPtr) != TCL_OK ||
+	TableTagGetEntry(tablePtr, "active", objcPtr, objvPtr) == NULL ||
+	Tcl_ListObjGetElements(interp, selPtr, &objcPtr, &objvPtr) != TCL_OK ||
+	TableTagGetEntry(tablePtr, "sel", objcPtr, objvPtr) == NULL ||
+	Tcl_ListObjGetElements(interp, titlePtr, &objcPtr, &objvPtr) != TCL_OK ||
+	TableTagGetEntry(tablePtr, "title", objcPtr, objvPtr) == NULL) {
+	res = TCL_ERROR;
+	goto done;
+    }
+
+    /* Clean up */
+done:
+    Tcl_DecrRefCount(flashPtr);
+    Tcl_DecrRefCount(activePtr);
+    Tcl_DecrRefCount(selPtr);
+    Tcl_DecrRefCount(titlePtr);
+    return res;
 }
 
 /*
@@ -719,7 +761,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 			for (col = tablePtr->colOffset+tablePtr->titleCols;
 			     col < tablePtr->colOffset+tablePtr->cols; col++) {
 			    TableMakeArrayIndex(row, col, buf);
-			    Tcl_ListObjAppendElement(NULL, resultPtr, 
+			    Tcl_ListObjAppendElement(NULL, resultPtr,
 				    Tcl_NewStringObj(buf, -1));
 			}
 		    }
@@ -732,7 +774,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 			 scanPtr = Tcl_NextHashEntry(&search)) {
 			if ((TableTag *) Tcl_GetHashValue(scanPtr) == tagPtr) {
 			    keybuf = (char *) Tcl_GetHashKey(tablePtr->cellStyles, scanPtr);
-			    Tcl_ListObjAppendElement(NULL, resultPtr, 
+			    Tcl_ListObjAppendElement(NULL, resultPtr,
 				    Tcl_NewStringObj(keybuf, -1));
 			}
 		    }
@@ -949,18 +991,8 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		result = Tk_ConfigureInfo(interp, tablePtr->tkwin, tagConfig,
 			(char *) tagPtr, (objc == 5) ? Tcl_GetString(objv[4]) : NULL, 0);
 	    } else {
-		const char **argv;
-
-		/* Stringify */
-		argv = (const char **) ckalloc((objc + 1) * sizeof(char *));
-		for (i = 0; i < objc; i++)
-		    argv[i] = Tcl_GetString(objv[i]);
-		argv[objc] = NULL;
-
-		result = Tk_ConfigureWidget(interp, tablePtr->tkwin,
-			tagConfig, objc-4, argv+4, (char *) tagPtr, TK_CONFIG_ARGV_ONLY);
-		ckfree((char *) argv);
-		if (result == TCL_ERROR) {
+		if (Tk_ConfigureWidget(interp, tablePtr->tkwin, tagConfig, objc-4,
+		    (void *) (objv+4), (char *) tagPtr, TK_CONFIG_OBJS) == TCL_ERROR) {
 		    return TCL_ERROR;
 		}
 

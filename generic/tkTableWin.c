@@ -580,20 +580,11 @@ static int EmbWinConfigure(
 
     Tcl_Interp *interp = tablePtr->interp;
     Tk_Window oldWindow;
-    int i, result;
-    const char **argv;
 
     oldWindow = ewPtr->tkwin;
 
-    /* Stringify */
-    argv = (const char **) ckalloc((objc + 1) * sizeof(char *));
-    for (i = 0; i < objc; i++)
-	argv[i] = Tcl_GetString(objv[i]);
-    argv[i] = NULL;
-    result = Tk_ConfigureWidget(interp, tablePtr->tkwin,
-	    winConfigSpecs, objc, argv, (char *) ewPtr, TK_CONFIG_ARGV_ONLY);
-    ckfree((char *) argv);
-    if (result != TCL_OK) {
+    if (Tk_ConfigureWidget(interp, tablePtr->tkwin, winConfigSpecs,
+	objc, (void *) objv, (char *) ewPtr, TK_CONFIG_OBJS) != TCL_OK) {
 	return TCL_ERROR;
     }
 
