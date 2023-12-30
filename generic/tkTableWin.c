@@ -124,6 +124,7 @@ static CONST86 char * StickyPrintProc(
     int flags = ((TableEmbWindow *) widgRec)->sticky;
     int count = 0;
     char *result = (char *) ckalloc(5*sizeof(char));
+    (void) clientData;
 
     if (flags&STICK_NORTH) result[count++] = 'n';
     if (flags&STICK_EAST)  result[count++] = 'e';
@@ -163,6 +164,7 @@ static int StickyParseProc(
     TableEmbWindow *ewPtr = (TableEmbWindow *) widgRec;
     int sticky = 0;
     char c;
+    (void) clientData;
 
     while ((c = *value++) != '\0') {
 	switch (c) {

@@ -1292,6 +1292,7 @@ static int TableOptionReliefSet(
     int offset)	{			/* Offset into item. */
 
     TableTag *tagPtr = (TableTag *) widgRec;
+    (void) clientData;
 
     if (*value == '\0') {
 	tagPtr->relief = -1;
@@ -1323,6 +1324,7 @@ static CONST86 char * TableOptionReliefGet(
     Tcl_FreeProc **freeProcPtr) {	/* Pointer to variable to fill in with
 					 * information about how to reclaim
 					 * storage for return string. */
+    (void) clientData;
 
     return (char *) Tk_NameOfRelief(((TableTag *) widgRec)->relief);
 }
