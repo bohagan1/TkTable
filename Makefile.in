@@ -342,8 +342,7 @@ dist: dist-clean
 
 	# TEA files
 	$(DIST_INSTALL_DATA) $(srcdir)/Makefile.in \
-	    $(srcdir)/aclocal.m4 $(srcdir)/configure.ac \
-	    $(DIST_DIR)/
+	    $(srcdir)/aclocal.m4 $(srcdir)/configure.ac $(DIST_DIR)/
 	$(DIST_INSTALL_SCRIPT) $(srcdir)/configure $(DIST_DIR)/
 
 	$(INSTALL_DATA_DIR) $(DIST_DIR)/tclconfig
@@ -352,8 +351,7 @@ dist: dist-clean
 	    $(DIST_DIR)/tclconfig/
 
 	# Extension files
-	$(DIST_INSTALL_DATA) \
-	    $(srcdir)/ChangeLog $(srcdir)/license.txt \
+	$(DIST_INSTALL_DATA) $(srcdir)/ChangeLog $(srcdir)/license.txt \
 	    $(srcdir)/README.txt $(srcdir)/README.blt \
 	    $(srcdir)/pkgIndex.tcl.in $(srcdir)/TODO.txt $(DIST_DIR)/
 
