@@ -23,9 +23,15 @@
  */
 
 #include "tkTable.h"
+#include "tkTableUuid.h"
 
 #ifdef DEBUG
 #include "dprint.h"
+#endif
+
+#ifdef BUILD_Tktable
+#   undef TCL_STORAGE_CLASS
+#   define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
 static int	Tk_TableObjCmd(ClientData clientData, Tcl_Interp *interp,
@@ -3883,20 +3889,110 @@ void ExpandPercents(
     Tcl_DStringAppend(dsPtr, "", 1);
 }
 
-/* Function to call on loading the Table module */
+/*
+ *----------------------------------------------------------------------
+ *
+ * Build Info Command --
+ *
+ *	Create command to return build info for package.
+ *
+ * Results:
+ *	A standard Tcl result
+ *
+ * Side effects:
+ *	Created build-info command.
+ *
+ *----------------------------------------------------------------------
+ */
 
-#ifdef BUILD_Tktable
-#   undef TCL_STORAGE_CLASS
-#   define TCL_STORAGE_CLASS DLLEXPORT
+#ifndef STRINGIFY
+#  define STRINGIFY(x) STRINGIFY1(x)
+#  define STRINGIFY1(x) #x
 #endif
-#ifdef MAC_TCL
-#pragma export on
+ 
+int
+BuildInfoCommand(Tcl_Interp* interp) {
+    Tcl_CmdInfo info;
+
+    if (Tcl_GetCommandInfo(interp, "::tcl::build-info", &info)) {
+	Tcl_CreateObjCommand(interp, "::tktable::build-info", info.objProc, (void *)(
+		PACKAGE_VERSION "+" STRINGIFY(TKTABLE_VERSION_UUID)
+#if defined(__clang__) && defined(__clang_major__)
+			    ".clang-" STRINGIFY(__clang_major__)
+#if __clang_minor__ < 10
+			    "0"
 #endif
+			    STRINGIFY(__clang_minor__)
+#endif
+#if defined(__cplusplus) && !defined(__OBJC__)
+			    ".cplusplus"
+#endif
+#ifndef NDEBUG
+			    ".debug"
+#endif
+#if !defined(__clang__) && !defined(__INTEL_COMPILER) && defined(__GNUC__)
+			    ".gcc-" STRINGIFY(__GNUC__)
+#if __GNUC_MINOR__ < 10
+			    "0"
+#endif
+			    STRINGIFY(__GNUC_MINOR__)
+#endif
+#ifdef __INTEL_COMPILER
+			    ".icc-" STRINGIFY(__INTEL_COMPILER)
+#endif
+#ifdef TCL_MEM_DEBUG
+			    ".memdebug"
+#endif
+#if defined(_MSC_VER)
+			    ".msvc-" STRINGIFY(_MSC_VER)
+#endif
+#ifdef USE_NMAKE
+			    ".nmake"
+#endif
+#ifndef TCL_CFG_OPTIMIZED
+			    ".no-optimize"
+#endif
+#ifdef __OBJC__
+			    ".objective-c"
+#if defined(__cplusplus)
+			    "plusplus"
+#endif
+#endif
+#ifdef TCL_CFG_PROFILED
+			    ".profile"
+#endif
+#ifdef PURIFY
+			    ".purify"
+#endif
+#ifdef STATIC_BUILD
+			    ".static"
+#endif
+		), NULL);
+    }
+    return TCL_OK;
+}
+/*
+ *-----------------------------------------------------------------------------
+ *
+ * Vfs_Init --
+ *
+ *	This procedure is the main initialization point of the Vfs
+ *	extension.
+ *
+ * Results:
+ *	Returns a standard Tcl completion code, and leaves an error
+ *	message in the interp's result if an error occurs.
+ *
+ * Side effects:
+ *	Adds a command to the Tcl interpreter.
+ *
+ *-----------------------------------------------------------------------------
+ */
 
 #if TCL_MAJOR_VERSION > 8
 #define MIN_VERSION "9.0"
 #else
-#define MIN_VERSION "8.6"
+#define MIN_VERSION "8.5"
 #endif
 
 EXTERN int Tktable_Init(Tcl_Interp *interp) {
@@ -3932,6 +4028,8 @@ EXTERN int Tktable_Init(Tcl_Interp *interp) {
 	    tkTableSafeInitScript : tkTableInitScript) == TCL_ERROR) {
 	return TCL_ERROR;
     }
+ 
+    BuildInfoCommand(interp);
 
     return Tcl_PkgProvide(interp, PACKAGE_NAME, PACKAGE_VERSION);
 }

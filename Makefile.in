@@ -163,7 +163,7 @@ DEFS		= @DEFS@ $(PKG_CFLAGS) \
 		  -DTBL_RUNTIME_DIR=\"$(pkglibdir)\"
 
 # Move pkgIndex.tcl to 'BINARIES' var if it is generated in the Makefile
-CONFIG_CLEAN_FILES = Makefile pkgIndex.tcl
+CONFIG_CLEAN_FILES = Makefile pkgIndex.tcl tkTableUuid.h
 CLEANFILES	= @CLEANFILES@
 
 CPPFLAGS	= @CPPFLAGS@
@@ -318,8 +318,20 @@ VPATH = $(srcdir):$(srcdir)/generic:$(srcdir)/unix:$(srcdir)/win:$(srcdir)/macos
 tkTable.tcl.h: $(srcdir)/library/tkTable.tcl
 	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' < `@CYGPATH@ $?` > '$@' || { rm -f $@; exit 1; }
 
-.c.@OBJEXT@:
+.c.@OBJEXT@: tkTableUuid.h
 	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+$(srcdir)/manifest.uuid:
+	printf "git-" >$(srcdir)/manifest.uuid
+	(cd $(srcdir); git rev-parse HEAD >>$(srcdir)/manifest.uuid || \
+	    (printf "svn-r" >$(srcdir)/manifest.uuid ; \
+	    svn info --show-item last-changed-revision >>$(srcdir)/manifest.uuid) || \
+	    printf "unknown" >$(srcdir)/manifest.uuid)
+
+tkTableUuid.h:	$(srcdir)/manifest.uuid
+	echo "#define TKTABLE_VERSION_UUID \\" >$@
+	cat $(srcdir)/manifest.uuid >>$@
+	echo "" >>$@
 
 #========================================================================
 # Distribution creation
@@ -351,7 +363,8 @@ dist: dist-clean
 	    $(DIST_DIR)/tclconfig/
 
 	# Extension files
-	$(DIST_INSTALL_DATA) $(srcdir)/ChangeLog $(srcdir)/license.txt \
+	$(DIST_INSTALL_DATA) $(srcdir)/ChangeLog \
+	    $(srcdir)/license.txt $(srcdir)/manifest.uuid \
 	    $(srcdir)/README.txt $(srcdir)/README.blt \
 	    $(srcdir)/pkgIndex.tcl.in $(srcdir)/TODO.txt $(DIST_DIR)/
 

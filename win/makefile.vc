@@ -77,8 +77,10 @@ PRJ_LIBS =
 all: default-target
 
 clean: default-clean
+	@if exist $(WIN_DIR)\vfsUuid.h del $(WIN_DIR)\vfsUuid.h
 
 realclean: default-hose
+	@if exist $(WIN_DIR)\vfsUuid.h del $(WIN_DIR)\vfsUuid.h
 
 $(PRJ_OBJS): $(TMP_DIR)\tkTable.tcl.h
 
@@ -97,6 +99,13 @@ $(TMP_DIR)\tkTable.tcl.h: $(LIBDIR)\tkTable.tcl
 # file in the $(OUT_DIR) directory.
 #pkgindex: default-pkgindex
 pkgindex: default-pkgindex-tea
+ 
+$(ROOT)\manifest.uuid:
+   copy $(WIN_DIR)\gitmanifest.in $(ROOT)\manifest.uuid
+   git rev-parse HEAD >>$(ROOT)\manifest.uuid
+
+$(WIN_DIR)\tkTableUuid.h:	$(ROOT)\manifest.uuid
+	copy $(WIN_DIR)\tkTableUuid.h.in+$(ROOT)\manifest.uuid $(WIN_DIR)\tkTableUuid.h
 
 # The default install target only installs binaries and scripts so add
 # an additional target for our documentation. Note this *adds* a target
@@ -108,6 +117,9 @@ install-tktabletcl:
 
 install: pkgindex default-install default-install-docs-html default-install-docs-n default-install-demos
 default-install-libraries: install-tktabletcl
+ 
+# Explicit dependency rules
+$(GENERICDIR)\tkTable.c: $(WIN_DIR)\tkTableUuid.h
 
 # Test package
 test: default-test
