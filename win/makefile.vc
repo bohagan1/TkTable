@@ -1,6 +1,6 @@
 #------------------------------------------------------------- -*- makefile -*-
 #
-# Sample makefile for building Tcl extensions.
+# Makefile for TkTable Extension
 #
 # Basic build, test and install
 #   nmake /f makefile.vc INSTALLDIR=c:\path\to\tcl
@@ -77,10 +77,8 @@ PRJ_LIBS =
 all: default-target
 
 clean: default-clean
-	@if exist $(WIN_DIR)\vfsUuid.h del $(WIN_DIR)\vfsUuid.h
 
 realclean: default-hose
-	@if exist $(WIN_DIR)\vfsUuid.h del $(WIN_DIR)\vfsUuid.h
 
 $(PRJ_OBJS): $(TMP_DIR)\tkTable.tcl.h
 
@@ -101,11 +99,19 @@ $(TMP_DIR)\tkTable.tcl.h: $(LIBDIR)\tkTable.tcl
 pkgindex: default-pkgindex-tea
  
 $(ROOT)\manifest.uuid:
-   copy $(WIN_DIR)\gitmanifest.in $(ROOT)\manifest.uuid
-   git rev-parse HEAD >>$(ROOT)\manifest.uuid
+    if not exist $(ROOT)\manifest.uuid (
+	copy $(WIN_DIR)\gitmanifest.in $(ROOT)\manifest.uuid
+	where git
+	if ERRORLEVEL 0 (
+	    git rev-parse HEAD >>$(ROOT)\manifest.uuid
+	) else (
+	    echo unknown >>$(ROOT)\manifest.uuid
+	)
+    )
 
-$(WIN_DIR)\tkTableUuid.h:	$(ROOT)\manifest.uuid
-	copy $(WIN_DIR)\tkTableUuid.h.in+$(ROOT)\manifest.uuid $(WIN_DIR)\tkTableUuid.h
+$(TMP_DIR)\tkTableUuid.h:	$(ROOT)\manifest.uuid
+	copy $(WIN_DIR)\tkTableUuid.h.in+$(ROOT)\manifest.uuid $(TMP_DIR)\tkTableUuid.h
+	echo: >>$(TMP_DIR)\tkTableUuid.h
 
 # The default install target only installs binaries and scripts so add
 # an additional target for our documentation. Note this *adds* a target
@@ -119,7 +125,7 @@ install: pkgindex default-install default-install-docs-html default-install-docs
 default-install-libraries: install-tktabletcl
  
 # Explicit dependency rules
-$(GENERICDIR)\tkTable.c: $(WIN_DIR)\tkTableUuid.h
+$(GENERICDIR)\tkTable.c: $(TMP_DIR)\tkTableUuid.h
 
 # Test package
 test: default-test
