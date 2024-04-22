@@ -86,21 +86,17 @@ TEA_ADD_TCL_SOURCES([library/tkTable.tcl library/tktable.py])
 # TEA_ADD_* any platform specific compiler/build info here.
 #--------------------------------------------------------------------
 
-#CLEANFILES="$CLEANFILES pkgIndex.tcl"
+TEA_ADD_CLEANFILES([pkgIndex.tcl tkTable.tcl.h])
+
 if test "${TEA_PLATFORM}" = "windows" ; then
-    # Ensure no empty if clauses
-    :
-    #TEA_ADD_SOURCES([win/winFile.c])
-    #TEA_ADD_INCLUDES([-I\"$(${CYGPATH} ${srcdir}/win)\"])
+    AC_DEFINE(BUILD_Tktable)
+    TEA_ADD_CLEANFILES([pkgIndex.tcl *.lib *.dll *.exp *.ilk *.pdb vc*.pch])
 else
-    # Ensure no empty else clauses
-    :
-    #TEA_ADD_SOURCES([unix/unixFile.c])
-    #TEA_ADD_LIBS([-lsuperfly])
+    TEA_ADD_CLEANFILES([pkgIndex.tcl *.so])
 fi
+AC_SUBST(CLEANFILES)
 
 #--------------------------------------------------------------------
-# __CHANGE__
 # Choose which headers you need.  Extension authors should try very
 # hard to only rely on the Tcl public header files.  Internal headers
 # contain private data structures and are subject to change without
