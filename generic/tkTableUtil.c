@@ -71,13 +71,13 @@ int TableOptionBdSet(
     Tk_Window tkwin,			/* Window containing table widget. */
     const char *value,			/* Value of option. */
     char *widgRec,			/* Pointer to record for item. */
-    int offset)	{			/* Offset into item. */
+    Tcl_Size offset)	{		/* Offset into item. */
 
     char **borderStr;
     int *bordersPtr, *bdPtr;
     int type	= PTR2INT(clientData);
     int result	= TCL_OK;
-    int argc;
+    Tcl_Size argc;
     const char **argv;
 
     if ((type == BD_TABLE) && (value[0] == '\0')) {
@@ -90,7 +90,7 @@ int TableOptionBdSet(
     }
 
     if ((type == BD_TABLE) || (type == BD_TABLE_TAG)) {
-	TableTag *tagPtr = (TableTag *) (widgRec + offset);
+	TableTag *tagPtr = (TableTag *) (widgRec + (size_t)offset);
 	borderStr	= &(tagPtr->borderStr);
 	bordersPtr	= &(tagPtr->borders);
 	bdPtr		= tagPtr->bd;
@@ -140,7 +140,7 @@ int TableOptionBdSet(
 		} else {
 		    *borderStr	= NULL;
 		}
-		*bordersPtr	= argc;
+		*bordersPtr	= (int) argc;
 	    }
 	}
 	ckfree ((char *) argv);
@@ -167,7 +167,7 @@ CONST86 char * TableOptionBdGet(
     ClientData clientData,		/* Type of struct being set. */
     Tk_Window tkwin,			/* Window containing canvas widget. */
     char *widgRec,			/* Pointer to record for item. */
-    int offset,				/* Offset into item. */
+    Tcl_Size offset,			/* Offset into item. */
     Tcl_FreeProc **freeProcPtr)	{	/* Pointer to variable to fill in with
 					 * information about how to reclaim
 					 * storage for return string. */
@@ -175,7 +175,7 @@ CONST86 char * TableOptionBdGet(
     int type = PTR2INT(clientData);
 
     if (type == BD_TABLE) {
-	return ((TableTag *) (widgRec + offset))->borderStr;
+	return ((TableTag *) (widgRec + (size_t)offset))->borderStr;
     } else if (type == BD_TABLE_TAG) {
 	return ((TableTag *) widgRec)->borderStr;
     } else if (type == BD_TABLE_WIN) {
@@ -204,7 +204,8 @@ CONST86 char * TableOptionBdGet(
  */
 
 int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int nullOK) {
-    int i, argc, result = TCL_OK;
+    int i, result = TCL_OK;
+    Tcl_Size argc;
     const char **argv;
 
     /*
@@ -236,7 +237,7 @@ int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int n
 		    }
 		    tagPtr->bd[i] = MAX(0, tagPtr->bd[i]);
 		}
-		tagPtr->borders = argc;
+		tagPtr->borders = (int) argc;
 	    }
 	    ckfree ((char *) argv);
 	}
@@ -258,7 +259,7 @@ int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int n
 		Tk_GetPixels(tablePtr->interp, tablePtr->tkwin, argv[i], &(tagPtr->bd[i]));
 	    }
 	    ckfree ((char *) argv);
-	    tagPtr->borders	= argc;
+	    tagPtr->borders	= (int) argc;
 	    tagPtr->borderStr	= (char *) ckalloc(length);
 	    memcpy(tagPtr->borderStr, oldValue, length);
 	} else {
@@ -286,14 +287,14 @@ int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int n
  */
 
 int Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp, Tk_Window unused,
-	const char *value, char *widgRec, int offset) {
+	const char *value, char *widgRec, Tcl_Size offset) {
   Cmd_Struct *p = (Cmd_Struct *)clientData;
   int mode = Cmd_GetValue(p,value);
   if (!mode) {
     Cmd_GetError(interp,p,value);
     return TCL_ERROR;
   }
-  *((int*)(widgRec+offset)) = mode;
+  *((int*)(widgRec+(size_t)offset)) = mode;
   return TCL_OK;
 }
 
@@ -313,9 +314,9 @@ int Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp, Tk_Window unused,
  */
 
 CONST86 char * Cmd_OptionGet(ClientData clientData, Tk_Window unused,
-	char *widgRec, int offset, Tcl_FreeProc **freeProcPtr) {
+	char *widgRec, Tcl_Size offset, Tcl_FreeProc **freeProcPtr) {
   Cmd_Struct *p = (Cmd_Struct *)clientData;
-  int mode = *((int*)(widgRec+offset));
+  int mode = *((int*)(widgRec+(size_t)offset));
   return (CONST86 char *) Cmd_GetName(p,mode);
 }
 

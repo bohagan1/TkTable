@@ -119,7 +119,7 @@ $(TMP_DIR)\tkTableUuid.h:	$(ROOT)\manifest.uuid
 # install (from targets.vc) will remain.
 install-tktabletcl:
          @echo Installing package entrypoint in '$(SCRIPT_INSTALL_DIR)'
- 	@$(CPY) $(OUT_DIR)\tkTable.tcl "$(SCRIPT_INSTALL_DIR)"
+ 	@$(CPY) $(LIBDIR)\tkTable.tcl "$(SCRIPT_INSTALL_DIR)"
 
 install: pkgindex default-install default-install-docs-html default-install-docs-n default-install-demos
 default-install-libraries: install-tktabletcl

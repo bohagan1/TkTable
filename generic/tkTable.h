@@ -47,7 +47,17 @@
  * Backwards compatibility for size type change
  */
 #if TCL_MAJOR_VERSION < 9 && TCL_MINOR_VERSION < 7
-#   define Tcl_Size int
+    #include <limits.h>
+    #define TCL_SIZE_MAX INT_MAX
+
+    #ifndef Tcl_Size
+        typedef int Tcl_Size;
+    #endif
+
+    #define TCL_SIZE_MODIFIER ""
+    #define Tcl_GetSizeIntFromObj Tcl_GetIntFromObj
+    #define Tcl_NewSizeIntObj     Tcl_NewIntObj
+    #define Tcl_NewSizeIntFromObj Tcl_NewWideIntObj
 #endif
 
 #ifndef EXTERN
@@ -562,19 +572,19 @@ extern int	Table_TagCmd(ClientData clientData,
 extern void	Table_ClearHashTable(Tcl_HashTable *hashTblPtr);
 extern int	TableOptionBdSet(ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
-			const char *value, char *widgRec, int offset);
+			const char *value, char *widgRec, Tcl_Size offset);
 extern CONST86 char *	TableOptionBdGet(ClientData clientData,
-			Tk_Window tkwin, char *widgRec, int offset,
+			Tk_Window tkwin, char *widgRec, Tcl_Size offset,
 			Tcl_FreeProc **freeProcPtr);
 extern int	TableTagConfigureBd(Table *tablePtr,
 			TableTag *tagPtr, char *oldValue, int nullOK);
 extern int	Cmd_OptionSet(ClientData clientData,
 			Tcl_Interp *interp,
 			Tk_Window unused, const char *value,
-			char *widgRec, int offset);
+			char *widgRec, Tcl_Size offset);
 extern CONST86 char *	Cmd_OptionGet(ClientData clientData,
 			Tk_Window unused, char *widgRec,
-			int offset, Tcl_FreeProc **freeProcPtr);
+			Tcl_Size offset, Tcl_FreeProc **freeProcPtr);
 
 /*
  * HEADERS IN tkTableCell.c
@@ -647,7 +657,7 @@ EXTERN int Tktable_SafeInit(Tcl_Interp *interp);
 
 extern void	TableGetActiveBuf(Table *tablePtr);
 extern void	ExpandPercents(Table *tablePtr, char *before,
-			int r, int c, char *oldVal, char *newVal, int idx,
+			int r, int c, char *oldVal, char *newVal, Tcl_Size idx,
 			Tcl_DString *dsPtr, int cmdType);
 extern void	TableInvalidate(Table *tablePtr, int x, int y,
 			int width, int height, int force);

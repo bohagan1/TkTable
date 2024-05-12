@@ -33,7 +33,8 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int result = TCL_OK;
-    int row, col, templen;
+    int row, col;
+    Tcl_Size templen;
 
     if (objc != 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "index");
@@ -361,8 +362,11 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	return TCL_ERROR;
     }
     if (objc == 6) {
-	rc = Tcl_GetStringFromObj(objv[5], &w);
-	if ((w < 1) || (strncmp(rc, "row", w) && strncmp(rc, "col", w))) {
+	Tcl_Size temp;
+
+	rc = Tcl_GetStringFromObj(objv[5], &temp);
+	w = (int) temp;
+	if ((w < 1) || (strncmp(rc, "row", (size_t) w) && strncmp(rc, "col", (size_t) w))) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "mark|dragto x y ?row|col?");
 	    return TCL_ERROR;
 	}
@@ -698,7 +702,7 @@ int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp,
 
     if (objc == 3) {
 	char *value;
-	int len;
+	Tcl_Size len;
 
 	value = Tcl_GetStringFromObj(objv[2], &len);
 	if (STREQ(value, tablePtr->activeBuf)) {

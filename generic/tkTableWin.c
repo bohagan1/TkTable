@@ -16,9 +16,9 @@
 
 static int	StickyParseProc(ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
-			const char *value, char *widgRec, int offset);
+			const char *value, char *widgRec, Tcl_Size offset);
 static CONST86 char *	StickyPrintProc(ClientData clientData,
-			Tk_Window tkwin, char *widgRec, int offset,
+			Tk_Window tkwin, char *widgRec, Tcl_Size offset,
 			Tcl_FreeProc **freeProcPtr);
 
 static void	EmbWinLostSlaveProc(ClientData clientData, Tk_Window tkwin);
@@ -70,7 +70,7 @@ static Tk_CustomOption tagBdOpt		= { TableOptionBdSet, TableOptionBdGet,
 
 static Tk_ConfigSpec winConfigSpecs[] = {
   {TK_CONFIG_BORDER, "-background", "background", "Background", NULL,
-   Tk_Offset(TableEmbWindow, bg),
+   offsetof(TableEmbWindow, bg),
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 0, 0},
@@ -78,19 +78,19 @@ static Tk_ConfigSpec winConfigSpecs[] = {
    0 /* no offset */,
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK, &tagBdOpt },
   {TK_CONFIG_STRING, "-create", (char *)NULL, (char *)NULL, (char *)NULL,
-   Tk_Offset(TableEmbWindow, create),
+   offsetof(TableEmbWindow, create),
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_PIXELS, "-padx", (char *)NULL, (char *)NULL, (char *)NULL,
-   Tk_Offset(TableEmbWindow, padX), TK_CONFIG_DONT_SET_DEFAULT },
+   offsetof(TableEmbWindow, padX), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_PIXELS, "-pady", (char *)NULL, (char *)NULL, (char *)NULL,
-   Tk_Offset(TableEmbWindow, padY), TK_CONFIG_DONT_SET_DEFAULT },
+   offsetof(TableEmbWindow, padY), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_CUSTOM, "-sticky", (char *)NULL, (char *)NULL, (char *)NULL,
-   Tk_Offset(TableEmbWindow, sticky), TK_CONFIG_DONT_SET_DEFAULT,
+   offsetof(TableEmbWindow, sticky), TK_CONFIG_DONT_SET_DEFAULT,
    &stickyOption},
   {TK_CONFIG_RELIEF, "-relief", "relief", "Relief", NULL,
-   Tk_Offset(TableEmbWindow, relief), 0 },
+   offsetof(TableEmbWindow, relief), 0 },
   {TK_CONFIG_WINDOW, "-window", (char *)NULL, (char *)NULL, (char *)NULL,
-   Tk_Offset(TableEmbWindow, tkwin),
+   offsetof(TableEmbWindow, tkwin),
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL,
    (char *)NULL, 0, 0 }
@@ -116,7 +116,7 @@ static CONST86 char * StickyPrintProc(
     Tk_Window tkwin,			/* Window for text widget. */
     char *widgRec,			/* Pointer to TkTextEmbWindow
 					 * structure. */
-    int offset,				/* Ignored. */
+    Tcl_Size offset,			/* Ignored. */
     Tcl_FreeProc **freeProcPtr)	{	/* Pointer to variable to fill in with
 					 * information about how to reclaim
 					 * storage for return string. */
@@ -159,7 +159,7 @@ static int StickyParseProc(
     const char *value,			/* Value of option. */
     char *widgRec,			/* Pointer to TkTextEmbWindow
 					 * structure. */
-    int offset)	{			/* Offset into item (ignored). */
+    Tcl_Size offset)	{		/* Offset into item (ignored). */
 
     TableEmbWindow *ewPtr = (TableEmbWindow *) widgRec;
     int sticky = 0;

@@ -56,8 +56,8 @@ static void	TableFlashEvent(ClientData clientdata);
 static char *	TableVarProc(ClientData clientData, Tcl_Interp *interp,
 			char *name, char *index, int flags);
 static void	TableCursorEvent(ClientData clientData);
-static int	TableFetchSelection(ClientData clientData,
-			int offset, char *buffer, int maxBytes);
+static Tcl_Size	TableFetchSelection(ClientData clientData,
+			Tcl_Size offset, char *buffer, Tcl_Size maxBytes);
 static Tk_RestrictAction TableRestrictProc(ClientData arg, XEvent *eventPtr);
 
 /*
@@ -178,155 +178,155 @@ static Tk_CustomOption bdOpt		= { TableOptionBdSet, TableOptionBdGet,
 
 Tk_ConfigSpec tableSpecs[] = {
     {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor", "center",
-     Tk_Offset(Table, defaultTag.anchor), 0},
+     offsetof(Table, defaultTag.anchor), 0},
     {TK_CONFIG_BOOLEAN, "-autoclear", "autoClear", "AutoClear", "0",
-     Tk_Offset(Table, autoClear), 0},
+     offsetof(Table, autoClear), 0},
     {TK_CONFIG_BORDER, "-background", "background", "Background", NORMAL_BG,
-     Tk_Offset(Table, defaultTag.bg), 0},
+     offsetof(Table, defaultTag.bg), 0},
     {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 0},
     {TK_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 0, 0},
     {TK_CONFIG_CURSOR, "-bordercursor", "borderCursor", "Cursor", "crosshair",
-     Tk_Offset(Table, bdcursor), TK_CONFIG_NULL_OK },
+     offsetof(Table, bdcursor), TK_CONFIG_NULL_OK },
     {TK_CONFIG_CUSTOM, "-borderwidth", "borderWidth", "BorderWidth", "1",
-     Tk_Offset(Table, defaultTag), TK_CONFIG_NULL_OK, &bdOpt },
+     offsetof(Table, defaultTag), TK_CONFIG_NULL_OK, &bdOpt },
     {TK_CONFIG_STRING, "-browsecommand", "browseCommand", "BrowseCommand", "",
-     Tk_Offset(Table, browseCmd), TK_CONFIG_NULL_OK},
+     offsetof(Table, browseCmd), TK_CONFIG_NULL_OK},
     {TK_CONFIG_SYNONYM, "-browsecmd", "browseCommand", (char *)NULL,
      (char *)NULL, 0, TK_CONFIG_NULL_OK},
     {TK_CONFIG_BOOLEAN, "-cache", "cache", "Cache", "0",
-     Tk_Offset(Table, caching), 0},
+     offsetof(Table, caching), 0},
     {TK_CONFIG_INT, "-colorigin", "colOrigin", "Origin", "0",
-     Tk_Offset(Table, colOffset), 0},
+     offsetof(Table, colOffset), 0},
     {TK_CONFIG_INT, "-cols", "cols", "Cols", "10",
-     Tk_Offset(Table, cols), 0},
+     offsetof(Table, cols), 0},
     {TK_CONFIG_STRING, "-colseparator", "colSeparator", "Separator", NULL,
-     Tk_Offset(Table, colSep), TK_CONFIG_NULL_OK },
+     offsetof(Table, colSep), TK_CONFIG_NULL_OK },
     {TK_CONFIG_CUSTOM, "-colstretchmode", "colStretch", "StretchMode", "none",
-     Tk_Offset (Table, colStretch), 0 , &stretchOpt },
+     offsetof (Table, colStretch), 0 , &stretchOpt },
     {TK_CONFIG_STRING, "-coltagcommand", "colTagCommand", "TagCommand", NULL,
-     Tk_Offset(Table, colTagCmd), TK_CONFIG_NULL_OK },
+     offsetof(Table, colTagCmd), TK_CONFIG_NULL_OK },
     {TK_CONFIG_INT, "-colwidth", "colWidth", "ColWidth", "10",
-     Tk_Offset(Table, defColWidth), 0},
+     offsetof(Table, defColWidth), 0},
     {TK_CONFIG_STRING, "-command", "command", "Command", "",
-     Tk_Offset(Table, command), TK_CONFIG_NULL_OK},
+     offsetof(Table, command), TK_CONFIG_NULL_OK},
     {TK_CONFIG_ACTIVE_CURSOR, "-cursor", "cursor", "Cursor", "xterm",
-     Tk_Offset(Table, cursor), TK_CONFIG_NULL_OK },
+     offsetof(Table, cursor), TK_CONFIG_NULL_OK },
     {TK_CONFIG_CUSTOM, "-drawmode", "drawMode", "DrawMode", "compatible",
-     Tk_Offset(Table, drawMode), 0, &drawOpt },
+     offsetof(Table, drawMode), 0, &drawOpt },
     {TK_CONFIG_STRING, "-ellipsis", "ellipsis", "Ellipsis", "",
-     Tk_Offset(Table, defaultTag.ellipsis), TK_CONFIG_NULL_OK},
+     offsetof(Table, defaultTag.ellipsis), TK_CONFIG_NULL_OK},
     {TK_CONFIG_BOOLEAN, "-exportselection", "exportSelection",
-     "ExportSelection", "1", Tk_Offset(Table, exportSelection), 0},
+     "ExportSelection", "1", offsetof(Table, exportSelection), 0},
     {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL, 0, 0},
     {TK_CONFIG_BOOLEAN, "-flashmode", "flashMode", "FlashMode", "0",
-     Tk_Offset(Table, flashMode), 0},
+     offsetof(Table, flashMode), 0},
     {TK_CONFIG_INT, "-flashtime", "flashTime", "FlashTime", "2",
-     Tk_Offset(Table, flashTime), 0},
+     offsetof(Table, flashTime), 0},
     {TK_CONFIG_FONT, "-font", "font", "Font",  DEF_TABLE_FONT,
-     Tk_Offset(Table, defaultTag.tkfont), 0},
+     offsetof(Table, defaultTag.tkfont), 0},
     {TK_CONFIG_BORDER, "-foreground", "foreground", "Foreground", NORMAL_FG,
-     Tk_Offset(Table, defaultTag.fg), 0},
+     offsetof(Table, defaultTag.fg), 0},
 #ifdef PROCS
     {TK_CONFIG_BOOLEAN, "-hasprocs", "hasProcs", "hasProcs", "0",
-     Tk_Offset(Table, hasProcs), 0},
+     offsetof(Table, hasProcs), 0},
 #endif
     {TK_CONFIG_INT, "-height", "height", "Height", "0",
-     Tk_Offset(Table, maxReqRows), 0},
+     offsetof(Table, maxReqRows), 0},
     {TK_CONFIG_COLOR, "-highlightbackground", "highlightBackground",
-     "HighlightBackground", HIGHLIGHT_BG, Tk_Offset(Table, highlightBgColorPtr), 0},
+     "HighlightBackground", HIGHLIGHT_BG, offsetof(Table, highlightBgColorPtr), 0},
     {TK_CONFIG_COLOR, "-highlightcolor", "highlightColor", "HighlightColor",
-     HIGHLIGHT, Tk_Offset(Table, highlightColorPtr), 0},
+     HIGHLIGHT, offsetof(Table, highlightColorPtr), 0},
     {TK_CONFIG_PIXELS, "-highlightthickness", "highlightThickness",
-     "HighlightThickness", "2", Tk_Offset(Table, highlightWidth), 0},
+     "HighlightThickness", "2", offsetof(Table, highlightWidth), 0},
     {TK_CONFIG_BORDER, "-insertbackground", "insertBackground", "Foreground",
-     "Black", Tk_Offset(Table, insertBg), 0},
+     "Black", offsetof(Table, insertBg), 0},
     {TK_CONFIG_PIXELS, "-insertborderwidth", "insertBorderWidth", "BorderWidth",
-     "0", Tk_Offset(Table, insertBorderWidth), TK_CONFIG_COLOR_ONLY},
+     "0", offsetof(Table, insertBorderWidth), TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_PIXELS, "-insertborderwidth", "insertBorderWidth", "BorderWidth",
-     "0", Tk_Offset(Table, insertBorderWidth), TK_CONFIG_MONO_ONLY},
+     "0", offsetof(Table, insertBorderWidth), TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_INT, "-insertofftime", "insertOffTime", "OffTime", "300",
-     Tk_Offset(Table, insertOffTime), 0},
+     offsetof(Table, insertOffTime), 0},
     {TK_CONFIG_INT, "-insertontime", "insertOnTime", "OnTime", "600",
-     Tk_Offset(Table, insertOnTime), 0},
+     offsetof(Table, insertOnTime), 0},
     {TK_CONFIG_PIXELS, "-insertwidth", "insertWidth", "InsertWidth", "2",
-     Tk_Offset(Table, insertWidth), 0},
+     offsetof(Table, insertWidth), 0},
     {TK_CONFIG_BOOLEAN, "-invertselected", "invertSelected", "InvertSelected",
-     "0", Tk_Offset(Table, invertSelected), 0},
+     "0", offsetof(Table, invertSelected), 0},
     {TK_CONFIG_PIXELS, "-ipadx", "ipadX", "Pad", "0",
-     Tk_Offset(Table, ipadX), 0},
+     offsetof(Table, ipadX), 0},
     {TK_CONFIG_PIXELS, "-ipady", "ipadY", "Pad", "0",
-     Tk_Offset(Table, ipadY), 0},
+     offsetof(Table, ipadY), 0},
     {TK_CONFIG_JUSTIFY, "-justify", "justify", "Justify", "left",
-     Tk_Offset(Table, defaultTag.justify), 0 },
+     offsetof(Table, defaultTag.justify), 0 },
     {TK_CONFIG_PIXELS, "-maxheight", "maxHeight", "MaxHeight", "600",
-     Tk_Offset(Table, maxReqHeight), 0},
+     offsetof(Table, maxReqHeight), 0},
     {TK_CONFIG_PIXELS, "-maxwidth", "maxWidth", "MaxWidth", "800",
-     Tk_Offset(Table, maxReqWidth), 0},
+     offsetof(Table, maxReqWidth), 0},
     {TK_CONFIG_BOOLEAN, "-multiline", "multiline", "Multiline", "1",
-     Tk_Offset(Table, defaultTag.multiline), 0},
-    {TK_CONFIG_PIXELS, "-padx", "padX", "Pad", "0", Tk_Offset(Table, padX), 0},
-    {TK_CONFIG_PIXELS, "-pady", "padY", "Pad", "0", Tk_Offset(Table, padY), 0},
+     offsetof(Table, defaultTag.multiline), 0},
+    {TK_CONFIG_PIXELS, "-padx", "padX", "Pad", "0", offsetof(Table, padX), 0},
+    {TK_CONFIG_PIXELS, "-pady", "padY", "Pad", "0", offsetof(Table, padY), 0},
     {TK_CONFIG_RELIEF, "-relief", "relief", "Relief", "sunken",
-     Tk_Offset(Table, defaultTag.relief), 0},
+     offsetof(Table, defaultTag.relief), 0},
     {TK_CONFIG_CUSTOM, "-resizeborders", "resizeBorders", "ResizeBorders",
-     "both", Tk_Offset(Table, resize), 0, &resizeTypeOpt },
+     "both", offsetof(Table, resize), 0, &resizeTypeOpt },
     {TK_CONFIG_INT, "-rowheight", "rowHeight", "RowHeight", "1",
-     Tk_Offset(Table, defRowHeight), 0},
+     offsetof(Table, defRowHeight), 0},
     {TK_CONFIG_INT, "-roworigin", "rowOrigin", "Origin", "0",
-     Tk_Offset(Table, rowOffset), 0},
-    {TK_CONFIG_INT, "-rows", "rows", "Rows", "10", Tk_Offset(Table, rows), 0},
+     offsetof(Table, rowOffset), 0},
+    {TK_CONFIG_INT, "-rows", "rows", "Rows", "10", offsetof(Table, rows), 0},
     {TK_CONFIG_STRING, "-rowseparator", "rowSeparator", "Separator", NULL,
-     Tk_Offset(Table, rowSep), TK_CONFIG_NULL_OK },
+     offsetof(Table, rowSep), TK_CONFIG_NULL_OK },
     {TK_CONFIG_CUSTOM, "-rowstretchmode", "rowStretch", "StretchMode", "none",
-     Tk_Offset(Table, rowStretch), 0 , &stretchOpt },
+     offsetof(Table, rowStretch), 0 , &stretchOpt },
     {TK_CONFIG_STRING, "-rowtagcommand", "rowTagCommand", "TagCommand", NULL,
-     Tk_Offset(Table, rowTagCmd), TK_CONFIG_NULL_OK },
+     offsetof(Table, rowTagCmd), TK_CONFIG_NULL_OK },
     {TK_CONFIG_SYNONYM, "-selcmd", "selectionCommand", (char *)NULL,
      (char *)NULL, 0, TK_CONFIG_NULL_OK},
     {TK_CONFIG_STRING, "-selectioncommand", "selectionCommand",
-     "SelectionCommand", NULL, Tk_Offset(Table, selCmd), TK_CONFIG_NULL_OK },
+     "SelectionCommand", NULL, offsetof(Table, selCmd), TK_CONFIG_NULL_OK },
     {TK_CONFIG_STRING, "-selectmode", "selectMode", "SelectMode", "browse",
-     Tk_Offset(Table, selectMode), TK_CONFIG_NULL_OK },
+     offsetof(Table, selectMode), TK_CONFIG_NULL_OK },
     {TK_CONFIG_BOOLEAN, "-selecttitles", "selectTitles", "SelectTitles", "0",
-     Tk_Offset(Table, selectTitles), 0},
+     offsetof(Table, selectTitles), 0},
     {TK_CONFIG_CUSTOM, "-selecttype", "selectType", "SelectType", "cell",
-     Tk_Offset(Table, selectType), 0, &selTypeOpt },
+     offsetof(Table, selectType), 0, &selTypeOpt },
 #ifdef PROCS
     {TK_CONFIG_BOOLEAN, "-showprocs", "showProcs", "showProcs", "0",
-     Tk_Offset(Table, showProcs), 0},
+     offsetof(Table, showProcs), 0},
 #endif
     {TK_CONFIG_BOOLEAN, "-sparsearray", "sparseArray", "SparseArray", "1",
-     Tk_Offset(Table, sparse), 0},
+     offsetof(Table, sparse), 0},
     {TK_CONFIG_CUSTOM, "-state", "state", "State", "normal",
-     Tk_Offset(Table, state), 0, &stateTypeOpt},
+     offsetof(Table, state), 0, &stateTypeOpt},
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus", (char *)NULL,
-     Tk_Offset(Table, takeFocus), TK_CONFIG_NULL_OK },
+     offsetof(Table, takeFocus), TK_CONFIG_NULL_OK },
     {TK_CONFIG_INT, "-titlecols", "titleCols", "TitleCols", "0",
-     Tk_Offset(Table, titleCols), TK_CONFIG_NULL_OK },
+     offsetof(Table, titleCols), TK_CONFIG_NULL_OK },
 #ifdef TITLE_CURSOR
     {TK_CONFIG_CURSOR, "-titlecursor", "titleCursor", "Cursor", "arrow",
-     Tk_Offset(Table, titleCursor), TK_CONFIG_NULL_OK },
+     offsetof(Table, titleCursor), TK_CONFIG_NULL_OK },
 #endif
     {TK_CONFIG_INT, "-titlerows", "titleRows", "TitleRows", "0",
-     Tk_Offset(Table, titleRows), TK_CONFIG_NULL_OK },
+     offsetof(Table, titleRows), TK_CONFIG_NULL_OK },
     {TK_CONFIG_BOOLEAN, "-usecommand", "useCommand", "UseCommand", "1",
-     Tk_Offset(Table, useCmd), 0},
+     offsetof(Table, useCmd), 0},
     {TK_CONFIG_STRING, "-variable", "variable", "Variable", "::tableData",
-     Tk_Offset(Table, arrayVar), TK_CONFIG_NULL_OK },
+     offsetof(Table, arrayVar), TK_CONFIG_NULL_OK },
     {TK_CONFIG_BOOLEAN, "-validate", "validate", "Validate", "0",
-     Tk_Offset(Table, validate), 0},
+     offsetof(Table, validate), 0},
     {TK_CONFIG_STRING, "-validatecommand", "validateCommand", "ValidateCommand",
-     "", Tk_Offset(Table, valCmd), TK_CONFIG_NULL_OK},
+     "", offsetof(Table, valCmd), TK_CONFIG_NULL_OK},
     {TK_CONFIG_SYNONYM, "-vcmd", "validateCommand", (char *)NULL,
      (char *)NULL, 0, TK_CONFIG_NULL_OK},
     {TK_CONFIG_INT, "-width", "width", "Width", "0",
-     Tk_Offset(Table, maxReqCols), 0},
+     offsetof(Table, maxReqCols), 0},
     {TK_CONFIG_BOOLEAN, "-wrap", "wrap", "Wrap", "0",
-     Tk_Offset(Table, defaultTag.wrap), 0},
+     offsetof(Table, defaultTag.wrap), 0},
     {TK_CONFIG_STRING, "-xscrollcommand", "xScrollCommand", "ScrollCommand",
-     NULL, Tk_Offset(Table, xScrollCmd), TK_CONFIG_NULL_OK },
+     NULL, offsetof(Table, xScrollCmd), TK_CONFIG_NULL_OK },
     {TK_CONFIG_STRING, "-yscrollcommand", "yScrollCommand", "ScrollCommand",
-     NULL, Tk_Offset(Table, yScrollCmd), TK_CONFIG_NULL_OK },
+     NULL, offsetof(Table, yScrollCmd), TK_CONFIG_NULL_OK },
     {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL,
      (char *)NULL, 0, 0}
 };
@@ -3413,20 +3413,20 @@ void TableConfigCursor(Table *tablePtr) {
  *----------------------------------------------------------------------
  */
 
-static int TableFetchSelection(
+static Tcl_Size TableFetchSelection(
      ClientData clientData,	/* Information about table widget. */
-     int offset,		/* Offset within selection of first
-				 * character to be returned. */
+     Tcl_Size offset,		/* Offset within selection of first character to be returned. */
      char *buffer,		/* Location in which to place selection. */
-     int maxBytes) {		/* Maximum number of bytes to place at buffer,
-				 * not including terminating NULL. */
+     Tcl_Size maxBytes) {	/* Maximum number of bytes to place at buffer, not including 
+				 * terminating NULL. */
 
     Table *tablePtr = (Table *) clientData;
     Tcl_Interp *interp = tablePtr->interp;
     char *value, *data, *rowsep = tablePtr->rowSep, *colsep = tablePtr->colSep;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
-    int length, count, lastrow=0, needcs=0, r, c, listArgc, rslen=0, cslen=0;
+    int lastrow=0, needcs=0, r, c, rslen=0, cslen=0;
+    Tcl_Size count, length, listArgc;
     int numcols, numrows, code;
     const char **listArgv;
 
@@ -3741,7 +3741,7 @@ int TableValidateChange(
     /* Now form command string and run through the -validatecommand */
     Tcl_Preserve((ClientData) tablePtr);
     Tcl_DStringInit(&script);
-    ExpandPercents(tablePtr, tablePtr->valCmd, r, c, old, new, index, &script, CMD_VALIDATE);
+    ExpandPercents(tablePtr, tablePtr->valCmd, r, c, old, new, (Tcl_Size) index, &script, CMD_VALIDATE);
     code = Tcl_GlobalEval(tablePtr->interp, Tcl_DStringValue(&script));
     Tcl_DStringFree(&script);
 
@@ -3802,13 +3802,13 @@ void ExpandPercents(
      int r, int c,			/* row,col index of cell */
      char *old,                 /* current value of cell */
      char *new,                 /* potential new value of cell */
-     int index,                 /* index of insert/delete */
+     Tcl_Size index,            /* index of insert/delete */
      Tcl_DString *dsPtr,        /* Dynamic string in which to append
 				 * new command. */
      int cmdType) {		/* type of command to make %-subs for */
 
-    int length, cvtFlags;
-    Tcl_Size spaceNeeded;
+    int cvtFlags;
+    Tcl_Size length, spaceNeeded;
     Tcl_UniChar ch;
     char *string, buf[INDEX_BUFSIZE];
 
@@ -3860,7 +3860,7 @@ void ExpandPercents(
 	    string = buf;
 	    break;
 	case 'i': /* index of cursor OR |number| of cells selected */
-	    sprintf(buf, "%d", index);
+	    sprintf(buf, "%" TCL_SIZE_MODIFIER "d", index);
 	    string = buf;
 	    break;
 	case 's': /* Current cell value */

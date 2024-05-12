@@ -91,7 +91,7 @@ static int TableSortCompareProc(
  *----------------------------------------------------------------------
  */
 char * TableCellSort(Table *tablePtr, char *str) {
-    int listArgc;
+    Tcl_Size listArgc;
     const char **listArgv;
     char *result;
 
@@ -355,13 +355,15 @@ static SortElement * MergeSort(
  */
 Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
     int length, i;
+    Tcl_Size len;
     Tcl_Obj *sortedObjPtr, **listObjPtrs;
     SortElement *elementArray;
     SortElement *elementPtr;
 
-    if (Tcl_ListObjGetElements(interp, listObjPtr, &length, &listObjPtrs) != TCL_OK) {
+    if (Tcl_ListObjGetElements(interp, listObjPtr, &len, &listObjPtrs) != TCL_OK) {
 	return NULL;
     }
+    length = (int) len;
     if (length <= 0) {
 	return listObjPtr;
     }

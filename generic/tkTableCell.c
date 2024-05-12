@@ -744,7 +744,7 @@ int TableGetIcursor(Table *tablePtr, char *arg, int *posn) {
 
     len = (int) strlen(tablePtr->activeBuf);
     /* Need to base it off strlen to account for \x00 (Unicode null) */
-    len = Tcl_NumUtfChars(tablePtr->activeBuf, len);
+    len = (int) Tcl_NumUtfChars(tablePtr->activeBuf, len);
 
     /* ensure icursor didn't get out of sync */
     if (tablePtr->icursor > len) tablePtr->icursor = len;
@@ -887,7 +887,8 @@ int TableGetIndex(
  */
 int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *)clientData;
-    int row, col, len, i, j, max;
+    int row, col, i, j, max;
+    Tcl_Size len;
     char *str;
 
     /* sets any number of tags/indices to a given value */
@@ -903,7 +904,7 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
     }
 
     str = Tcl_GetStringFromObj(objv[2], &len);
-    if (strncmp(str, "row", len) == 0 || strncmp(str, "col", len) == 0) {
+    if (strncmp(str, "row", (size_t) len) == 0 || strncmp(str, "col", (size_t) len) == 0) {
 	Tcl_Obj *resultPtr = Tcl_GetObjResult(interp);
 	/* set row index list ?index list ...? */
 	if (objc < 4) {
@@ -926,7 +927,7 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		}
 	    }
 	} else if (tablePtr->state == STATE_NORMAL) {
-	    int listc;
+	    Tcl_Size listc;
 	    Tcl_Obj **listv;
 	    /* make sure there are an even number of index/list pairs */
 	    if (objc & 0) {
@@ -938,7 +939,7 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    return TCL_ERROR;
 		}
 		if (*str == 'r') {
-		    max = col+MIN(tablePtr->cols+tablePtr->colOffset-col, listc);
+		    max = col+MIN(tablePtr->cols+tablePtr->colOffset-col, (int) listc);
 		    for (j = col; j < max; j++) {
 			if (TableSetCellValue(tablePtr, row, j, Tcl_GetString(listv[j-col]))
 			    != TCL_OK) {
@@ -952,7 +953,7 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 				     j-tablePtr->colOffset, CELL);
 		    }
 		} else {
-		    max = row+MIN(tablePtr->rows+tablePtr->rowOffset-row, listc);
+		    max = row+MIN(tablePtr->rows+tablePtr->rowOffset-row, (int) listc);
 		    for (j = row; j < max; j++) {
 			if (TableSetCellValue(tablePtr, j, col, Tcl_GetString(listv[j-row]))
 			    != TCL_OK) {

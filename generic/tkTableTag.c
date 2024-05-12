@@ -16,9 +16,9 @@
 static unsigned int	TableTagGetPriority(Table *tablePtr, TableTag *tagPtr);
 static int	TableOptionReliefSet(ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
-			const char *value, char *widgRec, int offset);
+			const char *value, char *widgRec, Tcl_Size offset);
 static CONST86 char *	TableOptionReliefGet(ClientData clientData,
-			Tk_Window tkwin, char *widgRec, int offset,
+			Tk_Window tkwin, char *widgRec, Tcl_Size offset,
 			Tcl_FreeProc **freeProcPtr);
 
 static const char *tagCmdNames[] = {
@@ -52,37 +52,37 @@ static Tk_CustomOption tagReliefOpt =
 
 static Tk_ConfigSpec tagConfig[] = {
   {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor", "center",
-   Tk_Offset(TableTag, anchor), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+   offsetof(TableTag, anchor), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_BORDER, "-background", "background", "Background", NULL,
-   Tk_Offset(TableTag, bg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+   offsetof(TableTag, bg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_CUSTOM, "-borderwidth", "borderWidth", "BorderWidth", "",
    0 /* no offset */,
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK, &tagBdOpt },
   {TK_CONFIG_STRING, "-ellipsis", "ellipsis", "Ellipsis", "",
-   Tk_Offset(TableTag, ellipsis), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+   offsetof(TableTag, ellipsis), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_BORDER, "-foreground", "foreground", "Foreground", NULL,
-   Tk_Offset(TableTag, fg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+   offsetof(TableTag, fg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_FONT, "-font", "font", "Font", NULL,
-   Tk_Offset(TableTag, tkfont), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+   offsetof(TableTag, tkfont), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_STRING, "-image", "image", "Image", NULL,
-   Tk_Offset(TableTag, imageStr),
+   offsetof(TableTag, imageStr),
    TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_JUSTIFY, "-justify", "justify", "Justify", "left",
-   Tk_Offset(TableTag, justify), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+   offsetof(TableTag, justify), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
   {TK_CONFIG_INT, "-multiline", "multiline", "Multiline", "-1",
-   Tk_Offset(TableTag, multiline), TK_CONFIG_DONT_SET_DEFAULT },
+   offsetof(TableTag, multiline), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_CUSTOM, "-relief", "relief", "Relief", "flat",
-   Tk_Offset(TableTag, relief), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK,
+   offsetof(TableTag, relief), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK,
    &tagReliefOpt },
   {TK_CONFIG_INT, "-showtext", "showText", "ShowText", "-1",
-   Tk_Offset(TableTag, showtext), TK_CONFIG_DONT_SET_DEFAULT },
+   offsetof(TableTag, showtext), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_CUSTOM, "-state", "state", "State", "unknown",
-   Tk_Offset(TableTag, state), TK_CONFIG_DONT_SET_DEFAULT, &tagStateOpt },
+   offsetof(TableTag, state), TK_CONFIG_DONT_SET_DEFAULT, &tagStateOpt },
   {TK_CONFIG_INT, "-wrap", "wrap", "Wrap", "-1",
-   Tk_Offset(TableTag, wrap), TK_CONFIG_DONT_SET_DEFAULT },
+   offsetof(TableTag, wrap), TK_CONFIG_DONT_SET_DEFAULT },
   {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, 0, 0}
 };
 
@@ -435,7 +435,7 @@ int TableGetTagBorders(TableTag *tagPtr, int *left, int *right, int *top, int *b
  *
  *----------------------------------------------------------------------
  */
-static TableTag * TableTagGetEntry(Table *tablePtr, char *name, int objc, Tcl_Obj *const objv[]) {
+static TableTag * TableTagGetEntry(Table *tablePtr, char *name, Tcl_Size objc, Tcl_Obj *const objv[]) {
     Tcl_HashEntry *entryPtr;
     TableTag *tagPtr = NULL;
     int new;
@@ -515,7 +515,8 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr)
     Tcl_Obj *selPtr = Tcl_NewListObj(0, NULL);
     Tcl_Obj *titlePtr = Tcl_NewListObj(0, NULL);
     Tcl_Obj *flashPtr = Tcl_NewListObj(0, NULL);
-    int objcPtr, res = TCL_OK;
+    Tcl_Size objcPtr;
+    int res = TCL_OK;
     Tcl_Obj **objvPtr;
 
     if (Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
@@ -674,7 +675,8 @@ void TableCleanupTag(Table *tablePtr, TableTag *tagPtr) {
  */
 int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *)clientData;
-    int result = TCL_OK, cmdIndex, i, newEntry, value, len;
+    int result = TCL_OK, cmdIndex, i, newEntry, value;
+    Tcl_Size len;
     int row, col, tagPrio, refresh = 0;
     TableTag *tagPtr, *tag2Ptr;
     Tcl_HashEntry *entryPtr, *scanPtr;
@@ -1289,7 +1291,7 @@ static int TableOptionReliefSet(
     Tk_Window tkwin,			/* Window containing table widget. */
     const char *value,		/* Value of option. */
     char *widgRec,			/* Pointer to record for item. */
-    int offset)	{			/* Offset into item. */
+    Tcl_Size offset)	{		/* Offset into item. */
 
     TableTag *tagPtr = (TableTag *) widgRec;
     (void) clientData;
@@ -1320,7 +1322,7 @@ static CONST86 char * TableOptionReliefGet(
     ClientData clientData,		/* Type of struct being set. */
     Tk_Window tkwin,			/* Window containing canvas widget. */
     char *widgRec,			/* Pointer to record for item. */
-    int offset,				/* Offset into item. */
+    Tcl_Size offset,			/* Offset into item. */
     Tcl_FreeProc **freeProcPtr) {	/* Pointer to variable to fill in with
 					 * information about how to reclaim
 					 * storage for return string. */
