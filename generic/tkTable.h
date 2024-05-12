@@ -132,7 +132,7 @@
 #	define DEF_TABLE_FONT	"TkTextFont"
 #	define DEF_HEADER_FONT	"TkHeadingFont"
 #   else
-#	define NORMAL_BG	"white"	
+#	define NORMAL_BG	"white"
 #	define NORMAL_FG	"black"
 #	define ACTIVE_BG	"#ececec"
 #	define ACTIVE_FG	NORMAL_FG
@@ -151,8 +151,8 @@
 #define MIN(A,B)	(((A)>(B))?(B):(A))
 #define BETWEEN(val,min,max)	( ((val)<(min)) ? (min) : \
 				( ((val)>(max)) ? (max) : (val) ) )
-#define CONSTRAIN(val,min,max)	if ((val) < (min)) { (val) = MIN(min,max); } \
-				else if ((val) > (max)) { (val) = (max); }
+#define CONSTRAIN(val,min,max)	if ((val) < (min)) { (val) = MIN(min,max);} \
+				else if ((val) > (max)) { (val) = (max);}
 #define STREQ(s1, s2)	(strcmp((s1), (s2)) == 0)
 #define ARSIZE(A)	(sizeof(A)/sizeof(*A))
 #define INDEX_BUFSIZE	32		/* max size of buffer for indices */
@@ -483,21 +483,18 @@ typedef struct TableEmbWindow {
 
 extern Tk_ConfigSpec tableSpecs[];
 
-extern void	EmbWinDisplay(Table *tablePtr, Drawable window,
-			TableEmbWindow *ewPtr, TableTag *tagPtr,
-			int x, int y, int width, int height);
-extern void	EmbWinUnmap(Table *tablePtr,
-			int rlo, int rhi, int clo, int chi);
+extern void	EmbWinDisplay(Table *tablePtr, Drawable window, TableEmbWindow *ewPtr,
+			TableTag *tagPtr, int x, int y, int width, int height);
+extern void	EmbWinUnmap(Table *tablePtr, int rlo, int rhi, int clo, int chi);
 extern void	EmbWinDelete(Table *tablePtr, TableEmbWindow *ewPtr);
-extern int	Table_WinMove(Table *tablePtr,
-			char *const srcPtr, char *const destPtr, int flags);
+extern int	Table_WinMove(Table *tablePtr, char *const srcPtr, char *const destPtr,
+			int flags);
 extern int	Table_WinDelete(Table *tablePtr, char *const idxPtr);
-extern int	Table_WindowCmd(ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern int	TableValidateChange(Table *tablePtr, int r,
-			int c, char *oldVal, char *newVal, int idx);
+extern int	Table_WindowCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+			Tcl_Obj *const objv[]);
+extern int	TableValidateChange(Table *tablePtr, int r, int c, char *oldVal,
+			char *newVal, int idx);
 extern void	TableLostSelection(ClientData clientData);
-extern void	GenerateTableSelectEvent(ClientData clientData);
 extern void	TableSetActiveIndex(Table *tablePtr);
 
 /*
@@ -541,10 +538,8 @@ extern int	Table_ViewCmd(ClientData clientData,
 
 extern int	Table_EditCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern void	TableDeleteChars(Table *tablePtr,
-			int idx, int count);
-extern void	TableInsertChars(Table *tablePtr,
-			int idx, char *string);
+extern void	TableDeleteChars(Table *tablePtr, int idx, int count);
+extern void	TableInsertChars(Table *tablePtr, int idx, char *string);
 
 /*
  * HEADERS IN tkTableTag.c
@@ -552,76 +547,59 @@ extern void	TableInsertChars(Table *tablePtr,
 
 extern TableTag *TableNewTag(Table *tablePtr);
 extern void	TableResetTag(Table *tablePtr, TableTag *tagPtr);
-extern void	TableMergeTag(Table *tablePtr, TableTag *baseTag,
-			TableTag *addTag);
+extern void	TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag);
 extern void	TableInvertTag(TableTag *baseTag);
-extern int	TableGetTagBorders(TableTag *tagPtr,
-			int *left, int *right, int *top, int *bottom);
+extern int	TableGetTagBorders(TableTag *tagPtr, int *left, int *right, int *top,
+			int *bottom);
 extern int	TableInitTags(Tcl_Interp *interp, Table *tablePtr);
-extern TableTag *FindRowColTag(Table *tablePtr,
-			int cell, int type);
-extern void	TableCleanupTag(Table *tablePtr,
-			TableTag *tagPtr);
-extern int	Table_TagCmd(ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+extern TableTag *FindRowColTag(Table *tablePtr, int cell, int type);
+extern void	TableCleanupTag(Table *tablePtr, TableTag *tagPtr);
+extern int	Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+			Tcl_Obj *const objv[]);
 
 /*
  * HEADERS IN tkTableUtil.c
  */
 
 extern void	Table_ClearHashTable(Tcl_HashTable *hashTblPtr);
-extern int	TableOptionBdSet(ClientData clientData,
-			Tcl_Interp *interp, Tk_Window tkwin,
+extern int	TableOptionBdSet(ClientData clientData, Tcl_Interp *interp,
+			Tk_Window tkwin, const char *value, char *widgRec, Tcl_Size offset);
+extern CONST86 char *	TableOptionBdGet(ClientData clientData, Tk_Window tkwin, char *widgRec,
+			Tcl_Size offset, Tcl_FreeProc **freeProcPtr);
+extern int	TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int nullOK);
+extern int	Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp, Tk_Window unused,
 			const char *value, char *widgRec, Tcl_Size offset);
-extern CONST86 char *	TableOptionBdGet(ClientData clientData,
-			Tk_Window tkwin, char *widgRec, Tcl_Size offset,
-			Tcl_FreeProc **freeProcPtr);
-extern int	TableTagConfigureBd(Table *tablePtr,
-			TableTag *tagPtr, char *oldValue, int nullOK);
-extern int	Cmd_OptionSet(ClientData clientData,
-			Tcl_Interp *interp,
-			Tk_Window unused, const char *value,
-			char *widgRec, Tcl_Size offset);
-extern CONST86 char *	Cmd_OptionGet(ClientData clientData,
-			Tk_Window unused, char *widgRec,
+extern CONST86 char *	Cmd_OptionGet(ClientData clientData, Tk_Window unused, char *widgRec,
 			Tcl_Size offset, Tcl_FreeProc **freeProcPtr);
 
 /*
  * HEADERS IN tkTableCell.c
  */
 
-extern int	TableTrueCell(Table *tablePtr, int row, int col,
-					   int *trow, int *tcol);
-extern int	TableCellCoords(Table *tablePtr, int row,
-			int col, int *rx, int *ry, int *rw, int *rh);
-extern int	TableCellVCoords(Table *tablePtr, int row,
-			int col, int *rx, int *ry,
-			int *rw, int *rh, int full);
-extern void	TableWhatCell(Table *tablePtr,
-			int x, int y, int *row, int *col);
-extern int	TableAtBorder(Table *tablePtr, int x, int y,
-			int *row, int *col);
+extern int	TableTrueCell(Table *tablePtr, int row, int col, int *trow, int *tcol);
+extern int	TableCellCoords(Table *tablePtr, int row, int col, int *rx, int *ry, int *rw,
+			int *rh);
+extern int	TableCellVCoords(Table *tablePtr, int row, int col, int *rx, int *ry, int *rw,
+			int *rh, int full);
+extern void	TableWhatCell(Table *tablePtr, int x, int y, int *row, int *col);
+extern int	TableAtBorder(Table *tablePtr, int x, int y, int *row, int *col);
 extern char *	TableGetCellValue(Table *tablePtr, int r, int c);
-extern int	TableSetCellValue(Table *tablePtr, int r, int c,
-			char *value);
-extern int    TableMoveCellValue(Table *tablePtr,
-			int fromr, int fromc, char *frombuf,
+extern int	TableSetCellValue(Table *tablePtr, int r, int c, char *value);
+extern int	TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf,
 			int tor, int toc, char *tobuf, int outOfBounds);
 
-extern int	TableGetIcursor(Table *tablePtr, char *arg,
-			int *posn);
+extern int	TableGetIcursor(Table *tablePtr, char *arg, int *posn);
 #define TableGetIcursorObj(tablePtr, objPtr, posnPtr) \
 	TableGetIcursor(tablePtr, Tcl_GetString(objPtr), posnPtr)
-extern int	TableGetIndex(Table *tablePtr,
-			char *str, int *row_p, int *col_p);
+extern int	TableGetIndex(Table *tablePtr, char *str, int *row_p, int *col_p);
 #define TableGetIndexObj(tablePtr, objPtr, rowPtr, colPtr) \
 	TableGetIndex(tablePtr, Tcl_GetString(objPtr), rowPtr, colPtr)
-extern int	Table_SetCmd(ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern int	Table_HiddenCmd(ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern int	Table_SpanCmd(ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+extern int	Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+			Tcl_Obj *const objv[]);
+extern int	Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+			Tcl_Obj *const objv[]);
+extern int	Table_SpanCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+			Tcl_Obj *const objv[]);
 extern void	TableSpanSanCheck(Table *tablePtr);
 
 /*
@@ -643,8 +621,8 @@ extern Tcl_Obj*	TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr);
  */
 
 #ifdef POSTSCRIPT
-extern int	Table_PostscriptCmd(ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+extern int	Table_PostscriptCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+			Tcl_Obj *const objv[]);
 extern void	Tcl_DStringAppendAll(Tcl_DString *, arg1, ...);
 #endif
 
@@ -656,13 +634,10 @@ EXTERN int Tktable_Init(Tcl_Interp *interp);
 EXTERN int Tktable_SafeInit(Tcl_Interp *interp);
 
 extern void	TableGetActiveBuf(Table *tablePtr);
-extern void	ExpandPercents(Table *tablePtr, char *before,
-			int r, int c, char *oldVal, char *newVal, Tcl_Size idx,
-			Tcl_DString *dsPtr, int cmdType);
-extern void	TableInvalidate(Table *tablePtr, int x, int y,
-			int width, int height, int force);
-extern void	TableRefresh(Table *tablePtr,
-			int arg1, int arg2, int mode);
+extern void	ExpandPercents(Table *tablePtr, char *before, int r, int c, char *oldVal,
+			char *newVal, Tcl_Size idx, Tcl_DString *dsPtr, int cmdType);
+extern void	TableInvalidate(Table *tablePtr, int x, int y, int width, int height, int force);
+extern void	TableRefresh(Table *tablePtr, int arg1, int arg2, int mode);
 extern void	TableGeometryRequest(Table *tablePtr);
 extern void	TableAdjustActive(Table *tablePtr);
 extern void	TableAdjustParams(Table *tablePtr);

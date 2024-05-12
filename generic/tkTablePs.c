@@ -1,4 +1,4 @@
-/* 
+/*
  * tkTablePs.c --
  *
  *	This module implements postscript output for table widgets.
@@ -80,41 +80,41 @@ typedef struct TkPostscriptInfo {
 
 static Tk_ConfigSpec configSpecs[] = {
   {TK_CONFIG_STRING, "-colormap", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, colorVar), 0},
+	offsetof(TkPostscriptInfo, colorVar), 0},
   {TK_CONFIG_STRING, "-colormode", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, colorMode), 0},
+	offsetof(TkPostscriptInfo, colorMode), 0},
   {TK_CONFIG_STRING, "-file", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, fileName), 0},
+	offsetof(TkPostscriptInfo, fileName), 0},
   {TK_CONFIG_STRING, "-channel", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, channelName), 0},
+	offsetof(TkPostscriptInfo, channelName), 0},
   {TK_CONFIG_STRING, "-first", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, first), 0},
+	offsetof(TkPostscriptInfo, first), 0},
   {TK_CONFIG_STRING, "-fontmap", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, fontVar), 0},
+	offsetof(TkPostscriptInfo, fontVar), 0},
   {TK_CONFIG_PIXELS, "-height", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, height), 0},
+	offsetof(TkPostscriptInfo, height), 0},
   {TK_CONFIG_STRING, "-last", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, last), 0},
+	offsetof(TkPostscriptInfo, last), 0},
   {TK_CONFIG_ANCHOR, "-pageanchor", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, pageAnchor), 0},
+	offsetof(TkPostscriptInfo, pageAnchor), 0},
   {TK_CONFIG_STRING, "-pageheight", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, pageHeightString), 0},
+	offsetof(TkPostscriptInfo, pageHeightString), 0},
   {TK_CONFIG_STRING, "-pagewidth", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, pageWidthString), 0},
+	offsetof(TkPostscriptInfo, pageWidthString), 0},
   {TK_CONFIG_STRING, "-pagex", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, pageXString), 0},
+	offsetof(TkPostscriptInfo, pageXString), 0},
   {TK_CONFIG_STRING, "-pagey", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, pageYString), 0},
+	offsetof(TkPostscriptInfo, pageYString), 0},
   {TK_CONFIG_BOOLEAN, "-rotate", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, rotate), 0},
+	offsetof(TkPostscriptInfo, rotate), 0},
   {TK_CONFIG_PIXELS, "-width", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, width), 0},
+	offsetof(TkPostscriptInfo, width), 0},
   {TK_CONFIG_PIXELS, "-x", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, x), 0},
+	offsetof(TkPostscriptInfo, x), 0},
   {TK_CONFIG_PIXELS, "-y", (char *) NULL, (char *) NULL, "",
-   offsetof(TkPostscriptInfo, y), 0},
+	offsetof(TkPostscriptInfo, y), 0},
   {TK_CONFIG_END, (char *) NULL, (char *) NULL, (char *) NULL,
-   (char *) NULL, 0, 0}
+	(char *) NULL, 0, 0}
 };
 
 /*
@@ -1082,7 +1082,7 @@ int Tk_TablePsFont(
      */
 
     Tcl_DStringInit(&ds);
-    
+
     if (psInfoPtr->fontVar != NULL) {
 	char *list, **argv;
 	int objc;
@@ -1109,11 +1109,11 @@ int Tk_TablePsFont(
 
 	    Tcl_DStringAppend(&ds, argv[0], -1);
 	    points = (int) size;
-	    
+
 	    ckfree((char *) argv);
 	    goto findfont;
 	}
-    } 
+    }
 
     points = Tk_PostscriptFontName(tkfont, &ds);
 

@@ -13,13 +13,10 @@
 
 #include "tkTable.h"
 
-static unsigned int	TableTagGetPriority(Table *tablePtr, TableTag *tagPtr);
-static int	TableOptionReliefSet(ClientData clientData,
-			Tcl_Interp *interp, Tk_Window tkwin,
-			const char *value, char *widgRec, Tcl_Size offset);
-static CONST86 char *	TableOptionReliefGet(ClientData clientData,
-			Tk_Window tkwin, char *widgRec, Tcl_Size offset,
-			Tcl_FreeProc **freeProcPtr);
+static int	TableOptionReliefSet(ClientData clientData, Tcl_Interp *interp,
+			Tk_Window tkwin, const char *value, char *widgRec, Tcl_Size offset);
+static CONST86 char *	TableOptionReliefGet(ClientData clientData, Tk_Window tkwin,
+			char *widgRec, Tcl_Size offset, Tcl_FreeProc **freeProcPtr);
 
 static const char *tagCmdNames[] = {
     "celltag", "cget", "coltag", "configure", "delete", "exists",
@@ -35,15 +32,15 @@ static Cmd_Struct tagState_vals[]= {
     {"unknown",	 STATE_UNKNOWN},
     {"normal",	 STATE_NORMAL},
     {"disabled", STATE_DISABLED},
-    {"",	 0 }
+    {"",	 0}
 };
 
-static Tk_CustomOption tagStateOpt =
-{ Cmd_OptionSet, Cmd_OptionGet, (ClientData) (&tagState_vals) };
+static Tk_CustomOption tagStateOpt = 
+	{ Cmd_OptionSet, Cmd_OptionGet, (ClientData) (&tagState_vals)};
 static Tk_CustomOption tagBdOpt =
-{ TableOptionBdSet, TableOptionBdGet, (ClientData) BD_TABLE_TAG };
+	{ TableOptionBdSet, TableOptionBdGet, (ClientData) BD_TABLE_TAG};
 static Tk_CustomOption tagReliefOpt =
-{ TableOptionReliefSet, TableOptionReliefGet, (ClientData) NULL };
+	{ TableOptionReliefSet, TableOptionReliefGet, (ClientData) NULL};
 
 /*
  * The default specification for configuring tags
@@ -52,37 +49,34 @@ static Tk_CustomOption tagReliefOpt =
 
 static Tk_ConfigSpec tagConfig[] = {
   {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor", "center",
-   offsetof(TableTag, anchor), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+	offsetof(TableTag, anchor), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK},
   {TK_CONFIG_BORDER, "-background", "background", "Background", NULL,
-   offsetof(TableTag, bg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+	offsetof(TableTag, bg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK},
   {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_CUSTOM, "-borderwidth", "borderWidth", "BorderWidth", "",
-   0 /* no offset */,
-   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK, &tagBdOpt },
+	0 /* no offset */, TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK, &tagBdOpt},
   {TK_CONFIG_STRING, "-ellipsis", "ellipsis", "Ellipsis", "",
-   offsetof(TableTag, ellipsis), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+	offsetof(TableTag, ellipsis), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK},
   {TK_CONFIG_BORDER, "-foreground", "foreground", "Foreground", NULL,
-   offsetof(TableTag, fg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+	offsetof(TableTag, fg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK},
   {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_FONT, "-font", "font", "Font", NULL,
-   offsetof(TableTag, tkfont), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+	offsetof(TableTag, tkfont), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK},
   {TK_CONFIG_STRING, "-image", "image", "Image", NULL,
-   offsetof(TableTag, imageStr),
-   TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+	offsetof(TableTag, imageStr), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK},
   {TK_CONFIG_JUSTIFY, "-justify", "justify", "Justify", "left",
-   offsetof(TableTag, justify), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK },
+	offsetof(TableTag, justify), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK},
   {TK_CONFIG_INT, "-multiline", "multiline", "Multiline", "-1",
-   offsetof(TableTag, multiline), TK_CONFIG_DONT_SET_DEFAULT },
+	offsetof(TableTag, multiline), TK_CONFIG_DONT_SET_DEFAULT},
   {TK_CONFIG_CUSTOM, "-relief", "relief", "Relief", "flat",
-   offsetof(TableTag, relief), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK,
-   &tagReliefOpt },
+	offsetof(TableTag, relief), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK, &tagReliefOpt},
   {TK_CONFIG_INT, "-showtext", "showText", "ShowText", "-1",
-   offsetof(TableTag, showtext), TK_CONFIG_DONT_SET_DEFAULT },
+	offsetof(TableTag, showtext), TK_CONFIG_DONT_SET_DEFAULT},
   {TK_CONFIG_CUSTOM, "-state", "state", "State", "unknown",
-   offsetof(TableTag, state), TK_CONFIG_DONT_SET_DEFAULT, &tagStateOpt },
+	offsetof(TableTag, state), TK_CONFIG_DONT_SET_DEFAULT, &tagStateOpt},
   {TK_CONFIG_INT, "-wrap", "wrap", "Wrap", "-1",
-   offsetof(TableTag, wrap), TK_CONFIG_DONT_SET_DEFAULT },
+	offsetof(TableTag, wrap), TK_CONFIG_DONT_SET_DEFAULT},
   {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, 0, 0}
 };
 
@@ -233,6 +227,26 @@ void TableResetTag(Table *tablePtr, TableTag *tagPtr) {
      */
     memcpy((void *) jtagPtr, (void *) &(tablePtr->defaultTag),
 	    sizeof(TableTag));
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TableTagGetPriority --
+ *	Get the priority value for a tag.
+ *
+ * Results:
+ *	returns the priority.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+static unsigned int TableTagGetPriority(Table *tablePtr, TableTag *tagPtr) {
+    unsigned int prio = 0;
+    while (tagPtr != tablePtr->tagPrios[prio]) {prio++;}
+    return prio;
 }
 
 /*
@@ -390,28 +404,28 @@ void TableInvertTag(TableTag *baseTag) {
 int TableGetTagBorders(TableTag *tagPtr, int *left, int *right, int *top, int *bottom) {
     switch (tagPtr->borders) {
 	case 0:
-	    if (left)	{ *left		= 0; }
-	    if (right)	{ *right	= 0; }
-	    if (top)	{ *top		= 0; }
-	    if (bottom)	{ *bottom	= 0; }
+	    if (left)	{ *left		= 0;}
+	    if (right)	{ *right	= 0;}
+	    if (top)	{ *top		= 0;}
+	    if (bottom)	{ *bottom	= 0;}
 	    break;
 	case 1:
-	    if (left)	{ *left		= tagPtr->bd[0]; }
-	    if (right)	{ *right	= tagPtr->bd[0]; }
-	    if (top)	{ *top		= tagPtr->bd[0]; }
-	    if (bottom)	{ *bottom	= tagPtr->bd[0]; }
+	    if (left)	{ *left		= tagPtr->bd[0];}
+	    if (right)	{ *right	= tagPtr->bd[0];}
+	    if (top)	{ *top		= tagPtr->bd[0];}
+	    if (bottom)	{ *bottom	= tagPtr->bd[0];}
 	    break;
 	case 2:
-	    if (left)	{ *left		= tagPtr->bd[0]; }
-	    if (right)	{ *right	= tagPtr->bd[1]; }
-	    if (top)	{ *top		= 0; }
-	    if (bottom)	{ *bottom	= 0; }
+	    if (left)	{ *left		= tagPtr->bd[0];}
+	    if (right)	{ *right	= tagPtr->bd[1];}
+	    if (top)	{ *top		= 0;}
+	    if (bottom)	{ *bottom	= 0;}
 	    break;
 	case 4:
-	    if (left)	{ *left		= tagPtr->bd[0]; }
-	    if (right)	{ *right	= tagPtr->bd[1]; }
-	    if (top)	{ *top		= tagPtr->bd[2]; }
-	    if (bottom)	{ *bottom	= tagPtr->bd[3]; }
+	    if (left)	{ *left		= tagPtr->bd[0];}
+	    if (right)	{ *right	= tagPtr->bd[1];}
+	    if (top)	{ *top		= tagPtr->bd[2];}
+	    if (bottom)	{ *bottom	= tagPtr->bd[3];}
 	    break;
 	default:
 	    Tcl_Panic("invalid border value '%d'\n", tagPtr->borders);
@@ -473,26 +487,6 @@ static TableTag * TableTagGetEntry(Table *tablePtr, char *name, Tcl_Size objc, T
 		objc, (void *) objv, (char *)tagPtr, TK_CONFIG_OBJS);
     }
     return tagPtr;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TableTagGetPriority --
- *	Get the priority value for a tag.
- *
- * Results:
- *	returns the priority.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-static unsigned int TableTagGetPriority(Table *tablePtr, TableTag *tagPtr) {
-    unsigned int prio = 0;
-    while (tagPtr != tablePtr->tagPrios[prio]) { prio++; }
-    return prio;
 }
 
 /*
@@ -1289,7 +1283,7 @@ static int TableOptionReliefSet(
     ClientData clientData,		/* Type of struct being set. */
     Tcl_Interp *interp,			/* Used for reporting errors. */
     Tk_Window tkwin,			/* Window containing table widget. */
-    const char *value,		/* Value of option. */
+    const char *value,			/* Value of option. */
     char *widgRec,			/* Pointer to record for item. */
     Tcl_Size offset)	{		/* Offset into item. */
 

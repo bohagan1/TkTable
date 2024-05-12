@@ -870,7 +870,7 @@ int Table_SelAnchorCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
 	tablePtr->anchorRow = BETWEEN(row-tablePtr->rowOffset, 0, tablePtr->rows-1);
 	tablePtr->anchorCol = BETWEEN(col-tablePtr->colOffset, 0, tablePtr->cols-1);
     } else {
-	tablePtr->anchorRow = BETWEEN(row-tablePtr->rowOffset, 
+	tablePtr->anchorRow = BETWEEN(row-tablePtr->rowOffset,
 		tablePtr->titleRows, tablePtr->rows-1);
 	tablePtr->anchorCol = BETWEEN(col-tablePtr->colOffset,
 		tablePtr->titleCols, tablePtr->cols-1);
