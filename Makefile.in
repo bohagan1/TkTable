@@ -381,7 +381,7 @@ dist: dist-clean
 	    $(srcdir)/README.txt $(srcdir)/README.blt \
 	    $(srcdir)/pkgIndex.tcl.in $(srcdir)/TODO.txt $(DIST_DIR)/
 
-	list='demos doc generic library mac tests unix win'; \
+	list='demos doc generic library tests win'; \
 	for p in $$list; do \
 	    if test -d $(srcdir)/$$p ; then \
 		$(INSTALL_DATA_DIR) $(DIST_DIR)/$$p; \
