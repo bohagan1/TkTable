@@ -140,14 +140,14 @@ PKG_ENV		= @LD_LIBRARY_PATH_VAR@="$(EXTRA_PATH):$(@LD_LIBRARY_PATH_VAR@)" \
 TCLSH_PROG	= @TCLSH_PROG@
 TCLSH		= $(TCLSH_ENV) $(PKG_ENV) $(TCLSH_PROG)
 
-#WISH_ENV	= TK_LIBRARY=`@CYGPATH@ $(TK_SRC_DIR)/library`
-#WISH_PROG	= @WISH_PROG@
-#WISH		= $(TCLSH_ENV) $(WISH_ENV) $(PKG_ENV) $(WISH_PROG)
+WISH_ENV	= TK_LIBRARY=`@CYGPATH@ $(TK_SRC_DIR)/library`
+WISH_PROG	= @WISH_PROG@
+WISH		= $(TCLSH_ENV) $(WISH_ENV) $(PKG_ENV) $(WISH_PROG)
 
 SHARED_BUILD	= @SHARED_BUILD@
 
-#INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@
-INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@
+#INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@ -I.
+INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@ -I. -I$(srcdir)
 
 PKG_CFLAGS	= @PKG_CFLAGS@
 
@@ -219,7 +219,7 @@ doc:
 	@echo "        xml2nroff sample.xml > sample.n"
 	@echo "        xml2html sample.xml > sample.html"
 
-install: all install-binaries install-libraries install-doc
+install: all install-binaries install-libraries install-doc-n install-doc-html
 
 install-binaries: binaries install-lib-binaries install-bin-binaries
 
@@ -234,19 +234,30 @@ install-libraries: libraries
 	@list='$(PKG_HEADERS)'; for i in $$list; do \
 	    echo "Installing $(srcdir)/$$i" ; \
 	    $(INSTALL_DATA) $(srcdir)/$$i "$(DESTDIR)$(includedir)" ; \
-	done;
+	done
 
 #========================================================================
 # Install documentation.  Unix manpages should go in the $(mandir)
 # directory.
 #========================================================================
 
-install-doc: doc
+install-doc-html: doc
+	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(pkglibdir)/html"
+	@list='$(srcdir)/doc/*.html'; for i in $$list; do \
+	    if test -f $$i ; then \
+		echo "Installing $$i"; \
+		$(INSTALL_DATA) $$i "$(DESTDIR)$(pkglibdir)/html"; \
+	    fi; \
+	done
+
+install-doc-n: doc
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(mandir)/mann"
 	@echo "Installing documentation in $(DESTDIR)$(mandir)"
 	@list='$(srcdir)/doc/*.n'; for i in $$list; do \
-	    echo "Installing $$i"; \
-	    $(INSTALL_DATA) $$i "$(DESTDIR)$(mandir)/mann" ; \
+	    if test -f $$i ; then \
+		echo "Installing $$i"; \
+		$(INSTALL_DATA) $$i "$(DESTDIR)$(mandir)/mann" ; \
+	    fi; \
 	done
 
 test: binaries libraries
@@ -318,9 +329,6 @@ VPATH = $(srcdir):$(srcdir)/generic:$(srcdir)/unix:$(srcdir)/win:$(srcdir)/macos
 tkTable.tcl.h: $(srcdir)/library/tkTable.tcl
 	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' < `@CYGPATH@ $?` > '$@' || { rm -f $@; exit 1; }
 
-.c.@OBJEXT@: tkTableUuid.h
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
-
 $(srcdir)/manifest.uuid:
 	printf "git-" >$(srcdir)/manifest.uuid
 	(cd $(srcdir); git rev-parse HEAD >>$(srcdir)/manifest.uuid || \
@@ -332,7 +340,12 @@ tkTableUuid.h:	$(srcdir)/manifest.uuid
 	echo "#define TKTABLE_VERSION_UUID \\" >$@
 	cat $(srcdir)/manifest.uuid >>$@
 	echo "" >>$@
- 
+
+tkTable.@OBJEXT@:	tkTableUuid.h tkTable.tcl.h
+
+.c.@OBJEXT@:
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
 #========================================================================
 # Create the pkgIndex.tcl file.
 # It is usually easiest to let Tcl do this for you with pkg_mkIndex, but
@@ -361,10 +374,9 @@ DIST_INSTALL_SCRIPT	= CPPROG='cp -p' $(INSTALL) -m 755
 dist-clean:
 	rm -rf $(DIST_DIR) $(top_builddir)/$(PKG_DIR).tar.*
 
-dist: dist-clean
-	$(INSTALL_DATA_DIR) $(DIST_DIR)
-
+dist: dist-clean $(srcdir)/manifest.uuid
 	# TEA files
+	$(INSTALL_DATA_DIR) $(DIST_DIR)
 	$(DIST_INSTALL_DATA) $(srcdir)/Makefile.in \
 	    $(srcdir)/aclocal.m4 $(srcdir)/configure.ac $(DIST_DIR)/
 	$(DIST_INSTALL_SCRIPT) $(srcdir)/configure $(DIST_DIR)/
@@ -373,7 +385,7 @@ dist: dist-clean
 	$(INSTALL_DATA_DIR) $(DIST_DIR)/tclconfig
 	$(DIST_INSTALL_DATA) $(srcdir)/tclconfig/README.txt \
 	    $(srcdir)/tclconfig/tcl.m4 $(srcdir)/tclconfig/install-sh \
-	    $(DIST_DIR)/tclconfig/
+	    $(srcdir)/tclconfig/license.terms $(DIST_DIR)/tclconfig/
 
 	# Extension files
 	$(DIST_INSTALL_DATA) $(srcdir)/ChangeLog \
@@ -390,8 +402,8 @@ dist: dist-clean
 	done
 
 	(cd $(DIST_ROOT); $(COMPRESS);)
+	mv $(PKG_DIR).tar.gz $(top_builddir)
 	cd $(top_builddir)
-	mv $(DIST_ROOT)/$(PKG_DIR).tar.gz $(top_builddir)
 
 #========================================================================
 # End of user-definable section

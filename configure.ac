@@ -74,7 +74,7 @@ TEA_ADD_INCLUDES([-I. -I${srcdir}/generic])
 TEA_ADD_LIBS([])
 TEA_ADD_CFLAGS([])
 TEA_ADD_STUB_SOURCES([])
-TEA_ADD_TCL_SOURCES([library/tkTable.tcl library/tktable.py])
+TEA_ADD_TCL_SOURCES([library/tkTable.tcl library/tktable.py license.txt README.txt])
 
 #--------------------------------------------------------------------
 # You can add more files to clean if your extension creates any extra
@@ -86,13 +86,13 @@ TEA_ADD_TCL_SOURCES([library/tkTable.tcl library/tktable.py])
 # TEA_ADD_* any platform specific compiler/build info here.
 #--------------------------------------------------------------------
 
-TEA_ADD_CLEANFILES([pkgIndex.tcl tkTable.tcl.h])
+TEA_ADD_CLEANFILES([pkgIndex.tcl tkTable.tcl.h Makefile])
 
 if test "${TEA_PLATFORM}" = "windows" ; then
     AC_DEFINE(BUILD_Tktable)
-    TEA_ADD_CLEANFILES([pkgIndex.tcl *.lib *.dll *.exp *.ilk *.pdb vc*.pch])
+    TEA_ADD_CLEANFILES([*.lib *.dll *.exp *.ilk *.pdb vc*.pch])
 else
-    TEA_ADD_CLEANFILES([pkgIndex.tcl *.so])
+    TEA_ADD_CLEANFILES([*.so])
 fi
 AC_SUBST(CLEANFILES)
 
@@ -140,6 +140,16 @@ TEA_CONFIG_CFLAGS
 TEA_ENABLE_SYMBOLS
 
 #--------------------------------------------------------------------
+# Everyone should be linking against the Tcl stub library.  If you
+# can't for some reason, remove this definition.  If you aren't using
+# stubs, you also need to modify the SHLIB_LD_LIBS setting below to
+# link against the non-stubbed Tcl library.  Add Tk too if necessary.
+#--------------------------------------------------------------------
+
+AC_DEFINE(USE_TCL_STUBS)
+AC_DEFINE(USE_TK_STUBS)
+
+#--------------------------------------------------------------------
 # Integer pointer types used by the (U)INT2PTR / PTR2(U)INT macros.
 #--------------------------------------------------------------------
 
@@ -179,7 +189,7 @@ TEA_EXPORT_CONFIG([Tktable])
 #--------------------------------------------------------------------
 
 AC_CONFIG_FILES([Makefile pkgIndex.tcl])
-AC_CONFIG_FILES([tktableConfig.sh])
+#AC_CONFIG_FILES([tktableConfig.sh])
 
 #--------------------------------------------------------------------
 # Finally, substitute all of the various values into the files
