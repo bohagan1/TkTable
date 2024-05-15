@@ -3,9 +3,9 @@
 # Makefile for TkTable Extension
 #
 # Basic build, test and install
-#   nmake /f makefile.vc INSTALLDIR=c:\path\to\tcl
-#   nmake /f makefile.vc INSTALLDIR=c:\path\to\tcl test
-#   nmake /f makefile.vc INSTALLDIR=c:\path\to\tcl install
+#   nmake /f makefile.vc INSTALLDIR=c:\path\to\tcl TCLDIR=c:\path\to\tcl\sources
+#   nmake /f makefile.vc INSTALLDIR=c:\path\to\tcl TCLDIR=c:\path\to\tcl\sources test
+#   nmake /f makefile.vc INSTALLDIR=c:\path\to\tcl TCLDIR=c:\path\to\tcl\sources install
 #
 # For other build options (debug, static etc.),
 # See TIP 477 (https://core.tcl-lang.org/tips/doc/main/tip/477.md) for
@@ -54,8 +54,12 @@ PRJ_DEFINES = -DDLL_BUILD -DBUILD_$(PROJECT) -D_WIN32 \
 		-DTBL_COMMAND=\"$(TBL_COMMAND)\" \
 		-DTBL_RUNTIME="\"$(TBL_RUNTIME)\"" \
 		-DTBL_RUNTIME_DIR="\"$(INST_RUNTIMEU)\"" \
-		-D_CRT_SECURE_NO_WARNINGS
-PRJ_LIBS = 
+		-D_CRT_SECURE_NO_WARNINGS \
+		-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE \
+		-D__STDC_WANT_SECURE_LIB__=1
+
+# Define any additional project needed libraries
+PRJ_LIBS = WS2_32.Lib
 
 # NO_EMBEDDED_RUNTIME means that the tkTable.tcl file will not be embedded
 # into the executable, thus the default tkTable.tcl library file will not
@@ -64,17 +68,14 @@ PRJ_LIBS =
 # predefined set of directories (see docs).
 #PRJ_DEFINES	+= -DNO_EMBEDDED_RUNTIME
 
-# Use standard rules
-!include "rules.vc"
-
-# Define the standard targets
+# Define the standard targets which calls rules.vc
 !include "targets.vc"
 
 #---------------------------------------------------------------------
 # Project specific targets
 #---------------------------------------------------------------------
 
-all: default-target
+all: setup default-target
 
 clean: default-clean
 
@@ -94,10 +95,11 @@ $(TMP_DIR)\tkTable.tcl.h: $(LIBDIR)\tkTable.tcl
 <<
 
 # We must define a pkgindex target that will create a pkgIndex.tcl
-# file in the $(OUT_DIR) directory.
-#pkgindex: default-pkgindex
+# file in the $(OUT_DIR) directory. We can just redirect to the
+# default-pkgindex target for our sample extension.
 pkgindex: default-pkgindex-tea
  
+# Manifest which defines fossil/git commit id for build-info command
 $(ROOT)\manifest.uuid:
     if not exist $(ROOT)\manifest.uuid (
 	copy $(WIN_DIR)\gitmanifest.in $(ROOT)\manifest.uuid
@@ -113,16 +115,17 @@ $(TMP_DIR)\tkTableUuid.h:	$(ROOT)\manifest.uuid
 	copy $(WIN_DIR)\tkTableUuid.h.in+$(ROOT)\manifest.uuid $(TMP_DIR)\tkTableUuid.h
 	echo: >>$(TMP_DIR)\tkTableUuid.h
 
-# The default install target only installs binaries and scripts so add
-# an additional target for our documentation. Note this *adds* a target
-# since no commands are listed after it. The original targets for
-# install (from targets.vc) will remain.
 install-tktabletcl:
          @echo Installing package entrypoint in '$(SCRIPT_INSTALL_DIR)'
  	@$(CPY) $(LIBDIR)\tkTable.tcl "$(SCRIPT_INSTALL_DIR)"
 
-install: pkgindex default-install default-install-docs-html default-install-docs-n default-install-demos
 default-install-libraries: install-tktabletcl
+
+# The default install target only installs binaries and scripts so add
+# an additional target for our documentation. Note this *adds* a target
+# since no commands are listed after it. The original targets for
+# install (from targets.vc) will remain.
+install: pkgindex default-install default-install-docs-html default-install-docs-n default-install-demos
  
 # Explicit dependency rules
 $(GENERICDIR)\tkTable.c: $(TMP_DIR)\tkTableUuid.h

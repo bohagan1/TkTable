@@ -70,7 +70,7 @@ TEA_SETUP_COMPILER
 TEA_ADD_SOURCES([tkTable.c tkTableWin.c tkTableTag.c tkTableEdit.c
 		 tkTableCell.c tkTableCellSort.c tkTableCmds.c tkTableUtil.c])
 TEA_ADD_HEADERS([])
-TEA_ADD_INCLUDES([-I. -I${srcdir}/generic])
+TEA_ADD_INCLUDES([-I$(${CYGPATH} ${TCL_SRC_DIR}/generic)])
 TEA_ADD_LIBS([])
 TEA_ADD_CFLAGS([])
 TEA_ADD_STUB_SOURCES([])
