@@ -378,22 +378,16 @@ dist: dist-clean $(srcdir)/manifest.uuid
 	# TEA files
 	$(INSTALL_DATA_DIR) $(DIST_DIR)
 	$(DIST_INSTALL_DATA) $(srcdir)/Makefile.in \
-	    $(srcdir)/aclocal.m4 $(srcdir)/configure.ac $(DIST_DIR)/
+		$(srcdir)/aclocal.m4 $(srcdir)/configure.ac $(DIST_DIR)/
 	$(DIST_INSTALL_SCRIPT) $(srcdir)/configure $(DIST_DIR)/
-
-	# TEA files
-	$(INSTALL_DATA_DIR) $(DIST_DIR)/tclconfig
-	$(DIST_INSTALL_DATA) $(srcdir)/tclconfig/README.txt \
-	    $(srcdir)/tclconfig/tcl.m4 $(srcdir)/tclconfig/install-sh \
-	    $(srcdir)/tclconfig/license.terms $(DIST_DIR)/tclconfig/
 
 	# Extension files
 	$(DIST_INSTALL_DATA) $(srcdir)/ChangeLog \
-	    $(srcdir)/license.txt $(srcdir)/manifest.uuid \
-	    $(srcdir)/README.txt $(srcdir)/README.blt \
-	    $(srcdir)/pkgIndex.tcl.in $(srcdir)/TODO.txt $(DIST_DIR)/
+		$(srcdir)/license.txt $(srcdir)/manifest.uuid \
+		$(srcdir)/README.txt $(srcdir)/README.blt \
+		$(srcdir)/pkgIndex.tcl.in $(srcdir)/TODO.txt $(DIST_DIR)/
 
-	list='demos doc generic library tests win'; \
+	list='demos doc generic library tclconfig tests win'; \
 	for p in $$list; do \
 	    if test -d $(srcdir)/$$p ; then \
 		$(INSTALL_DATA_DIR) $(DIST_DIR)/$$p; \
