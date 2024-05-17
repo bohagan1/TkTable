@@ -1,25 +1,18 @@
 /*
+ *----------------------------------------------------------------------
  * tkTable.h --
  *
- *	This is the header file for the module that implements
- *	table widgets for the Tk toolkit.
+ *	Macro and structure definitions
  *
  * Copyright (c) 1997-2002 Jeffrey Hobbs
  *
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id: tkTable.h,v 1.19 2013/04/18 23:59:59 hobbs Exp $
+ *----------------------------------------------------------------------
  */
 
 #ifndef _TKTABLE_H_
 #define _TKTABLE_H_
-
-#ifdef MAC_OSX_TK
- #ifndef MAC_OSX_TCL
- #define MAC_OSX_TCL
- #endif
-#endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -33,6 +26,29 @@
 #else
 # include <X11/Xatom.h>
 #endif /* MAC_OSX_TK */
+
+/* Platform unique definitions */
+#ifdef MAC_OSX_TK
+#ifndef MAC_OSX_TCL
+#define MAC_OSX_TCL
+#endif
+#endif
+
+/* Windows needs to know which symbols to export. */
+#ifdef BUILD_Tktable
+#undef TCL_STORAGE_CLASS
+#define TCL_STORAGE_CLASS	DLLEXPORT
+#endif
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+/* VC++ has an entry point called DllMain instead of DllEntryPoint */
+#if defined(_MSC_VER)
+#define DllEntryPoint DllMain
+#endif
+#endif
 
 /* Handle TCL 8.6 CONST changes */
 #ifndef CONST86
@@ -60,10 +76,6 @@
     #define Tcl_NewSizeIntFromObj Tcl_NewWideIntObj
 #endif
 
-#ifndef EXTERN
-#   define EXTERN extern TCL_STORAGE_CLASS
-#endif
-
 /*
  * Macros used to cast between pointers and integers (e.g. when storing an int
  * in ClientData), on 64-bit architectures they avoid gcc warning about "cast
@@ -86,21 +98,6 @@
 #   else
 #	define UINT2PTR(p) ((void*)(p))
 #	define PTR2UINT(p) ((unsigned int)(p))
-#   endif
-#endif
-
-#ifdef BUILD_Tktable
-#undef TCL_STORAGE_CLASS
-#define TCL_STORAGE_CLASS	DLLEXPORT
-#endif
-
-#ifdef _WIN32
-#   define WIN32_LEAN_AND_MEAN
-#   include <windows.h>
-#   undef WIN32_LEAN_AND_MEAN
-/* VC++ has an entry point called DllMain instead of DllEntryPoint */
-#   if defined(_MSC_VER)
-#	define DllEntryPoint DllMain
 #   endif
 #endif
 

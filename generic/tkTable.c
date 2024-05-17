@@ -22,6 +22,18 @@
  * RCS: @(#) $Id: tkTable.c,v 1.37 2013/04/18 23:59:59 hobbs Exp $
  */
 
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
+#include <tk.h>
+#ifdef MAC_OSX_TK
+# include <X11_tk/Xatom.h>
+#else
+# include <X11/Xatom.h>
+#endif /* MAC_OSX_TK */
 #include "tkTable.h"
 #include "tkTableUuid.h"
 
