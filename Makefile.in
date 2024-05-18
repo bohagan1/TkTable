@@ -163,7 +163,7 @@ DEFS		= @DEFS@ $(PKG_CFLAGS) \
 		  -DTBL_RUNTIME_DIR=\"$(pkglibdir)\"
 
 # Move pkgIndex.tcl to 'BINARIES' var if it is generated in the Makefile
-CONFIG_CLEAN_FILES = Makefile pkgIndex.tcl tkTableUuid.h tkTable.tcl.h
+CONFIG_CLEAN_FILES = Makefile
 CLEANFILES	= @CLEANFILES@
 
 CPPFLAGS	= @CPPFLAGS@
@@ -396,7 +396,7 @@ dist: dist-clean $(srcdir)/manifest.uuid
 	done
 
 	(cd $(DIST_ROOT); $(COMPRESS);)
-	mv $(PKG_DIR).tar.gz $(top_builddir)
+	mv $(DIST_ROOT)/$(PKG_DIR).tar.gz $(top_builddir)
 	cd $(top_builddir)
 
 #========================================================================
@@ -416,7 +416,7 @@ clean:
 distclean: clean
 	-rm -f *.tab.c
 	-rm -f $(CONFIG_CLEAN_FILES)
-	-rm -f config.cache config.log config.status
+	-rm -f config.cache config.log config.status configure~
 	-rm -fR autom4te.cache
 
 #========================================================================

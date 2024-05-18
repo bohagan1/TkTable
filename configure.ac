@@ -4,8 +4,8 @@ dnl	generate the file "configure", which is run during Tcl installation
 dnl	to configure the system for the local environment.
 
 #-----------------------------------------------------------------------
-# Sample configure.ac for Tcl Extensions.  The only places you should
-# need to modify this file are marked by the string __CHANGE__
+# This is the configure.ac for the TkTable extension.  The only places you
+# should need to modify this file are marked by the string __CHANGE__.
 #-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
@@ -24,7 +24,7 @@ AC_INIT([Tktable],[2.11])
 # as well as PKG_LIB_FILE and PKG_STUB_LIB_FILE.
 #--------------------------------------------------------------------
 
-TEA_INIT()
+TEA_INIT
 
 AC_CONFIG_AUX_DIR(tclconfig)
 
@@ -70,7 +70,7 @@ TEA_SETUP_COMPILER
 TEA_ADD_SOURCES([tkTable.c tkTableWin.c tkTableTag.c tkTableEdit.c
 		 tkTableCell.c tkTableCellSort.c tkTableCmds.c tkTableUtil.c])
 TEA_ADD_HEADERS([])
-TEA_ADD_INCLUDES([-I$(${CYGPATH} ${TCL_SRC_DIR}/generic)])
+TEA_ADD_INCLUDES([])
 TEA_ADD_LIBS([])
 TEA_ADD_CFLAGS([])
 TEA_ADD_STUB_SOURCES([])
@@ -86,7 +86,7 @@ TEA_ADD_TCL_SOURCES([library/tkTable.tcl library/tktable.py license.txt README.t
 # TEA_ADD_* any platform specific compiler/build info here.
 #--------------------------------------------------------------------
 
-TEA_ADD_CLEANFILES([pkgIndex.tcl tkTable.tcl.h Makefile])
+TEA_ADD_CLEANFILES([pkgIndex.tcl tkTable.tcl.h tkTableUuid.h])
 
 if test "${TEA_PLATFORM}" = "windows" ; then
     AC_DEFINE(BUILD_Tktable)
@@ -150,19 +150,19 @@ AC_DEFINE(USE_TCL_STUBS)
 AC_DEFINE(USE_TK_STUBS)
 
 #--------------------------------------------------------------------
-# Integer pointer types used by the (U)INT2PTR / PTR2(U)INT macros.
-#--------------------------------------------------------------------
-
-AC_TYPE_INTPTR_T
-AC_TYPE_UINTPTR_T
-
-#--------------------------------------------------------------------
 # This macro generates a line to use when building a library.  It
 # depends on values set by the TEA_ENABLE_SHARED, TEA_ENABLE_SYMBOLS,
 # and TEA_LOAD_TCLCONFIG macros above.
 #--------------------------------------------------------------------
 
 TEA_MAKE_LIB
+
+#--------------------------------------------------------------------
+# Integer pointer types used by the (U)INT2PTR / PTR2(U)INT macros.
+#--------------------------------------------------------------------
+
+AC_TYPE_INTPTR_T
+AC_TYPE_UINTPTR_T
 
 #--------------------------------------------------------------------
 # Determine the name of the tclsh and/or wish executables in the

@@ -5804,7 +5804,7 @@ printf "%s\n" "$ac_cv_c_bigendian" >&6; }
 
 
 
-    vars="-I$(${CYGPATH} ${TCL_SRC_DIR}/generic)"
+    vars=""
     for i in $vars; do
 	PKG_INCLUDES="$PKG_INCLUDES $i"
     done
@@ -5872,7 +5872,7 @@ printf "%s\n" "$ac_cv_c_bigendian" >&6; }
 #--------------------------------------------------------------------
 
 
-    CLEANFILES="$CLEANFILES pkgIndex.tcl tkTable.tcl.h Makefile"
+    CLEANFILES="$CLEANFILES pkgIndex.tcl tkTable.tcl.h tkTableUuid.h"
 
 
 if test "${TEA_PLATFORM}" = "windows" ; then
