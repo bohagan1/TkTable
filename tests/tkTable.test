@@ -61,14 +61,14 @@ update
 set i 1
 
 foreach test {
-    {-anchor n n left {bad anchor position "left": must be n, ne, e, se, s, sw, w, nw, or center}}
+    {-anchor n n left {bad anchor "left": must be n, ne, e, se, s, sw, w, nw, or center}}
     {-autoclear yes 1 xyzzy {expected boolean value but got "xyzzy"}}
     {-background #ff0000 #ff0000 non-existent
 	    {unknown color name "non-existent"}}
-    {-bd "4 2" "4 2" badValue {bad screen distance "badValue"}}
+    {-bd "4 2" "4 2" badValue {expected screen distance but got "badValue"}}
     {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
     {-bordercursor arrow arrow badValue {bad cursor spec "badValue"}}
-    {-borderwidth 1 1 badValue {bad screen distance "badValue"}}
+    {-borderwidth 1 1 badValue {expected screen distance but got "badValue"}}
     {-browsecommand {Some command} {Some command} {} {}}
     {-browsecmd {Some command} {Some command} {} {}}
     {-cache yes 1 xyzzy {expected boolean value but got "xyzzy"}}
@@ -91,22 +91,22 @@ foreach test {
     {-height 30 30 20p {expected integer but got "20p"}}
     {-highlightbackground #112233 #112233 ugly {unknown color name "ugly"}}
     {-highlightcolor #123456 #123456 bogus {unknown color name "bogus"}}
-    {-highlightthickness 6 6 bogus {bad screen distance "bogus"}}
+    {-highlightthickness 6 6 bogus {expected screen distance but got "bogus"}}
     {-highlightthickness -2 0 {} {}}
     {-insertbackground #110022 #110022 bogus {unknown color name "bogus"}}
-    {-insertborderwidth 1.3 1 2.6x {bad screen distance "2.6x"}}
+    {-insertborderwidth 1.3 1 2.6x {expected screen distance but got "2.6x"}}
     {-insertofftime 100 100 3.2 {expected integer but got "3.2"}}
     {-insertontime 100 100 3.2 {expected integer but got "3.2"}}
-    {-insertwidth 1.3 1 2.6x {bad screen distance "2.6x"}}
+    {-insertwidth 1.3 1 2.6x {expected screen distance but got "2.6x"}}
     {-invertselected yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-ipadx 1.3 1 2.6x {bad screen distance "2.6x"}}
-    {-ipady 1.3 1 2.6x {bad screen distance "2.6x"}}
+    {-ipadx 1.3 1 2.6x {expected screen distance but got "2.6x"}}
+    {-ipady 1.3 1 2.6x {expected screen distance but got "2.6x"}}
     {-justify left left wrong {bad justification "wrong": must be left, right, or center}}
-    {-maxheight 300 300 2.6x {bad screen distance "2.6x"}}
-    {-maxwidth 300 300 2.6x {bad screen distance "2.6x"}}
+    {-maxheight 300 300 2.6x {expected screen distance but got "2.6x"}}
+    {-maxwidth 300 300 2.6x {expected screen distance but got "2.6x"}}
     {-multiline yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-padx 1.3 1 2.6x {bad screen distance "2.6x"}}
-    {-pady 1.3 1 2.6x {bad screen distance "2.6x"}}
+    {-padx 1.3 1 2.6x {expected screen distance but got "2.6x"}}
+    {-pady 1.3 1 2.6x {expected screen distance but got "2.6x"}}
     {-relief groove groove 1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
     {-rowheight -20 -20 xyzzy {expected integer but got "xyzzy"}}
     {-roworigin -20 -20 xyzzy {expected integer but got "xyzzy"}}
@@ -150,12 +150,12 @@ foreach test {
 }
 
 foreach test {
-    {-anchor n n left {bad anchor position "left": must be n, ne, e, se, s, sw, w, nw, or center}}
+    {-anchor n n left {bad anchor "left": must be n, ne, e, se, s, sw, w, nw, or center}}
     {-background #ff0000 #ff0000 non-existent
 	    {unknown color name "non-existent"}}
-    {-bd "4 2" "4 2" badValue {bad screen distance "badValue"}}
+    {-bd "4 2" "4 2" badValue {expected screen distance but got "badValue"}}
     {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
-    {-borderwidth 1 1 badValue {bad screen distance "badValue"}}
+    {-borderwidth 1 1 badValue {expected screen distance but got "badValue"}}
     {-fg #110022 #110022 bogus {unknown color name "bogus"}}
     {-font {Helvetica 12} {Helvetica 12} {} {font "" doesn't exist}}
     {-foreground #110022 #110022 bogus {unknown color name "bogus"}}
@@ -414,12 +414,7 @@ test table-25.2.3 {TableWidgetCmd procedure, "tag names" option} {
 } {flash}
 test table-25.2.4 {TableWidgetCmd procedure, "tag names" option} {
     .t tag configure foo
-} [expr {
-    ([info tclversion] > 8.3) ?
-    {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-ellipsis ellipsis Ellipsis {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
-    :
-    {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-ellipsis ellipsis Ellipsis {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {unknown relief}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
-}]
+} {{-anchor anchor Anchor center {}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-ellipsis ellipsis Ellipsis {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
 test table-25.2.5 {TableWidgetCmd procedure, "tag names" option} {
     .t tag names
 } {flash active sel title foo}
