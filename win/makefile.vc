@@ -75,6 +75,18 @@ PRJ_LIBS = WS2_32.Lib
 # Project specific targets
 #---------------------------------------------------------------------
 
+# Implicit rule to generate html from man files
+# NOTE: this requires doctools from tcllib hence it is not intended
+# to be run during install. Rather, use it to generate a new version
+# of HTML docs to be stored in the repository.
+make-docs-html:
+	$(TCLSH) "$(PRJ_INSTALL_DIR)\..\..\bin\dtplite.tcl" \
+	    -o "$(DOCDIR)\$(PROJECT).html" html "$(DOCDIR)\$(PROJECT).man"
+
+make-docs-n:
+	$(TCLSH) "$(PRJ_INSTALL_DIR)\..\..\bin\dtplite.tcl" \
+	    -o "$(DOCDIR)\$(PROJECT).n" nroff "$(DOCDIR)\$(PROJECT).man"
+
 all: setup default-target
 
 clean: default-clean

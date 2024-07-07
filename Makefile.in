@@ -215,11 +215,20 @@ libraries:
 # end user machine when building from source.
 #========================================================================
 
-doc:
-	@echo "If you have documentation to create, place the commands to"
-	@echo "build the docs in the 'doc:' target.  For example:"
-	@echo "        xml2nroff sample.xml > sample.n"
-	@echo "        xml2html sample.xml > sample.html"
+DTPLITE=$(TCLSH) @DTPLITE@
+doc: tkTable.n
+
+tkTable.n: $(srcdir)/doc/tkTable.man
+	@echo "make nroff documentation"
+	@if [ -n "$(DTPLITE)" -a -x "$(DTPLITE)" ]; then \
+	    $(DTPLITE) -o $(srcdir)/doc/tkTable.n nroff $(srcdir)/doc/tkTable.man ; \
+	fi
+
+tkTable.html: $(srcdir)/doc/tkTable.man
+	@echo "make HTML documentation"
+	@if [ -n "$(DTPLITE)" -a -x "$(DTPLITE)" ]; then \
+	    $(DTPLITE) -o $(srcdir)/doc/tkTable.html html $(srcdir)/doc/tkTable.man ; \
+	fi
 
 install: all install-binaries install-libraries install-doc-n install-doc-html
 
@@ -243,7 +252,7 @@ install-libraries: libraries
 # directory.
 #========================================================================
 
-install-doc-html: doc
+install-doc-html: tkTable.html
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(pkglibdir)/html"
 	@echo "Installing HTML documentation in $(DESTDIR)$(pkglibdir)/html"
 	@list='$(srcdir)/doc/*.html'; for i in $$list; do \
@@ -253,7 +262,7 @@ install-doc-html: doc
 	    fi; \
 	done
 
-install-doc-n: doc
+install-doc-n: tkTable.n
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(mandir)/mann"
 	@echo "Installing nroff documentation in $(DESTDIR)$(mandir)/mann"
 	@list='$(srcdir)/doc/*.n'; for i in $$list; do \

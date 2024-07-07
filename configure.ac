@@ -182,6 +182,12 @@ TEA_PROG_WISH
 TEA_EXPORT_CONFIG([Tktable])
 #AC_SUBST(SAMPLE_VAR)
 
+# -------------------------------------------------------------------
+# Find a usable dtplite (from tcllib) to use in document generation.
+# -------------------------------------------------------------------
+
+TEA_PROG_DTPLITE
+
 #--------------------------------------------------------------------
 # Specify files to substitute AC variables in. You may alternatively
 # have a special pkgIndex.tcl.in or other files which require
