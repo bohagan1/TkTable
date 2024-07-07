@@ -4,8 +4,8 @@ dnl	generate the file "configure", which is run during Tcl installation
 dnl	to configure the system for the local environment.
 
 #-----------------------------------------------------------------------
-# This is the configure.ac for the TkTable extension.  The only places you
-# should need to modify this file are marked by the string __CHANGE__.
+# This is the configure.ac file for the TkTable extension.  The only places
+# you should need to modify this file are marked by the string __CHANGE__.
 #-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
@@ -57,6 +57,13 @@ TEA_PREFIX
 #-----------------------------------------------------------------------
 
 TEA_SETUP_COMPILER
+
+#--------------------------------------------------------------------
+# Integer pointer types used by the (U)INT2PTR / PTR2(U)INT macros.
+#--------------------------------------------------------------------
+
+AC_TYPE_INTPTR_T
+AC_TYPE_UINTPTR_T
 
 #-----------------------------------------------------------------------
 # Specify the C source files to compile in TEA_ADD_SOURCES,
@@ -156,13 +163,6 @@ AC_DEFINE(USE_TK_STUBS)
 #--------------------------------------------------------------------
 
 TEA_MAKE_LIB
-
-#--------------------------------------------------------------------
-# Integer pointer types used by the (U)INT2PTR / PTR2(U)INT macros.
-#--------------------------------------------------------------------
-
-AC_TYPE_INTPTR_T
-AC_TYPE_UINTPTR_T
 
 #--------------------------------------------------------------------
 # Determine the name of the tclsh and/or wish executables in the

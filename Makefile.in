@@ -204,8 +204,10 @@ all: binaries libraries doc
 #========================================================================
 
 binaries: $(BINARIES)
+	@echo "make binaries"
 
 libraries:
+
 
 #========================================================================
 # Your doc target should differentiate from doc builds (by the developer)
@@ -243,6 +245,7 @@ install-libraries: libraries
 
 install-doc-html: doc
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(pkglibdir)/html"
+	@echo "Installing HTML documentation in $(DESTDIR)$(pkglibdir)/html"
 	@list='$(srcdir)/doc/*.html'; for i in $$list; do \
 	    if test -f $$i ; then \
 		echo "Installing $$i"; \
@@ -252,11 +255,16 @@ install-doc-html: doc
 
 install-doc-n: doc
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(mandir)/mann"
-	@echo "Installing documentation in $(DESTDIR)$(mandir)"
+	@echo "Installing nroff documentation in $(DESTDIR)$(mandir)/mann"
 	@list='$(srcdir)/doc/*.n'; for i in $$list; do \
 	    if test -f $$i ; then \
 		echo "Installing $$i"; \
-		$(INSTALL_DATA) $$i "$(DESTDIR)$(mandir)/mann" ; \
+		if test -f "$(DESTDIR)$(mandir)/mann/Tcl.n.gz" ; then \
+		    gzip -k $$i ; \
+		    $(INSTALL_DATA) $$i.gz "$(DESTDIR)$(mandir)/mann" ; \
+		else \
+		    $(INSTALL_DATA) $$i "$(DESTDIR)$(mandir)/mann" ; \
+		fi; \
 	    fi; \
 	done
 
@@ -330,6 +338,7 @@ tkTable.tcl.h: $(srcdir)/library/tkTable.tcl
 	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' < `@CYGPATH@ $?` > '$@' || { rm -f $@; exit 1; }
 
 $(srcdir)/manifest.uuid:
+	@echo "Make manifest.uuid"
 	printf "git-" >$(srcdir)/manifest.uuid
 	(cd $(srcdir); git rev-parse HEAD >>$(srcdir)/manifest.uuid || \
 	    (printf "svn-r" >$(srcdir)/manifest.uuid ; \
@@ -355,6 +364,7 @@ tkTable.@OBJEXT@:	tkTableUuid.h tkTable.tcl.h
 #========================================================================
 
 pkgIndex.tcl: $(srcdir)/pkgIndex.tcl.in
+	@echo "make pkgIndex.tcl"
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
