@@ -64,10 +64,12 @@
  */
 #if TCL_MAJOR_VERSION < 9 && TCL_MINOR_VERSION < 7
     #include <limits.h>
-    #define TCL_SIZE_MAX INT_MAX
+    #ifndef TCL_SIZE_MAX
+	#define TCL_SIZE_MAX INT_MAX
+    #endif
 
     #ifndef Tcl_Size
-        typedef int Tcl_Size;
+	typedef int Tcl_Size;
     #endif
 
     #define TCL_SIZE_MODIFIER ""

@@ -35,7 +35,7 @@ static Cmd_Struct tagState_vals[]= {
     {"",	 0}
 };
 
-static Tk_CustomOption tagStateOpt = 
+static Tk_CustomOption tagStateOpt =
 	{ Cmd_OptionSet, Cmd_OptionGet, (ClientData) (&tagState_vals)};
 static Tk_CustomOption tagBdOpt =
 	{ TableOptionBdSet, TableOptionBdGet, (ClientData) BD_TABLE_TAG};

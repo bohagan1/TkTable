@@ -64,7 +64,7 @@ typedef struct TkPostscriptInfo {
 				 * NULL means return Postscript info as
 				 * result. Malloc'ed. */
   char *channelName;		/* If -channel is specified, the name of
-                                 * the channel to use. */
+				 * the channel to use. */
   Tcl_Channel chan;		/* Open channel corresponding to fileName. */
   Tcl_HashTable fontTable;	/* Hash table containing names of all font
 				 * families used in output.  The hash table

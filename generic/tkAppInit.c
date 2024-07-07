@@ -86,12 +86,12 @@ int Tcl_AppInit(
 	return TCL_ERROR;
     }
     Tcl_StaticPackage(interp, "Tcltest", Tcltest_Init,
-            (Tcl_PackageInitProc *) NULL);
+	    (Tcl_PackageInitProc *) NULL);
     if (Tktest_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
     Tcl_StaticPackage(interp, "Tktest", Tktest_Init,
-            (Tcl_PackageInitProc *) NULL);
+	    (Tcl_PackageInitProc *) NULL);
 #endif /* TK_TEST */
 
 
@@ -106,7 +106,7 @@ int Tcl_AppInit(
      * where "Mod" is the name of the module.
      */
     if (Tktable_Init(interp) == TCL_ERROR) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
     Tcl_StaticPackage(interp, "Tktable", Tktable_Init, Tktable_SafeInit);
 

@@ -285,9 +285,9 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	    case OPT_DIMS:
 		flags |= HOLD_DIMS;
 		break;
- 	    case OPT_SEL:
- 		flags |= HOLD_SEL;
- 		break;
+	    case OPT_SEL:
+		flags |= HOLD_SEL;
+		break;
 	    case OPT_TAGS:
 		flags |= HOLD_TAGS;
 		break;

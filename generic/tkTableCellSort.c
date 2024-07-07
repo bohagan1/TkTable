@@ -131,31 +131,31 @@ static int DictionaryCompare(
 	    }
 	    continue;
 	}
-        diff = UCHAR(*left) - UCHAR(*right);
-        if (diff) {
-            if (isupper(UCHAR(*left)) && islower(UCHAR(*right))) {
-                diff = UCHAR(tolower(*left)) - UCHAR(*right);
-                if (diff) {
+	diff = UCHAR(*left) - UCHAR(*right);
+	if (diff) {
+	    if (isupper(UCHAR(*left)) && islower(UCHAR(*right))) {
+		diff = UCHAR(tolower(*left)) - UCHAR(*right);
+		if (diff) {
 		    return diff;
-                } else if (secondaryDiff == 0) {
+		} else if (secondaryDiff == 0) {
 		    secondaryDiff = -1;
-                }
-            } else if (isupper(UCHAR(*right)) && islower(UCHAR(*left))) {
-                diff = UCHAR(*left) - UCHAR(tolower(UCHAR(*right)));
-                if (diff) {
+		}
+	    } else if (isupper(UCHAR(*right)) && islower(UCHAR(*left))) {
+		diff = UCHAR(*left) - UCHAR(tolower(UCHAR(*right)));
+		if (diff) {
 		    return diff;
-                } else if (secondaryDiff == 0) {
+		} else if (secondaryDiff == 0) {
 		    secondaryDiff = 1;
-                }
-            } else {
-                return diff;
-            }
-        }
-        if (*left == 0) {
+		}
+	    } else {
+		return diff;
+	    }
+	}
+	if (*left == 0) {
 	    break;
 	}
-        left++;
-        right++;
+	left++;
+	right++;
     }
     if (diff == 0) {
 	diff = secondaryDiff;
@@ -246,10 +246,10 @@ static SortElement * MergeLists(
     SortElement *tailPtr;
 
     if (leftPtr == NULL) {
-        return rightPtr;
+	return rightPtr;
     }
     if (rightPtr == NULL) {
-        return leftPtr;
+	return leftPtr;
     }
     if (DictionaryCompare(Tcl_GetString(leftPtr->objPtr),
 		Tcl_GetString(rightPtr->objPtr)) > 0) {
@@ -312,7 +312,7 @@ static SortElement * MergeSort(
     int i;
 
     for(i = 0; i < NUM_LISTS; i++){
-        subList[i] = NULL;
+	subList[i] = NULL;
     }
     while (headPtr != NULL) {
 	elementPtr = headPtr;
@@ -329,7 +329,7 @@ static SortElement * MergeSort(
     }
     elementPtr = NULL;
     for (i = 0; i < NUM_LISTS; i++){
-        elementPtr = MergeLists(subList[i], elementPtr);
+	elementPtr = MergeLists(subList[i], elementPtr);
     }
     return elementPtr;
 }
