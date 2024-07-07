@@ -931,7 +931,7 @@ static int TableWidgetObjCmd(
 
 	case CMD_CONFIGURE:
 	    if (objc < 4) {
-		result = Tk_ConfigureInfo(interp, tablePtr->tkwin, tableSpecs, 
+		result = Tk_ConfigureInfo(interp, tablePtr->tkwin, tableSpecs,
 			(char *) tablePtr, (objc == 3) ?
 			Tcl_GetString(objv[2]) : (char *) NULL, 0);
 	    } else {
@@ -2551,7 +2551,7 @@ static void TableDisplay(ClientData clientdata) {
 				x0 + (ellEast ? width - useEllLen : 0), y0, useEllLen, height,
 				x0 - x + (ellEast ? width - useEllLen : 0),
 				y0 - y);
-			Tk_DrawChars(display, clipWind, tagGc, ellFont, 
+			Tk_DrawChars(display, clipWind, tagGc, ellFont,
 				ellipsis, (int) strlen(ellipsis),
 				x0 - x + (ellEast ? width - useEllLen : 0),
 				y0 - y + originY + fm.ascent);
@@ -3969,19 +3969,20 @@ EXTERN int Tktable_Init(Tcl_Interp *interp) {
     if (Tcl_InitStubs(interp, MIN_VERSION, 0) == NULL) {
 	return TCL_ERROR;
     }
+#else
+    if (Tcl_PkgRequireEx(interp, "Tcl", MIN_VERSION, 0, NULL) == NULL) {
+	return TCL_ERROR;
+    }
 #endif
 #ifdef USE_TK_STUBS
     if (Tk_InitStubs(interp, MIN_VERSION, 0) == NULL) {
 	return TCL_ERROR;
     }
+#else
+    if (Tcl_PkgRequireEx(interp, "Tk", MIN_VERSION, 0, NULL) == NULL) {
+	return TCL_ERROR;
+    }
 #endif
-
-    if (Tcl_PkgRequire(interp, "Tcl", MIN_VERSION, 0) == NULL) {
-	return TCL_ERROR;
-    }
-    if (Tcl_PkgRequire(interp, "Tk", MIN_VERSION, 0) == NULL) {
-	return TCL_ERROR;
-    }
 
     Tcl_CreateObjCommand(interp, TBL_COMMAND, Tk_TableObjCmd,
 	(ClientData) Tk_MainWindow(interp), (Tcl_CmdDeleteProc *) NULL);
