@@ -6,7 +6,6 @@
 # See the file "license.txt" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id: tkTable.test,v 1.15 2011/04/06 00:48:54 hobbs Exp $
 
 # deletes:
 # test 2 -5

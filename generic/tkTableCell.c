@@ -9,7 +9,6 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tkTableCell.c,v 1.12 2008/11/14 21:10:12 hobbs Exp $
  */
 
 #include "tkTable.h"
