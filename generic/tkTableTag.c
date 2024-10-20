@@ -519,6 +519,8 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr)
 	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("-relief",-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("solid",-1)) != TCL_OK ||
 
+	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-bd",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj(SELECT_BD,-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj(SELECT_BG,-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-fg",-1)) != TCL_OK ||
@@ -526,12 +528,14 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr)
 	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-relief",-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("sunken",-1)) != TCL_OK ||
 
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-bd",-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("1",-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj(DISABLED_BG,-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-fg",-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj(DISABLED_FG,-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-font",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj(DEF_HEADER_FONT,-1)) != TCL_OK ||
+	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("TkHeadingFont",-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-relief",-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("ridge",-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-state",-1)) != TCL_OK ||

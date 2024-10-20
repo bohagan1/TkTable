@@ -15,6 +15,8 @@
 # MODULE:	This module contains the wrapper class for the tktable widget
 #
 # CREATED:	Roethemeyer, 20.01.98
+#
+# VERSION:	$Id: tktable.py,v 1.2 2008/11/14 22:49:35 hobbs Exp $
 # 
 #============================================================================
 
