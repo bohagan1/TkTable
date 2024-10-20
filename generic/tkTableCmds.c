@@ -63,7 +63,8 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	    Tcl_DStringInit(&script);
 	    ExpandPercents(tablePtr, tablePtr->browseCmd, tablePtr->rowOffset - 1,
 		tablePtr->colOffset - 1, buf1, buf2, tablePtr->icursor, &script, 0);
-	    result = Tcl_GlobalEval(interp, Tcl_DStringValue(&script));
+	    result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
+		Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
 	    if (result == TCL_OK || result == TCL_RETURN) {
 		 Tcl_ResetResult(interp);
 	    }
@@ -114,8 +115,9 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 		TableMakeArrayIndex(row, col, buf2);
 		Tcl_DStringInit(&script);
 		ExpandPercents(tablePtr, tablePtr->browseCmd, row, col,
-			       buf1, buf2, tablePtr->icursor, &script, 0);
-		result = Tcl_GlobalEval(interp, Tcl_DStringValue(&script));
+			buf1, buf2, tablePtr->icursor, &script, 0);
+		result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
+			Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
 		if (result == TCL_OK || result == TCL_RETURN) {
 		    Tcl_ResetResult(interp);
 		}
@@ -348,7 +350,8 @@ enum bdCmd {
 int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     Tcl_HashEntry *entryPtr;
-    int x, y, w, h, row, col, key, dummy, value, cmdIndex;
+    int x, y, w, h, row, col, key, dummy, value;
+    Tcl_Size cmdIndex;
     char *rc = NULL;
     Tcl_Obj *objPtr, *resultPtr;
 
@@ -356,8 +359,8 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	Tcl_WrongNumArgs(interp, 2, objv, "mark|dragto x y ?row|col?");
 	return TCL_ERROR;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[2], bdCmdNames, "option", 0, &cmdIndex) != TCL_OK ||
-	Tcl_GetIntFromObj(interp, objv[3], &x) != TCL_OK ||
+    if (Tcl_GetIndexFromObj(interp, objv[2], bdCmdNames, "option", 0, &cmdIndex) 
+	    != TCL_OK || Tcl_GetIntFromObj(interp, objv[3], &x) != TCL_OK ||
 	Tcl_GetIntFromObj(interp, objv[4], &y) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -365,8 +368,8 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	Tcl_Size temp;
 
 	rc = Tcl_GetStringFromObj(objv[5], &temp);
-	w = (int) temp;
-	if ((w < 1) || (strncmp(rc, "row", (size_t) w) && strncmp(rc, "col", (size_t) w))) {
+	if ((temp < 1) || (strncmp(rc, "row", (size_t) temp) &&
+		strncmp(rc, "col", (size_t) temp))) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "mark|dragto x y ?row|col?");
 	    return TCL_ERROR;
 	}
@@ -475,15 +478,16 @@ enum clearCommand {
  */
 int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int cmdIndex, redraw = 0;
+    Tcl_Size cmdIndex;
+    int redraw = 0;
 
     if (objc < 3 || objc > 5) {
 	Tcl_WrongNumArgs(interp, 2, objv, "option ?first? ?last?");
 	return TCL_ERROR;
     }
 
-    if (Tcl_GetIndexFromObj(interp, objv[2], clearNames,
-			    "clear option", 0, &cmdIndex) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, objv[2], clearNames, "clear option", 0,
+	    &cmdIndex) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -795,14 +799,14 @@ int Table_GetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
  */
 int Table_ScanCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int x, y, row, col, cmdIndex;
+    int x, y, row, col;
+    Tcl_Size cmdIndex;
 
     if (objc != 5) {
 	Tcl_WrongNumArgs(interp, 2, objv, "mark|dragto x y");
 	return TCL_ERROR;
-    } else if (Tcl_GetIndexFromObj(interp, objv[2], bdCmdNames,
-	    "option", 0, &cmdIndex) != TCL_OK ||
-	    Tcl_GetIntFromObj(interp, objv[3], &x) == TCL_ERROR ||
+    } else if (Tcl_GetIndexFromObj(interp, objv[2], bdCmdNames, "option", 0, &cmdIndex)
+	    != TCL_OK || Tcl_GetIntFromObj(interp, objv[3], &x) == TCL_ERROR ||
 	    Tcl_GetIntFromObj(interp, objv[4], &y) == TCL_ERROR) {
 	return TCL_ERROR;
     }

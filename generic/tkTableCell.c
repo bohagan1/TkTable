@@ -477,7 +477,8 @@ char * TableGetCellValue(Table *tablePtr, int r, int c) {
 	Tcl_DString script;
 	Tcl_DStringInit(&script);
 	ExpandPercents(tablePtr, tablePtr->command, r, c, "", (char *)NULL, 0, &script, 0);
-	if ((code = Tcl_GlobalEval(interp, Tcl_DStringValue(&script))) == TCL_ERROR) {
+	if ((code = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
+		Tcl_DStringLength(&script), TCL_EVAL_GLOBAL)) == TCL_ERROR) {
 	    tablePtr->useCmd = 0;
 	    tablePtr->dataSource &= ~DATA_COMMAND;
 	    if (tablePtr->arrayVar)
@@ -526,8 +527,8 @@ VALUE:
 	    Tcl_SetHashValue(entryPtr, 0);
 	    Tcl_DStringInit(&script);
 	    ExpandPercents(tablePtr, result+1, r, c, result+1, (char *)NULL, 0, &script, 0);
-	    if ((code = Tcl_GlobalEval(interp, Tcl_DStringValue(&script))) != TCL_OK ||
-		Tcl_GetHashValue(entryPtr) == 1) {
+	    if ((code = Tcl_EvalEx(interp, Tcl_DStringValue(&script), Tcl_DStringLength(&script),
+		    TCL_EVAL_GLOBAL)) != TCL_OK || Tcl_GetHashValue(entryPtr) == 1) {
 		Tcl_AddErrorInfo(interp, "\n\tin proc evaled by table:\n");
 		Tcl_AddErrorInfo(interp, Tcl_DStringValue(&script));
 		Tcl_BackgroundException(interp, TCL_ERROR);
@@ -580,7 +581,8 @@ int TableSetCellValue(Table *tablePtr, int r, int c, char *value) {
 
 	Tcl_DStringInit(&script);
 	ExpandPercents(tablePtr, tablePtr->command, r, c, value, (char *)NULL, 1, &script, 0);
-	if ((code = Tcl_GlobalEval(interp, Tcl_DStringValue(&script))) == TCL_ERROR) {
+	if ((code = Tcl_EvalEx(interp, Tcl_DStringValue(&script), Tcl_DStringLength(&script),
+		TCL_EVAL_GLOBAL)) == TCL_ERROR) {
 	    /* An error resulted.  Prevent further triggering of the command
 	     * and set up the error message. */
 	    tablePtr->useCmd = 0;
@@ -743,7 +745,7 @@ int TableGetIcursor(Table *tablePtr, char *arg, int *posn) {
 
     len = (int) strlen(tablePtr->activeBuf);
     /* Need to base it off strlen to account for \x00 (Unicode null) */
-    len = (int) Tcl_NumUtfChars(tablePtr->activeBuf, len);
+    len = (int) Tcl_NumUtfChars(tablePtr->activeBuf, (Tcl_Size)len);
 
     /* ensure icursor didn't get out of sync */
     if (tablePtr->icursor > len) tablePtr->icursor = len;

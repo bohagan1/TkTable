@@ -543,7 +543,7 @@ static char * TableVarProc(
  *
  *----------------------------------------------------------------------
  */
-
+#if TCL_MAJOR_VERSION < 9
 void TkSendVirtualEvent(Tk_Window target, const char *eventName, Tcl_Obj *detail) {
     union {XEvent general; XVirtualEvent virt;} event;
 
@@ -559,6 +559,7 @@ void TkSendVirtualEvent(Tk_Window target, const char *eventName, Tcl_Obj *detail
 
     Tk_QueueWindowEvent(&event.general, TCL_QUEUE_TAIL);
 }
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -580,7 +581,11 @@ static void GenerateTableSelectEvent(
      ClientData clientData) {	/* Information about table widget. */
 
     Table *tablePtr = (Table *) clientData;
+#if TCL_MAJOR_VERSION > 8
+    Tk_SendVirtualEvent(tablePtr->tkwin, "TableSelect", NULL);
+#else
     TkSendVirtualEvent(tablePtr->tkwin, "TableSelect", NULL);
+#endif
 }
 
 /*
@@ -825,7 +830,8 @@ static int TableConfigure(
      * Only do the full reconfigure if absolutely necessary
      */
     if (!forceUpdate) {
-	int i, dummy;
+	int i;
+	Tcl_Size dummy;
 	for (i = 0; i < objc-1; i += 2) {
 	    if (Tcl_GetIndexFromObj(NULL, objv[i], updateOpts, "", 0, &dummy) == TCL_OK) {
 		forceUpdate = 1;
@@ -885,7 +891,8 @@ static int TableWidgetObjCmd(
      Tcl_Obj *const objv[]) {	/* Argument objects. */
 
     Table *tablePtr = (Table *) clientData;
-    int row, col, i, cmdIndex, result = TCL_OK;
+    int row, col, i, result = TCL_OK;
+    Tcl_Size cmdIndex;
 
     if (objc < 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");
@@ -1524,7 +1531,7 @@ static Tcl_Size TableFetchSelection(
 		    lastrow = r;
 		    needcs = 0;
 		    if (rslen) {
-			Tcl_DStringAppend(&tablePtr->selection, rowsep, rslen);
+			Tcl_DStringAppend(&tablePtr->selection, rowsep, (Tcl_Size)rslen);
 		    } else {
 			Tcl_DStringEndSublist(&tablePtr->selection);
 			Tcl_DStringStartSublist(&tablePtr->selection);
@@ -1544,7 +1551,7 @@ static Tcl_Size TableFetchSelection(
 	    data = TableGetCellValue(tablePtr, r, c);
 	    if (cslen) {
 		if (needcs) {
-		    Tcl_DStringAppend(&tablePtr->selection, colsep, cslen);
+		    Tcl_DStringAppend(&tablePtr->selection, colsep, (Tcl_Size)cslen);
 		}
 		Tcl_DStringAppend(&tablePtr->selection, data, -1);
 	    } else {
@@ -2397,7 +2404,7 @@ static void TableDisplay(ClientData clientdata) {
 	     * at the first \x00 unicode char it finds (!= '\0'),
 	     * although there can be more to the string than that
 	     */
-	    numChars = Tcl_NumUtfChars(string, (int) strlen(string));
+	    numChars = Tcl_NumUtfChars(string, (Tcl_Size) strlen(string));
 
 	    /* If there is a string, show it */
 	    if (activeCell || numChars) {
@@ -3704,8 +3711,10 @@ int TableValidateChange(
     /* Now form command string and run through the -validatecommand */
     Tcl_Preserve((ClientData) tablePtr);
     Tcl_DStringInit(&script);
-    ExpandPercents(tablePtr, tablePtr->valCmd, r, c, old, new, (Tcl_Size) index, &script, CMD_VALIDATE);
-    code = Tcl_GlobalEval(tablePtr->interp, Tcl_DStringValue(&script));
+    ExpandPercents(tablePtr, tablePtr->valCmd, r, c, old, new, (Tcl_Size) index,
+	&script, CMD_VALIDATE);
+    code = Tcl_EvalEx(tablePtr->interp, Tcl_DStringValue(&script),
+	Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
     Tcl_DStringFree(&script);
 
     if (code != TCL_OK && code != TCL_RETURN) {
@@ -3795,7 +3804,7 @@ void ExpandPercents(
 	    Tcl_DStringAppend(dsPtr, before, -1);
 	    break;
 	} else if (string != before) {
-	    Tcl_DStringAppend(dsPtr, before, (int) (string-before));
+	    Tcl_DStringAppend(dsPtr, before, (Tcl_Size) (string-before));
 	    before = string;
 	}
 
@@ -3836,7 +3845,7 @@ void ExpandPercents(
 	    string = Tk_PathName(tablePtr->tkwin);
 	    break;
 	default:
-	    length = (int) Tcl_UniCharToUtf(ch, buf);
+	    length = Tcl_UniCharToUtf(ch, buf);
 	    buf[length] = '\0';
 	    string = buf;
 	    break;

@@ -139,7 +139,7 @@ foreach test {
 	list [lindex [.t configure $name] 4] [.t cget $name]
     } -result [list [lindex $test 2] [lindex $test 2]]
     incr i
-    if {[lindex $test 3] != ""} {
+    if {[lindex $test 3] ne ""} {
 	test table-1.$i "configuration options, $name" -body {
 	    list [catch {.t configure $name [lindex $test 3]} msg] $msg
 	} -match glob -result [list 1 [lindex $test 4]]
@@ -172,7 +172,7 @@ foreach test {
 	list [lindex [.t tag configure title $name] 4] [.t tag cget title $name]
     } [list [lindex $test 2] [lindex $test 2]]
     incr i
-    if {[lindex $test 3] != ""} {
+    if {[lindex $test 3] ne ""} {
 	test table-1.$i "tag configuration options, $name" -body {
 	    list [catch {.t tag configure title $name [lindex $test 3]} msg] $msg
 	} -match glob -result [list 1 [lindex $test 4]]

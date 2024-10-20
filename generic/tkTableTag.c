@@ -508,9 +508,14 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr)
     Tcl_Obj *selPtr = Tcl_NewListObj(0, NULL);
     Tcl_Obj *titlePtr = Tcl_NewListObj(0, NULL);
     Tcl_Obj *flashPtr = Tcl_NewListObj(0, NULL);
-    Tcl_Size objcPtr;
+    Tcl_Size objc;
     int res = TCL_OK;
-    Tcl_Obj **objvPtr;
+    Tcl_Obj **objv;
+
+    if (activePtr == NULL || selPtr == NULL || titlePtr == NULL || flashPtr == NULL) {
+	res = TCL_ERROR;
+	goto done;
+    }
 
     if (Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
 	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj(ACTIVE_BG,-1)) != TCL_OK ||
@@ -550,14 +555,14 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr)
     /*
      * The order of creation is important to priority.
      */
-    if (Tcl_ListObjGetElements(interp, flashPtr, &objcPtr, &objvPtr) != TCL_OK ||
-	TableTagGetEntry(tablePtr, "flash", objcPtr, objvPtr) == NULL ||
-	Tcl_ListObjGetElements(interp, activePtr, &objcPtr, &objvPtr) != TCL_OK ||
-	TableTagGetEntry(tablePtr, "active", objcPtr, objvPtr) == NULL ||
-	Tcl_ListObjGetElements(interp, selPtr, &objcPtr, &objvPtr) != TCL_OK ||
-	TableTagGetEntry(tablePtr, "sel", objcPtr, objvPtr) == NULL ||
-	Tcl_ListObjGetElements(interp, titlePtr, &objcPtr, &objvPtr) != TCL_OK ||
-	TableTagGetEntry(tablePtr, "title", objcPtr, objvPtr) == NULL) {
+    if (Tcl_ListObjGetElements(interp, flashPtr, &objc, &objv) != TCL_OK ||
+	TableTagGetEntry(tablePtr, "flash", objc, objv) == NULL ||
+	Tcl_ListObjGetElements(interp, activePtr, &objc, &objv) != TCL_OK ||
+	TableTagGetEntry(tablePtr, "active", objc, objv) == NULL ||
+	Tcl_ListObjGetElements(interp, selPtr, &objc, &objv) != TCL_OK ||
+	TableTagGetEntry(tablePtr, "sel", objc, objv) == NULL ||
+	Tcl_ListObjGetElements(interp, titlePtr, &objc, &objv) != TCL_OK ||
+	TableTagGetEntry(tablePtr, "title", objc, objv) == NULL) {
 	res = TCL_ERROR;
 	goto done;
     }
@@ -672,8 +677,8 @@ void TableCleanupTag(Table *tablePtr, TableTag *tagPtr) {
  */
 int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *)clientData;
-    int result = TCL_OK, cmdIndex, i, newEntry, value;
-    Tcl_Size len;
+    int result = TCL_OK, i, newEntry, value;
+    Tcl_Size len, cmdIndex;
     int row, col, tagPrio, refresh = 0;
     TableTag *tagPtr, *tag2Ptr;
     Tcl_HashEntry *entryPtr, *scanPtr;
@@ -688,8 +693,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	return TCL_ERROR;
     }
 
-    result = Tcl_GetIndexFromObj(interp, objv[2], tagCmdNames,
-				 "tag option", 0, &cmdIndex);
+    result = Tcl_GetIndexFromObj(interp, objv[2], tagCmdNames, "tag option", 0, &cmdIndex);
     if (result != TCL_OK) {
 	return result;
     }

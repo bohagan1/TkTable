@@ -76,6 +76,8 @@
     #define Tcl_GetSizeIntFromObj Tcl_GetIntFromObj
     #define Tcl_NewSizeIntObj     Tcl_NewIntObj
     #define Tcl_NewSizeIntFromObj Tcl_NewWideIntObj
+    #define TK_ANCHOR_NULL -1
+    #define TK_JUSTIFY_NULL -1
 #endif
 
 /*
@@ -560,8 +562,7 @@ extern TableTag *TableNewTag(Table *tablePtr);
 extern void	TableResetTag(Table *tablePtr, TableTag *tagPtr);
 extern void	TableMergeTag(Table *tablePtr, TableTag *baseTag, TableTag *addTag);
 extern void	TableInvertTag(TableTag *baseTag);
-extern int	TableGetTagBorders(TableTag *tagPtr, int *left, int *right, int *top,
-			int *bottom);
+extern int	TableGetTagBorders(TableTag *tagPtr, int *left, int *right, int *top, int *bottom);
 extern int	TableInitTags(Tcl_Interp *interp, Table *tablePtr);
 extern TableTag *FindRowColTag(Table *tablePtr, int cell, int type);
 extern void	TableCleanupTag(Table *tablePtr, TableTag *tagPtr);
@@ -634,7 +635,7 @@ extern Tcl_Obj*	TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr);
 #ifdef POSTSCRIPT
 extern int	Table_PostscriptCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 			Tcl_Obj *const objv[]);
-extern void	Tcl_DStringAppendAll(Tcl_DString *, arg1, ...);
+extern void	Tcl_DStringAppendAll(Tcl_DString *, ...);
 #endif
 
 /*

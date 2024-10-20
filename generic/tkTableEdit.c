@@ -206,7 +206,8 @@ static void TableModifyRC(
  */
 int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int doInsert, cmdIndex, first, last;
+    int doInsert, first, last;
+    Tcl_Size cmdIndex;
 
     if (objc < 4) {
 	Tcl_WrongNumArgs(interp, 2, objv, "option ?switches? arg ?arg?");
@@ -493,14 +494,14 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 void TableDeleteChars(
     Table *tablePtr,		/* Table widget to modify. */
     int index,			/* Index of first character to delete. */
-    int count) {			/* How many characters to delete. */
+    int count) {		/* How many characters to delete. */
 
     int byteIndex, byteCount, newByteCount, numBytes, numChars;
     char *new, *string;
 
     string = tablePtr->activeBuf;
     numBytes = (int) strlen(string);
-    numChars = (int) Tcl_NumUtfChars(string, numBytes);
+    numChars = (int) Tcl_NumUtfChars(string, (Tcl_Size)numBytes);
     if ((index + count) > numChars) {
 	count = numChars - index;
     }
@@ -508,8 +509,9 @@ void TableDeleteChars(
 	return;
     }
 
-    byteIndex = (int) (Tcl_UtfAtIndex(string, index) - string);
-    byteCount = (int) (Tcl_UtfAtIndex(string + byteIndex, count) - (string + byteIndex));
+    byteIndex = (int) (Tcl_UtfAtIndex(string, (Tcl_Size)index) - string);
+    byteCount = (int) (Tcl_UtfAtIndex(string + byteIndex, (Tcl_Size)count) -
+	(string + byteIndex));
 
     newByteCount = numBytes + 1 - byteCount;
     new = (char *) ckalloc((unsigned) newByteCount);
@@ -584,7 +586,7 @@ void TableInsertChars(
     }
 
     string = tablePtr->activeBuf;
-    byteIndex = (int) (Tcl_UtfAtIndex(string, index) - string);
+    byteIndex = (int) (Tcl_UtfAtIndex(string, (Tcl_Size)index) - string);
 
     oldlen = (int) strlen(string);
     new = (char *) ckalloc((unsigned)(oldlen + byteCount + 1));
@@ -613,8 +615,8 @@ void TableInsertChars(
      */
 
     if (tablePtr->icursor >= index) {
-	tablePtr->icursor += (int) (Tcl_NumUtfChars(new, oldlen+byteCount)
-	    - Tcl_NumUtfChars(tablePtr->activeBuf, oldlen));
+	tablePtr->icursor += (int) (Tcl_NumUtfChars(new, (Tcl_Size)(oldlen+byteCount))
+	    - Tcl_NumUtfChars(tablePtr->activeBuf, (Tcl_Size)oldlen));
     }
 
     ckfree(string);
