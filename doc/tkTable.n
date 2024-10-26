@@ -1,5 +1,5 @@
 '\"
-'\" Generated from file 'tkTable\&.man' by tcllib/doctools with format 'nroff'
+'\" Generated from file 'Tktable\&.man' by tcllib/doctools with format 'nroff'
 '\" Copyright (c) 1997-2002 Jeffrey Hobbs
 '\"
 .TH "tkTable" n 2\&.12 tkTable "TkTable extension"

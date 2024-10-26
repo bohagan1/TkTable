@@ -71,6 +71,8 @@ PRJ_LIBS = WS2_32.Lib
 # Define the standard targets which calls rules.vc
 !include "targets.vc"
 
+.SUFFIXES: .c .obj .res .man
+
 #---------------------------------------------------------------------
 # Project specific targets
 #---------------------------------------------------------------------
@@ -80,12 +82,14 @@ PRJ_LIBS = WS2_32.Lib
 # to be run during install. Rather, use it to generate a new version
 # of HTML docs to be stored in the repository.
 make-docs-html:
-	$(TCLSH) "$(PRJ_INSTALL_DIR)\..\..\bin\dtplite.tcl" \
+	$(TCLSH) "$(INSTALLDIR)\bin\dtplite.tcl" \
 	    -o "$(DOCDIR)\$(PROJECT).html" html "$(DOCDIR)\$(PROJECT).man"
 
 make-docs-n:
-	$(TCLSH) "$(PRJ_INSTALL_DIR)\..\..\bin\dtplite.tcl" \
+	$(TCLSH) "$(INSTALLDIR)\bin\dtplite.tcl" \
 	    -o "$(DOCDIR)\$(PROJECT).n" nroff "$(DOCDIR)\$(PROJECT).man"
+
+docs: make-docs-n make-docs-html 
 
 all: setup default-target
 
@@ -95,6 +99,11 @@ realclean: default-hose
 
 # Explicit dependency rules
 $(PRJ_OBJS): $(TMP_DIR)\tkTable.tcl.h $(TMP_DIR)\TkTableUuid.h
+
+# We must define a pkgindex target that will create a pkgIndex.tcl
+# file in the $(OUT_DIR) directory. We can just redirect to the
+# default-pkgindex target for our sample extension.
+pkgindex: default-pkgindex-tea
 
 # Create a C source file version of the script resources for inclusion in the
 # build so that only the compiled library file is needed for this extension to
@@ -110,26 +119,27 @@ $(TMP_DIR)\tkTable.tcl.h: $(LIBDIR)\tkTable.tcl
 	}
 <<
 
-# We must define a pkgindex target that will create a pkgIndex.tcl
-# file in the $(OUT_DIR) directory. We can just redirect to the
-# default-pkgindex target for our sample extension.
-pkgindex: default-pkgindex-tea
- 
-# Manifest which defines fossil/git commit id for build-info command
-$(ROOT)\manifest.uuid:
-    if not exist $(ROOT)\manifest.uuid (
-	copy $(WIN_DIR)\gitmanifest.in $(ROOT)\manifest.uuid
-	where git
-	if ERRORLEVEL 0 (
-	    git rev-parse HEAD >>$(ROOT)\manifest.uuid
+# Use manifest file which defines fossil/git commit id for build-info command
+$(TMP_DIR)\manifest.uuid:
+!if exist($(ROOT)\manifest.uuid)
+	@copy "$(ROOT)\manifest.uuid" "$(TMP_DIR)\manifest.uuid"
+!else
+!if exist($(ROOT)\.git)
+	@copy "$(WIN_DIR)\gitmanifest.in" "$(TMP_DIR)\manifest.uuid"
+	@for /f "delims=" %i in ('where git') do (set GIT_PATH=%i)
+	@if [%GIT_PATH%] NEQ [] (
+		@git rev-parse HEAD >>$(TMP_DIR)\manifest.uuid
 	) else (
-	    echo unknown >>$(ROOT)\manifest.uuid
+		@echo unknown >>$(TMP_DIR)\manifest.uuid
 	)
-    )
+!else
+	@echo unknown >$(TMP_DIR)\manifest.uuid
+!endif
+!endif
 
-$(TMP_DIR)\tkTableUuid.h:	$(ROOT)\manifest.uuid
-	copy $(WIN_DIR)\tkTableUuid.h.in+$(ROOT)\manifest.uuid $(TMP_DIR)\tkTableUuid.h
-	echo: >>$(TMP_DIR)\tkTableUuid.h
+$(TMP_DIR)\tkTableUuid.h:	$(TMP_DIR)\manifest.uuid
+	@copy $(WIN_DIR)\tkTableUuid.h.in+$(TMP_DIR)\manifest.uuid $(TMP_DIR)\tkTableUuid.h
+	@echo: >>$(TMP_DIR)\tkTableUuid.h
 
 install-tktabletcl:
          @echo Installing package entrypoint in '$(SCRIPT_INSTALL_DIR)'
@@ -141,7 +151,8 @@ default-install-libraries: install-tktabletcl
 # an additional target for our documentation. Note this *adds* a target
 # since no commands are listed after it. The original targets for
 # install (from targets.vc) will remain.
-install: pkgindex default-install default-install-docs-html default-install-docs-n default-install-demos
- 
+install: pkgindex default-install default-install-docs-html default-install-demos
+
 # Test package
 test: default-test
+
