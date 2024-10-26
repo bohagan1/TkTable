@@ -93,8 +93,12 @@ clean: default-clean
 
 realclean: default-hose
 
-$(PRJ_OBJS): $(TMP_DIR)\tkTable.tcl.h
+# Explicit dependency rules
+$(PRJ_OBJS): $(TMP_DIR)\tkTable.tcl.h $(TMP_DIR)\TkTableUuid.h
 
+# Create a C source file version of the script resources for inclusion in the
+# build so that only the compiled library file is needed for this extension to
+# load and operate.
 $(TMP_DIR)\tkTable.tcl.h: $(LIBDIR)\tkTable.tcl
 	"$(TCLSH)" << $(LIBDIR)\tkTable.tcl >$(TMP_DIR)\tkTable.tcl.h
 	set in [open [lindex $$argv 0] r]
@@ -139,8 +143,5 @@ default-install-libraries: install-tktabletcl
 # install (from targets.vc) will remain.
 install: pkgindex default-install default-install-docs-html default-install-docs-n default-install-demos
  
-# Explicit dependency rules
-$(GENERICDIR)\tkTable.c: $(TMP_DIR)\tkTableUuid.h
-
 # Test package
 test: default-test
