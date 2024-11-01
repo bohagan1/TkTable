@@ -218,16 +218,16 @@ libraries:
 DTPLITE=$(TCLSH) @DTPLITE@
 doc: tkTable.n
 
-tkTable.n: $(srcdir)/doc/tkTable.man
+tkTable.n: doc/tkTable.man
 	@echo "make nroff documentation"
 	@if [ -n "$(DTPLITE)" -a -x "$(DTPLITE)" ]; then \
-	    $(DTPLITE) -o $(srcdir)/doc/tkTable.n nroff $(srcdir)/doc/tkTable.man ; \
+	    $(DTPLITE) -o doc/tkTable.n nroff doc/tkTable.man ; \
 	fi
 
-tkTable.html: $(srcdir)/doc/tkTable.man
+tkTable.html: doc/tkTable.man
 	@echo "make HTML documentation"
 	@if [ -n "$(DTPLITE)" -a -x "$(DTPLITE)" ]; then \
-	    $(DTPLITE) -o $(srcdir)/doc/tkTable.html html $(srcdir)/doc/tkTable.man ; \
+	    $(DTPLITE) -o doc/tkTable.html html doc/tkTable.man ; \
 	fi
 
 install: all install-binaries install-libraries install-doc-n install-doc-html
@@ -255,7 +255,7 @@ install-libraries: libraries
 install-doc-html: tkTable.html
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(pkglibdir)/html"
 	@echo "Installing HTML documentation in $(DESTDIR)$(pkglibdir)/html"
-	@list='$(srcdir)/doc/*.html'; for i in $$list; do \
+	@list='doc/*.html'; for i in $$list; do \
 	    if test -f $$i ; then \
 		echo "Installing $$i"; \
 		$(INSTALL_DATA) $$i "$(DESTDIR)$(pkglibdir)/html"; \
@@ -265,7 +265,7 @@ install-doc-html: tkTable.html
 install-doc-n: tkTable.n
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(mandir)/mann"
 	@echo "Installing nroff documentation in $(DESTDIR)$(mandir)/mann"
-	@list='$(srcdir)/doc/*.n'; for i in $$list; do \
+	@list='doc/*.n'; for i in $$list; do \
 	    if test -f $$i ; then \
 		echo "Installing $$i"; \
 		if test -f "$(DESTDIR)$(mandir)/mann/Tcl.n.gz" ; then \
@@ -276,6 +276,10 @@ install-doc-n: tkTable.n
 		fi; \
 	    fi; \
 	done
+
+#========================================================================
+# Test and debug
+#========================================================================
 
 test: binaries libraries
 	$(TCLSH) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) \
@@ -325,6 +329,32 @@ $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
 	$(RANLIB_STUB) $(PKG_STUB_LIB_FILE)
 
 #========================================================================
+# Support files needed to compile C code
+#========================================================================
+
+# Create a C-source-ified version of the script resources for this
+# package so that we only need a single file to enable this extension.
+# I would prefer to use $< over $?, but FreeBSD's can't handle it, and
+# with only one prereq, $? is sufficient.
+tkTable.tcl.h: library/tkTable.tcl
+	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' \
+	    -e 's/$$/\\n"/' '$?' > '$@' || { rm -f '$@'; exit 1; }
+
+# Create header file with fossil, git, or svn UUID for build-info command 
+manifest.uuid:
+	@echo "Make manifest.uuid"
+	printf "git-" >manifest.uuid
+	(git rev-parse HEAD >>manifest.uuid || \
+	    (printf "svn-r" >manifest.uuid ; \
+	    svn info --show-item last-changed-revision >>manifest.uuid) || \
+	    printf "unknown" >manifest.uuid)
+
+tkTableUuid.h:	manifest.uuid
+	echo "#define TKTABLE_VERSION_UUID \\" >$@
+	cat manifest.uuid >>$@
+	echo "" >>$@
+
+#========================================================================
 # We need to enumerate the list of .c to .o lines here.
 #
 # In the following lines, $(srcdir) refers to the toplevel directory
@@ -341,24 +371,6 @@ $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
 
 VPATH = $(srcdir):$(srcdir)/generic:$(srcdir)/unix:$(srcdir)/win:$(srcdir)/macosx
 
-# I would prefer to use $< over $?, but FreeBSD's can't handle it, and
-# with only one prereq, $? is sufficient
-tkTable.tcl.h: $(srcdir)/library/tkTable.tcl
-	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' < `@CYGPATH@ $?` > '$@' || { rm -f $@; exit 1; }
-
-$(srcdir)/manifest.uuid:
-	@echo "Make manifest.uuid"
-	printf "git-" >$(srcdir)/manifest.uuid
-	(cd $(srcdir); git rev-parse HEAD >>$(srcdir)/manifest.uuid || \
-	    (printf "svn-r" >$(srcdir)/manifest.uuid ; \
-	    svn info --show-item last-changed-revision >>$(srcdir)/manifest.uuid) || \
-	    printf "unknown" >$(srcdir)/manifest.uuid)
-
-tkTableUuid.h:	$(srcdir)/manifest.uuid
-	echo "#define TKTABLE_VERSION_UUID \\" >$@
-	cat $(srcdir)/manifest.uuid >>$@
-	echo "" >>$@
-
 tkTable.@OBJEXT@:	tkTableUuid.h tkTable.tcl.h
 
 .c.@OBJEXT@:
@@ -372,7 +384,7 @@ tkTable.@OBJEXT@:	tkTableUuid.h tkTable.tcl.h
 # the configure script output the pkgIndex.tcl by editing configure.in.
 #========================================================================
 
-pkgIndex.tcl: $(srcdir)/pkgIndex.tcl.in
+pkgIndex.tcl: pkgIndex.tcl.in
 	@echo "make pkgIndex.tcl"
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
@@ -393,7 +405,7 @@ DIST_INSTALL_SCRIPT	= CPPROG='cp -p' $(INSTALL) -m 755
 dist-clean:
 	rm -rf $(DIST_DIR) $(top_builddir)/$(PKG_DIR).tar.*
 
-dist: dist-clean $(srcdir)/manifest.uuid
+dist: dist-clean manifest.uuid
 	# TEA files
 	$(INSTALL_DATA_DIR) $(DIST_DIR)
 	$(DIST_INSTALL_DATA) $(srcdir)/Makefile.in \
@@ -498,7 +510,7 @@ install-bin-binaries: binaries
 	  fi; \
 	done
 
-Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
+Makefile: Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
