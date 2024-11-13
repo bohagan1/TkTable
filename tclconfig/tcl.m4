@@ -225,6 +225,10 @@ AC_DEFUN([TEA_PATH_TKCONFIG], [
 	    AS_HELP_STRING([--with-tk],
 		[directory containing tk configuration (tkConfig.sh)]),
 	    [with_tkconfig="${withval}"])
+	AC_ARG_WITH(tk8,
+	    AS_HELP_STRING([--with-tk8],
+		[Compile for Tk8 in Tk9 environment]),
+	    [with_tk8="${withval}"])
 	AC_MSG_CHECKING([for Tk configuration])
 	AC_CACHE_VAL(ac_cv_c_tkconfig,[
 
@@ -1193,19 +1197,19 @@ AC_DEFUN([TEA_CONFIG_CFLAGS], [
 	    fi
 
 	    if test "$GCC" != "yes" ; then
-	        if test "${SHARED_BUILD}" = "0" ; then
+		if test "${SHARED_BUILD}" = "0" ; then
 		    runtime=-MT
-	        else
+		else
 		    runtime=-MD
-	        fi
-	        case "x`echo \${VisualStudioVersion}`" in
-	            x1[[4-9]]*)
-		        lflags="${lflags} -nodefaultlib:libucrt.lib"
-		        TEA_ADD_LIBS([ucrt.lib])
-	            ;;
-	            *)
-	            ;;
-	        esac
+		fi
+		case "x`echo \${VisualStudioVersion}`" in
+		    x1[[4-9]]*)
+			lflags="${lflags} -nodefaultlib:libucrt.lib"
+			TEA_ADD_LIBS([ucrt.lib])
+		    ;;
+		    *)
+		    ;;
+		esac
 
 		if test "$do64bit" != "no" ; then
 		    CC="cl.exe"
@@ -1303,7 +1307,7 @@ AC_DEFUN([TEA_CONFIG_CFLAGS], [
 			;;
 		    *)
 			# Make sure only first arg gets _r
-		    	CC=`echo "$CC" | sed -e 's/^\([[^ ]]*\)/\1_r/'`
+			CC=`echo "$CC" | sed -e 's/^\([[^ ]]*\)/\1_r/'`
 			;;
 		esac
 		AC_MSG_RESULT([Using $CC for compiling with threads])
@@ -1506,14 +1510,14 @@ AC_DEFUN([TEA_CONFIG_CFLAGS], [
 	    # Check to enable 64-bit flags for compiler/linker
 
 	    AS_IF([test "$do64bit" = yes], [
-	        AS_IF([test "$GCC" = yes], [
-	            AC_MSG_WARN([64bit mode not supported by gcc])
-	        ], [
-	            do64bit_ok=yes
-	            SHLIB_LD="ld -64 -shared -rdata_shared"
-	            CFLAGS="$CFLAGS -64"
-	            LDFLAGS_ARCH="-64"
-	        ])
+		AS_IF([test "$GCC" = yes], [
+		    AC_MSG_WARN([64bit mode not supported by gcc])
+		], [
+		    do64bit_ok=yes
+		    SHLIB_LD="ld -64 -shared -rdata_shared"
+		    CFLAGS="$CFLAGS -64"
+		    LDFLAGS_ARCH="-64"
+		])
 	    ])
 	    ;;
 	Linux*|GNU*|NetBSD-Debian|DragonFly-*|FreeBSD-*)
@@ -1661,15 +1665,6 @@ AC_DEFUN([TEA_CONFIG_CFLAGS], [
 	    ])
 	    # TEA specific: use LDFLAGS_DEFAULT instead of LDFLAGS
 	    SHLIB_LD='${CC} -dynamiclib ${CFLAGS} ${LDFLAGS_DEFAULT}'
-	    AC_CACHE_CHECK([if ld accepts -single_module flag], tcl_cv_ld_single_module, [
-		hold_ldflags=$LDFLAGS
-		LDFLAGS="$LDFLAGS -dynamiclib -Wl,-single_module"
-		AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[int i;]])],
-			[tcl_cv_ld_single_module=yes],[tcl_cv_ld_single_module=no])
-		LDFLAGS=$hold_ldflags])
-	    AS_IF([test $tcl_cv_ld_single_module = yes], [
-		SHLIB_LD="${SHLIB_LD} -Wl,-single_module"
-	    ])
 	    # TEA specific: link shlib with current and compatibility version flags
 	    vers=`echo ${PACKAGE_VERSION} | sed -e 's/^\([[0-9]]\{1,5\}\)\(\(\.[[0-9]]\{1,3\}\)\{0,2\}\).*$/\1\2/p' -e d`
 	    SHLIB_LD="${SHLIB_LD} -current_version ${vers:-0} -compatibility_version ${vers:-0}"
@@ -1740,9 +1735,9 @@ AC_DEFUN([TEA_CONFIG_CFLAGS], [
 	    # Digital OSF/1
 	    SHLIB_CFLAGS=""
 	    AS_IF([test "$SHARED_BUILD" = 1], [
-	        SHLIB_LD='ld -shared -expect_unresolved "*"'
+		SHLIB_LD='ld -shared -expect_unresolved "*"'
 	    ], [
-	        SHLIB_LD='ld -non_shared -expect_unresolved "*"'
+		SHLIB_LD='ld -non_shared -expect_unresolved "*"'
 	    ])
 	    SHLIB_SUFFIX=".so"
 	    AS_IF([test $doRpath = yes], [
@@ -1912,7 +1907,7 @@ AC_DEFUN([TEA_CONFIG_CFLAGS], [
 		LDFLAGS="$LDFLAGS -Wl,-Bexport"
 		AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[int i;]])],
 			[tcl_cv_ld_Bexport=yes],[tcl_cv_ld_Bexport=no])
-	        LDFLAGS=$hold_ldflags])
+		LDFLAGS=$hold_ldflags])
 	    AS_IF([test $tcl_cv_ld_Bexport = yes], [
 		LDFLAGS="$LDFLAGS -Wl,-Bexport"
 	    ])
@@ -2678,8 +2673,8 @@ AC_DEFUN([TEA_TCL_64BIT_FLAGS], [
 	dnl Define HAVE_TYPE_OFF64_T only when the off64_t type and the
 	dnl functions lseek64 and open64 are defined.
 	if test "x${tcl_cv_type_off64_t}" = "xyes" && \
-	        test "x${ac_cv_func_lseek64}" = "xyes" && \
-	        test "x${ac_cv_func_open64}" = "xyes" ; then
+		test "x${ac_cv_func_lseek64}" = "xyes" && \
+		test "x${ac_cv_func_open64}" = "xyes" ; then
 	    AC_DEFINE(HAVE_TYPE_OFF64_T, 1, [Is off64_t in <sys/types.h>?])
 	    AC_MSG_RESULT([yes])
 	else
@@ -3217,6 +3212,9 @@ print("manifest needed")
 	PACKAGE_LIB_PREFIX="${PACKAGE_LIB_PREFIX8}"
 	AC_DEFINE(TCL_MAJOR_VERSION, 8, [Compile for Tcl8?])
     fi
+    if test "${TCL_MAJOR_VERSION}" -gt 8 -a x"${with_tk8}" != x; then
+	AC_DEFINE(TK_MAJOR_VERSION, 8, [Compile for Tk8?])
+    fi
     if test "${TEA_PLATFORM}" = "windows" ; then
 	if test "${SHARED_BUILD}" = "1" ; then
 	    # We force the unresolved linking of symbols that are really in
@@ -3417,14 +3415,14 @@ AC_DEFUN([TEA_PRIVATE_TCL_HEADERS], [
 	    # If Tcl was built as a framework, attempt to use
 	    # the framework's Headers and PrivateHeaders directories
 	    case ${TCL_DEFS} in
-	    	*TCL_FRAMEWORK*)
+		*TCL_FRAMEWORK*)
 		    if test -d "${TCL_BIN_DIR}/Headers" -a \
 			    -d "${TCL_BIN_DIR}/PrivateHeaders"; then
 			TCL_INCLUDES="-I\"${TCL_BIN_DIR}/Headers\" -I\"${TCL_BIN_DIR}/PrivateHeaders\" ${TCL_INCLUDES}"
 		    else
 			TCL_INCLUDES="${TCL_INCLUDES} ${TCL_INCLUDE_SPEC} `echo "${TCL_INCLUDE_SPEC}" | sed -e 's/Headers/PrivateHeaders/'`"
 		    fi
-	            ;;
+		    ;;
 	    esac
 	    result="Using ${TCL_INCLUDES}"
 	else
