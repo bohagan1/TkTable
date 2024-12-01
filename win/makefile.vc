@@ -82,12 +82,18 @@ PRJ_LIBS = WS2_32.Lib
 # to be run during install. Rather, use it to generate a new version
 # of HTML docs to be stored in the repository.
 make-docs-html:
-	$(TCLSH) "$(INSTALLDIR)\bin\dtplite.tcl" \
-	    -o "$(DOCDIR)\$(PROJECT).html" html "$(DOCDIR)\$(PROJECT).man"
+	"$(_INSTALLDIR)\..\bin\tclsh.exe" "$(_INSTALLDIR)\..\bin\dtplite.tcl" \
+	    -o "$(ROOT)\doc\$(PROJECT).html" html "$(ROOT)\doc\$(PROJECT).man"
 
 make-docs-n:
-	$(TCLSH) "$(INSTALLDIR)\bin\dtplite.tcl" \
-	    -o "$(DOCDIR)\$(PROJECT).n" nroff "$(DOCDIR)\$(PROJECT).man"
+	"$(_INSTALLDIR)\..\bin\tclsh.exe" "$(_INSTALLDIR)\..\bin\dtplite.tcl" \
+	    -o "$(ROOT)\doc\$(PROJECT).n" nroff "$(ROOT)\doc\$(PROJECT).man"
+
+make-docs:
+	"$(_INSTALLDIR)\..\bin\tclsh.exe" "$(_INSTALLDIR)\..\bin\dtplite.tcl" \
+	    -o "$DOCDIR" html "$(ROOT)\doc"
+	"$(_INSTALLDIR)\..\bin\tclsh.exe" "$(_INSTALLDIR)\..\bin\dtplite.tcl" \
+	    -o "$DOCDIR" nroff "$(ROOT)\doc"
 
 docs: make-docs-n make-docs-html 
 

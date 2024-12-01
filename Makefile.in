@@ -216,19 +216,31 @@ libraries:
 #========================================================================
 
 DTPLITE=$(TCLSH) @DTPLITE@
-doc: tkTable.n
 
-tkTable.n: doc/tkTable.man
+doc: make-docs-n make-docs-html
+
+make-docs-n: doc/tkTable.man
 	@echo "make nroff documentation"
 	@if [ -n "$(DTPLITE)" -a -x "$(DTPLITE)" ]; then \
 	    $(DTPLITE) -o doc/tkTable.n nroff doc/tkTable.man ; \
 	fi
 
-tkTable.html: doc/tkTable.man
+make-docs-html: doc/tkTable.man
 	@echo "make HTML documentation"
 	@if [ -n "$(DTPLITE)" -a -x "$(DTPLITE)" ]; then \
 	    $(DTPLITE) -o doc/tkTable.html html doc/tkTable.man ; \
 	fi
+
+make-docs: doc/tkTable.man
+	@echo "make documentation"
+	@if [ -n "$(DTPLITE)" -a -x "$(DTPLITE)" ]; then \
+	    $(DTPLITE) -o doc nroff doc ; \
+	    $(DTPLITE) -o doc html doc ; \
+	fi
+
+#========================================================================
+# Install targets
+#========================================================================
 
 install: all install-binaries install-libraries install-doc-n install-doc-html
 
@@ -252,7 +264,7 @@ install-libraries: libraries
 # directory.
 #========================================================================
 
-install-doc-html: tkTable.html
+install-doc-html: make-docs-html
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(pkglibdir)/html"
 	@echo "Installing HTML documentation in $(DESTDIR)$(pkglibdir)/html"
 	@list='doc/*.html'; for i in $$list; do \
@@ -262,7 +274,7 @@ install-doc-html: tkTable.html
 	    fi; \
 	done
 
-install-doc-n: tkTable.n
+install-doc-n: make-docs-n
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(mandir)/mann"
 	@echo "Installing nroff documentation in $(DESTDIR)$(mandir)/mann"
 	@list='doc/*.n'; for i in $$list; do \

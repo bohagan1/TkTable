@@ -1882,7 +1882,7 @@ $table configure -padx [$table cget -padx]
 
 .CE
 .SH KEYWORDS
-extension, table, widget
+TkTable, cell, column, extension, row, table, widget
 .SH CATEGORY
 table
 .SH COPYRIGHT
