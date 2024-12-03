@@ -756,8 +756,7 @@ int Table_WinDelete(Table *tablePtr, char *const idxPtr) {
 int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *)clientData;
-    int result = TCL_OK, row, col, x, y, width, height, i, new;
-    Tcl_Size cmdIndex;
+    int result = TCL_OK, row, col, x, y, width, height, i, new, cmdIndex;
     TableEmbWindow *ewPtr;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;

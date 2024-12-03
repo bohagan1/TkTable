@@ -677,8 +677,8 @@ void TableCleanupTag(Table *tablePtr, TableTag *tagPtr) {
  */
 int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *)clientData;
-    int result = TCL_OK, i, newEntry, value;
-    Tcl_Size len, cmdIndex;
+    int result = TCL_OK, i, newEntry, value, cmdIndex;
+    Tcl_Size len;
     int row, col, tagPrio, refresh = 0;
     TableTag *tagPtr, *tag2Ptr;
     Tcl_HashEntry *entryPtr, *scanPtr;

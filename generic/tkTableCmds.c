@@ -350,8 +350,7 @@ enum bdCmd {
 int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     Tcl_HashEntry *entryPtr;
-    int x, y, w, h, row, col, key, dummy, value;
-    Tcl_Size cmdIndex;
+    int x, y, w, h, row, col, key, dummy, value, cmdIndex;
     char *rc = NULL;
     Tcl_Obj *objPtr, *resultPtr;
 
@@ -478,8 +477,7 @@ enum clearCommand {
  */
 int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    Tcl_Size cmdIndex;
-    int redraw = 0;
+    int cmdIndex, redraw = 0;
 
     if (objc < 3 || objc > 5) {
 	Tcl_WrongNumArgs(interp, 2, objv, "option ?first? ?last?");
@@ -799,8 +797,7 @@ int Table_GetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
  */
 int Table_ScanCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int x, y, row, col;
-    Tcl_Size cmdIndex;
+    int x, y, row, col, cmdIndex;
 
     if (objc != 5) {
 	Tcl_WrongNumArgs(interp, 2, objv, "mark|dragto x y");

@@ -830,8 +830,7 @@ static int TableConfigure(
      * Only do the full reconfigure if absolutely necessary
      */
     if (!forceUpdate) {
-	int i;
-	Tcl_Size dummy;
+	int i, dummy;
 	for (i = 0; i < objc-1; i += 2) {
 	    if (Tcl_GetIndexFromObj(NULL, objv[i], updateOpts, "", 0, &dummy) == TCL_OK) {
 		forceUpdate = 1;
@@ -891,8 +890,7 @@ static int TableWidgetObjCmd(
      Tcl_Obj *const objv[]) {	/* Argument objects. */
 
     Table *tablePtr = (Table *) clientData;
-    int row, col, i, result = TCL_OK;
-    Tcl_Size cmdIndex;
+    int row, col, i, result = TCL_OK, cmdIndex;
 
     if (objc < 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");

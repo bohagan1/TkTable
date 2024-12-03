@@ -206,8 +206,7 @@ static void TableModifyRC(
  */
 int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int doInsert, first, last;
-    Tcl_Size cmdIndex;
+    int doInsert, first, last, cmdIndex;
 
     if (objc < 4) {
 	Tcl_WrongNumArgs(interp, 2, objv, "option ?switches? arg ?arg?");
