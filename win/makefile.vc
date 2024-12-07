@@ -24,6 +24,8 @@
 PROJECT = Tktable
 TBL_COMMAND = table
 TBL_RUNTIME = tkTable.tcl
+
+# Note this extension needs Tk *source* to build
 PROJECT_REQUIRES_TK=1
 
 !include "rules-ext.vc"
@@ -95,7 +97,7 @@ make-docs:
 	"$(_INSTALLDIR)\..\bin\tclsh.exe" "$(_INSTALLDIR)\..\bin\dtplite.tcl" \
 	    -o "$DOCDIR" nroff "$(ROOT)\doc"
 
-docs: make-docs-n make-docs-html 
+docs: make-docs-n make-docs-html
 
 all: setup default-target
 
@@ -118,7 +120,7 @@ $(TMP_DIR)\tkTable.tcl.h: $(LIBDIR)\tkTable.tcl
 	"$(TCLSH)" << $(LIBDIR)\tkTable.tcl >$(TMP_DIR)\tkTable.tcl.h
 	set in [open [lindex $$argv 0] r]
 	while {[gets $$in line] != -1} {
-	    switch -regexp -- $$line "^$$" - {^#} continue
+	    switch -regexp -- $$line "^$$" - {^\s*#} continue
 	    regsub -all {\\} $$line {\\\\} line
 	    regsub -all {"} $$line {\"} line
 	    puts "\"$$line\\n\""
@@ -132,12 +134,7 @@ $(TMP_DIR)\manifest.uuid:
 !else
 !if exist($(ROOT)\.git)
 	@copy "$(WIN_DIR)\gitmanifest.in" "$(TMP_DIR)\manifest.uuid"
-	@for /f "delims=" %i in ('where git') do (set GIT_PATH=%i)
-	@if [%GIT_PATH%] NEQ [] (
-		@git rev-parse HEAD >>$(TMP_DIR)\manifest.uuid
-	) else (
-		@echo unknown >>$(TMP_DIR)\manifest.uuid
-	)
+	@git rev-parse HEAD >>$(TMP_DIR)\manifest.uuid || echo unknown >>$(TMP_DIR)\manifest.uuid
 !else
 	@echo unknown >$(TMP_DIR)\manifest.uuid
 !endif
@@ -148,8 +145,8 @@ $(TMP_DIR)\tkTableUuid.h:	$(TMP_DIR)\manifest.uuid
 	@echo: >>$(TMP_DIR)\tkTableUuid.h
 
 install-tktabletcl:
-         @echo Installing package entrypoint in '$(SCRIPT_INSTALL_DIR)'
- 	@$(CPY) $(LIBDIR)\tkTable.tcl "$(SCRIPT_INSTALL_DIR)"
+	@echo Installing package entrypoint in '$(SCRIPT_INSTALL_DIR)'
+	@$(CPY) $(LIBDIR)\tkTable.tcl "$(SCRIPT_INSTALL_DIR)"
 
 default-install-libraries: install-tktabletcl
 
