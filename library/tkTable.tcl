@@ -832,7 +832,7 @@ proc tk_tablePasteHandler {w cell data} {
 	foreach item $line {
 	    if {$col > $cols} break
 	    set oldTxt [$w get $row,$col]
-	    if {![string equal $item $oldTxt]} {
+	    if {![string equal $item $oldTxt] && $vcmd ne ""} {
 		set vldCmd [string map [list %W $w %r $row %c $col %s $oldTxt %S $item] $vcmd]
 		if {![eval $vldCmd]} {
 		    incr col
