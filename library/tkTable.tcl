@@ -94,41 +94,46 @@ bind Table <ButtonRelease-2> {
 
 ## Mouse wheel events
 
-if {[tk windowingsystem] eq "aqua"} {
-    bind Table <MouseWheel> {
-	%W yview scroll [expr {- (%D)}] units
-    }
-    bind Table <Option-MouseWheel> {
-	%W yview scroll [expr {-10 * (%D)}] units
-    }
-    bind Table <Shift-MouseWheel> {
-	%W xview scroll [expr {- (%D)}] units
-    }
-    bind Table <Shift-Option-MouseWheel> {
-	%W xview scroll [expr {-10 * (%D)}] units
-    }
+if {[package vcompare [package present Tk] 8.7] >= 0} {
+    bind Table <MouseWheel> {tk::MouseWheel %W y %D -40.0}
+    bind Table <Option-MouseWheel> {tk::MouseWheel %W y %D -12.0}
+    bind Table <Shift-MouseWheel> {tk::MouseWheel %W x %D -40.0}
+    bind Table <Shift-Option-MouseWheel> {tk::MouseWheel %W x %D -12.0}
+
 } else {
-    bind Table <MouseWheel> {
-	%W yview scroll [expr {- (%D / 120) * 4}] units
+    if {[tk windowingsystem] eq "aqua"} {
+	bind Table <MouseWheel>		{%W yview scroll [expr {-%D}] units}
+	bind Table <Shift-MouseWheel>	{%W xview scroll [expr {-%D}] units}
+	bind Table <Option-MouseWheel>	{%W yview scroll [expr {-10 * %D}] units}
+	bind Table <Shift-Option-MouseWheel> {%W xview scroll [expr {-10 * %D}] units}
+    } else {
+	bind Table <MouseWheel>		{%W yview scroll [expr {-%D / 120}] units}
+	bind Table <Shift-MouseWheel>	{%W xview scroll [expr {-%D / 120}] units}
     }
-    bind Table <Shift-MouseWheel> {
-	%W xview scroll [expr {- (%D / 120) * 4}] units
+
+    if {[tk windowingsystem] eq "x11"} {
+	bind Table <Button-4>		{%W yview scroll -5 units}
+	bind Table <Shift-Button-4>	{%W xview scroll -5 units}
+	bind Table <Button-5>		{%W yview scroll  5 units}
+	bind Table <Shift-Button-5>	{%W xview scroll  5 units}
     }
 }
 
-if {[tk windowingsystem] eq "x11"} {
-    bind Table <4> {
-	%W yview scroll -5 units
+## Touchpad scrolling
+#
+if {[package vcompare [package present Tk] 8.7] >= 0} {
+bind Table <TouchpadScroll> {
+    if {%# %% 5 != 0} {
+        return
     }
-    bind Table <Shift-4> {
-	%W xview scroll -5 units
+    lassign [tk::PreciseScrollDeltas %D] tk::Priv(deltaX) tk::Priv(deltaY)
+    if {$tk::Priv(deltaX) != 0} {
+ 	%W xview scroll [expr {-$tk::Priv(deltaX)}] units
     }
-    bind Table <5> {
-	%W yview scroll 5 units
+    if {$tk::Priv(deltaY) != 0} {
+	%W yview scroll [expr {-$tk::Priv(deltaY)}] units
     }
-    bind Table <Shift-5> {
-	%W xview scroll 5 units
-    }
+}
 }
 
 ## Key events
