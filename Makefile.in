@@ -499,7 +499,7 @@ install-lib-binaries: binaries
 	done
 	@if test "x$(SHARED_BUILD)" = "x1"; then \
 	    echo " Install pkgIndex.tcl $(DESTDIR)$(pkglibdir)"; \
-	    $(INSTALL_DATA) $(srcdir)/pkgIndex.tcl "$(DESTDIR)$(pkglibdir)"; \
+	    $(INSTALL_DATA) pkgIndex.tcl "$(DESTDIR)$(pkglibdir)"; \
 	fi
 	@if test -f "$(srcdir)/tktableConfig.sh"; then \
 	    $(INSTALL_DATA) $(srcdir)/tktableConfig.sh $(DESTDIR)$(libdir); \
