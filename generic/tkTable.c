@@ -596,7 +596,7 @@ static void GenerateTableSelectEvent(
  *	grabbed away from a table widget.
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	The existing selection is unhighlighted, and the window is
@@ -1143,7 +1143,7 @@ static int TableWidgetObjCmd(
  *	Redraws just the highlight for the window
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	None
@@ -1169,7 +1169,7 @@ static void TableRedrawHighlight(Table *tablePtr) {
  *	(when no-one is using it anymore).
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	Everything associated with the table is freed up (hopefully).
@@ -1282,7 +1282,7 @@ static void TableDestroy(ClientData clientdata) {
  *	events on tables.
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	When the window gets deleted, internal structures get
@@ -1421,7 +1421,7 @@ static void TableEventProc(
  *	this command destroys it.
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	The widget is destroyed.
@@ -1461,7 +1461,7 @@ static void TableCmdDeletedProc(ClientData clientData) {
  *	as given by offset and maxBytes.
  *
  * Side effects:
- *	None.
+ *	None
  *
  *----------------------------------------------------------------------
  */
@@ -1774,7 +1774,7 @@ static int Tk_TableObjCmd(
  *	and determine its new geometry.
  *
  * Results:
- *      None.
+ *      None
  *
  * Side effects:
  *      Entry will be relayed out and redisplayed.
@@ -1817,7 +1817,7 @@ static void TableWorldChanged(
  *	Will cause redraw for visible cells
  *
  * Side effects:
- *	None.
+ *	None
  *
  *----------------------------------------------------------------------
  */
@@ -1963,7 +1963,7 @@ static void TableUndisplay(Table *tablePtr) {
  *		o Use of alternative routine for Windows
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	Information appears on the screen.
@@ -2882,7 +2882,7 @@ void TableInvalidate(Table * tablePtr, int x, int y, int w, int h, int flags) {
  *	table is now empty, stops the timer, else reenables it.
  *
  * Side effects:
- *	None.
+ *	None
  *
  *----------------------------------------------------------------------
  */
@@ -2965,7 +2965,7 @@ void TableAddFlash(Table *tablePtr, int row, int col) {
  *	value of the active buffer.
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	Traces on the array can cause side effects.
@@ -2989,7 +2989,7 @@ void TableSetActiveIndex(Table *tablePtr) {
  *	Set the position to the end of the string.
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	tablePtr->activeBuf will change.
@@ -3026,7 +3026,7 @@ void TableGetActiveBuf(Table *tablePtr) {
  *	This procedure is invoked to request a new geometry from Tk.
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	Geometry information is updated and a new requested size is
@@ -3136,7 +3136,7 @@ void TableAdjustActive(Table *tablePtr) {
  *	all and invalidates the table if it has.
  *
  * Results:
- *	None.
+ *	None
  *
  * Side Effects:
  *	Number of rows can change if -rowstretchmode == fill.
@@ -3381,7 +3381,7 @@ void TableAdjustParams(Table *tablePtr) {
     /*
      * If we don't have the info, don't bother to fix up the other parameters
      */
-    if (Tk_WindowId(tablePtr->tkwin) == None) {
+    if (Tk_WindowId(tablePtr->tkwin) == NULL) {
 	tablePtr->oldTopRow = tablePtr->oldLeftCol = -1;
 	return;
     }
@@ -3536,7 +3536,7 @@ void TableAdjustParams(Table *tablePtr) {
  *	Toggle the cursor status.  Equivalent to EntryBlinkProc.
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	The cursor will be switched off/on.
@@ -3576,7 +3576,7 @@ static void TableCursorEvent(ClientData clientData) {
  *	Equivalent to EntryFocusProc.
  *
  * Results:
- *	None.
+ *	None
  *
  * Side effects:
  *	The cursor will be switched off/on.
@@ -3638,7 +3638,7 @@ void TableConfigCursor(Table *tablePtr) {
  *	Returns either TK_DISCARD_EVENT or TK_DEFER_EVENT.
  *
  * Side effects:
- *	None.
+ *	None
  *
  *----------------------------------------------------------------------
  */
@@ -3761,7 +3761,7 @@ int TableValidateChange(
  *	given by dsPtr.
  *
  * Side effects:
- *	None.
+ *	None
  *
  *--------------------------------------------------------------
  */
@@ -4027,7 +4027,7 @@ EXTERN int Tktable_SafeInit(Tcl_Interp *interp) {
  *	Returns TRUE;
  *
  * Side effects:
- *	None.
+ *	None
  *
  *----------------------------------------------------------------------
  */
