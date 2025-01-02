@@ -3381,7 +3381,7 @@ void TableAdjustParams(Table *tablePtr) {
     /*
      * If we don't have the info, don't bother to fix up the other parameters
      */
-    if (Tk_WindowId(tablePtr->tkwin) == NULL) {
+    if (Tk_WindowId(tablePtr->tkwin) == (Window)NULL) {
 	tablePtr->oldTopRow = tablePtr->oldLeftCol = -1;
 	return;
     }
