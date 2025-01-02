@@ -204,7 +204,6 @@ all: binaries libraries doc
 #========================================================================
 
 binaries: $(BINARIES)
-	@echo "make binaries"
 
 libraries:
 
@@ -267,7 +266,7 @@ install-libraries: libraries
 install-doc-html: make-docs-html
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(pkglibdir)/html"
 	@echo "Installing HTML documentation in $(DESTDIR)$(pkglibdir)/html"
-	@list='doc/*.html'; for i in $$list; do \
+	@list='$(srcdir)/doc/*.html'; for i in $$list; do \
 	    if test -f $$i ; then \
 		echo "Installing $$i"; \
 		$(INSTALL_DATA) $$i "$(DESTDIR)$(pkglibdir)/html"; \
@@ -277,7 +276,7 @@ install-doc-html: make-docs-html
 install-doc-n: make-docs-n
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(mandir)/mann"
 	@echo "Installing nroff documentation in $(DESTDIR)$(mandir)/mann"
-	@list='doc/*.n'; for i in $$list; do \
+	@list='$(srcdir)/doc/*.n'; for i in $$list; do \
 	    if test -f $$i ; then \
 		if test -f "$(DESTDIR)$(mandir)/mann/Tcl.n.gz" -o \
 		    "$(DESTDIR)$(mandir)/mann/Tcl*.n.gz" ; then \
@@ -431,7 +430,7 @@ dist: dist-clean manifest.uuid
 		$(srcdir)/README.txt $(srcdir)/pkgIndex.tcl.in \
 		$(srcdir)/TODO.txt $(DIST_DIR)/
 
-	list='demos doc generic library tclconfig tests win'; \
+	list='demos doc generic library tclconfig macosx tests unix win'; \
 	for p in $$list; do \
 	    if test -d $(srcdir)/$$p ; then \
 		$(INSTALL_DATA_DIR) $(DIST_DIR)/$$p; \
@@ -523,7 +522,7 @@ install-bin-binaries: binaries
 	  fi; \
 	done
 
-Makefile: Makefile.in  $(top_builddir)/config.status
+Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
