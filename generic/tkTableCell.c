@@ -929,43 +929,47 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    }
 	} else if (tablePtr->state == STATE_NORMAL) {
 	    Tcl_Size listc;
-	    Tcl_Obj **listv;
+	    Tcl_Obj *itemObj;
 	    /* make sure there are an even number of index/list pairs */
 	    if (objc & 0) {
 		goto CMD_SET_USAGE;
 	    }
 	    for (i = 3; i < objc-1; i += 2) {
 		if ((TableGetIndexObj(tablePtr, objv[i], &row, &col) != TCL_OK) ||
-		    (Tcl_ListObjGetElements(interp, objv[i+1], &listc, &listv) != TCL_OK)) {
+		    (Tcl_ListObjLength(interp, objv[i+1], &listc) != TCL_OK)) {
 		    return TCL_ERROR;
 		}
 		if (*str == 'r') {
 		    max = col+MIN(tablePtr->cols+tablePtr->colOffset-col, (int) listc);
 		    for (j = col; j < max; j++) {
-			if (TableSetCellValue(tablePtr, row, j, Tcl_GetString(listv[j-col]))
-			    != TCL_OK) {
+			Tcl_ListObjIndex(interp, objv[i+1], j-col, &itemObj);
+			Tcl_IncrRefCount(itemObj);
+			if (TableSetCellValue(tablePtr, row, j, Tcl_GetString(itemObj)) != TCL_OK) {
+			    Tcl_DecrRefCount(itemObj);
 			    return TCL_ERROR;
 			}
 			if (row-tablePtr->rowOffset == tablePtr->activeRow &&
 			    j-tablePtr->colOffset == tablePtr->activeCol) {
 			    TableGetActiveBuf(tablePtr);
 			}
-			TableRefresh(tablePtr, row-tablePtr->rowOffset,
-				     j-tablePtr->colOffset, CELL);
+			TableRefresh(tablePtr, row-tablePtr->rowOffset, j-tablePtr->colOffset, CELL);
+			Tcl_DecrRefCount(itemObj);
 		    }
 		} else {
 		    max = row+MIN(tablePtr->rows+tablePtr->rowOffset-row, (int) listc);
 		    for (j = row; j < max; j++) {
-			if (TableSetCellValue(tablePtr, j, col, Tcl_GetString(listv[j-row]))
-			    != TCL_OK) {
+			Tcl_ListObjIndex(interp, objv[i+1], j-row, &itemObj);
+			Tcl_IncrRefCount(itemObj);
+			if (TableSetCellValue(tablePtr, j, col, Tcl_GetString(itemObj)) != TCL_OK) {
+			    Tcl_DecrRefCount(itemObj);
 			    return TCL_ERROR;
 			}
 			if (j-tablePtr->rowOffset == tablePtr->activeRow &&
 			    col-tablePtr->colOffset == tablePtr->activeCol) {
 			    TableGetActiveBuf(tablePtr);
 			}
-			TableRefresh(tablePtr, j-tablePtr->rowOffset,
-				     col-tablePtr->colOffset, CELL);
+			TableRefresh(tablePtr, j-tablePtr->rowOffset, col-tablePtr->colOffset, CELL);
+			Tcl_DecrRefCount(itemObj);
 		    }
 		}
 	    }

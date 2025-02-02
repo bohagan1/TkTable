@@ -502,78 +502,77 @@ static TableTag * TableTagGetEntry(Table *tablePtr, char *name, Tcl_Size objc, T
  *
  *----------------------------------------------------------------------
  */
-int TableInitTags(Tcl_Interp *interp, Table *tablePtr)
-{
-    Tcl_Obj *activePtr = Tcl_NewListObj(0, NULL);
-    Tcl_Obj *selPtr = Tcl_NewListObj(0, NULL);
-    Tcl_Obj *titlePtr = Tcl_NewListObj(0, NULL);
-    Tcl_Obj *flashPtr = Tcl_NewListObj(0, NULL);
-    Tcl_Size objc;
-    int res = TCL_OK;
-    Tcl_Obj **objv;
+int DoTableInitTags(Tcl_Interp *interp, Table *tablePtr, Tcl_Size objc, Tcl_Obj *const objv[], char *name) {
+    int i, res = TCL_OK;
 
-    if (activePtr == NULL || selPtr == NULL || titlePtr == NULL || flashPtr == NULL) {
-	res = TCL_ERROR;
-	goto done;
+    for (i = 0; i < objc; i++) {
+	if (objv[i] != NULL) {
+	    Tcl_IncrRefCount(objv[i]);
+	} else {
+	    Tcl_SetResult(interp, (char *) "Create object error", TCL_STATIC);
+	    res = TCL_ERROR;
+	    objc = i;
+	    goto done;
+	}
     }
-
-    if (Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj(ACTIVE_BG,-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("-fg",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj(ACTIVE_FG,-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("-relief",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, activePtr, Tcl_NewStringObj("solid",-1)) != TCL_OK ||
-
-	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-bd",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj(SELECT_BD,-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj(SELECT_BG,-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-fg",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj(SELECT_FG,-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("-relief",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, selPtr, Tcl_NewStringObj("sunken",-1)) != TCL_OK ||
-
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-bd",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("1",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj(DISABLED_BG,-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-fg",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj(DISABLED_FG,-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-font",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("TkHeadingFont",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-relief",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("ridge",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("-state",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, titlePtr, Tcl_NewStringObj("disabled",-1)) != TCL_OK ||
-
-	Tcl_ListObjAppendElement(interp, flashPtr, Tcl_NewStringObj("-bg",-1)) != TCL_OK ||
-	Tcl_ListObjAppendElement(interp, flashPtr, Tcl_NewStringObj("red",-1)) != TCL_OK) {
+    if (TableTagGetEntry(tablePtr, name, objc, objv) == NULL) {
+	Tcl_SetResult(interp, (char *) "Create tag error", TCL_STATIC);
 	res = TCL_ERROR;
-	goto done;
     }
-
-    /*
-     * The order of creation is important to priority.
-     */
-    if (Tcl_ListObjGetElements(interp, flashPtr, &objc, &objv) != TCL_OK ||
-	TableTagGetEntry(tablePtr, "flash", objc, objv) == NULL ||
-	Tcl_ListObjGetElements(interp, activePtr, &objc, &objv) != TCL_OK ||
-	TableTagGetEntry(tablePtr, "active", objc, objv) == NULL ||
-	Tcl_ListObjGetElements(interp, selPtr, &objc, &objv) != TCL_OK ||
-	TableTagGetEntry(tablePtr, "sel", objc, objv) == NULL ||
-	Tcl_ListObjGetElements(interp, titlePtr, &objc, &objv) != TCL_OK ||
-	TableTagGetEntry(tablePtr, "title", objc, objv) == NULL) {
-	res = TCL_ERROR;
-	goto done;
-    }
-
-    /* Clean up */
 done:
-    Tcl_DecrRefCount(flashPtr);
-    Tcl_DecrRefCount(activePtr);
-    Tcl_DecrRefCount(selPtr);
-    Tcl_DecrRefCount(titlePtr);
+    for (i = 0; i < objc; i++) {
+	Tcl_DecrRefCount(objv[i]);
+    }
     return res;
+}
+ 
+int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
+    Tcl_Obj *objv[12];
+
+    objv[0] = Tcl_NewStringObj("-bg",-1);
+    objv[1] = Tcl_NewStringObj("red",-1);
+    if (DoTableInitTags(interp, tablePtr, 2, objv, "flash") != TCL_OK) {
+	return TCL_ERROR;
+    }
+
+    objv[0] = Tcl_NewStringObj("-bg",-1);
+    objv[1] = Tcl_NewStringObj(ACTIVE_BG,-1);
+    objv[2] = Tcl_NewStringObj("-fg",-1);
+    objv[3] = Tcl_NewStringObj(ACTIVE_FG,-1);
+    objv[4] = Tcl_NewStringObj("-relief",-1);
+    objv[5] = Tcl_NewStringObj("solid",-1);
+    if (DoTableInitTags(interp, tablePtr, 6, objv, "active") != TCL_OK) {
+	return TCL_ERROR;
+    }
+
+    objv[0] = Tcl_NewStringObj("-bd",-1);
+    objv[1] = Tcl_NewStringObj(SELECT_BD,-1);
+    objv[2] = Tcl_NewStringObj("-bg",-1);
+    objv[3] = Tcl_NewStringObj(SELECT_BG,-1);
+    objv[4] = Tcl_NewStringObj("-fg",-1);
+    objv[5] = Tcl_NewStringObj(SELECT_FG,-1);
+    objv[6] = Tcl_NewStringObj("-relief",-1);
+    objv[7] = Tcl_NewStringObj("sunken",-1);
+    if (DoTableInitTags(interp, tablePtr, 8, objv, "sel") != TCL_OK) {
+	return TCL_ERROR;
+    }
+
+    objv[0] = Tcl_NewStringObj("-bd",-1);
+    objv[1] = Tcl_NewStringObj("1",-1);
+    objv[2] = Tcl_NewStringObj("-bg",-1);
+    objv[3] = Tcl_NewStringObj(DISABLED_BG,-1);
+    objv[4] = Tcl_NewStringObj("-fg",-1);
+    objv[5] = Tcl_NewStringObj(DISABLED_FG,-1);
+    objv[6] = Tcl_NewStringObj("-font",-1);
+    objv[7] = Tcl_NewStringObj("TkHeadingFont",-1);
+    objv[8] = Tcl_NewStringObj("-relief",-1);
+    objv[9] = Tcl_NewStringObj("ridge",-1);
+    objv[10] = Tcl_NewStringObj("-state",-1);
+    objv[11] = Tcl_NewStringObj("disabled",-1);
+    if (DoTableInitTags(interp, tablePtr, 12, objv, "title") != TCL_OK) {
+	return TCL_ERROR;
+    }
+    return TCL_OK;
 }
 
 /*

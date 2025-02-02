@@ -368,6 +368,7 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
     for (i=0; i < length; i++){
 	elementArray[i].objPtr = listObjPtrs[i];
 	elementArray[i].nextPtr = &elementArray[i+1];
+	Tcl_IncrRefCount(listObjPtrs[i]);
     }
     elementArray[length-1].nextPtr = NULL;
     elementPtr = MergeSort(elementArray);
@@ -376,6 +377,9 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
 	Tcl_ListObjAppendElement(NULL, sortedObjPtr, elementPtr->objPtr);
     }
     ckfree((char*) elementArray);
+    for (i=0; i < length; i++){
+	Tcl_DecrRefCount(listObjPtrs[i]);
+    }
 
     return sortedObjPtr;
 }
