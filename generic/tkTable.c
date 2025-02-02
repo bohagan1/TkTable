@@ -3856,7 +3856,6 @@ void ExpandPercents(
 		cvtFlags | TCL_DONT_USE_BRACES);
 	Tcl_DStringSetLength(dsPtr, length + spaceNeeded);
     }
-    Tcl_DStringAppend(dsPtr, "", 1);
 }
 
 /*
