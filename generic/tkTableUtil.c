@@ -148,6 +148,7 @@ int TableOptionBdSet(
  *----------------------------------------------------------------------
  *
  * TableOptionBdGet --
+ *	This routine returns the borderwidth value for a tag.
  *
  * Results:
  *	Value of the -bd option.
@@ -297,7 +298,7 @@ void Cmd_GetError(Tcl_Interp *interp, const Cmd_Struct *cmds, const char *arg) {
  *----------------------------------------------------------------------
  *
  * Cmd_OptionSet --
- *
+ *	Set option to value.
  *
  * Results:
  *	A standard Tcl result.
@@ -324,7 +325,7 @@ int Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp, Tk_Window unused,
  *----------------------------------------------------------------------
  *
  * Cmd_OptionGet --
- *
+ *	Get value for option.
  *
  * Results:
  *	Value of the option.

@@ -335,7 +335,7 @@ enum bdCmd {
  *--------------------------------------------------------------
  *
  * Table_BorderCmd --
- *	This procedure is invoked to process the bbox method
+ *	This procedure is invoked to process the border method
  *	that corresponds to a table widget managed by this module.
  *	See the user documentation for details on what it does.
  *
@@ -621,7 +621,7 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
  *--------------------------------------------------------------
  *
  * Table_CurselectionCmd --
- *	This procedure is invoked to process the bbox method
+ *	This procedure is invoked to process the curselection method
  *	that corresponds to a table widget managed by this module.
  *	See the user documentation for details on what it does.
  *
@@ -737,7 +737,7 @@ int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp,
  *--------------------------------------------------------------
  *
  * Table_GetCmd --
- *	This procedure is invoked to process the bbox method
+ *	This procedure is invoked to process the get method
  *	that corresponds to a table widget managed by this module.
  *	See the user documentation for details on what it does.
  *

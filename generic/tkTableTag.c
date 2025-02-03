@@ -1310,6 +1310,7 @@ static int TableOptionReliefSet(
  *----------------------------------------------------------------------
  *
  * TableOptionReliefGet --
+ *	This routine gets the borderwidth value for a tag.
  *
  * Results:
  *	Value of the tag's -relief option.
