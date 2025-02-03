@@ -535,13 +535,15 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
 	return TCL_ERROR;
     }
 
-    objv[0] = Tcl_NewStringObj("-bg",-1);
-    objv[1] = Tcl_NewStringObj(ACTIVE_BG,-1);
-    objv[2] = Tcl_NewStringObj("-fg",-1);
-    objv[3] = Tcl_NewStringObj(ACTIVE_FG,-1);
-    objv[4] = Tcl_NewStringObj("-relief",-1);
-    objv[5] = Tcl_NewStringObj("solid",-1);
-    if (DoTableInitTags(interp, tablePtr, 6, objv, "active") != TCL_OK) {
+    objv[0] = Tcl_NewStringObj("-bd",-1);
+    objv[1] = Tcl_NewStringObj(BORDER_WIDTH,-1);
+    objv[2] = Tcl_NewStringObj("-bg",-1);
+    objv[3] = Tcl_NewStringObj(ACTIVE_BG,-1);
+    objv[4] = Tcl_NewStringObj("-fg",-1);
+    objv[5] = Tcl_NewStringObj(ACTIVE_FG,-1);
+    objv[6] = Tcl_NewStringObj("-relief",-1);
+    objv[7] = Tcl_NewStringObj("solid",-1);
+    if (DoTableInitTags(interp, tablePtr, 8, objv, "active") != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -552,13 +554,13 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
     objv[4] = Tcl_NewStringObj("-fg",-1);
     objv[5] = Tcl_NewStringObj(SELECT_FG,-1);
     objv[6] = Tcl_NewStringObj("-relief",-1);
-    objv[7] = Tcl_NewStringObj("sunken",-1);
+    objv[7] = Tcl_NewStringObj("ridge",-1);
     if (DoTableInitTags(interp, tablePtr, 8, objv, "sel") != TCL_OK) {
 	return TCL_ERROR;
     }
 
     objv[0] = Tcl_NewStringObj("-bd",-1);
-    objv[1] = Tcl_NewStringObj(SELECT_BD,-1);
+    objv[1] = Tcl_NewStringObj(BORDER_WIDTH,-1);
     objv[2] = Tcl_NewStringObj("-bg",-1);
     objv[3] = Tcl_NewStringObj(DISABLED_FG,-1);
     objv[4] = Tcl_NewStringObj("-fg",-1);
@@ -566,7 +568,7 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
     objv[6] = Tcl_NewStringObj("-font",-1);
     objv[7] = Tcl_NewStringObj("TkHeadingFont",-1);
     objv[8] = Tcl_NewStringObj("-relief",-1);
-    objv[9] = Tcl_NewStringObj("ridge",-1);
+    objv[9] = Tcl_NewStringObj("raised",-1);
     objv[10] = Tcl_NewStringObj("-state",-1);
     objv[11] = Tcl_NewStringObj("disabled",-1);
     if (DoTableInitTags(interp, tablePtr, 12, objv, "title") != TCL_OK) {
