@@ -62,7 +62,7 @@ bind $t <Motion> {
 # mousebutton 1 toggles the value of the cell
 # use of "selection includes" would work here
 bind $t <1> {
-    set rc [%W curselectionl]
+    set rc [%W curselection]
     if {[string match ON $tab($rc)]} {
 	set tab($rc) OFF
         %W tag celltag OFF $rc
