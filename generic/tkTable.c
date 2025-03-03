@@ -28,17 +28,8 @@
 # include <inttypes.h>
 #endif
 #include <tk.h>
-#ifdef MAC_OSX_TK
-# include <X11_tk/Xatom.h>
-#else
-# include <X11/Xatom.h>
-#endif /* MAC_OSX_TK */
 #include "tkTable.h"
 #include "tkTableUuid.h"
-
-#ifdef DEBUG
-#include "dprint.h"
-#endif
 
 #ifdef BUILD_Tktable
 #   undef TCL_STORAGE_CLASS
@@ -2062,13 +2053,6 @@ static void TableDisplay(ClientData clientdata) {
     TableWhatCell(tablePtr, invalidX, invalidY, &rowFrom, &colFrom);
     TableWhatCell(tablePtr, invalidX+invalidWidth-1, invalidY+invalidHeight-1, &rowTo, &colTo);
     tablePtr->flags &= ~AVOID_SPANS;
-
-#ifdef DEBUG
-    tcl_dprintf(tablePtr->interp, "%d,%d => %d,%d  X,Y %d,%d W,H %dx%d",
-	    rowFrom+tablePtr->rowOffset, colFrom+tablePtr->colOffset,
-	    rowTo+tablePtr->rowOffset, colTo+tablePtr->colOffset,
-	    invalidX, invalidY, invalidWidth, invalidHeight);
-#endif
 
     /*
      * Initialize colTagsCache hash table to cache column tag names.
