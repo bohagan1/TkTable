@@ -53,9 +53,9 @@ static Tk_ConfigSpec tagConfig[] = {
 	offsetof(TableTag, bg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK},
   {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 0},
   {TK_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 0, 0},
-  {TK_CONFIG_CUSTOM, "-borderwidth", "borderWidth", "BorderWidth", "",
+  {TK_CONFIG_CUSTOM, "-borderwidth", "borderWidth", "BorderWidth", NULL,
 	0 /* no offset */, TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK, &tagBdOpt},
-  {TK_CONFIG_STRING, "-ellipsis", "ellipsis", "Ellipsis", "",
+  {TK_CONFIG_STRING, "-ellipsis", "ellipsis", "Ellipsis", NULL,
 	offsetof(TableTag, ellipsis), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK},
   {TK_CONFIG_BORDER, "-foreground", "foreground", "Foreground", NULL,
 	offsetof(TableTag, fg), TK_CONFIG_DONT_SET_DEFAULT|TK_CONFIG_NULL_OK},
@@ -995,8 +995,10 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		result = Tk_ConfigureInfo(interp, tablePtr->tkwin, tagConfig,
 			(char *) tagPtr, (objc == 5) ? Tcl_GetString(objv[4]) : NULL, 0);
 	    } else {
+		/* Get option values using TCL objects. For unspecified options, ignore
+		   option database and only use default values instead. */
 		if (Tk_ConfigureWidget(interp, tablePtr->tkwin, tagConfig, objc-4,
-		    (void *) (objv+4), (char *) tagPtr, TK_CONFIG_OBJS) == TCL_ERROR) {
+		    (void *) (objv+4), (char *) tagPtr, TK_CONFIG_OBJS|TK_CONFIG_ARGV_ONLY) == TCL_ERROR) {
 		    return TCL_ERROR;
 		}
 
