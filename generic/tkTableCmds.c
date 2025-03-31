@@ -477,7 +477,7 @@ enum clearCommand {
  */
 int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int cmdIndex, redraw = 0;
+    int cmdIndex, redraw = 0, selchanged = 0;
 
     if (objc < 3 || objc > 5) {
 	Tcl_WrongNumArgs(interp, 2, objv, "option ?first? ?last?");
@@ -491,6 +491,9 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
 
     if (objc == 3) {
 	if (cmdIndex == CLEAR_TAGS || cmdIndex == CLEAR_ALL) {
+	    Tcl_HashSearch search;
+	    selchanged = (Tcl_FirstHashEntry(tablePtr->selCells, &search) != NULL);
+	    
 	    Tcl_DeleteHashTable(tablePtr->rowStyles);
 	    Tcl_DeleteHashTable(tablePtr->colStyles);
 	    Tcl_DeleteHashTable(tablePtr->cellStyles);
@@ -577,6 +580,7 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
 		    }
 		    if ((entryPtr = Tcl_FindHashEntry(tablePtr->selCells, buf))) {
 			Tcl_DeleteHashEntry(entryPtr);
+			selchanged = 1;
 			redraw = 1;
 		    }
 		}
@@ -604,6 +608,7 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
 	    }
 	}
     }
+
     /* This could be more sensitive about what it updates,
      * but that can actually be a lot more costly in some cases */
     if (redraw) {
@@ -613,6 +618,11 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
 	    TableGeometryRequest(tablePtr);
 	}
 	TableInvalidateAll(tablePtr, 0);
+    }
+
+    /* If selection changed generate event */
+    if (selchanged) {
+	TableGenerateSelectEvent(tablePtr);
     }
     return TCL_OK;
 }
@@ -900,7 +910,7 @@ int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp,
     Table *tablePtr = (Table *) clientData;
     int result = TCL_OK;
     char buf1[INDEX_BUFSIZE];
-    int row, col, key, clo=0,chi=0,r1,c1,r2,c2;
+    int row, col, key, clo=0,chi=0,r1,c1,r2,c2, selchanged = 0;
     Tcl_HashEntry *entryPtr;
 
     if (objc < 4 || objc > 5) {
@@ -914,8 +924,9 @@ int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp,
 	    TableParseArrayIndex(&row, &col, Tcl_GetHashKey(tablePtr->selCells,entryPtr));
 	    Tcl_DeleteHashEntry(entryPtr);
 	    TableRefresh(tablePtr, row-tablePtr->rowOffset, col-tablePtr->colOffset, CELL);
+	    selchanged = 1;
 	}
-	return TCL_OK;
+	goto done;
     }
     if (TableGetIndexObj(tablePtr, objv[3], &row, &col) == TCL_ERROR ||
 	(objc==5 && TableGetIndexObj(tablePtr, objv[4], &r2, &c2) == TCL_ERROR)) {
@@ -957,10 +968,16 @@ CLEAR_CELLS:
 	    if (entryPtr != NULL) {
 		Tcl_DeleteHashEntry(entryPtr);
 		TableRefresh(tablePtr, row-tablePtr->rowOffset, col-tablePtr->colOffset, CELL);
+		selchanged = 1;
 	    }
 	}
     }
     if (key) goto CLEAR_BOTH;
+done:
+    /* If selection changed generate event */
+    if (selchanged) {
+	TableGenerateSelectEvent(tablePtr);
+    }
     return result;
 }
 
@@ -1018,7 +1035,7 @@ int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp,
 int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp,
 	int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int row, col, dummy, key;
+    int row, col, dummy, key, selchanged = 0;
     char buf1[INDEX_BUFSIZE];
     Tcl_HashSearch search;
     Tcl_HashEntry *entryPtr;
@@ -1086,6 +1103,7 @@ SET_CELLS:
 	    if (Tcl_FindHashEntry(tablePtr->selCells, buf1) == NULL) {
 		Tcl_CreateHashEntry(tablePtr->selCells, buf1, &dummy);
 		TableRefresh(tablePtr, row-tablePtr->rowOffset, col-tablePtr->colOffset, CELL);
+		selchanged = 1;
 	    }
 	}
     }
@@ -1098,6 +1116,10 @@ SET_CELLS:
      * selection, we should grab it now */
     if (entryPtr == NULL && tablePtr->exportSelection) {
 	Tk_OwnSelection(tablePtr->tkwin, XA_PRIMARY, TableLostSelection, (ClientData) tablePtr);
+    }
+    /* If selection changed generate event */
+    if (selchanged) {
+	TableGenerateSelectEvent(tablePtr);
     }
     return TCL_OK;
 }

@@ -555,7 +555,7 @@ void TkSendVirtualEvent(Tk_Window target, const char *eventName, Tcl_Obj *detail
 /*
  *----------------------------------------------------------------------
  *
- * GenerateTableSelectEvent --
+ * TableGenerateSelectEvent --
  *
  *	Send an event that the table selection was updated. This is
  *	equivalent to event generate $tableWidget <<TableSelect>>
@@ -568,10 +568,8 @@ void TkSendVirtualEvent(Tk_Window target, const char *eventName, Tcl_Obj *detail
  *
  *----------------------------------------------------------------------
  */
-static void GenerateTableSelectEvent(
-     ClientData clientData) {	/* Information about table widget. */
+void TableGenerateSelectEvent(Table *tablePtr) {
 
-    Table *tablePtr = (Table *) clientData;
 #if TCL_MAJOR_VERSION > 8
     Tk_SendVirtualEvent(tablePtr->tkwin, "TableSelect", NULL);
 #else
@@ -612,7 +610,7 @@ void TableLostSelection(
 	    Tcl_DeleteHashEntry(entryPtr);
 	    TableRefresh(tablePtr, row-tablePtr->rowOffset, col-tablePtr->colOffset, CELL);
 	}
-	GenerateTableSelectEvent(clientData);
+	TableGenerateSelectEvent(tablePtr);
     }
 }
 

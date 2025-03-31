@@ -64,7 +64,7 @@ static void TableModifyRC(
     int lo, int hi,	/* the lo and hi col/row */
     int outOfBounds) {	/* the boundary check for shifting items */
 
-    int j, new;
+    int j, new, selchanged = 0;
     char buf[INDEX_BUFSIZE], buf1[INDEX_BUFSIZE];
     Tcl_HashEntry *entryPtr, *newPtr;
     TableEmbWindow *ewPtr;
@@ -118,12 +118,14 @@ static void TableModifyRC(
 	    entryPtr = Tcl_FindHashEntry(tablePtr->selCells, buf);
 	    if (entryPtr != NULL) {
 		Tcl_DeleteHashEntry(entryPtr);
+		selchanged = 1;
 	    }
 	    if (!outOfBounds) {
 		entryPtr = Tcl_FindHashEntry(tablePtr->selCells, buf1);
 		if (entryPtr != NULL) {
 		    Tcl_CreateHashEntry(tablePtr->selCells, buf, &new);
 		    Tcl_DeleteHashEntry(entryPtr);
+		    selchanged = 1;
 		}
 	    }
 	}
@@ -186,6 +188,10 @@ static void TableModifyRC(
 	    }
 	}
     }
+    /* If selection changed generate event */
+    if (selchanged) {
+	TableGenerateSelectEvent(tablePtr);
+    }
 }
 
 /*
@@ -206,7 +212,7 @@ static void TableModifyRC(
  */
 int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int doInsert, first, last, cmdIndex;
+    int doInsert, first, last, cmdIndex, selchanged = 0;
 
     if (objc < 4) {
 	Tcl_WrongNumArgs(interp, 2, objv, "option ?switches? arg ?arg?");
@@ -449,6 +455,7 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	    /* clear selection - forceful, but effective */
 	    Tcl_DeleteHashTable(tablePtr->selCells);
 	    Tcl_InitHashTable(tablePtr->selCells, TCL_STRING_KEYS);
+	    selchanged = 1;
 	}
 
 	/*
@@ -470,7 +477,10 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	TableInvalidateAll(tablePtr, 0);
 	break;
     }
-
+    }
+    /* If selection changed generate event */
+    if (selchanged) {
+	TableGenerateSelectEvent(tablePtr);
     }
     return TCL_OK;
 }

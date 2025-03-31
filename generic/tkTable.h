@@ -503,6 +503,7 @@ extern int	Table_WindowCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 			Tcl_Obj *const objv[]);
 extern int	TableValidateChange(Table *tablePtr, int r, int c, char *oldVal,
 			char *newVal, int idx);
+extern void	TableGenerateSelectEvent(Table *tablePtr);
 extern void	TableLostSelection(ClientData clientData);
 extern void	TableSetActiveIndex(Table *tablePtr);
 
