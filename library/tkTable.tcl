@@ -24,6 +24,7 @@ namespace eval ::tktable {
     variable Priv
     array set Priv [list x 0 y 0 afterId {} mouseMoved 0 \
 	    borderInfo {} borderB1 1]
+    namespace export tk_tableCopy tk_tableCut tk_tablePaste
 }
 
 # ::tktable::ClipboardKeysyms --
@@ -35,13 +36,9 @@ namespace eval ::tktable {
 #		such as "Meta-y") used for the copy operation.
 # cut -		Name of the key used for the cut operation.
 # paste -	Name of the key used for the paste operation.
-
-proc ::tktable::ClipboardKeysyms {copy cut paste} {
-    bind Table <$copy>	{tk_tableCopy %W}
-    bind Table <$cut>	{tk_tableCut %W}
-    bind Table <$paste>	{tk_tablePaste %W}
-}
-::tktable::ClipboardKeysyms <Copy> <Cut> <Paste>
+bind Table <<Copy>>	{::tktable::tk_tableCopy %W}
+bind Table <<Cut>>	{::tktable::tk_tableCut %W}
+bind Table <<Paste>>	{::tktable::tk_tablePaste %W}
 
 ##
 ## Interactive cell resizing, affected by -resizeborders option
@@ -89,7 +86,7 @@ bind Table <B2-Motion> {
     if {$::tktable::Priv(mouseMoved)} { %W scan dragto %x %y }
 }
 bind Table <ButtonRelease-2> {
-    if {!$::tktable::Priv(mouseMoved)} { tk_tablePaste %W [%W index @%x,%y] }
+    if {!$::tktable::Priv(mouseMoved)} { ::tktable::tk_tablePaste %W [%W index @%x,%y] }
 }
 
 ## Mouse wheel events
@@ -610,7 +607,7 @@ proc ::tktable::AutoScan {w} {
 proc ::tktable::MoveCell {w x y} {
     if {[catch {$w index active row} r]} return
     set c [$w index active col]
-    set cell [$w index [incr r $x],[incr c $y]]
+    set cell [$w index [format "%d,%d" [incr r $x] [incr c $y]]]
     while {[set true [$w hidden $cell]] ne {}} {
 	# The cell is in some way hidden
 	if {[$w index active] ne $true} {
@@ -659,7 +656,7 @@ proc ::tktable::ExtendSelect {w x y} {
     if {[$w cget -selectmode] ne "extended" ||
 	[catch {$w index active row} r]} return
     set c [$w index active col]
-    $w activate [incr r $x],[incr c $y]
+    $w activate [format "%d,%d" [incr r $x] [incr c $y]]
     $w see active
     ::tktable::Motion $w [$w index active]
 }
@@ -733,7 +730,7 @@ proc ::tktable::ChangeWidth {w i a} {
 # Arguments:
 # w -		Name of a table widget.
 
-proc tk_tableCopy w {
+proc ::tktable::tk_tableCopy w {
     if {[selection own -displayof $w] eq $w} {
 	clipboard clear -displayof $w
 	catch {clipboard append -displayof $w [::tktable::GetSelection $w]}
@@ -749,7 +746,7 @@ proc tk_tableCopy w {
 # Arguments:
 # w -		Name of a table widget.
 
-proc tk_tableCut w {
+proc ::tktable::tk_tableCut w {
     if {[selection own -displayof $w] eq $w} {
 	clipboard clear -displayof $w
 	catch {
@@ -769,7 +766,7 @@ proc tk_tableCut w {
 # w -		Name of a table widget.
 # cell -	Cell to start pasting in.
 #
-proc tk_tablePaste {w {cell {}}} {
+proc ::tktable::tk_tablePaste {w {cell {}}} {
     if {$cell ne {}} {
 	if {[catch {::tktable::GetSelection $w} data]} return
     } else {
@@ -778,7 +775,7 @@ proc tk_tablePaste {w {cell {}}} {
 	}
 	set cell active
     }
-    tk_tablePasteHandler $w [$w index $cell] $data
+    ::tktable::tk_tablePasteHandler $w [$w index $cell] $data
     if {[$w cget -state] eq "normal"} {focus $w}
 }
 
@@ -794,7 +791,7 @@ proc tk_tablePaste {w {cell {}}} {
 # w -		Name of a table widget.
 # cell -	Cell to start pasting in.
 #
-proc tk_tablePasteHandler {w cell data} {
+proc ::tktable::tk_tablePasteHandler {w cell data} {
     #
     # Don't allow pasting into the title cells
     #
@@ -846,6 +843,12 @@ proc tk_tablePasteHandler {w cell data} {
     }
 }
 
+#
+# Backwards compatibility
+#
+namespace import tktable::tk_*
+
+#
 # tktable::Sort --
 #
 # This procedure handles how data is sorted in the table widget.
