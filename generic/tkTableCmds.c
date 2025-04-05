@@ -47,6 +47,8 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	tablePtr->flags |= ACTIVE_DISABLED;
 	tablePtr->activeRow = -1;
 	tablePtr->activeCol = -1;
+	tablePtr->focusRow = -1;
+	tablePtr->focusCol = -1;
 	TableAdjustActive(tablePtr);
 	TableConfigCursor(tablePtr);
 
@@ -98,6 +100,8 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	    tablePtr->flags &= ~ACTIVE_DISABLED;
 	    tablePtr->activeRow = row;
 	    tablePtr->activeCol = col;
+	    tablePtr->focusRow = row;
+	    tablePtr->focusCol = col;
 	    if (tablePtr->activeTagPtr != NULL) {
 		ckfree((char *) (tablePtr->activeTagPtr));
 		tablePtr->activeTagPtr = NULL;
@@ -153,6 +157,61 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	tablePtr->flags |= HAS_ACTIVE;
     }
     return result;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * Table_FocusCmd --
+ *	This procedure is invoked to process the focus method.
+ *	This sets which cell has the focus for keyboard navigation.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	See the user documentation.
+ *
+ *--------------------------------------------------------------
+ */
+int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
+	int objc, Tcl_Obj *const objv[]) {
+    Table *tablePtr = (Table *) clientData;
+    int row, col;
+    Tcl_Size templen;
+
+    if (objc != 3) {
+	Tcl_WrongNumArgs(interp, 2, objv, "index");
+	return TCL_ERROR;
+    }
+
+    /* If empty value, clear focus */
+    if (Tcl_GetStringFromObj(objv[2], &templen), templen == 0) {
+	tablePtr->focusRow = -1;
+	tablePtr->focusCol = -1;
+	return TCL_OK;
+    }
+
+    /* Get cell index */
+    if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
+	return TCL_ERROR;
+    }
+
+    /* Convert to valid index in real coords */
+    row -= tablePtr->rowOffset;
+    col -= tablePtr->colOffset;
+
+    /* Make sure the cell has a reasonable real index */
+    CONSTRAIN(row, 0, tablePtr->rows-1);
+    CONSTRAIN(col, 0, tablePtr->cols-1);
+
+    /* If focus cell changed, set new focus cell */
+    if (row != tablePtr->focusRow || col != tablePtr->focusCol) {
+	tablePtr->focusRow = row;
+	tablePtr->focusCol = col;
+	TableRefresh(tablePtr, row, col, CELL|INV_FORCE);
+    } 
+    return TCL_OK;
 }
 
 /*

@@ -839,6 +839,15 @@ int TableGetIndex(
     } else if (strncmp(str, "end", len) == 0) {		/* end */
 	r = tablePtr->rows-1+tablePtr->rowOffset;
 	c = tablePtr->cols-1+tablePtr->colOffset;
+    } else if (len > 1 && strncmp(str, "focus", len) == 0 ) {	/* focus */
+	if (tablePtr->focusRow > -1) {
+	    r = tablePtr->focusRow+tablePtr->rowOffset;
+	    c = tablePtr->focusCol+tablePtr->colOffset;
+	} else {
+	    Tcl_SetObjResult(tablePtr->interp,
+		    Tcl_NewStringObj("no \"focus\" cell in table", -1));
+	    return TCL_ERROR;
+	}
     } else if (strncmp(str, "origin", len) == 0) {	/* origin */
 	r = tablePtr->titleRows+tablePtr->rowOffset;
 	c = tablePtr->titleCols+tablePtr->colOffset;
@@ -858,7 +867,7 @@ int TableGetIndex(
     IndexError:
 	Tcl_AppendStringsToObj(Tcl_GetObjResult(tablePtr->interp),
 		"bad table index \"", str, "\": must be active, anchor, end, ",
-		"origin, topleft, bottomright, @x,y, or <row>,<col>",
+		"focus, origin, topleft, bottomright, @x,y, or <row>,<col>",
 		(char *)NULL);
 	return TCL_ERROR;
     }

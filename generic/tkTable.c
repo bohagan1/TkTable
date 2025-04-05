@@ -55,7 +55,7 @@ enum selCommand {
 
 static const char *commandNames[] = {
     "activate", "bbox", "border", "cget", "clear", "configure", "curselection", "curvalue",
-    "delete", "get", "height", "hidden", "icursor", "index", "insert",
+    "delete", "focus", "get", "height", "hidden", "icursor", "index", "insert",
 #ifdef POSTSCRIPT
     "postscript",
 #endif
@@ -64,7 +64,8 @@ static const char *commandNames[] = {
 };
 enum command {
     CMD_ACTIVATE, CMD_BBOX, CMD_BORDER, CMD_CGET, CMD_CLEAR, CMD_CONFIGURE, CMD_CURSEL,
-    CMD_CURVALUE, CMD_DELETE, CMD_GET, CMD_HEIGHT, CMD_HIDDEN, CMD_ICURSOR, CMD_INDEX, CMD_INSERT,
+    CMD_CURVALUE, CMD_DELETE, CMD_FOCUS, CMD_GET, CMD_HEIGHT, CMD_HIDDEN, CMD_ICURSOR,
+    CMD_INDEX, CMD_INSERT,
 #ifdef POSTSCRIPT
     CMD_POSTSCRIPT,
 #endif
@@ -137,6 +138,12 @@ static Cmd_Struct state_vals[]= {
     {"",	 0}
 };
 
+static Cmd_Struct mode_vals[]= {
+    {"table",	    MODE_TABLE},
+    {"spreadsheet", MODE_SPREADSHEET},
+    {"",	    0}
+};
+
 /* The widget configuration table */
 static Tk_CustomOption drawOpt	= {Cmd_OptionSet, Cmd_OptionGet, (ClientData)(&drawmode_vals)};
 static Tk_CustomOption resizeTypeOpt = {Cmd_OptionSet, Cmd_OptionGet, (ClientData)(&resize_vals)};
@@ -144,6 +151,7 @@ static Tk_CustomOption stretchOpt = {Cmd_OptionSet, Cmd_OptionGet, (ClientData)(
 static Tk_CustomOption selTypeOpt = {Cmd_OptionSet, Cmd_OptionGet, (ClientData)(&sel_vals)};
 static Tk_CustomOption stateTypeOpt = {Cmd_OptionSet, Cmd_OptionGet, (ClientData)(&state_vals)};
 static Tk_CustomOption bdOpt	= {TableOptionBdSet, TableOptionBdGet, (ClientData) BD_TABLE};
+static Tk_CustomOption modeTypeOpt = {Cmd_OptionSet, Cmd_OptionGet, (ClientData)(&mode_vals)};
 
 Tk_ConfigSpec tableSpecs[] = {
     {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor", "center",
@@ -229,6 +237,8 @@ Tk_ConfigSpec tableSpecs[] = {
 	offsetof(Table, maxReqHeight), 0},
     {TK_CONFIG_PIXELS, "-maxwidth", "maxWidth", "MaxWidth", "800",
 	offsetof(Table, maxReqWidth), 0},
+    {TK_CONFIG_CUSTOM, "-mode", "mode", "Mode", "table",
+	offsetof(Table, modeType), 0, &modeTypeOpt},
     {TK_CONFIG_BOOLEAN, "-multiline", "multiline", "Multiline", "1",
 	offsetof(Table, defaultTag.multiline), 0},
     {TK_CONFIG_PIXELS, "-padx", "padX", "Pad", "0", offsetof(Table, padX), 0},
@@ -942,6 +952,10 @@ static int TableWidgetObjCmd(
 	case CMD_DELETE:
 	case CMD_INSERT:
 	    result = Table_EditCmd(clientData, interp, objc, objv);
+	    break;
+
+	case CMD_FOCUS:
+	    result = Table_FocusCmd(clientData, interp, objc, objv);
 	    break;
 
 	case CMD_GET:
@@ -1662,6 +1676,8 @@ static int Tk_TableObjCmd(
     tablePtr->anchorCol		= -1;
     tablePtr->activeRow		= -1;
     tablePtr->activeCol		= -1;
+    tablePtr->focusRow		= -1;
+    tablePtr->focusCol		= -1;
     tablePtr->oldTopRow		= -1;
     tablePtr->oldLeftCol	= -1;
     tablePtr->oldActRow		= -1;
@@ -2261,6 +2277,8 @@ static void TableDisplay(ClientData clientdata) {
 		    activeCell = 1;
 		    tablePtr->flags &= ~ACTIVE_DISABLED;
 		}
+	    } else if (row == tablePtr->focusRow && col == tablePtr->focusCol) {
+		
 	    }
 	    /* is this cell selected? */
 	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL) {

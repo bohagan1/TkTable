@@ -246,6 +246,10 @@
 #define BD_TABLE_TAG	(1<<1)
 #define BD_TABLE_WIN	(1<<2)
 
+/* These alter how the bindings behave */
+#define MODE_TABLE		(1<<0)
+#define MODE_SPREADSHEET	(1<<1)
+
 /*
  * Possible state values for tags
  */
@@ -281,8 +285,8 @@ typedef struct {
     Tk_Image	image;		/* actual pointer to image, if any */
     TableState	state;		/* state of the cell */
     Tk_Justify	justify;	/* justification of text in the cell */
-    int		multiline;	/* wrapping style of multiline text */
-    int		wrap;		/* wrapping style of multiline text */
+    int		multiline;	/* wrapping style of multi-line text */
+    int		wrap;		/* wrapping style of multi-line text */
     int		showtext;	/* whether to display text over image */
     char *	ellipsis;	/* ellipsis to display on clipped text */
 } TableTag;
@@ -300,6 +304,7 @@ typedef struct {
      * Configurable Options
      */
     int autoClear;
+    int modeType;		/* table or spreadsheet */
     char *selectMode;		/* single, browse, multiple, or extended */
     int selectType;		/* row, col, both, or cell */
     int selectTitles;		/* whether to do automatic title selection */
@@ -394,6 +399,7 @@ typedef struct {
 				 * be different to keep the screen full */
     int anchorRow, anchorCol;	/* the row,col of the anchor cell */
     int activeRow, activeCol;	/* the row,col of the active cell */
+    int focusRow, focusCol;	/* the row,col of the focus cell */
     int oldTopRow, oldLeftCol;	/* cached by TableAdjustParams */
     int oldActRow, oldActCol;	/* cached by TableAdjustParams */
     int icursor;		/* The index of the insertion cursor in the
@@ -439,7 +445,7 @@ typedef struct {
 
     /* The invalid rectangle if there is an update pending */
     int invalidX, invalidY, invalidWidth, invalidHeight;
-    int seen[4];			/* see TableUndisplay */
+    int seen[4];		/* see TableUndisplay */
 
     int haveSelection;
     Tcl_DString selection;
@@ -524,6 +530,8 @@ extern int	Table_ClearCmd(ClientData clientData,
 extern int	Table_CurselectionCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 extern int	Table_CurvalueCmd(ClientData clientData,
+			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+extern int	Table_FocusCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 extern int	Table_GetCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
