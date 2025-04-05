@@ -1,6 +1,6 @@
 # table.tcl --
 #
-# Version align with tkTable 2.7, jeff at hobbs org
+# Version align with tkTable 2.12, jeff at hobbs org
 # This file defines the default bindings for Tk table widgets
 # and provides procedures that help in implementing those bindings.
 #
@@ -133,41 +133,29 @@ bind Table <<Table_Commit>> {
 # the table (via mouse) or FocusOut (loss of focus by table).
 event add <<Table_Commit>> <Leave> <FocusOut>
 
-bind Table <Shift-Up>		{::tktable::ExtendSelect %W -1  0}
-bind Table <Shift-Down>		{::tktable::ExtendSelect %W  1  0}
-bind Table <Shift-Left>		{::tktable::ExtendSelect %W  0 -1}
-bind Table <Shift-Right>	{::tktable::ExtendSelect %W  0  1}
-bind Table <Prior>		{%W yview scroll -1 pages; %W activate topleft}
-bind Table <Next>		{%W yview scroll  1 pages; %W activate topleft}
-bind Table <Control-Prior>	{%W xview scroll -1 pages}
-bind Table <Control-Next>	{%W xview scroll  1 pages}
-bind Table <Home>		{%W see origin}
-bind Table <End>		{%W see end}
-bind Table <Control-Home> {
-    %W selection clear all
-    %W activate origin
-    %W selection set active
-    %W see active
-}
-bind Table <Control-End> {
-    %W selection clear all
-    %W activate end
-    %W selection set active
-    %W see active
-}
-bind Table <Shift-Control-Home>	{::tktable::DataExtend %W origin}
-bind Table <Shift-Control-End>	{::tktable::DataExtend %W end}
-bind Table <Up>			{::tktable::MoveCell %W -1  0}
-bind Table <Down>		{::tktable::MoveCell %W  1  0}
-bind Table <Left>		{::tktable::MoveCell %W  0 -1}
-bind Table <Right>		{::tktable::MoveCell %W  0  1}
+# Left/Right arrow key bindings (none, shift, control, control+shift)
+bind Table <<PrevChar>>		{::tktable::KeyNav %W left}
+bind Table <<NextChar>>		{::tktable::KeyNav %W right}
 
-#bind Table <Return>		{::tktable::MoveCell %W 1 0}
-bind Table <Return>		{::tktable::Insert %W "\n"}
+# Up/down arrow key bindings (none, shift, control, control+shift)
+bind Table <<PrevLine>>		{::tktable::KeyNav %W up}
+bind Table <<NextLine>>		{::tktable::KeyNav %W down}
 
-bind Table <Control-Left>	{%W icursor [expr {[%W icursor]-1}]}
-bind Table <Control-Right>	{%W icursor [expr {[%W icursor]+1}]}
+# Home/End key bindings (none, shift, control, control+shift)
+bind Table <<LineStart>>	{::tktable::KeyNav %W first}
+bind Table <<LineEnd>>		{::tktable::KeyNav %W last}
+bind Table <Control-Home>	{::tktable::KeyNav %W top}
+bind Table <Control-End>	{::tktable::KeyNav %W bottom}
 
+# Other key navigation
+bind Table <Return>		{::tktable::MoveCell %W 0 1}
+bind Table <Shift-Return>	{::tktable::MoveCell %W 0 -1}
+bind Table <Alt-Return>		{::tktable::Insert %W "\n"}
+bind Table <Control-Return>	{::tktable::ToggleFocus %W}
+bind Table <Tab>		{::tktable::MoveCell %W 1 0; break}
+bind Table <Shift-Tab>		{::tktable::MoveCell %W -1 0; break}
+bind Table <Control-Tab>	[bind all <<NextWindow>>]
+bind Table <Control-Shift-Tab>	[bind all <<PrevWindow>>]
 
 # Other selection functions
 bind Table <<Clear>>		{::tktable::SelectClear %W}
@@ -197,9 +185,150 @@ bind Table <Control-minus>	{::tktable::ChangeWidth %W active -1}
 bind Table <Alt-KeyPress>	{# nothing}
 bind Table <Meta-KeyPress>	{# nothing}
 bind Table <Control-KeyPress>	{# nothing}
-bind Table <Any-Tab>		{# nothing}
 if {$::tcl_platform(platform) eq "macintosh"} {
     bind Table <Command-KeyPress> {# nothing}
+}
+
+# ::tktable::KeyNav
+#	This performs cell edit or navigation function
+# Arguments:
+#   w	The widget for which the operation will be applied.
+#   op	Operation to perform
+#   edit Check cell edit first or not
+# Results:
+#   Returns current cell, new cell, current icursor position, and new position
+#
+proc ::tktable::KeyNav {w op} {
+    set orig -1
+    set pos -1
+
+    if {![catch {$w index active} cell] && [$w curvalue] ne ""} {
+	# Cell edit mode
+	lassign [split $cell ","] row col
+	set pos [$w icursor]
+	set orig $pos
+	switch $op {
+	    "first" - "origin" - "top" {
+		# Move to first char
+		set pos 0
+	    }
+	    "last" - "end" - "bottom" {
+		# Move to last char
+		set pos "end"
+	    }
+	    "left" {
+		# Move left 1 char or cell
+		if {$pos > 0} {
+		    incr pos -1
+		} else {
+		    incr col -1
+		    set pos end
+		}
+	    }
+	    "right" {
+		# Move right 1 char or cell
+		incr pos
+		set len [string length [$w curvalue]]
+		if {$pos > $len || $len == 0} {
+		    incr col 1
+		    set pos 0
+		}
+	    }
+	    "up" {
+		# Move up 1 cell
+		incr row -1
+		set pos end
+		set orig -1
+	    }
+	    "down" {
+		# Move down 1 cell
+		incr row
+		set pos 0
+		set orig -1
+	    }
+	    default {
+		return
+	    }
+	}
+	
+    } elseif {![catch {$w index focus} cell]} {
+	# Cell nav mode
+	lassign [split $cell ","] row col
+	switch $op {
+	    "first" {
+		# Move to first cell in row
+		set col [$w index origin col]
+		$w xview moveto 0
+	    }
+	    "last" {
+		# Move to last cell in row
+		set col [$w index end col]
+		$w xview moveto 1
+	    }
+	    "left" {
+		# Move left 1 cell
+		incr col -1
+		set pos end
+	    }
+	   "right" {
+		# Move right 1 cell
+		incr col
+		set pos 0
+	    }
+	    "up" {
+		# Move up 1 cell
+		incr row -1
+	    }
+	    "down" {
+		# Move down 1 cell
+		incr row
+	    }
+	    "origin" - "top" {
+		# Move to origin cell
+		lassign [split [$w index origin] ","] row col
+		$w xview moveto 0
+		$w yview moveto 0
+	    }
+	    "end" - "bottom" {
+		# Move to end cell
+		lassign [split [$w index end] ","] row col
+		$w xview moveto 1
+		$w yview moveto 1
+	    }
+	    default {
+		return
+	    }
+	}
+    } else {
+	return
+    }
+
+    # Move to new cell
+    lassign [split $cell ","] r c
+    if {$r != $row || $c != $col} {
+	::tktable::MoveCell $w [expr {$col - $c}] [expr {$row - $r}]
+    }
+
+    # Move to new index position
+    if {$pos != $orig} {
+	$w icursor $pos
+    }
+}
+
+# ::tktable::ToggleFocus
+#  Toggle between cell edit and navigation modes
+# Arguments:
+#   w	The widget for which the selection will be retrieved.
+# Results:
+#   Returns nothing
+#
+proc ::tktable::ToggleFocus {w} {
+    if {![catch {$w index active} cell]} {
+	$w activate {}
+	$w focus $cell
+    } elseif {![catch {$w index focus} cell]} {
+	$w activate $cell
+    }
 }
 
 # ::tktable::GetSelection --
@@ -608,13 +737,15 @@ proc ::tktable::AutoScan {w} {
 #
 # Arguments:
 # w - The table widget.
-# x - +1 to move down one cell, -1 to move up one cell.
-# y - +1 to move right one cell, -1 to move left one cell.
-
+# x - +1 to move right one cell, -1 to move left one cell.
+# y - +1 to move down one cell, -1 to move up one cell.
+#
 proc ::tktable::MoveCell {w x y} {
     if {[catch {$w index active row} r]} return
     set c [$w index active col]
-    set cell [$w index [format "%d,%d" [incr r $x] [incr c $y]]]
+    set cell [$w index [format "%d,%d" [incr r $y] [incr c $x]]]
+
+    # Get move to cell
     while {[set true [$w hidden $cell]] ne {}} {
 	# The cell is in some way hidden
 	if {[$w index active] ne $true} {
@@ -622,10 +753,11 @@ proc ::tktable::MoveCell {w x y} {
 	    set cell $true
 	    break
 	}
-	if {$x > 0} {incr r} elseif {$x < 0} {incr r -1}
-	if {$y > 0} {incr c} elseif {$y < 0} {incr c -1}
-	if {[$w index $r,$c] ne $cell]} {
-	    set cell [$w index $r,$c]
+	if {$x != 0} {incr c [expr {$x > 0 ? 1 : -1}]}
+	if {$y != 0} {incr r [expr {$y > 0 ? 1 : -1}]}
+	set new [$w index $r,$c]
+	if {$new ne $cell]} {
+	    set cell $new
 	} else {
 	    # We couldn't find a non-hidden cell, just don't move
 	    return
