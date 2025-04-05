@@ -136,16 +136,24 @@ event add <<Table_Commit>> <Leave> <FocusOut>
 # Left/Right arrow key bindings (none, shift, control, control+shift)
 bind Table <<PrevChar>>		{::tktable::KeyNav %W left}
 bind Table <<NextChar>>		{::tktable::KeyNav %W right}
+bind Table <<SelectPrevChar>>	{::tktable::SelectionExtend %W left}
+bind Table <<SelectNextChar>>	{::tktable::SelectionExtend %W right}
 
 # Up/down arrow key bindings (none, shift, control, control+shift)
 bind Table <<PrevLine>>		{::tktable::KeyNav %W up}
 bind Table <<NextLine>>		{::tktable::KeyNav %W down}
+bind Table <<SelectPrevLine>>	{::tktable::SelectionExtend %W up}
+bind Table <<SelectNextLine>>	{::tktable::SelectionExtend %W down}
 
 # Home/End key bindings (none, shift, control, control+shift)
 bind Table <<LineStart>>	{::tktable::KeyNav %W first}
 bind Table <<LineEnd>>		{::tktable::KeyNav %W last}
+bind Table <<SelectLineStart>>	{::tktable::SelectionExtend %W first}
+bind Table <<SelectLineEnd>>	{::tktable::SelectionExtend %W last}
 bind Table <Control-Home>	{::tktable::KeyNav %W top}
 bind Table <Control-End>	{::tktable::KeyNav %W bottom}
+bind Table <Control-Shift-Home>	{::tktable::SelectionExtend %W top}
+bind Table <Control-Shift-End>	{::tktable::SelectionExtend %W bottom}
 
 # Other key navigation
 bind Table <Return>		{::tktable::MoveCell %W 0 1}
@@ -189,7 +197,7 @@ if {$::tcl_platform(platform) eq "macintosh"} {
     bind Table <Command-KeyPress> {# nothing}
 }
 
-# ::tktable::KeyNav
+# ::tktable::MoveHandler
 #	This performs cell edit or navigation function
 # Arguments:
 #   w	The widget for which the operation will be applied.
@@ -198,11 +206,11 @@ if {$::tcl_platform(platform) eq "macintosh"} {
 # Results:
 #   Returns current cell, new cell, current icursor position, and new position
 #
-proc ::tktable::KeyNav {w op} {
+proc ::tktable::MoveHandler {w op edit} {
     set orig -1
     set pos -1
 
-    if {![catch {$w index active} cell] && [$w curvalue] ne ""} {
+    if {![catch {$w index active} cell] && [$w curvalue] ne "" && $edit} {
 	# Cell edit mode
 	lassign [split $cell ","] row col
 	set pos [$w icursor]
@@ -302,6 +310,21 @@ proc ::tktable::KeyNav {w op} {
     } else {
 	return
     }
+    return [list $cell $row $col $orig $pos]
+}
+
+# ::tktable::KeyNav
+#	This performs cell edit or navigation function
+# Arguments:
+#   w	The widget for which the operation will be applied.
+#   op	Operation to perform
+# Results:
+#   Returns nothing
+#
+proc ::tktable::KeyNav {w op} {
+    set res [::tktable::MoveHandler $w $op 1]
+    if {[llength $res] == 0} return
+    lassign $res cell row col orig pos
 
     # Move to new cell
     lassign [split $cell ","] r c
@@ -312,6 +335,32 @@ proc ::tktable::KeyNav {w op} {
     # Move to new index position
     if {$pos != $orig} {
 	$w icursor $pos
+    }
+}
+
+# ::tktable::SelectionExtend
+#	Extends selection to include new cell
+# Arguments:
+#   w	The widget for which the operation will be applied.
+#   op	Operation to perform
+# Results:
+#   Returns nothing
+#
+proc ::tktable::SelectionExtend {w op} {
+    set res [::tktable::MoveHandler $w $op 0]
+    if {[llength $res] == 0} return
+    lassign $res cell row col orig pos
+ 
+    # Extend selection to new cell
+    lassign [split $cell ","] r c
+    if {$r != $row || $c != $col} {
+	::tktable::ExtendSelect $w [expr {$col - $c}] [expr {$row - $r}]
+	#::tktable::DataExtend $w origin|end
+    }
+
+    # Extend selection to new index position
+    if {$pos != $orig} {
+	# Not supported
     }
 }
 
@@ -741,8 +790,8 @@ proc ::tktable::AutoScan {w} {
 # y - +1 to move down one cell, -1 to move up one cell.
 #
 proc ::tktable::MoveCell {w x y} {
-    if {[catch {$w index active row} r]} return
-    set c [$w index active col]
+    if {[catch {$w index focus row} r]} return
+    set c [$w index focus col]
     set cell [$w index [format "%d,%d" [incr r $y] [incr c $x]]]
 
     # Get move to cell
@@ -788,15 +837,20 @@ proc ::tktable::MoveCell {w x y} {
 #
 # Arguments:
 # w - The table widget.
-# x - +1 to move down one cell, -1 to move up one cell.
-# y - +1 to move right one cell, -1 to move left one cell.
+# x - +1 to move right one cell, -1 to move left one cell.
+# y - +1 to move down one cell, -1 to move up one cell.
 #
 proc ::tktable::ExtendSelect {w x y} {
-    if {[$w cget -selectmode] ne "extended" ||
-	[catch {$w index active row} r]} return
-    set c [$w index active col]
-    $w activate [format "%d,%d" [incr r $x] [incr c $y]]
+    if {[$w cget -selectmode] ni [list "extended" "multiple"] ||
+	[catch {$w index focus row} r]} return
+    set c [$w index focus col]
+    $w activate [format "%d,%d" [incr r $y] [incr c $x]]
+    if {[$w bbox active] eq ""} {
+	$w xview scroll $x units
+	$w yview scroll $y units
+    }
     $w see active
+    $w selection set active
     ::tktable::Motion $w [$w index active]
 }
 
