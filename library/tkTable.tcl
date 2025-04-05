@@ -169,6 +169,8 @@ bind Table <Control-Shift-Tab>	[bind all <<PrevWindow>>]
 bind Table <<Clear>>		{::tktable::SelectClear %W}
 bind Table <<SelectAll>>	{::tktable::SelectAll %W}
 bind Table <<SelectNone>>	{::tktable::SelectNone %W}
+bind Table <Shift-space>	{::tktable::SelectRow %W}
+bind Table <Control-space>	{::tktable::SelectColumn %W}
 bind Table <Select>		{::tktable::BeginSelect %W [%W index active]}
 bind Table <Shift-Select>	{::tktable::BeginExtend %W [%W index active]}
 
@@ -924,6 +926,45 @@ proc ::tktable::SelectNone {w} {
 proc ::tktable::SelectClear {w} {
     $w curselection {}
 }
+
+# ::tktable::SelectRow
+#
+# Used to select row with current focus cell
+#
+# Arguments:
+# w - The table widget.
+#
+proc ::tktable::SelectRow {w} {
+    if {[$w cget -selectmode] in [list single browse]} {
+	$w selection clear all
+	catch {$w selection set active}
+    } elseif {![catch {$w index focus row} row]} {
+	set col1 [$w index origin col]
+	set col2 [$w index end col]
+	$w selection set [format "%d,%d" $row $col1] [format "%d,%d" $row $col2]
+    }
+    
+}
+
+# ::tktable::SelectColumn
+#
+# Used to select column with current focus cell
+#
+# Arguments:
+# w - The table widget.
+#
+proc ::tktable::SelectColumn {w} {
+    if {[$w cget -selectmode] in [list single browse]} {
+	$w selection clear all
+	catch {$w selection set active}
+    } elseif {![catch {$w index focus col} col]} {
+	set row1 [$w index origin row]
+	set row2 [$w index end row]
+	$w selection set [format "%d,%d" $row1 $col] [format "%d,%d" $row2 $col]
+    }
+    
+}
+
 
 # ::tktable::ChangeWidth --
 #
