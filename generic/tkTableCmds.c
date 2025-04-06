@@ -39,7 +39,9 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
     if (objc != 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "index");
 	return TCL_ERROR;
-    } else if (Tcl_GetStringFromObj(objv[2], &templen), templen == 0) {
+    }
+
+    if (Tcl_GetStringFromObj(objv[2], &templen), templen == 0) {
 	/*
 	 * Test implementation to clear active cell (becroft)
 	 */
@@ -47,8 +49,11 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	tablePtr->flags |= ACTIVE_DISABLED;
 	tablePtr->activeRow = -1;
 	tablePtr->activeCol = -1;
-	tablePtr->focusRow = -1;
-	tablePtr->focusCol = -1;
+	if (tablePtr->focusRow != -1 || tablePtr->focusCol != -1) {
+	    TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
+	    tablePtr->focusRow = -1;
+	    tablePtr->focusCol = -1;
+	}
 	TableAdjustActive(tablePtr);
 	TableConfigCursor(tablePtr);
 
@@ -73,9 +78,7 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	    Tcl_DStringFree(&script);
 	    tablePtr->flags &= ~BROWSE_CMD;
 	}
-    } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
-	return TCL_ERROR;
-    } else {
+    } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) == TCL_OK) {
 	int x, y, w, dummy;
 	char buf1[INDEX_BUFSIZE], buf2[INDEX_BUFSIZE];
 
@@ -100,6 +103,9 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	    tablePtr->flags &= ~ACTIVE_DISABLED;
 	    tablePtr->activeRow = row;
 	    tablePtr->activeCol = col;
+	    if (tablePtr->focusRow != -1 || tablePtr->focusCol != -1) {
+		TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
+	    }
 	    tablePtr->focusRow = row;
 	    tablePtr->focusCol = col;
 	    if (tablePtr->activeTagPtr != NULL) {
@@ -155,6 +161,8 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	    }
 	}
 	tablePtr->flags |= HAS_ACTIVE;
+    } else {
+	return TCL_ERROR;
     }
     return result;
 }
@@ -187,6 +195,9 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
 
     /* If empty value, clear focus */
     if (Tcl_GetStringFromObj(objv[2], &templen), templen == 0) {
+	if (tablePtr->focusRow != -1 || tablePtr->focusCol != -1) {
+	    TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
+	}
 	tablePtr->focusRow = -1;
 	tablePtr->focusCol = -1;
 	return TCL_OK;
@@ -207,9 +218,10 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
 
     /* If focus cell changed, set new focus cell */
     if (row != tablePtr->focusRow || col != tablePtr->focusCol) {
+	TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
 	tablePtr->focusRow = row;
 	tablePtr->focusCol = col;
-	TableRefresh(tablePtr, row, col, CELL|INV_FORCE);
+	TableRefresh(tablePtr, row, col, CELL);
     } 
     return TCL_OK;
 }

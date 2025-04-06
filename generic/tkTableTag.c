@@ -495,7 +495,7 @@ static TableTag * TableTagGetEntry(Table *tablePtr, char *name, Tcl_Size objc, T
  *	Creates the static table tags.
  *
  * Results:
- *	active, sel, title and flash are created as tags.
+ *	active, flash, focus, sel, and title are created as tags.
  *
  * Side effects:
  *	None.
@@ -544,6 +544,18 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
     objv[6] = Tcl_NewStringObj("-relief",-1);
     objv[7] = Tcl_NewStringObj("solid",-1);
     if (DoTableInitTags(interp, tablePtr, 8, objv, "active") != TCL_OK) {
+	return TCL_ERROR;
+    }
+
+    objv[0] = Tcl_NewStringObj("-bd",-1);
+    objv[1] = Tcl_NewStringObj("2",-1);
+    objv[2] = Tcl_NewStringObj("-bg",-1);
+    objv[3] = Tcl_NewStringObj(ACTIVE_BG,-1);
+    objv[4] = Tcl_NewStringObj("-fg",-1);
+    objv[5] = Tcl_NewStringObj(ACTIVE_FG,-1);
+    objv[6] = Tcl_NewStringObj("-relief",-1);
+    objv[7] = Tcl_NewStringObj("solid",-1);
+    if (DoTableInitTags(interp, tablePtr, 8, objv, "focus") != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -723,15 +735,14 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    if (objc == 4) {
 		/*
 		 * The user just wants the cells with this tag returned.
-		 * Handle specially tags named: active, flash, sel, title
+		 * Handle specially tags named: active, flash, focus, sel, title
 		 */
 
-		if ((tablePtr->flags & HAS_ACTIVE) &&
-			STREQ(tagname, "active")) {
-		    TableMakeArrayIndex(
-			tablePtr->activeRow+tablePtr->rowOffset,
+		if ((tablePtr->flags & HAS_ACTIVE) && STREQ(tagname, "active")) {
+		    TableMakeArrayIndex(tablePtr->activeRow+tablePtr->rowOffset,
 			tablePtr->activeCol+tablePtr->colOffset, buf);
 		    Tcl_SetStringObj(resultPtr, buf, -1);
+
 		} else if ((tablePtr->flashMode && STREQ(tagname, "flash"))
 			|| STREQ(tagname, "sel")) {
 		    hashTblPtr = (*tagname == 's') ?
@@ -743,6 +754,12 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 			Tcl_ListObjAppendElement(NULL, resultPtr,
 				Tcl_NewStringObj(keybuf, -1));
 		    }
+
+		} else if ((tablePtr->focusRow > -1) && STREQ(tagname, "focus")) {
+		    TableMakeArrayIndex(tablePtr->focusRow+tablePtr->rowOffset,
+			tablePtr->focusCol+tablePtr->colOffset, buf);
+		    Tcl_SetStringObj(resultPtr, buf, -1);
+
 		} else if (STREQ(tagname, "title") &&
 			(tablePtr->titleRows || tablePtr->titleCols)) {
 		    for (row = tablePtr->rowOffset;
@@ -765,6 +782,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 				    Tcl_NewStringObj(buf, -1));
 			}
 		    }
+
 		} else {
 		    /*
 		     * Check this tag pointer amongst all tagged cells
@@ -856,12 +874,13 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 
 	    if (objc == 4) {
 		/* the user just wants the tagged cells to be returned */
-		/* Special handling for tags: active, flash, sel, title */
+		/* Special handling for tags: active, flash, focus, sel, title */
 
 		if ((tablePtr->flags & HAS_ACTIVE) && strcmp(tagname, "active") == 0) {
 		    Tcl_SetIntObj(resultPtr, (forRows ?
 			    tablePtr->activeRow+tablePtr->rowOffset :
 			    tablePtr->activeCol+tablePtr->colOffset));
+
 		} else if ((tablePtr->flashMode && STREQ(tagname, "flash"))
 			|| STREQ(tagname, "sel")) {
 		    Tcl_HashTable *cacheTblPtr;
@@ -884,6 +903,12 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 
 		    Tcl_DeleteHashTable(cacheTblPtr);
 		    ckfree((char *) (cacheTblPtr));
+
+		} else if ((tablePtr->focusRow > -1) && strcmp(tagname, "focus") == 0) {
+		    Tcl_SetIntObj(resultPtr, (forRows ?
+			    tablePtr->focusRow+tablePtr->rowOffset :
+			    tablePtr->focusCol+tablePtr->colOffset));
+
 		} else if (STREQ(tagname, "title") &&
 			(forRows?tablePtr->titleRows:tablePtr->titleCols)) {
 		    if (forRows) {
@@ -899,6 +924,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 			    Tcl_ListObjAppendElement(NULL, resultPtr, Tcl_NewIntObj(col));
 			}
 		    }
+
 		} else {
 		    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
 			 scanPtr != NULL;
@@ -1031,9 +1057,10 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    /* run through the remaining arguments */
 	    for (i = 3; i < objc; i++) {
 		tagname  = Tcl_GetString(objv[i]);
-		/* cannot delete the title tag */
+		/* cannot delete special tags */
 		if (STREQ(tagname, "title") ||
 			STREQ(tagname, "sel") ||
+			STREQ(tagname, "focus") ||
 			STREQ(tagname, "flash") ||
 			STREQ(tagname, "active")) {
 		    Tcl_AppendStringsToObj(resultPtr, "cannot delete ",
@@ -1137,6 +1164,9 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    } else if (STREQ(tagname, "flash")) {
 		result = (tablePtr->flashMode &&
 			(Tcl_FindHashEntry(tablePtr->flashCells, buf) != NULL));
+	    } else if (STREQ(tagname, "focus")) {
+		result = (tablePtr->focusRow+tablePtr->rowOffset==row &&
+			tablePtr->focusCol+tablePtr->colOffset==col);
 	    } else if (STREQ(tagname, "sel")) {
 		result = (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL);
 	    } else if (STREQ(tagname, "title")) {

@@ -1998,7 +1998,7 @@ static void TableDisplay(ClientData clientdata) {
     GC tagGc = NULL, topGc, bottomGc;
     char *string = NULL;
     char buf[INDEX_BUFSIZE];
-    TableTag *tagPtr = NULL, *titlePtr, *selPtr, *activePtr, *flashPtr, *rowPtr, *colPtr;
+    TableTag *tagPtr = NULL, *titlePtr, *selPtr, *activePtr, *focusPtr, *flashPtr, *rowPtr, *colPtr;
     Tcl_HashEntry *entryPtr;
     XPoint rect[3];
     Tcl_HashTable *colTagsCache = NULL;
@@ -2058,6 +2058,8 @@ static void TableDisplay(ClientData clientdata) {
     selPtr	= (TableTag *) Tcl_GetHashValue(entryPtr);
     entryPtr	= Tcl_FindHashEntry(tablePtr->tagTable, "active");
     activePtr	= (TableTag *) Tcl_GetHashValue(entryPtr);
+    entryPtr	= Tcl_FindHashEntry(tablePtr->tagTable, "focus");
+    focusPtr	= (TableTag *) Tcl_GetHashValue(entryPtr);
     entryPtr	= Tcl_FindHashEntry(tablePtr->tagTable, "flash");
     flashPtr	= (TableTag *) Tcl_GetHashValue(entryPtr);
 
@@ -2277,8 +2279,9 @@ static void TableDisplay(ClientData clientdata) {
 		    activeCell = 1;
 		    tablePtr->flags &= ~ACTIVE_DISABLED;
 		}
-	    } else if (row == tablePtr->focusRow && col == tablePtr->focusCol) {
-		
+	    } else if ((tablePtr->state == STATE_NORMAL) && 
+		    row == tablePtr->focusRow && col == tablePtr->focusCol) {
+		TableMergeTag(tablePtr, tagPtr, focusPtr);
 	    }
 	    /* is this cell selected? */
 	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL) {
@@ -3943,9 +3946,9 @@ BuildInfoCommand(Tcl_Interp* interp) {
 /*
  *-----------------------------------------------------------------------------
  *
- * Vfs_Init --
+ * Tktable_Init --
  *
- *	This procedure is the main initialization point of the Vfs
+ *	This procedure is the main initialization point of the TkTable
  *	extension.
  *
  * Results:
