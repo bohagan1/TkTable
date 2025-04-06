@@ -155,6 +155,18 @@ bind Table <Control-End>	{::tktable::KeyNav %W bottom}
 bind Table <Control-Shift-Home>	{::tktable::SelectionExtend %W top}
 bind Table <Control-Shift-End>	{::tktable::SelectionExtend %W bottom}
 
+# Page Up/Down key bindings (none, shift, control, control+shift)
+bind Table <Prior>		{::tktable::PageNav %W up}
+bind Table <Next>		{::tktable::PageNav %W down}
+bind Table <Shift-Prior>	{::tktable::PageNav %W left}
+bind Table <Shift-Next>		{::tktable::PageNav %W right}
+bind Table <Control-Prior>	{::tktable::ScreenNav %W up}
+bind Table <Control-Next>	{::tktable::ScreenNav %W down}
+bind Table <Control-Shift-Prior> {::tktable::ScreenNav %W left}
+bind Table <Control-Shift-Next> {::tktable::ScreenNav %W right}
+bind Table <Meta-Prior>		{::tktable::PageNav %W left}
+bind Table <Meta-Next>		{::tktable::PageNav %W right}
+
 # Other key navigation
 bind Table <Return>		{::tktable::MoveCell %W 0 1}
 bind Table <Shift-Return>	{::tktable::MoveCell %W 0 -1}
@@ -363,6 +375,94 @@ proc ::tktable::SelectionExtend {w op} {
     # Extend selection to new index position
     if {$pos != $orig} {
 	# Not supported
+    }
+}
+
+# ::tktable::PageNav
+#	Move by 1 page (screen full)
+# Arguments:
+#   w	The widget for which the operation will be applied.
+#   op	Operation to perform
+# Results:
+#   Returns nothing
+#
+proc ::tktable::PageNav {w op} {
+    if {![catch {$w index active} cell] || ![catch {$w index focus} cell]} {
+	lassign [$w bbox $cell] x y width height
+	switch $op {
+	    "left" {
+		$w xview scroll -1 pages
+	    }
+	   "right" {
+		$w xview scroll 1 pages
+	    }
+	    "up" {
+		$w yview scroll -1 pages
+	    }
+	    "down" {
+		$w yview scroll 1 pages
+	    }
+	    default {
+		return
+	    }
+	}
+	$w activate [format "@%d,%d" [expr {$x+($width/2)}] [expr {$y+($height/2)}]]
+    }
+}
+
+# ::tktable::ScreenNav
+#	Move to edge of visible part of table
+# Arguments:
+#   w	The widget for which the operation will be applied.
+#   op	Operation to perform
+# Results:
+#   Returns nothing
+#
+proc ::tktable::ScreenNav {w op} {
+    if {![catch {$w index active} cell] || ![catch {$w index focus} cell]} {
+	lassign [split $cell ","] r c
+	set row $r
+	set col $c
+
+	# Calc move
+	switch $op {
+	    "left" {
+		set c [$w index topleft col]
+		if {$c == $col} {
+		    $w xview scroll -1 pages
+		    set c [$w index topleft col]
+		}
+	    }
+	    "right" {
+		set c [$w index bottomright col]
+		if {$c == $col} {
+		    $w xview scroll 1 pages
+		    set c [$w index bottomright col]
+		}
+	    }
+	    "up" {
+		set r [$w index topleft row]
+		if {$r == $row} {
+		    $w yview scroll -1 pages
+		    set r [$w index topleft row]
+		}
+	    }
+	    "down" {
+		set r [$w index bottomright row]
+		if {$r == $row} {
+		    $w yview scroll 1 pages
+		    set r [$w index bottomright row]
+		}
+	    }
+	    default {
+		return
+	    }
+	}
+
+	# Do move if cell changed
+	if {$c != $col || $r != $row} {
+	    $w activate [format "%d,%d" $r $c]
+	}
     }
 }
 
