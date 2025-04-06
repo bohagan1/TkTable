@@ -167,6 +167,20 @@ bind Table <Control-Shift-Next> {::tktable::ScreenNav %W right}
 bind Table <Meta-Prior>		{::tktable::PageNav %W left}
 bind Table <Meta-Next>		{::tktable::PageNav %W right}
 
+# Scroll Lock bindings
+bind Table <Mod3-Up>		{%W yview scroll -1 units}
+bind Table <Mod3-Down>		{%W yview scroll 1 units}
+bind Table <Mod3-Left>		{%W xview scroll -1 units}
+bind Table <Mod3-Right>		{%W xview scroll 1 units}
+bind Table <Mod3-Prior>		{%W yview scroll -1 pages}
+bind Table <Mod3-Next>		{%W yview scroll 1 pages}
+bind Table <Mod3-Control-Prior>	{%W yview moveto 0.0}
+bind Table <Mod3-Control-Next>	{%W yview moveto 1.0}
+bind Table <Mod3-Home>		{%W xview scroll -1 pages}
+bind Table <Mod3-End>		{%W xview scroll 1 pages}
+bind Table <Mod3-Control-Home>	{%W xview moveto 0.0}
+bind Table <Mod3-Control-End>	{%W xview moveto 1.0}
+
 # Other key navigation
 bind Table <Return>		{::tktable::MoveCell %W 0 1}
 bind Table <Shift-Return>	{::tktable::MoveCell %W 0 -1}
