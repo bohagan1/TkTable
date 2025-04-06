@@ -525,18 +525,18 @@ done:
     }
     return res;
 }
- 
+
 int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
     Tcl_Obj *objv[12];
 
     objv[0] = Tcl_NewStringObj("-bg",-1);
-    objv[1] = Tcl_NewStringObj("red",-1);
+    objv[1] = Tcl_NewStringObj("green",-1);
     if (DoTableInitTags(interp, tablePtr, 2, objv, "flash") != TCL_OK) {
 	return TCL_ERROR;
     }
 
     objv[0] = Tcl_NewStringObj("-bd",-1);
-    objv[1] = Tcl_NewStringObj(BORDER_WIDTH,-1);
+    objv[1] = Tcl_NewStringObj("1",-1);
     objv[2] = Tcl_NewStringObj("-bg",-1);
     objv[3] = Tcl_NewStringObj(ACTIVE_BG,-1);
     objv[4] = Tcl_NewStringObj("-fg",-1);
@@ -547,15 +547,11 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
 	return TCL_ERROR;
     }
 
-    objv[0] = Tcl_NewStringObj("-bd",-1);
-    objv[1] = Tcl_NewStringObj(SELECT_BD,-1);
-    objv[2] = Tcl_NewStringObj("-bg",-1);
-    objv[3] = Tcl_NewStringObj(SELECT_BG,-1);
-    objv[4] = Tcl_NewStringObj("-fg",-1);
-    objv[5] = Tcl_NewStringObj(SELECT_FG,-1);
-    objv[6] = Tcl_NewStringObj("-relief",-1);
-    objv[7] = Tcl_NewStringObj("ridge",-1);
-    if (DoTableInitTags(interp, tablePtr, 8, objv, "sel") != TCL_OK) {
+    objv[0] = Tcl_NewStringObj("-bg",-1);
+    objv[1] = Tcl_NewStringObj(SELECT_BG,-1);
+    objv[2] = Tcl_NewStringObj("-fg",-1);
+    objv[3] = Tcl_NewStringObj(SELECT_FG,-1);
+    if (DoTableInitTags(interp, tablePtr, 4, objv, "sel") != TCL_OK) {
 	return TCL_ERROR;
     }
 
