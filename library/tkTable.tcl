@@ -17,13 +17,15 @@
 # borderInfo -		Boolean to know if the user clicked on a border
 # borderB1 -		Boolean that set whether B1 can be used for the
 #			interactiving resizing
+# bindingMode -		Should B1 focus or activate a cell
 #--------------------------------------------------------------------------
 
+# Ensure that a namespace is created for us
 namespace eval ::tktable {
     # Ensure that a namespace is created for us
     variable Priv
     array set Priv [list x 0 y 0 afterId {} mouseMoved 0 \
-	    borderInfo {} borderB1 1]
+	    borderInfo {} borderB1 1 bindingMode focus]
     namespace export tk_tableCopy tk_tableCut tk_tablePaste
 }
 
@@ -40,20 +42,12 @@ bind Table <<Paste>>	{::tktable::tk_tablePaste %W}
 bind Table <3>		{%W border mark %x %y}
 bind Table <B3-Motion>	{%W border dragto %x %y}
 
-## Button events
+## Button select events
 
 bind Table <1>		{::tktable::Button1 %W %x %y}
 bind Table <B1-Motion>	{::tktable::B1Motion %W %x %y}
-
-bind Table <ButtonRelease-1> {
-    if {$::tktable::Priv(borderInfo) eq "" && [winfo exists %W]} {
-	::tktable::CancelRepeat
-	%W activate @%x,%y
-    }
-}
-bind Table <Double-1> {
-    # empty
-}
+bind Table <ButtonRelease-1>	{::tktable::B1Release %W %x %y}
+bind Table <Double-Button-1>	{::tktable::DoubleButton1 %W %x %y}
 
 bind Table <Shift-1>	{::tktable::BeginExtend %W [%W index @%x,%y]}
 bind Table <Control-1>	{::tktable::BeginToggle %W [%W index @%x,%y]}
@@ -64,6 +58,9 @@ bind Table <B1-Leave>	{
 	::tktable::AutoScan %W
     }
 }
+
+## Button scan events
+
 bind Table <2> {
     %W scan mark %x %y
     array set ::tktable::Priv {x %x y %y}
@@ -294,12 +291,16 @@ proc ::tktable::MoveHandler {w op edit} {
 	    "first" {
 		# Move to first cell in row
 		set col [$w index origin col]
-		$w xview moveto 0
+		if {[$w cget -selectmode] in [list "extended" "multiple"]} {
+		    $w xview moveto 0
+		}
 	    }
 	    "last" {
 		# Move to last cell in row
 		set col [$w index end col]
-		$w xview moveto 1
+		if {[$w cget -selectmode] in [list "extended" "multiple"]} {
+		    $w xview moveto 1
+		}
 	    }
 	    "left" {
 		# Move left 1 cell
@@ -322,14 +323,18 @@ proc ::tktable::MoveHandler {w op edit} {
 	    "origin" - "top" {
 		# Move to origin cell
 		lassign [split [$w index origin] ","] row col
-		$w xview moveto 0
-		$w yview moveto 0
+		if {[$w cget -selectmode] in [list "extended" "multiple"]} {
+		    $w xview moveto 0
+		    $w yview moveto 0
+		}
 	    }
 	    "end" - "bottom" {
 		# Move to end cell
 		lassign [split [$w index end] ","] row col
-		$w xview moveto 1
-		$w yview moveto 1
+		if {[$w cget -selectmode] in [list "extended" "multiple"]} {
+		    $w xview moveto 1
+		    $w yview moveto 1
+		}
 	    }
 	    default {
 		return
@@ -401,27 +406,33 @@ proc ::tktable::SelectionExtend {w op} {
 #   Returns nothing
 #
 proc ::tktable::PageNav {w op} {
-    if {![catch {$w index active} cell] || ![catch {$w index focus} cell]} {
-	lassign [$w bbox $cell] x y width height
-	switch $op {
-	    "left" {
-		$w xview scroll -1 pages
-	    }
-	   "right" {
-		$w xview scroll 1 pages
-	    }
-	    "up" {
-		$w yview scroll -1 pages
-	    }
-	    "down" {
-		$w yview scroll 1 pages
-	    }
-	    default {
-		return
-	    }
-	}
-	$w activate [format "@%d,%d" [expr {$x+($width/2)}] [expr {$y+($height/2)}]]
+    if {![catch {$w index active} cell]} {
+	set fn activate
+    } elseif {![catch {$w index focus} cell]} {
+	set fn focus
+    } else {
+	return
     }
+    
+    lassign [$w bbox $cell] x y width height
+    switch $op {
+	"left" {
+	    $w xview scroll -1 pages
+	}
+	"right" {
+	    $w xview scroll 1 pages
+	}
+	"up" {
+	    $w yview scroll -1 pages
+	}
+	"down" {
+	    $w yview scroll 1 pages
+	}
+	default {
+	    return
+	}
+    }
+    $w $fn [format "@%d,%d" [expr {$x+($width/2)}] [expr {$y+($height/2)}]]
 }
 
 # ::tktable::ScreenNav
@@ -433,50 +444,55 @@ proc ::tktable::PageNav {w op} {
 #   Returns nothing
 #
 proc ::tktable::ScreenNav {w op} {
-    if {![catch {$w index active} cell] || ![catch {$w index focus} cell]} {
-	lassign [split $cell ","] r c
-	set row $r
-	set col $c
+    if {![catch {$w index active} cell]} {
+	set fn activate
+    } elseif {![catch {$w index focus} cell]} {
+	set fn focus
+    } else {
+	return
+    }
 
-	# Calc move
-	switch $op {
-	    "left" {
+    lassign [split $cell ","] r c
+    set row $r
+    set col $c
+
+    switch $op {
+	"left" {
+	    set c [$w index topleft col]
+	    if {$c == $col} {
+		$w xview scroll -1 pages
 		set c [$w index topleft col]
-		if {$c == $col} {
-		    $w xview scroll -1 pages
-		    set c [$w index topleft col]
-		}
 	    }
-	    "right" {
+	}
+	"right" {
+	    set c [$w index bottomright col]
+	    if {$c == $col} {
+		$w xview scroll 1 pages
 		set c [$w index bottomright col]
-		if {$c == $col} {
-		    $w xview scroll 1 pages
-		    set c [$w index bottomright col]
-		}
 	    }
-	    "up" {
+	}
+	"up" {
+	    set r [$w index topleft row]
+	    if {$r == $row} {
+		$w yview scroll -1 pages
 		set r [$w index topleft row]
-		if {$r == $row} {
-		    $w yview scroll -1 pages
-		    set r [$w index topleft row]
-		}
 	    }
-	    "down" {
+	}
+	"down" {
+	    set r [$w index bottomright row]
+	    if {$r == $row} {
+		$w yview scroll 1 pages
 		set r [$w index bottomright row]
-		if {$r == $row} {
-		    $w yview scroll 1 pages
-		    set r [$w index bottomright row]
-		}
-	    }
-	    default {
-		return
 	    }
 	}
+	default {
+	    return
+	}
+    }
 
-	# Do move if cell changed
-	if {$c != $col || $r != $row} {
-	    $w activate [format "%d,%d" $r $c]
-	}
+    # Do move if cell changed
+    if {$c != $col || $r != $row} {
+	$w $fn [format "%d,%d" $r $c]
     }
 }
 
@@ -625,8 +641,8 @@ proc ::tktable::Button1 {w x y} {
 	    ::tktable::BeginSelect $w [$w index @$x,$y]
 	    focus $w
 	}
-	array set Priv [list x $x y $y]
-	set Priv(mouseMoved) 0
+	set fn [expr {[$w cget -mode] eq "table" ? "activate" : "focus"}]
+	array set Priv [list x $x y $y mouseMoved 0 bindingMode $fn]
     }
 }
 
@@ -669,6 +685,45 @@ proc ::tktable::B1Motion {w x y} {
 	if {$::tktable::Priv(mouseMoved)} {
 	    ::tktable::Motion $w [$w index @$x,$y]
 	}
+    }
+}
+
+# ::tktable::B1Release --
+#
+# This procedure when B1 is released to activate cell.
+#
+# Arguments:
+#   w	- the table widget
+#   x	- x coord
+#   y	- y coord
+# Results:
+#   Returns nothing
+#
+proc ::tktable::B1Release {w x y} {
+    if {$::tktable::Priv(borderInfo) eq "" && [winfo exists $w]} {
+	::tktable::CancelRepeat
+	set fn $::tktable::Priv(bindingMode)
+	if {$fn eq "focus"} {
+	    $w activate {}
+	}
+	$w $fn [format "@%d,%d" $x $y]
+    }
+}
+
+# ::tktable::DoubleButton1 --
+#
+# This procedure is used to activate a cell
+#
+# Arguments:
+#   w	- the table widget
+#   x	- x coord
+#   y	- y coord
+# Results:
+#   Returns nothing
+#
+proc ::tktable::DoubleButton1 {w x y} {
+    if {$::tktable::Priv(borderInfo) eq "" && [winfo exists $w]} {
+	set ::tktable::Priv(bindingMode) activate
     }
 }
 
@@ -906,8 +961,16 @@ proc ::tktable::AutoScan {w} {
 # y - +1 to move down one cell, -1 to move up one cell.
 #
 proc ::tktable::MoveCell {w x y} {
-    if {[catch {$w index focus row} r]} return
-    set c [$w index focus col]
+    if {![catch {$w index active} cell]} {
+	set fn activate
+	set id active
+    } elseif {![catch {$w index focus} cell]} {
+	set fn focus
+	set id focus
+    } else {
+	return
+    }
+    lassign [split $cell ","] r c
     set cell [$w index [format "%d,%d" [incr r $y] [incr c $x]]]
 
     # Get move to cell
@@ -928,19 +991,19 @@ proc ::tktable::MoveCell {w x y} {
 	    return
 	}
     }
-    $w activate $cell
-    $w see active
+    $w $fn $cell
+    $w see $id
     switch [$w cget -selectmode] {
 	browse {
 	    $w selection clear all
-	    $w selection set active
+	    $w selection set $id
 	}
 	extended {
 	    variable Priv
 	    $w selection clear all
-	    $w selection set active
-	    $w selection anchor active
-	    set Priv(tablePrev) [$w index active]
+	    $w selection set $id
+	    $w selection anchor $id
+	    set Priv(tablePrev) [$w index $id]
 	}
     }
 }
@@ -957,17 +1020,28 @@ proc ::tktable::MoveCell {w x y} {
 # y - +1 to move down one cell, -1 to move up one cell.
 #
 proc ::tktable::ExtendSelect {w x y} {
-    if {[$w cget -selectmode] ni [list "extended" "multiple"] ||
-	[catch {$w index focus row} r]} return
-    set c [$w index focus col]
-    $w activate [format "%d,%d" [incr r $y] [incr c $x]]
-    if {[$w bbox active] eq ""} {
+    if {[$w cget -selectmode] ni [list "extended" "multiple"]} {
+	return
+    }
+    if {![catch {$w index active} cell]} {
+	set fn activate
+	set id active
+    } elseif {![catch {$w index focus} cell]} {
+	set fn focus
+	set id focus
+    } else {
+	return
+    }
+
+    lassign [split $cell ","] r c
+    $w $fn [format "%d,%d" [incr r $y] [incr c $x]]
+    if {[$w bbox $id] eq ""} {
 	$w xview scroll $x units
 	$w yview scroll $y units
     }
-    $w see active
-    $w selection set active
-    ::tktable::Motion $w [$w index active]
+    $w see $id
+    $w selection set $id
+    ::tktable::Motion $w [$w index $id]
 }
 
 # ::tktable::DataExtend
@@ -982,15 +1056,23 @@ proc ::tktable::ExtendSelect {w x y} {
 # el - An integer cell number.
 #
 proc ::tktable::DataExtend {w el} {
+    if {![catch {$w index active} cell]} {
+	set fn activate
+    } elseif {![catch {$w index focus} cell]} {
+	set fn focus
+    } else {
+	return
+    }
+
     set mode [$w cget -selectmode]
     if {$mode eq "extended"} {
-	$w activate $el
+	$w $fn $el
 	$w see $el
 	if {[$w selection includes anchor]} {
 	    ::tktable::Motion $w $el
 	}
     } elseif {$mode eq "multiple"} {
-	$w activate $el
+	$w $fn $el
 	$w see $el
     }
 }
@@ -1057,7 +1139,6 @@ proc ::tktable::SelectRow {w} {
 	set col2 [$w index end col]
 	$w selection set [format "%d,%d" $row $col1] [format "%d,%d" $row $col2]
     }
-    
 }
 
 # ::tktable::SelectColumn
@@ -1076,7 +1157,6 @@ proc ::tktable::SelectColumn {w} {
 	set row2 [$w index end row]
 	$w selection set [format "%d,%d" $row1 $col] [format "%d,%d" $row2 $col]
     }
-    
 }
 
 

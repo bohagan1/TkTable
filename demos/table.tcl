@@ -4,7 +4,7 @@ set cols 100
 set rows 100
 
 set w [table .tb -cols $cols -rows $rows -height 10 -width 10 \
-    -titlecols 1 -titlerows 1 -wrap 1 \
+    -titlecols 1 -titlerows 1 -wrap 1 -selectmode extended -mode spreadsheet \
     -xscrollcommand [list .sx set] -yscrollcommand [list .sy set]]
 ttk::scrollbar .sx -orient horizontal -command [list .tb xview]
 ttk::scrollbar .sy -orient vertical -command [list .tb yview]
