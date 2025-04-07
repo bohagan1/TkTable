@@ -274,7 +274,7 @@ Database Class:	\\fB\\$3\\fR
 .SH NAME
 tkTable \- Create and manipulate table widgets
 .SH SYNOPSIS
-package require \fBTcl ?8\&.5?\fR
+package require \fBTcl ?8\&.5-?\fR
 .sp
 package require \fBTktable ?2\&.12?\fR
 .sp
@@ -898,7 +898,7 @@ Database Class:	\fBState\fR
 
 .fi
 .IP
-Specifies one of two states for the entry:  \fBnormal\fR or \fBdisabled\fR\&.
+Specifies one of two states for the entry: \fBnormal\fR or \fBdisabled\fR\&.
 If the table is disabled then the value may not be changed using widget
 commands and no insertion cursor will be displayed, even if the input focus
 is in the widget\&.  Also, all insert or delete methods will be ignored\&.
@@ -1030,18 +1030,22 @@ for row and column will be constrained to actual values in the table,
 which means a valid cell is always found\&.
 .TP
 \fBactive\fR
-Indicates the cell that has the location cursor\&.
-It is specified with the \fBactivate\fR widget command\&.
+Indicates the cell that has the keyboard input focus and cursor\&.
+It is set by the \fBactivate\fR widget command\&.
 .TP
 \fBanchor\fR
-Indicates the anchor point for the selection, which is set with the
+Indicates the cell with selection anchor point\&. It is set by the
 \fBselection anchor\fR widget command\&.
 .TP
 \fBbottomright\fR
-Indicates the bottom-rightmost cell visible in the table\&.
+Indicates the bottom-right most cell currently visible in the table\&.
 .TP
 \fBend\fR
 Indicates the bottom right cell of the table\&.
+.TP
+\fBfocus\fR
+Indicates the cell that has the keyboard navigation focus\&.
+It is set by the \fBfocus\fR widget command\&.
 .TP
 \fBorigin\fR
 Indicates the top-leftmost editable cell of the table, not necessarily
@@ -1049,8 +1053,8 @@ in the display\&.  This takes into account the user specified origin and
 title area\&.
 .TP
 \fBtopleft\fR
-Indicates the top-leftmost editable cell visible in the table (this
-excludes title cells)\&.
+Indicates the top-left most editable cell currently visible in the table,
+excluding the title cells\&.
 .TP
 \fB@\fIx\fR\fB,\fR\fIy\fR\fR
 Indicates the cell that covers the point in the table window
@@ -1076,6 +1080,9 @@ This tag is given to the \fBactive\fR cell
 \fBflash\fR
 If flash mode is on, this tag is given to any recently edited cells\&.
 .TP
+\fBfocus\fR
+This tag is given to the \fBfocus\fR cell
+.TP
 \fBsel\fR
 This tag is given to any selected cells\&.
 .TP
@@ -1095,49 +1102,59 @@ default display style\&.  The following options are currently supported for tags
 Anchor for item in the cell space\&.
 .TP
 \fB-background or -bg\fR \fIcolor\fR
-Background color of the cell\&.
+Background color of the cell\&. May also be the empty string to inherit the
+default table background value (the default)\&.
 .TP
 \fB-borderwidth or -bd\fR \fIpixelList\fR
-Borderwidth of the cell, of the same format for the table, but may also
-be empty to inherit the default table borderwidth value (the default)\&.
+Borderwidth of the cell using same format for the table\&. May also be the
+empty string to inherit the default table borderwidth value (the default)\&.
 .TP
 \fB-ellipsis\fR \fIstring\fR
 String to display at the end of a line that would be clipped by its cell,
-like "\&.\&.\&."\&.  An ellipsis will be displayed only
-on non-wrapping, non-multiline cells that would be clipped\&.  The ellipsis
-will display on the left for east anchored cells, otherwise it displays
-on the right\&.
+like "\&.\&.\&."\&.  An ellipsis will be displayed only on non-wrapping, non-multiline
+cells that would be clipped\&. The ellipsis will display on the left for east
+anchored cells, otherwise it displays on the right\&. May also be the
+empty string to inherit the default table ellipsis value (the default)\&.
 .TP
 \fB-font\fR \fIfontName\fR
-Font for text in the cell\&.
+Font for text in the cell\&. May also be the
+empty string to inherit the default table font value (the default)\&.
 .TP
 \fB-foreground or -fg\fR \fIcolor\fR
-Foreground color of the cell\&.
+Foreground color of the cell\&. May also be the
+empty string to inherit the default table foreground value (the default)\&.
 .TP
 \fB-justify\fR \fIjustify\fR
 How to justify multi-line text in a cell\&.
 It must be one of \fBleft\fR, \fBright\fR, or \fBcenter\fR\&.
 .TP
 \fB-image\fR \fIimageName\fR
-An image to display in the cell instead of text\&.
+An image to display in the cell instead of text or empty string for none
+(default)\&.
 .TP
 \fB-multiline\fR \fIboolean\fR
-Whether to display text with newlines on multiple lines\&.
+Whether to display text with newlines on multiple lines\&. May also be the
+empty string to inherit the default table multiline value (the default)\&.
 .TP
 \fB-relief\fR \fIrelief\fR
-The relief for the cell\&.  May be the empty string to cause this tag to
-not disturb the value\&.
+The relief for the cell\&. Values are: \fBflat\fR, \fBgroove\fR,
+\fBraised\fR, \fBridge\fR, \fBsolid\fR, and \fBsunken\fR\&.
+May also be the
+empty string to inherit the default table relief value (the default)\&.
 .TP
 \fB-showtext\fR \fIboolean\fR
-Whether to show the text over an image\&.
+Whether to show the text over an image\&. May also be the
+empty string to inherit the default table showtext value (the default)\&.
 .TP
 \fB-state\fR \fIstate\fR
-The state of the cell, to allow for certain cells to be disabled\&.
-This prevents the cell from being edited by the \fBinsert\fR or \fBdelete\fR
-methods, but a direct \fBset\fR will not be prevented\&.
+The state of the cell, to allow for certain cells to be disabled\&. Uses the same
+values as the table state\&. This prevents the cell from being edited by the
+\fBinsert\fR or \fBdelete\fR methods, but a direct \fBset\fR will
+not be prevented\&.
 .TP
 \fB-wrap\fR \fIboolean\fR
-Whether characters should wrap in a cell that is not wide enough\&.
+Whether characters should wrap in a cell that is not wide enough\&. May also be the
+empty string to inherit the default table wrap value (the default)\&.
 .PP
 .PP
 A priority order is defined among tags based on creation order (first
@@ -1151,7 +1168,7 @@ If a cell has several tags associated with it that define the same display
 options (eg - a \fBtitle\fR cell with specific \fBrow\fR and \fBcell\fR
 tags), then the options of the highest priority tag are used\&.  If a
 particular display option hasn't been specified for a particular tag, or if
-it is specified as an empty string, then that option will not be used; the
+it is specified as an empty string {}, then that option will not be used; the
 next highest priority tag's option will be used instead\&.  If no tag
 specifies a particular display option, then the default style for the
 widget will be used\&.
@@ -1198,7 +1215,7 @@ specified, it uses the table's default background\&.
 .TP
 \fB-borderwidth or -bd\fR \fIpixelList\fR
 Borderwidth of the cell, of the same format for the table, but may also
-be empty to inherit the default table borderwidth value (the default)\&.
+be an empty string to inherit the default table borderwidth value (the default)\&.
 .TP
 \fB-padx\fR \fIpixels\fR
 As defined in the Tk options man page\&.
@@ -1215,7 +1232,7 @@ Stickiness of the window inside the cell, as defined by the \fBgrid\fR command\&
 .TP
 \fB-window\fR \fIpathName\fR
 Specifies the name of a window (widget) to display in the annotation\&.  It
-must exist before being specified here\&.  When an empty string is specified,
+must exist before being specified here\&. When an empty string is specified,
 if a window was displayed it will cease to be managed by the table widget\&.
 .PP
 .SH "THE SELECTION"
@@ -1314,7 +1331,10 @@ widget's path name\&. Option and the args determine the exact behavior of the
 command\&. The following commands are possible for table widgets:
 .TP
 \fIpathName\fR \fBactivate\fR \fIindex\fR
-Sets the active cell to the one indicated by \fIindex\fR\&.
+Sets the keyboard input focus (aka active item) cell to \fIindex\fR\&. Once the
+cell is active, the insertion cursor will be displayed and all keyboard events
+will be directed to that item\&. If \fIindex\fR is set to the empty string {},
+then no cell will be active\&.
 .TP
 \fIpathName\fR \fBbbox\fR \fIfirst\fR ?\fIlast\fR?
 It returns the bounding box for the specified cell (range) as a 4-tuple of
@@ -1331,7 +1351,7 @@ Records \fIx\fR and \fIy\fR and the row and/or column border under that
 point in the table window, if any; used in conjunction with later
 \fBborder dragto\fR commands\&.  Typically this command is associated with a
 mouse button press in the widget\&.  If \fIrow\fR or \fIcol\fR is not specified,
-it returns a tuple of both border indices (an empty item means no border)\&.
+it returns a tuple of both border indices (an empty string means no border)\&.
 Otherwise, just the specified item is returned\&.
 .TP
 \fIpathName\fR \fBborder dragto\fR \fIx y\fR
@@ -1445,6 +1465,10 @@ rows going down\&.  The selection will be cleared\&.  The switches are the same
 as those for column deletion\&.
 .RE
 .TP
+\fIpathName\fR \fBfocus\fR \fIindex\fR
+Sets the keyboard navigation focus cell to \fIindex\fR\&. If \fIindex\fR is set
+to the empty string {}, then no cell will have the focus\&.
+.TP
 \fIpathName\fR \fBget\fR \fIfirst\fR ?\fIlast\fR?
 Returns the value of the cells specified by the table indices \fIfirst\fR
 and (optionally) \fIlast\fR in a list\&.
@@ -1475,7 +1499,7 @@ return -1\&.
 \fIpathName\fR \fBindex\fR \fIindex\fR ?\fBrow|col\fR?
 Returns the integer cell coordinate that corresponds to \fIindex\fR in the
 form row,col\&.  If \fBrow\fR or \fBcol\fR is specified, then only the row or
-column index is returned\&.
+column index is returned\&. Will return an error if \fIindex\fR does not exist\&.
 .TP
 \fIpathName\fR \fBinsert\fR \fIoption arg arg\fR
 This command is used to into various things into a table\&.  It has several
@@ -1514,7 +1538,7 @@ two forms, depending on \fIoption\fR:
 Records \fIx\fR and \fIy\fR and the current view in the table
 window;  used in conjunction with later \fBscan dragto\fR commands\&.
 Typically this command is associated with a mouse button press in
-the widget\&.  It returns an empty string\&.
+the widget\&.  The return value is an empty string\&.
 .TP
 \fIpathName\fR \fBscan dragto\fR \fIx y\fR
 This command computes the difference between its \fIx\fR and \fIy\fR
@@ -1881,6 +1905,8 @@ table is not causing proper refresh):
 $table configure -padx [$table cget -padx]
 
 .CE
+.SH "SEE ALSO"
+widget
 .SH KEYWORDS
 TkTable, cell, column, extension, row, table, widget
 .SH CATEGORY

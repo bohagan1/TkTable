@@ -122,6 +122,7 @@
 <li class="doctools_section"><a href="#section12">DEFAULT BINDINGS</a></li>
 <li class="doctools_section"><a href="#section13">PERFORMANCE ISSUES</a></li>
 <li class="doctools_section"><a href="#section14">EXAMPLES</a></li>
+<li class="doctools_section"><a href="#see-also">See Also</a></li>
 <li class="doctools_section"><a href="#keywords">Keywords</a></li>
 <li class="doctools_section"><a href="#category">Category</a></li>
 <li class="doctools_section"><a href="#copyright">Copyright</a></li>
@@ -130,7 +131,7 @@
 <div id="synopsis" class="doctools_section"><h2><a name="synopsis">Synopsis</a></h2>
 <div class="doctools_synopsis">
 <ul class="doctools_requirements">
-<li>package require <b class="pkgname">Tcl <span class="opt">?8.5?</span></b></li>
+<li>package require <b class="pkgname">Tcl <span class="opt">?8.5-?</span></b></li>
 <li>package require <b class="pkgname">Tktable <span class="opt">?2.12?</span></b></li>
 </ul>
 <ul class="doctools_syntax">
@@ -552,7 +553,7 @@ less memory).  If false, then all values in the array will be maintained.</p></d
 Database Name:	<b class="optdbname">state</b><br>
 Database Class:	<b class="optdbclass">State</b><br>
 </dt>
-<dd><p>Specifies one of two states for the entry:  <b class="const">normal</b> or <b class="const">disabled</b>.
+<dd><p>Specifies one of two states for the entry: <b class="const">normal</b> or <b class="const">disabled</b>.
 If the table is disabled then the value may not be changed using widget
 commands and no insertion cursor will be displayed, even if the input focus
 is in the widget.  Also, all insert or delete methods will be ignored.
@@ -642,22 +643,25 @@ corresponds to the first cell in the table (0,0 by default).  The values
 for row and column will be constrained to actual values in the table,
 which means a valid cell is always found.</p></dd>
 <dt><b class="option">active</b></dt>
-<dd><p>Indicates the cell that has the location cursor.
-It is specified with the <b class="method">activate</b> widget command.</p></dd>
+<dd><p>Indicates the cell that has the keyboard input focus and cursor.
+It is set by the <b class="method">activate</b> widget command.</p></dd>
 <dt><b class="option">anchor</b></dt>
-<dd><p>Indicates the anchor point for the selection, which is set with the
+<dd><p>Indicates the cell with selection anchor point. It is set by the
 <b class="method">selection anchor</b> widget command.</p></dd>
 <dt><b class="option">bottomright</b></dt>
-<dd><p>Indicates the bottom-rightmost cell visible in the table.</p></dd>
+<dd><p>Indicates the bottom-right most cell currently visible in the table.</p></dd>
 <dt><b class="option">end</b></dt>
 <dd><p>Indicates the bottom right cell of the table.</p></dd>
+<dt><b class="option">focus</b></dt>
+<dd><p>Indicates the cell that has the keyboard navigation focus.
+It is set by the <b class="method">focus</b> widget command.</p></dd>
 <dt><b class="option">origin</b></dt>
 <dd><p>Indicates the top-leftmost editable cell of the table, not necessarily
 in the display.  This takes into account the user specified origin and
 title area.</p></dd>
 <dt><b class="option">topleft</b></dt>
-<dd><p>Indicates the top-leftmost editable cell visible in the table (this
-excludes title cells).</p></dd>
+<dd><p>Indicates the top-left most editable cell currently visible in the table,
+excluding the title cells.</p></dd>
 <dt><b class="option">@<i class="arg">x</i><b class="const">,</b><i class="arg">y</i></b></dt>
 <dd><p>Indicates the cell that covers the point in the table window
 specified by <i class="arg">x</i> and <i class="arg">y</i> (in pixel coordinates).  If no
@@ -680,6 +684,8 @@ configured by the user and will determine the attributes for special cells:</p>
 <dd><p>This tag is given to the <b class="const">active</b> cell</p></dd>
 <dt><b class="option">flash</b></dt>
 <dd><p>If flash mode is on, this tag is given to any recently edited cells.</p></dd>
+<dt><b class="option">focus</b></dt>
+<dd><p>This tag is given to the <b class="const">focus</b> cell</p></dd>
 <dt><b class="option">sel</b></dt>
 <dd><p>This tag is given to any selected cells.</p></dd>
 <dt><b class="option">title</b></dt>
@@ -696,38 +702,48 @@ default display style.  The following options are currently supported for tags:<
 <dt><b class="option">-anchor</b> <i class="arg">anchor</i></dt>
 <dd><p>Anchor for item in the cell space.</p></dd>
 <dt><b class="option">-background or -bg</b> <i class="arg">color</i></dt>
-<dd><p>Background color of the cell.</p></dd>
+<dd><p>Background color of the cell. May also be the empty string to inherit the
+default table background value (the default).</p></dd>
 <dt><b class="option">-borderwidth or -bd</b> <i class="arg">pixelList</i></dt>
-<dd><p>Borderwidth of the cell, of the same format for the table, but may also
-be empty to inherit the default table borderwidth value (the default).</p></dd>
+<dd><p>Borderwidth of the cell using same format for the table. May also be the
+empty string to inherit the default table borderwidth value (the default).</p></dd>
 <dt><b class="option">-ellipsis</b> <i class="arg">string</i></dt>
 <dd><p>String to display at the end of a line that would be clipped by its cell,
-like &quot;...&quot;.  An ellipsis will be displayed only
-on non-wrapping, non-multiline cells that would be clipped.  The ellipsis
-will display on the left for east anchored cells, otherwise it displays
-on the right.</p></dd>
+like &quot;...&quot;.  An ellipsis will be displayed only on non-wrapping, non-multiline
+cells that would be clipped. The ellipsis will display on the left for east
+anchored cells, otherwise it displays on the right. May also be the
+empty string to inherit the default table ellipsis value (the default).</p></dd>
 <dt><b class="option">-font</b> <i class="arg">fontName</i></dt>
-<dd><p>Font for text in the cell.</p></dd>
+<dd><p>Font for text in the cell. May also be the
+empty string to inherit the default table font value (the default).</p></dd>
 <dt><b class="option">-foreground or -fg</b> <i class="arg">color</i></dt>
-<dd><p>Foreground color of the cell.</p></dd>
+<dd><p>Foreground color of the cell. May also be the
+empty string to inherit the default table foreground value (the default).</p></dd>
 <dt><b class="option">-justify</b> <i class="arg">justify</i></dt>
 <dd><p>How to justify multi-line text in a cell.
 It must be one of <b class="const">left</b>, <b class="const">right</b>, or <b class="const">center</b>.</p></dd>
 <dt><b class="option">-image</b> <i class="arg">imageName</i></dt>
-<dd><p>An image to display in the cell instead of text.</p></dd>
+<dd><p>An image to display in the cell instead of text or empty string for none
+(default).</p></dd>
 <dt><b class="option">-multiline</b> <i class="arg">boolean</i></dt>
-<dd><p>Whether to display text with newlines on multiple lines.</p></dd>
+<dd><p>Whether to display text with newlines on multiple lines. May also be the
+empty string to inherit the default table multiline value (the default).</p></dd>
 <dt><b class="option">-relief</b> <i class="arg">relief</i></dt>
-<dd><p>The relief for the cell.  May be the empty string to cause this tag to
-not disturb the value.</p></dd>
+<dd><p>The relief for the cell. Values are: <b class="const">flat</b>, <b class="const">groove</b>,
+<b class="const">raised</b>, <b class="const">ridge</b>, <b class="const">solid</b>, and <b class="const">sunken</b>.
+May also be the
+empty string to inherit the default table relief value (the default).</p></dd>
 <dt><b class="option">-showtext</b> <i class="arg">boolean</i></dt>
-<dd><p>Whether to show the text over an image.</p></dd>
+<dd><p>Whether to show the text over an image. May also be the
+empty string to inherit the default table showtext value (the default).</p></dd>
 <dt><b class="option">-state</b> <i class="arg">state</i></dt>
-<dd><p>The state of the cell, to allow for certain cells to be disabled.
-This prevents the cell from being edited by the <b class="method">insert</b> or <b class="method">delete</b>
-methods, but a direct <b class="method">set</b> will not be prevented.</p></dd>
+<dd><p>The state of the cell, to allow for certain cells to be disabled. Uses the same
+values as the table state. This prevents the cell from being edited by the
+<b class="method">insert</b> or <b class="method">delete</b> methods, but a direct <b class="method">set</b> will
+not be prevented.</p></dd>
 <dt><b class="option">-wrap</b> <i class="arg">boolean</i></dt>
-<dd><p>Whether characters should wrap in a cell that is not wide enough.</p></dd>
+<dd><p>Whether characters should wrap in a cell that is not wide enough. May also be the
+empty string to inherit the default table wrap value (the default).</p></dd>
 </dl>
 <p>A priority order is defined among tags based on creation order (first
 created tag has highest default priority), and this order is used in
@@ -739,7 +755,7 @@ to it.  The priority of a tag can be modified by <b class="method">tag lower</b>
 options (eg - a <b class="const">title</b> cell with specific <b class="const">row</b> and <b class="const">cell</b>
 tags), then the options of the highest priority tag are used.  If a
 particular display option hasn't been specified for a particular tag, or if
-it is specified as an empty string, then that option will not be used; the
+it is specified as an empty string {}, then that option will not be used; the
 next highest priority tag's option will be used instead.  If no tag
 specifies a particular display option, then the default style for the
 widget will be used.</p>
@@ -781,7 +797,7 @@ again the next time the cell is displayed.</p></dd>
 specified, it uses the table's default background.</p></dd>
 <dt><b class="option">-borderwidth or -bd</b> <i class="arg">pixelList</i></dt>
 <dd><p>Borderwidth of the cell, of the same format for the table, but may also
-be empty to inherit the default table borderwidth value (the default).</p></dd>
+be an empty string to inherit the default table borderwidth value (the default).</p></dd>
 <dt><b class="option">-padx</b> <i class="arg">pixels</i></dt>
 <dd><p>As defined in the Tk options man page.</p></dd>
 <dt><b class="option">-pady</b> <i class="arg">pixels</i></dt>
@@ -793,7 +809,7 @@ specified, it uses the table's default relief.</p></dd>
 <dd><p>Stickiness of the window inside the cell, as defined by the <b class="syscmd">grid</b> command.</p></dd>
 <dt><b class="option">-window</b> <i class="arg">pathName</i></dt>
 <dd><p>Specifies the name of a window (widget) to display in the annotation.  It
-must exist before being specified here.  When an empty string is specified,
+must exist before being specified here. When an empty string is specified,
 if a window was displayed it will cease to be managed by the table widget.</p></dd>
 </dl>
 </div>
@@ -879,7 +895,10 @@ widget's path name. Option and the args determine the exact behavior of the
 command. The following commands are possible for table widgets:</p>
 <dl class="doctools_definitions">
 <dt><i class="arg">pathName</i> <b class="method">activate</b> <i class="arg">index</i></dt>
-<dd><p>Sets the active cell to the one indicated by <i class="arg">index</i>.</p></dd>
+<dd><p>Sets the keyboard input focus (aka active item) cell to <i class="arg">index</i>. Once the
+cell is active, the insertion cursor will be displayed and all keyboard events
+will be directed to that item. If <i class="arg">index</i> is set to the empty string {},
+then no cell will be active.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">bbox</b> <i class="arg">first</i> <span class="opt">?<i class="arg">last</i>?</span></dt>
 <dd><p>It returns the bounding box for the specified cell (range) as a 4-tuple of
 x, y, width and height in pixels.  It clips the box to the visible portion,
@@ -893,7 +912,7 @@ This is normally called through bindings, with the following as valid options:</
 point in the table window, if any; used in conjunction with later
 <b class="method">border dragto</b> commands.  Typically this command is associated with a
 mouse button press in the widget.  If <i class="arg">row</i> or <i class="arg">col</i> is not specified,
-it returns a tuple of both border indices (an empty item means no border).
+it returns a tuple of both border indices (an empty string means no border).
 Otherwise, just the specified item is returned.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">border dragto</b> <i class="arg">x y</i></dt>
 <dd><p>This command computes the difference between its <i class="arg">x</i> and <i class="arg">y</i> arguments
@@ -986,6 +1005,9 @@ treated just like regular cells and will move as specified.</p></dd>
 rows going down.  The selection will be cleared.  The switches are the same
 as those for column deletion.</p></dd>
 </dl></dd>
+<dt><i class="arg">pathName</i> <b class="method">focus</b> <i class="arg">index</i></dt>
+<dd><p>Sets the keyboard navigation focus cell to <i class="arg">index</i>. If <i class="arg">index</i> is set
+to the empty string {}, then no cell will have the focus.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">get</b> <i class="arg">first</i> <span class="opt">?<i class="arg">last</i>?</span></dt>
 <dd><p>Returns the value of the cells specified by the table indices <i class="arg">first</i>
 and (optionally) <i class="arg">last</i> in a list.</p></dd>
@@ -1012,7 +1034,7 @@ return -1.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">index</b> <i class="arg">index</i> <span class="opt">?<b class="const">row|col</b>?</span></dt>
 <dd><p>Returns the integer cell coordinate that corresponds to <i class="arg">index</i> in the
 form row,col.  If <b class="const">row</b> or <b class="const">col</b> is specified, then only the row or
-column index is returned.</p></dd>
+column index is returned. Will return an error if <i class="arg">index</i> does not exist.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">insert</b> <i class="arg">option arg arg</i></dt>
 <dd><p>This command is used to into various things into a table.  It has several
 forms, depending on the <i class="arg">option</i>:</p>
@@ -1044,7 +1066,7 @@ two forms, depending on <i class="arg">option</i>:</p>
 <dd><p>Records <i class="arg">x</i> and <i class="arg">y</i> and the current view in the table
 window;  used in conjunction with later <b class="method">scan dragto</b> commands.
 Typically this command is associated with a mouse button press in
-the widget.  It returns an empty string.</p></dd>
+the widget.  The return value is an empty string.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">scan dragto</b> <i class="arg">x y</i></dt>
 <dd><p>This command computes the difference between its <i class="arg">x</i> and <i class="arg">y</i>
 arguments and the <i class="arg">x</i> and <i class="arg">y</i> arguments to the last <b class="method">scan mark</b>
@@ -1343,6 +1365,9 @@ table is not causing proper refresh):</p>
 <pre class="doctools_example">
 $table configure -padx [$table cget -padx]
 </pre>
+</div>
+<div id="see-also" class="doctools_section"><h2><a name="see-also">See Also</a></h2>
+<p>widget</p>
 </div>
 <div id="keywords" class="doctools_section"><h2><a name="keywords">Keywords</a></h2>
 <p>TkTable, cell, column, extension, row, table, widget</p>

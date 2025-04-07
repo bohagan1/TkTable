@@ -333,7 +333,7 @@ then cell values that are empty will be deleted from the array (taking
 less memory).  If false, then all values in the array will be maintained.
 
 [tkoption_def -state state State]
-Specifies one of two states for the entry:  [const normal] or [const disabled].
+Specifies one of two states for the entry: [const normal] or [const disabled].
 If the table is disabled then the value may not be changed using widget
 commands and no insertion cursor will be displayed, even if the input focus
 is in the widget.  Also, all insert or delete methods will be ignored.
@@ -412,18 +412,22 @@ for row and column will be constrained to actual values in the table,
 which means a valid cell is always found.
 
 [opt_def active]
-Indicates the cell that has the location cursor.
-It is specified with the [method activate] widget command.
+Indicates the cell that has the keyboard input focus and cursor.
+It is set by the [method activate] widget command.
 
 [opt_def anchor]
-Indicates the anchor point for the selection, which is set with the
+Indicates the cell with selection anchor point. It is set by the
 [method "selection anchor"] widget command.
 
 [opt_def bottomright]
-Indicates the bottom-rightmost cell visible in the table.
+Indicates the bottom-right most cell currently visible in the table.
 
 [opt_def end]
 Indicates the bottom right cell of the table.
+
+[opt_def focus]
+Indicates the cell that has the keyboard navigation focus.
+It is set by the [method focus] widget command.
 
 [opt_def origin]
 Indicates the top-leftmost editable cell of the table, not necessarily
@@ -431,8 +435,8 @@ in the display.  This takes into account the user specified origin and
 title area.
 
 [opt_def topleft]
-Indicates the top-leftmost editable cell visible in the table (this
-excludes title cells).
+Indicates the top-left most editable cell currently visible in the table,
+excluding the title cells.
 
 [opt_def "@[arg x][const ,][arg y]"]
 Indicates the cell that covers the point in the table window
@@ -461,6 +465,9 @@ This tag is given to the [const active] cell
 [opt_def flash]
 If flash mode is on, this tag is given to any recently edited cells.
 
+[opt_def focus]
+This tag is given to the [const focus] cell
+
 [opt_def sel]
 This tag is given to any selected cells.
 
@@ -482,49 +489,59 @@ default display style.  The following options are currently supported for tags:
 Anchor for item in the cell space.
 
 [opt_def "-background or -bg" [arg color]]
-Background color of the cell.
+Background color of the cell. May also be the empty string to inherit the
+default table background value (the default).
 
 [opt_def "-borderwidth or -bd" [arg pixelList]]
-Borderwidth of the cell, of the same format for the table, but may also
-be empty to inherit the default table borderwidth value (the default).
+Borderwidth of the cell using same format for the table. May also be the
+empty string to inherit the default table borderwidth value (the default).
 
 [opt_def -ellipsis [arg string]]
 String to display at the end of a line that would be clipped by its cell,
-like "...".  An ellipsis will be displayed only
-on non-wrapping, non-multiline cells that would be clipped.  The ellipsis
-will display on the left for east anchored cells, otherwise it displays
-on the right.
+like "...".  An ellipsis will be displayed only on non-wrapping, non-multiline
+cells that would be clipped. The ellipsis will display on the left for east
+anchored cells, otherwise it displays on the right. May also be the
+empty string to inherit the default table ellipsis value (the default).
 
 [opt_def -font [arg fontName]]
-Font for text in the cell.
+Font for text in the cell. May also be the
+empty string to inherit the default table font value (the default).
 
 [opt_def "-foreground or -fg" [arg color]]
-Foreground color of the cell.
+Foreground color of the cell. May also be the
+empty string to inherit the default table foreground value (the default).
 
 [opt_def -justify [arg justify]]
 How to justify multi-line text in a cell.
 It must be one of [const left], [const right], or [const center].
 
 [opt_def -image [arg imageName]]
-An image to display in the cell instead of text.
+An image to display in the cell instead of text or empty string for none
+(default).
 
 [opt_def -multiline [arg boolean]]
-Whether to display text with newlines on multiple lines.
+Whether to display text with newlines on multiple lines. May also be the
+empty string to inherit the default table multiline value (the default).
 
 [opt_def -relief [arg relief]]
-The relief for the cell.  May be the empty string to cause this tag to
-not disturb the value.
+The relief for the cell. Values are: [const flat], [const groove],
+[const raised], [const ridge], [const solid], and [const sunken].
+May also be the
+empty string to inherit the default table relief value (the default).
 
 [opt_def -showtext [arg boolean]]
-Whether to show the text over an image.
+Whether to show the text over an image. May also be the
+empty string to inherit the default table showtext value (the default).
 
 [opt_def -state [arg state]]
-The state of the cell, to allow for certain cells to be disabled.
-This prevents the cell from being edited by the [method insert] or [method delete]
-methods, but a direct [method set] will not be prevented.
+The state of the cell, to allow for certain cells to be disabled. Uses the same
+values as the table state. This prevents the cell from being edited by the
+[method insert] or [method delete] methods, but a direct [method set] will
+not be prevented.
 
 [opt_def -wrap [arg boolean]]
-Whether characters should wrap in a cell that is not wide enough.
+Whether characters should wrap in a cell that is not wide enough. May also be the
+empty string to inherit the default table wrap value (the default).
 [list_end]
 
 [para]
@@ -539,7 +556,7 @@ If a cell has several tags associated with it that define the same display
 options (eg - a [const title] cell with specific [const row] and [const cell]
 tags), then the options of the highest priority tag are used.  If a
 particular display option hasn't been specified for a particular tag, or if
-it is specified as an empty string, then that option will not be used; the
+it is specified as an empty string {}, then that option will not be used; the
 next highest priority tag's option will be used instead.  If no tag
 specifies a particular display option, then the default style for the
 widget will be used.
@@ -588,7 +605,7 @@ specified, it uses the table's default background.
 
 [opt_def "-borderwidth or -bd" [arg pixelList]]
 Borderwidth of the cell, of the same format for the table, but may also
-be empty to inherit the default table borderwidth value (the default).
+be an empty string to inherit the default table borderwidth value (the default).
 
 [opt_def -padx [arg pixels]]
 As defined in the Tk options man page.
@@ -605,7 +622,7 @@ Stickiness of the window inside the cell, as defined by the [syscmd grid] comman
 
 [opt_def -window [arg pathName]]
 Specifies the name of a window (widget) to display in the annotation.  It
-must exist before being specified here.  When an empty string is specified,
+must exist before being specified here. When an empty string is specified,
 if a window was displayed it will cease to be managed by the table widget.
 [list_end]
 
@@ -709,7 +726,10 @@ command. The following commands are possible for table widgets:
 
 [list_begin definitions]
 [def "[arg pathName] [method activate] [arg index]"]
-Sets the active cell to the one indicated by [arg index].
+Sets the keyboard input focus (aka active item) cell to [arg index]. Once the
+cell is active, the insertion cursor will be displayed and all keyboard events
+will be directed to that item. If [arg index] is set to the empty string {},
+then no cell will be active.
 
 [def "[arg pathName] [method bbox] [arg first] [opt [arg last]]"]
 It returns the bounding box for the specified cell (range) as a 4-tuple of
@@ -726,7 +746,7 @@ Records [arg x] and [arg y] and the row and/or column border under that
 point in the table window, if any; used in conjunction with later
 [method "border dragto"] commands.  Typically this command is associated with a
 mouse button press in the widget.  If [arg row] or [arg col] is not specified,
-it returns a tuple of both border indices (an empty item means no border).
+it returns a tuple of both border indices (an empty string means no border).
 Otherwise, just the specified item is returned.
 
 [def "[arg pathName] [method "border dragto"] [arg "x y"]"]
@@ -840,6 +860,10 @@ rows going down.  The selection will be cleared.  The switches are the same
 as those for column deletion.
 [list_end]
 
+[def "[arg pathName] [method focus] [arg index]"]
+Sets the keyboard navigation focus cell to [arg index]. If [arg index] is set
+to the empty string {}, then no cell will have the focus.
+
 [def "[arg pathName] [method get] [arg first] [opt [arg last]]"]
 Returns the value of the cells specified by the table indices [arg first]
 and (optionally) [arg last] in a list.
@@ -870,7 +894,7 @@ return -1.
 [def "[arg pathName] [method index] [arg index] [opt [const "row|col"]]"]
 Returns the integer cell coordinate that corresponds to [arg index] in the
 form row,col.  If [const row] or [const col] is specified, then only the row or
-column index is returned.
+column index is returned. Will return an error if [arg index] does not exist.
 
 [def "[arg pathName] [method insert] [arg "option arg arg"]"]
 This command is used to into various things into a table.  It has several
@@ -909,7 +933,7 @@ two forms, depending on [arg option]:
 Records [arg x] and [arg y] and the current view in the table
 window;  used in conjunction with later [method "scan dragto"] commands.
 Typically this command is associated with a mouse button press in
-the widget.  It returns an empty string.
+the widget.  The return value is an empty string.
 
 [def "[arg pathName] [method "scan dragto"] [arg "x y"]"]
 This command computes the difference between its [arg x] and [arg y]
