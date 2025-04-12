@@ -1063,6 +1063,9 @@ Otherwise the [arg pattern] is used as a glob pattern to show only
 tags matching that pattern.  Tag names are returned in priority order
 (highest priority tag first).
 
+[def "[arg pathName] [method "tag priority"] [arg tagName]"]
+Returns the numeric priority for tag [arg tagName].
+
 [def "[arg pathName] [method "tag raise"] [arg tagName] [opt [arg aboveThis]]"]
 Raise the priority of the named tag.  If [arg aboveThis] is not specified,
 then the tag's priority is raised to the top, otherwise it is raised to

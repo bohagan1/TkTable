@@ -19,12 +19,12 @@ static CONST86 char *	TableOptionReliefGet(ClientData clientData, Tk_Window tkwi
 
 static const char *tagCmdNames[] = {
     "celltag", "cget", "coltag", "configure", "delete", "exists", "get",
-    "includes", "lower", "names", "raise", "rowtag", (char *) NULL
+    "includes", "lower", "names", "priority", "raise", "rowtag", (char *) NULL
 };
 
 enum tagCmd {
     TAG_CELLTAG, TAG_CGET, TAG_COLTAG, TAG_CONFIGURE, TAG_DELETE, TAG_EXISTS,
-    TAG_GET, TAG_INCLUDES, TAG_LOWER, TAG_NAMES, TAG_RAISE, TAG_ROWTAG
+    TAG_GET, TAG_INCLUDES, TAG_LOWER, TAG_NAMES, TAG_PRIORITY, TAG_RAISE, TAG_ROWTAG
 };
 
 static Cmd_Struct tagState_vals[]= {
@@ -1394,6 +1394,22 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		TableInvalidateAll(tablePtr, 0);
 	    }
 	    return TCL_OK;
+
+	case TAG_PRIORITY:
+	    /* Get priority of the named tag */
+	    if (objc != 4) {
+		Tcl_WrongNumArgs(interp, 3, objv, "tagName");
+		return TCL_ERROR;
+	    }
+	    tagname  = Tcl_GetString(objv[3]);
+	    /* check to see if the tag actually exists */
+	    entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
+	    if (entryPtr == NULL) {
+		goto invalidtag;
+	    }
+	    tagPtr  = (TableTag *) Tcl_GetHashValue(entryPtr);
+	    tagPrio = TableTagGetPriority(tablePtr, tagPtr);
+	    Tcl_SetObjResult(interp, Tcl_NewIntObj(tagPrio));
 
     }
     return TCL_OK;

@@ -1668,6 +1668,9 @@ Otherwise the \fIpattern\fR is used as a glob pattern to show only
 tags matching that pattern\&.  Tag names are returned in priority order
 (highest priority tag first)\&.
 .TP
+\fIpathName\fR \fBtag priority\fR \fItagName\fR
+Returns the numeric priority for tag \fItagName\fR\&.
+.TP
 \fIpathName\fR \fBtag raise\fR \fItagName\fR ?\fIaboveThis\fR?
 Raise the priority of the named tag\&.  If \fIaboveThis\fR is not specified,
 then the tag's priority is raised to the top, otherwise it is raised to
