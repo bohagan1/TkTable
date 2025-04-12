@@ -1651,6 +1651,9 @@ Deletes a tag\&.  No error if the tag does not exist\&.
 \fIpathName\fR \fBtag exists\fR \fItagName\fR
 Returns 1 if the named tag exists, 0 otherwise\&.
 .TP
+\fIpathName\fR \fBtag get\fR \fIindex\fR
+Returns list of tags for cell \fIindex\fR\&.
+.TP
 \fIpathName\fR \fBtag includes\fR \fItagName index\fR
 Returns 1 if the specified index has the named tag, 0 otherwise\&.
 .TP

@@ -1046,6 +1046,9 @@ Deletes a tag.  No error if the tag does not exist.
 [def "[arg pathName] [method "tag exists"] [arg tagName]"]
 Returns 1 if the named tag exists, 0 otherwise.
 
+[def "[arg pathName] [method "tag get"] [arg index]"]
+Returns list of tags for cell [arg index].
+
 [def "[arg pathName] [method "tag includes"] [arg "tagName index"]"]
 Returns 1 if the specified index has the named tag, 0 otherwise.
 
