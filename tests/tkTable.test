@@ -217,10 +217,10 @@ test table-3.1 {TableWidgetCmd procedure} {
 } {1 {wrong # args: should be ".t option ?arg arg ...?"}}
 test table-3.2 {TableWidgetCmd procedure, commands} {
     list [catch {.t whoknows} msg] $msg
-} {1 {bad option "whoknows": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, get, height, hidden, icursor, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview}}
+} {1 {bad option "whoknows": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, focus, get, height, hidden, icursor, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview}}
 test table-3.3 {TableWidgetCmd procedure, commands} {
     list [catch {.t c} msg] $msg
-} {1 {ambiguous option "c": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, get, height, hidden, icursor, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview}}
+} {1 {ambiguous option "c": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, focus, get, height, hidden, icursor, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview}}
 
 test table-4.1 {TableWidgetCmd procedure, "activate" option} {
     list [catch {.t activate} msg] $msg
@@ -230,7 +230,7 @@ test table-4.2 {TableWidgetCmd procedure, "activate" option} {
 } {1 {wrong # args: should be ".t activate index"}}
 test table-4.3 {TableWidgetCmd procedure, "activate" option} {
     list [catch {.t activate fooey} msg] $msg
-} {1 {bad table index "fooey": must be active, anchor, end, origin, topleft, bottomright, @x,y, or <row>,<col>}}
+} {1 {bad table index "fooey": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>}}
 test table-4.4 {TableWidgetCmd procedure, "activate" option} {
     .t activate 3,0
     .t index active
@@ -260,7 +260,7 @@ test table-5.2 {TableWidgetCmd procedure, "bbox" option} {
 } {1 {wrong # args: should be ".t bbox first ?last?"}}
 test table-5.3 {TableWidgetCmd procedure, "bbox" option} {
     list [catch {.t bbox fooey} msg] $msg
-} {1 {bad table index "fooey": must be active, anchor, end, origin, topleft, bottomright, @x,y, or <row>,<col>}}
+} {1 {bad table index "fooey": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>}}
 
 test table-6.1 {TableWidgetCmd procedure, "cget" option} {
     list [catch {.t cget} msg] $msg
@@ -277,7 +277,7 @@ test table-6.4 {TableWidgetCmd procedure, "cget" option} {
 
 test table-7.1 {TableWidgetCmd procedure, "configure" option} {
     llength [.t configure]
-} {71}
+} {72}
 test table-7.2 {TableWidgetCmd procedure, "configure" option} {
     list [catch {.t configure -gorp} msg] $msg
 } {1 {unknown option "-gorp"}}
@@ -396,7 +396,7 @@ test table-23.1 {TableWidgetCmd procedure, "set" option} {
 
 test table-24.1 {TableWidgetCmd procedure, "spans" option} {
     list [catch {.t spans this} msg] $msg
-} {1 {bad table index "this": must be active, anchor, end, origin, topleft, bottomright, @x,y, or <row>,<col>}}
+} {1 {bad table index "this": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>}}
 
 test table-25.1 {TableWidgetCmd procedure, "tag" option} {
     list [catch {.t tag} msg] $msg
@@ -404,13 +404,13 @@ test table-25.1 {TableWidgetCmd procedure, "tag" option} {
 
 test table-25.2.1 {TableWidgetCmd procedure, "tag names" option} {
     .t tag names
-} {flash active sel title}
+} {flash active focus sel title}
 test table-25.2.2 {TableWidgetCmd procedure, "tag names" option} {
     .t tag names *
-} {flash active sel title}
+} {flash active focus sel title}
 test table-25.2.3 {TableWidgetCmd procedure, "tag names" option} {
     .t tag names f*
-} {flash}
+} {flash focus}
 if {[info tclversion] < 9.0} {
 test table-25.2.4 {TableWidgetCmd procedure, "tag names" option} -body {
     .t tag configure foo
@@ -422,54 +422,65 @@ test table-25.2.4 {TableWidgetCmd procedure, "tag names" option} -body {
 }
 test table-25.2.5 {TableWidgetCmd procedure, "tag names" option} {
     .t tag names
-} {flash active sel title foo}
+} {flash active focus sel title foo}
 test table-25.2.6 {TableWidgetCmd procedure, "tag names" option} {
     .t tag names f*
-} {flash foo}
+} {flash focus foo}
 test table-25.2.7 {TableWidgetCmd procedure, "tag names" option} {
     .t tag raise foo
     .t tag names f*
-} {foo flash}
+} {foo flash focus}
 test table-25.2.8 {TableWidgetCmd procedure, "tag names" option} {
     .t tag lower foo
     .t tag names
-} {flash active sel title foo}
+} {flash active focus sel title foo}
 test table-25.2.9 {TableWidgetCmd procedure, "tag names" option} {
     .t tag raise foo active
     .t tag names
-} {flash foo active sel title}
+} {flash foo active focus sel title}
 test table-25.2.10 {TableWidgetCmd procedure, "tag names" option} {
     .t tag raise foo sel
     .t tag names
-} {flash active foo sel title}
+} {flash active focus foo sel title}
 test table-25.2.11 {TableWidgetCmd procedure, "tag names" option} {
     .t tag lower foo active
     .t tag names
-} {flash active foo sel title}
+} {flash active foo focus sel title}
 test table-25.2.12 {TableWidgetCmd procedure, "tag names" option} {
     .t tag lower foo foo
     .t tag names
-} {flash active foo sel title}
+} {flash active foo focus sel title}
 test table-25.2.13 {TableWidgetCmd procedure, "tag names" option} {
     .t tag lower foo sel
     .t tag names
-} {flash active sel foo title}
+} {flash active focus sel foo title}
 test table-25.2.14 {TableWidgetCmd procedure, "tag names" option} {
     .t tag lower foo
     .t tag names
-} {flash active sel title foo}
+} {flash active focus sel title foo}
 test table-25.2.15 {TableWidgetCmd procedure, "tag names" option} {
     .t tag raise foo foo
     .t tag names
-} {flash active sel title foo}
+} {flash active focus sel title foo}
 test table-25.2.16 {TableWidgetCmd procedure, "tag names" option} {
     .t tag raise foo flash
     .t tag names
-} {foo flash active sel title}
+} {foo flash active focus sel title}
 test table-25.2.17 {TableWidgetCmd procedure, "tag names" option} {
     .t tag lower foo title
     .t tag names
-} {flash active sel title foo}
+} {flash active focus sel title foo}
+test table-25.2.17 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag configure title -bg black
+    .t tag cget title -bg
+} {black}
+test table-25.2.18 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag cell new 0,0
+    .t tag get 0,0
+} {new}
+test table-25.2.19 {TableWidgetCmd procedure, "tag names" option} {
+    .t tag cell new
+} {0,0}
 
 test table-26.1 {TableWidgetCmd procedure, "validate" option} {
     list [catch {.t validate} msg] $msg
