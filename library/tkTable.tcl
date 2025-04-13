@@ -135,12 +135,20 @@ bind Table <<PrevChar>>		{::tktable::KeyNav %W left}
 bind Table <<NextChar>>		{::tktable::KeyNav %W right}
 bind Table <<SelectPrevChar>>	{::tktable::SelectionExtend %W left}
 bind Table <<SelectNextChar>>	{::tktable::SelectionExtend %W right}
+bind Table <<PrevWord>>		{::tktable::KeyNav %W pageLeft}
+bind Table <<NextWord>>		{::tktable::KeyNav %W pageRight}
+bind Table <<SelectPrevWord>>	{::tktable::SelectionExtend %W pageLeft}
+bind Table <<SelectNextWord>>	{::tktable::SelectionExtend %W pageRight}
 
 # Up/down arrow key bindings (none, shift, control, control+shift)
 bind Table <<PrevLine>>		{::tktable::KeyNav %W up}
 bind Table <<NextLine>>		{::tktable::KeyNav %W down}
 bind Table <<SelectPrevLine>>	{::tktable::SelectionExtend %W up}
 bind Table <<SelectNextLine>>	{::tktable::SelectionExtend %W down}
+bind Table <<PrevPara>>		{::tktable::KeyNav %W pageTop}
+bind Table <<NextPara>>		{::tktable::KeyNav %W pageBottom}
+bind Table <<SelectPrevPara>>	{::tktable::SelectionExtend %W pageTop}
+bind Table <<SelectNextPara>>	{::tktable::SelectionExtend %W pageBottom}
 
 # Home/End key bindings (none, shift, control, control+shift)
 bind Table <<LineStart>>	{::tktable::KeyNav %W first}
@@ -290,14 +298,14 @@ proc ::tktable::MoveHandler {w op edit} {
 	# Cell nav mode
 	lassign [split $cell ","] row col
 	switch $op {
-	    "first" {
+	    "first" - "pageLeft" {
 		# Move to first cell in row
 		if {[$w cget -selectmode] in [list "extended" "multiple"]} {
 		    set col [$w index origin col]
 		    $w xview moveto 0
 		}
 	    }
-	    "last" {
+	    "last" - "pageRight" {
 		# Move to last cell in row
 		if {[$w cget -selectmode] in [list "extended" "multiple"]} {
 		    set col [$w index end col]
@@ -321,6 +329,20 @@ proc ::tktable::MoveHandler {w op edit} {
 	    "down" {
 		# Move down 1 cell
 		incr row
+	    }
+	    "pageBottom" {
+		# Move to bottom cell in column
+		if {[$w cget -selectmode] in [list "extended" "multiple"]} {
+		    set row [$w index end row]
+		    $w yview moveto 1
+		}
+	    }
+	    "pageTop" {
+		# Move to top cell in column
+		if {[$w cget -selectmode] in [list "extended" "multiple"]} {
+		    set row [$w index origin row]
+		    $w yview moveto 0
+		}
 	    }
 	    "origin" - "top" {
 		# Move to origin cell
