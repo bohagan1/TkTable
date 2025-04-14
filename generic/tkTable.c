@@ -869,6 +869,90 @@ static int TableConfigure(
 /*
  *--------------------------------------------------------------
  *
+ * TableSeeCell --
+ *	This procedure is invoked to scroll view to see a cell.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Scrolls view.
+ *
+ *--------------------------------------------------------------
+ */
+static int TableSeeCell(
+    Tcl_Interp *interp,		/* Used for error reporting. */
+    Table *tablePtr,		/* Information about widget;  may or may
+				 * not already have values for some fields. */
+    Tcl_Obj *cellObj) {		/* Cell to see */
+    int col, row, top, bottom, left, right, delta, i;
+
+    if (TableGetIndexObj(tablePtr, cellObj, &row, &col) == TCL_ERROR) {
+	return TCL_ERROR;
+    } 
+
+    /* Adjust from user to master coords */
+    row -= tablePtr->rowOffset;
+    col -= tablePtr->colOffset;
+
+    /* topleft */
+    top = tablePtr->topRow+tablePtr->rowOffset;
+    left = tablePtr->leftCol+tablePtr->colOffset;
+
+    /* bottomright */
+    TableGetLastCell(tablePtr, &bottom, &right);
+    bottom += tablePtr->rowOffset;
+    right += tablePtr->colOffset;
+
+    /* Shift up/down by count rows or by screen-fulls until cell in view */
+    delta = bottom-top;
+    if (row < top) {
+	if (top - row < delta) {
+	    top = row;
+	}
+	while (row < top) {
+	    top-=delta;
+	}
+    } else if (row > bottom) {
+	if (bottom - row < delta) {
+	    bottom = row;
+	}
+	while (row > bottom) {
+	    bottom+=delta;
+	}
+	top = bottom-delta;
+    }
+
+    /* Shift left/right by count cols or by screen-fulls until cell in view */
+    delta = right-left;
+    if (col < left) {
+	if (left - col < delta) {
+	    left = col;
+	}
+	while (col < left) {
+	    left-=delta;
+	}
+    } else if (col > right) {
+	if (right - col < delta) {
+	    right = col;
+	}
+	while (col > right) {
+	    right+=delta;
+	}
+	left = right-delta;
+    }
+
+    if (!TableCellVCoords(tablePtr, row, col, &i, &i, &i, &i, 1)) {
+	tablePtr->topRow  = top;
+	tablePtr->leftCol = left;
+	TableAdjustParams(tablePtr);
+    }
+    return TCL_OK;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
  * TableWidgetObjCmd --
  *	This procedure is invoked to process the Tcl command
  *	that corresponds to a widget managed by this module.
@@ -883,10 +967,10 @@ static int TableConfigure(
  *--------------------------------------------------------------
  */
 static int TableWidgetObjCmd(
-     ClientData clientData,
-     Tcl_Interp *interp,
-     int objc,			/* Number of arguments. */
-     Tcl_Obj *const objv[]) {	/* Argument objects. */
+    ClientData clientData,
+    Tcl_Interp *interp,
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *const objv[]) {	/* Argument objects. */
 
     Table *tablePtr = (Table *) clientData;
     int row, col, i, result = TCL_OK, cmdIndex;
@@ -1040,17 +1124,8 @@ static int TableWidgetObjCmd(
 	    if (objc != 3) {
 		Tcl_WrongNumArgs(interp, 2, objv, "index");
 		result = TCL_ERROR;
-	    } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) == TCL_ERROR) {
-		result = TCL_ERROR;
 	    } else {
-		/* Adjust from user to master coords */
-		row -= tablePtr->rowOffset;
-		col -= tablePtr->colOffset;
-		if (!TableCellVCoords(tablePtr, row, col, &i, &i, &i, &i, 1)) {
-		    tablePtr->topRow  = row-1;
-		    tablePtr->leftCol = col-1;
-		    TableAdjustParams(tablePtr);
-		}
+		result = TableSeeCell(interp, tablePtr,	objv[2]);
 	    }
 	    break;
 

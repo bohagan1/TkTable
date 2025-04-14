@@ -946,9 +946,9 @@ speed through the window.  The return value is an empty string.
 
 [def "[arg pathName] [method see] [arg index]"]
 Adjust the view in the table so that the cell given by [arg index] is
-positioned as the cell one off from top left (excluding title rows and
-columns) if the cell is not currently visible on the screen.  The actual
-cell may be different to keep the screen full.
+positioned within the view if the cell is not currently visible on the screen.
+The view will be shifted left/right or up/down to maintain the current
+row or column relative position if [arg index] is in the same row or column.
 
 [def "[arg pathName] [method selection] [arg "option arg"]"]
 This command is used to adjust the selection within a table.  It

@@ -1077,9 +1077,9 @@ speed through the window.  The return value is an empty string.</p></dd>
 </dl></dd>
 <dt><i class="arg">pathName</i> <b class="method">see</b> <i class="arg">index</i></dt>
 <dd><p>Adjust the view in the table so that the cell given by <i class="arg">index</i> is
-positioned as the cell one off from top left (excluding title rows and
-columns) if the cell is not currently visible on the screen.  The actual
-cell may be different to keep the screen full.</p></dd>
+positioned within the view if the cell is not currently visible on the screen.
+The view will be shifted left/right or up/down to maintain the current
+row or column relative position if <i class="arg">index</i> is in the same row or column.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">selection</b> <i class="arg">option arg</i></dt>
 <dd><p>This command is used to adjust the selection within a table.  It
 has several forms, depending on <i class="arg">option</i>:</p>

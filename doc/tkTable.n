@@ -1551,9 +1551,9 @@ speed through the window\&.  The return value is an empty string\&.
 .TP
 \fIpathName\fR \fBsee\fR \fIindex\fR
 Adjust the view in the table so that the cell given by \fIindex\fR is
-positioned as the cell one off from top left (excluding title rows and
-columns) if the cell is not currently visible on the screen\&.  The actual
-cell may be different to keep the screen full\&.
+positioned within the view if the cell is not currently visible on the screen\&.
+The view will be shifted left/right or up/down to maintain the current
+row or column relative position if \fIindex\fR is in the same row or column\&.
 .TP
 \fIpathName\fR \fBselection\fR \fIoption arg\fR
 This command is used to adjust the selection within a table\&.  It
