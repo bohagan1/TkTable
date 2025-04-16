@@ -885,24 +885,20 @@ static int TableSeeCell(
     Table *tablePtr,		/* Information about widget;  may or may
 				 * not already have values for some fields. */
     Tcl_Obj *cellObj) {		/* Cell to see */
-    int col, row, top, bottom, left, right, delta, i;
+    int col, row, top, bottom, left, right, delta, temp, x, y, h, w;
 
     if (TableGetIndexObj(tablePtr, cellObj, &row, &col) == TCL_ERROR) {
 	return TCL_ERROR;
-    } 
+    }
 
     /* Adjust from user to master coords */
     row -= tablePtr->rowOffset;
     col -= tablePtr->colOffset;
 
-    /* topleft */
-    top = tablePtr->topRow+tablePtr->rowOffset;
-    left = tablePtr->leftCol+tablePtr->colOffset;
-
-    /* bottomright */
+    /* Get visible top/bottom row and left/right col */
+    top = tablePtr->topRow;
+    left = tablePtr->leftCol;
     TableGetLastCell(tablePtr, &bottom, &right);
-    bottom += tablePtr->rowOffset;
-    right += tablePtr->colOffset;
 
     /* Shift up/down by count rows or by screen-fulls until cell in view */
     delta = bottom-top;
@@ -942,10 +938,24 @@ static int TableSeeCell(
 	left = right-delta;
     }
 
-    if (!TableCellVCoords(tablePtr, row, col, &i, &i, &i, &i, 1)) {
+    temp = tablePtr->selectTitles ? 0 : 1;
+    CONSTRAIN(row, tablePtr->titleRows * temp, tablePtr->rows-1);
+    CONSTRAIN(col, tablePtr->titleCols * temp, tablePtr->cols-1);
+
+    if (!TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 1)) {
 	tablePtr->topRow  = top;
 	tablePtr->leftCol = left;
 	TableAdjustParams(tablePtr);
+	if (!TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 1)) {
+	    int hl = tablePtr->highlightWidth;
+	    if ((x+w) > (Tk_Width(tablePtr->tkwin)-hl)) {
+		tablePtr->leftCol++;
+	    }
+	    if ((y+h) > (Tk_Height(tablePtr->tkwin)-hl)) {
+		tablePtr->topRow++;
+	    }
+	    TableAdjustParams(tablePtr);
+	}
     }
     return TCL_OK;
 }
@@ -2354,7 +2364,7 @@ static void TableDisplay(ClientData clientdata) {
 		    activeCell = 1;
 		    tablePtr->flags &= ~ACTIVE_DISABLED;
 		}
-	    } else if ((tablePtr->state == STATE_NORMAL) && 
+	    } else if ((tablePtr->state == STATE_NORMAL) &&
 		    row == tablePtr->focusRow && col == tablePtr->focusCol) {
 		TableMergeTag(tablePtr, tagPtr, focusPtr);
 	    }
