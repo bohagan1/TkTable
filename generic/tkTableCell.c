@@ -787,9 +787,8 @@ int TableGetIcursor(Table *tablePtr, char *arg, int *posn) {
  *--------------------------------------------------------------
  */
 int TableGetIndex(
-    Table *tablePtr,	/* Table for which the index is being
-				 * specified. */
-    char *str,			/* Symbolic specification of cell in table. */
+    Table *tablePtr,	/* Table for which the index is being specified. */
+    char *str,		/* Symbolic specification of cell in table. */
     int *row_p,		/* Where to store converted row. */
     int *col_p)	{	/* Where to store converted col. */
 

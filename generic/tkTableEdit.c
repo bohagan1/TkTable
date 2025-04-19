@@ -14,10 +14,10 @@
 
 /* insert/delete subcommands */
 static const char *modCmdNames[] = {
-    "active", "cols", "rows", (char *)NULL
+    "active", "cols", "columns", "rows", (char *)NULL
 };
 enum modCmd {
-    MOD_ACTIVE, MOD_COLS, MOD_ROWS
+    MOD_ACTIVE, MOD_COLS, MOD_COLUMNS, MOD_ROWS
 };
 
 /* insert/delete row/col switches */
@@ -259,6 +259,7 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	break;	/* EDIT ACTIVE */
 
     case MOD_COLS:
+    case MOD_COLUMNS:
     case MOD_ROWS: {
 	/*
 	 * ROW/COL INSERTION/DELETION
