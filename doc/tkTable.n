@@ -1815,62 +1815,150 @@ become visible\&.
 .PP
 .SH "DEFAULT BINDINGS"
 .PP
-The initialization creates class bindings that give the following default
-behavior:
+The default class bindings are:
 .IP [1]
-Clicking Button-1 in a cell activates that cell\&.  Clicking
-into an already active cell moves the insertion cursor to the
-character nearest the mouse\&.
+When \fB-mode\fR is \fBtable\fR, clicking Button-1 in a cell activates that
+cell\&. If \fB-selectmode\fR is not \fBmultiple\fR, all other cells are
+unselected\&. Clicking into an already active cell moves the insertion cursor to
+the character nearest the mouse pointer\&. When \fB-mode\fR is \fBspreadsheet\fR,
+clicking Button-1 in a cell gives that cell the focus for keyboard navigation\&.
+A Double-Button-1 will activate that cell\&. A Triple-Button-1, will move the
+insertion cursor to the character nearest the mouse\&.
 .IP [2]
-Moving the mouse while Button-1 is pressed will stroke out a selection area\&.
-Exiting while Button-1 is pressed causing scanning to occur on the table
-along with selection\&.
+When \fB-selectmode\fR is \fBextended\fR, moving the mouse while Button-1 is
+pressed will stroke out a selection area\&. Exiting the window while Button-1 is
+pressed, will cause scanning to occur on the table along with extending the
+selection\&. Re-entering the window will terminate the scanning\&.
 .IP [3]
 Moving the mouse while Button-2 is pressed causes scanning to
 occur without any selection\&.
 .IP [4]
-Home moves the table to have the origin in view\&.
-.IP [5]
-End moves the table to have the \fBend\fR cell in view\&.
-.IP [6]
-Control-Home moves the table to the origin and activates that cell\&.
-.IP [7]
-Control-End moves the table to the end and activates that cell\&.
-.IP [8]
-Shift-Control-Home extends the selection to the origin\&.
-.IP [9]
-Shift-Control-End extends the selection to the end\&.
-.IP [10]
-The left, right, up and down arrows move the active cell\&.
-.IP [11]
-Shift-<arrow> extends the selection in that direction\&.
-.IP [12]
-Control-leftarrow and Control-rightarrow move the insertion
-cursor within the cell\&.
-.IP [13]
-Control-slash selects all the cells\&.
-.IP [14]
-Control-backslash clears selection from all the cells\&.
-.IP [15]
-Backspace deletes the character before the insertion cursor
-in the active cell\&.
-.IP [16]
-Delete deletes the character after the insertion cursor
-in the active cell\&.
-.IP [17]
-Escape rereads the value of the active cell from the specified data source,
-discarding any edits that have may been performed on the cell\&.
-.IP [18]
-Control-a moves the insertion cursor to the beginning of the active cell\&.
-.IP [19]
-Control-e moves the insertion cursor to the end of the active cell\&.
-.IP [20]
-Control-minus and Control-equals decrease and increase the
-width of the column with the active cell in it\&.
-.IP [21]
 Moving the mouse while Button-3 (the right button on Windows) is pressed
 while you are over a border will cause interactive resizing of that row
 and/or column to occur, based on the value of \fB-resizeborders\fR\&.
+.IP [5]
+The left, right, up, and down arrow keys move to the next cell in that
+direction\&.
+.IP [6]
+When \fB-selectmode\fR is \fBextended\fR, Shift and the left, right, up
+and down arrow keys extend the selection one cell in that direction\&.
+.IP [7]
+Control (or Option on Mac) and the left, right, up, and down arrow keys move to
+the first/last visible cell in that row or column\&.
+.IP [8]
+When \fB-selectmode\fR is \fBextended\fR, Control (or Option on Mac) plus
+Shift and the left, right, up, and down arrow keys extend the selection to the
+first/last visible column or row in that direction\&.
+.IP [9]
+Home moves to the first cell in the current row\&.
+.IP [10]
+End moves to the last cell in the current row\&.
+.IP [11]
+When \fB-selectmode\fR is \fBextended\fR, Shift-Home selects all cells
+from the current cell to the first cell in the current row\&.
+.IP [12]
+When \fB-selectmode\fR is \fBextended\fR, Shift-End selects all cells
+from the current cell to the last cell in the current row\&.
+.IP [13]
+Control-Home moves to the \fBorigin\fR cell\&.
+.IP [14]
+Control-End moves to the \fBend\fR cell\&.
+.IP [15]
+Shift-Control-Home extends the selection to the \fBorigin\fR cell\&.
+.IP [16]
+Shift-Control-End extends the selection to the \fBend\fR cell\&.
+.IP [17]
+Next or Prior (aka Page Down or Page Up) will move one screen-full down or up\&.
+.IP [18]
+Shift-Next or Shift-Prior will move one screen-full right or left\&.
+.IP [19]
+Control-Next or Control-Prior will move to the bottom or top cell in the
+current column\&.
+.IP [20]
+Control-Shift-Next or Control-Shift-Prior will move to the last or first cell
+in the row\&.
+.IP [21]
+When \fB-selectmode\fR is \fBextended\fR or \fBmultiple\fR, Control-slash
+(Command-a on Mac) selects all the cells in the table\&.
+.IP [22]
+When \fB-selectmode\fR is \fBextended\fR or \fBmultiple\fR, Control-backslash
+(except on Mac) unselects all cells in the table\&.
+.IP [23]
+When \fB-selectmode\fR is \fBextended\fR or \fBmultiple\fR, Shift-space
+will select all cells in the current row\&.
+.IP [24]
+When \fB-selectmode\fR is \fBextended\fR or \fBmultiple\fR, Control-space
+will select all cells in the current column\&.
+.IP [25]
+Control-Return will toggle whether the cell is activated or just has the focus\&.
+.IP [26]
+ScrollLock and the left, right, up, and down arrow keys will scroll the xview
+or yview by 1 unit in that direction\&.
+.IP [27]
+ScrollLock-Home or ScrollLock-End will scroll the xview by 1 page left or right\&.
+.IP [28]
+ScrollLock-Prior or ScrollLock-Next will scroll the yview by 1 page up or down\&.
+.IP [29]
+ScrollLock-Control-Home or ScrollLock-Control-End will scroll the xview to the
+0\&.0 or 1\&.0 position\&.
+.IP [30]
+ScrollLock-Control-Prior or ScrollLock-Control-Next will scroll the yview to the
+0\&.0 or 1\&.0 position\&.
+.IP [31]
+The virtual event <<Copy>> will copy the contents of the selected cells to the
+clipboard\&.
+.IP [32]
+The virtual event <<Cut>> will copy the contents of the selected cells to the
+clipboard and clear the cells\&.
+.IP [33]
+The virtual event <<Paste>> will paste the clipboard contents into the
+table cells\&.
+.PP
+.PP
+When a cell is active, the following bindings are available in addition or in
+place of the above bindings:
+.IP [1]
+The left or right arrow keys will move the insertion cursor left or right one
+character\&. If already at the first or last character, the cell to left or right
+will be activated and the insertion cursor set to after the last or before the
+first character, respectively\&.
+.IP [2]
+The up and down arrow keys will move to and activate the above or below
+cell and put the insertion cursor at the same location in the new cell\&.
+.IP [3]
+Home moves the insertion cursor to the beginning of the active cell\&.
+.IP [4]
+End moves the insertion cursor to the end of the active cell\&.
+.IP [5]
+Backspace deletes the character before the insertion cursor in the active cell\&.
+.IP [6]
+Delete deletes the character after the insertion cursor in the active cell\&.
+.IP [7]
+Return accepts any changes made to the cell and activates the below cell\&.
+.IP [8]
+Shift-Return accepts any changes made to the cell and activates the above cell\&.
+.IP [9]
+Tab accepts any changes made to the cell and activates the cell to the
+right of the current cell\&.
+.IP [10]
+Shift-Tab accepts any changes made to the cell and activates the cell to
+the left of the current cell\&.
+.IP [11]
+Alt-Return inserts a newline character\&.
+.IP [12]
+Alt-Tab inserts a tab character\&.
+.IP [13]
+Escape rereads the value of the active cell from the specified data source,
+discarding any edits that have may been performed on the cell\&.
+.IP [14]
+Control-a moves the insertion cursor to the beginning of the active cell\&.
+.IP [15]
+Control-e moves the insertion cursor to the end of the active cell\&.
+.IP [16]
+Control-k deletes from the insertion cursor to the end of the active cell\&.
+.IP [17]
+Control-minus and Control-equals decrease and increase the
+width of the column with the active cell in it\&.
 .PP
 Some bindings may have slightly different behavior dependent on the
 \fB-selectionmode\fR of the widget\&.
@@ -1881,9 +1969,8 @@ but no insertion cursor will be displayed and no cell modifications will
 take place\&.
 .PP
 The behavior of tables can be changed by defining new bindings for
-individual widgets or by redefining the class bindings\&.  The default
-bindings are either compiled in or read from a file expected to
-correspond to: "[lindex $tcl_pkgPath 0]/Tktable<version>/tkTable\&.tcl"\&.
+individual widgets or by redefining the class bindings\&. See the
+tkTable\&.tcl file in the same directory as the library\&.
 .SH "PERFORMANCE ISSUES"
 .PP
 The number of rows and columns or a table widget should not significantly

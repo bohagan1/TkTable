@@ -1302,42 +1302,101 @@ become visible.</p></dd>
 </dl>
 </div>
 <div id="section12" class="doctools_section"><h2><a name="section12">DEFAULT BINDINGS</a></h2>
-<p>The initialization creates class bindings that give the following default
-behavior:</p>
+<p>The default class bindings are:</p>
 <ol class="doctools_enumerated">
-<li><p>Clicking Button-1 in a cell activates that cell.  Clicking
-into an already active cell moves the insertion cursor to the
-character nearest the mouse.</p></li>
-<li><p>Moving the mouse while Button-1 is pressed will stroke out a selection area.
-Exiting while Button-1 is pressed causing scanning to occur on the table
-along with selection.</p></li>
+<li><p>When <b class="option">-mode</b> is <b class="const">table</b>, clicking Button-1 in a cell activates that
+cell. If <b class="option">-selectmode</b> is not <b class="const">multiple</b>, all other cells are
+unselected. Clicking into an already active cell moves the insertion cursor to
+the character nearest the mouse pointer. When <b class="option">-mode</b> is <b class="const">spreadsheet</b>,
+clicking Button-1 in a cell gives that cell the focus for keyboard navigation.
+A Double-Button-1 will activate that cell. A Triple-Button-1, will move the
+insertion cursor to the character nearest the mouse.</p></li>
+<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, moving the mouse while Button-1 is
+pressed will stroke out a selection area. Exiting the window while Button-1 is
+pressed, will cause scanning to occur on the table along with extending the
+selection. Re-entering the window will terminate the scanning.</p></li>
 <li><p>Moving the mouse while Button-2 is pressed causes scanning to
 occur without any selection.</p></li>
-<li><p>Home moves the table to have the origin in view.</p></li>
-<li><p>End moves the table to have the <b class="const">end</b> cell in view.</p></li>
-<li><p>Control-Home moves the table to the origin and activates that cell.</p></li>
-<li><p>Control-End moves the table to the end and activates that cell.</p></li>
-<li><p>Shift-Control-Home extends the selection to the origin.</p></li>
-<li><p>Shift-Control-End extends the selection to the end.</p></li>
-<li><p>The left, right, up and down arrows move the active cell.</p></li>
-<li><p>Shift-&lt;arrow&gt; extends the selection in that direction.</p></li>
-<li><p>Control-leftarrow and Control-rightarrow move the insertion
-cursor within the cell.</p></li>
-<li><p>Control-slash selects all the cells.</p></li>
-<li><p>Control-backslash clears selection from all the cells.</p></li>
-<li><p>Backspace deletes the character before the insertion cursor
-in the active cell.</p></li>
-<li><p>Delete deletes the character after the insertion cursor
-in the active cell.</p></li>
+<li><p>Moving the mouse while Button-3 (the right button on Windows) is pressed
+while you are over a border will cause interactive resizing of that row
+and/or column to occur, based on the value of <b class="option">-resizeborders</b>.</p></li>
+<li><p>The left, right, up, and down arrow keys move to the next cell in that
+direction.</p></li>
+<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, Shift and the left, right, up
+and down arrow keys extend the selection one cell in that direction.</p></li>
+<li><p>Control (or Option on Mac) and the left, right, up, and down arrow keys move to
+the first/last visible cell in that row or column.</p></li>
+<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, Control (or Option on Mac) plus
+Shift and the left, right, up, and down arrow keys extend the selection to the
+first/last visible column or row in that direction.</p></li>
+<li><p>Home moves to the first cell in the current row.</p></li>
+<li><p>End moves to the last cell in the current row.</p></li>
+<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, Shift-Home selects all cells
+from the current cell to the first cell in the current row.</p></li>
+<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, Shift-End selects all cells
+from the current cell to the last cell in the current row.</p></li>
+<li><p>Control-Home moves to the <b class="const">origin</b> cell.</p></li>
+<li><p>Control-End moves to the <b class="const">end</b> cell.</p></li>
+<li><p>Shift-Control-Home extends the selection to the <b class="const">origin</b> cell.</p></li>
+<li><p>Shift-Control-End extends the selection to the <b class="const">end</b> cell.</p></li>
+<li><p>Next or Prior (aka Page Down or Page Up) will move one screen-full down or up.</p></li>
+<li><p>Shift-Next or Shift-Prior will move one screen-full right or left.</p></li>
+<li><p>Control-Next or Control-Prior will move to the bottom or top cell in the
+current column.</p></li>
+<li><p>Control-Shift-Next or Control-Shift-Prior will move to the last or first cell
+in the row.</p></li>
+<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b> or <b class="const">multiple</b>, Control-slash
+(Command-a on Mac) selects all the cells in the table.</p></li>
+<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b> or <b class="const">multiple</b>, Control-backslash
+(except on Mac) unselects all cells in the table.</p></li>
+<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b> or <b class="const">multiple</b>, Shift-space
+will select all cells in the current row.</p></li>
+<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b> or <b class="const">multiple</b>, Control-space
+will select all cells in the current column.</p></li>
+<li><p>Control-Return will toggle whether the cell is activated or just has the focus.</p></li>
+<li><p>ScrollLock and the left, right, up, and down arrow keys will scroll the xview
+or yview by 1 unit in that direction.</p></li>
+<li><p>ScrollLock-Home or ScrollLock-End will scroll the xview by 1 page left or right.</p></li>
+<li><p>ScrollLock-Prior or ScrollLock-Next will scroll the yview by 1 page up or down.</p></li>
+<li><p>ScrollLock-Control-Home or ScrollLock-Control-End will scroll the xview to the
+0.0 or 1.0 position.</p></li>
+<li><p>ScrollLock-Control-Prior or ScrollLock-Control-Next will scroll the yview to the
+0.0 or 1.0 position.</p></li>
+<li><p>The virtual event &lt;&lt;Copy&gt;&gt; will copy the contents of the selected cells to the
+clipboard.</p></li>
+<li><p>The virtual event &lt;&lt;Cut&gt;&gt; will copy the contents of the selected cells to the
+clipboard and clear the cells.</p></li>
+<li><p>The virtual event &lt;&lt;Paste&gt;&gt; will paste the clipboard contents into the
+table cells.</p></li>
+</ol>
+<p>When a cell is active, the following bindings are available in addition or in
+place of the above bindings:</p>
+<ol class="doctools_enumerated">
+<li><p>The left or right arrow keys will move the insertion cursor left or right one
+character. If already at the first or last character, the cell to left or right
+will be activated and the insertion cursor set to after the last or before the
+first character, respectively.</p></li>
+<li><p>The up and down arrow keys will move to and activate the above or below
+cell and put the insertion cursor at the same location in the new cell.</p></li>
+<li><p>Home moves the insertion cursor to the beginning of the active cell.</p></li>
+<li><p>End moves the insertion cursor to the end of the active cell.</p></li>
+<li><p>Backspace deletes the character before the insertion cursor in the active cell.</p></li>
+<li><p>Delete deletes the character after the insertion cursor in the active cell.</p></li>
+<li><p>Return accepts any changes made to the cell and activates the below cell.</p></li>
+<li><p>Shift-Return accepts any changes made to the cell and activates the above cell.</p></li>
+<li><p>Tab accepts any changes made to the cell and activates the cell to the
+right of the current cell.</p></li>
+<li><p>Shift-Tab accepts any changes made to the cell and activates the cell to
+the left of the current cell.</p></li>
+<li><p>Alt-Return inserts a newline character.</p></li>
+<li><p>Alt-Tab inserts a tab character.</p></li>
 <li><p>Escape rereads the value of the active cell from the specified data source,
 discarding any edits that have may been performed on the cell.</p></li>
 <li><p>Control-a moves the insertion cursor to the beginning of the active cell.</p></li>
 <li><p>Control-e moves the insertion cursor to the end of the active cell.</p></li>
+<li><p>Control-k deletes from the insertion cursor to the end of the active cell.</p></li>
 <li><p>Control-minus and Control-equals decrease and increase the
 width of the column with the active cell in it.</p></li>
-<li><p>Moving the mouse while Button-3 (the right button on Windows) is pressed
-while you are over a border will cause interactive resizing of that row
-and/or column to occur, based on the value of <b class="option">-resizeborders</b>.</p></li>
 </ol>
 <p>Some bindings may have slightly different behavior dependent on the
 <b class="option">-selectionmode</b> of the widget.</p>
@@ -1346,9 +1405,8 @@ view can still be adjusted and cells can still be selected,
 but no insertion cursor will be displayed and no cell modifications will
 take place.</p>
 <p>The behavior of tables can be changed by defining new bindings for
-individual widgets or by redefining the class bindings.  The default
-bindings are either compiled in or read from a file expected to
-correspond to: &quot;[lindex $tcl_pkgPath 0]/Tktable&lt;version&gt;/tkTable.tcl&quot;.</p>
+individual widgets or by redefining the class bindings. See the
+tkTable.tcl file in the same directory as the library.</p>
 </div>
 <div id="section13" class="doctools_section"><h2><a name="section13">PERFORMANCE ISSUES</a></h2>
 <p>The number of rows and columns or a table widget should not significantly

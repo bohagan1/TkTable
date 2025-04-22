@@ -1211,49 +1211,142 @@ become visible.
 
 [section "DEFAULT BINDINGS"]
 [para]
-The initialization creates class bindings that give the following default
-behavior:
+The default class bindings are:
 [list_begin enumerated]
 [enum]
-Clicking Button-1 in a cell activates that cell.  Clicking
-into an already active cell moves the insertion cursor to the
-character nearest the mouse.
+When [option -mode] is [const table], clicking Button-1 in a cell activates that
+cell. If [option -selectmode] is not [const multiple], all other cells are
+unselected. Clicking into an already active cell moves the insertion cursor to
+the character nearest the mouse pointer. When [option -mode] is [const spreadsheet],
+clicking Button-1 in a cell gives that cell the focus for keyboard navigation.
+A Double-Button-1 will activate that cell. A Triple-Button-1, will move the
+insertion cursor to the character nearest the mouse.
 [enum]
-Moving the mouse while Button-1 is pressed will stroke out a selection area.
-Exiting while Button-1 is pressed causing scanning to occur on the table
-along with selection.
+When [option -selectmode] is [const extended], moving the mouse while Button-1 is
+pressed will stroke out a selection area. Exiting the window while Button-1 is
+pressed, will cause scanning to occur on the table along with extending the
+selection. Re-entering the window will terminate the scanning.
 [enum]
 Moving the mouse while Button-2 is pressed causes scanning to
 occur without any selection.
 [enum]
-Home moves the table to have the origin in view.
+Moving the mouse while Button-3 (the right button on Windows) is pressed
+while you are over a border will cause interactive resizing of that row
+and/or column to occur, based on the value of [option -resizeborders].
+
 [enum]
-End moves the table to have the [const end] cell in view.
+The left, right, up, and down arrow keys move to the next cell in that
+direction.
 [enum]
-Control-Home moves the table to the origin and activates that cell.
+When [option -selectmode] is [const extended], Shift and the left, right, up
+and down arrow keys extend the selection one cell in that direction.
 [enum]
-Control-End moves the table to the end and activates that cell.
+Control (or Option on Mac) and the left, right, up, and down arrow keys move to
+the first/last visible cell in that row or column.
 [enum]
-Shift-Control-Home extends the selection to the origin.
+When [option -selectmode] is [const extended], Control (or Option on Mac) plus
+Shift and the left, right, up, and down arrow keys extend the selection to the
+first/last visible column or row in that direction.
 [enum]
-Shift-Control-End extends the selection to the end.
+Home moves to the first cell in the current row.
 [enum]
-The left, right, up and down arrows move the active cell.
+End moves to the last cell in the current row.
 [enum]
-Shift-<arrow> extends the selection in that direction.
+When [option -selectmode] is [const extended], Shift-Home selects all cells
+from the current cell to the first cell in the current row.
 [enum]
-Control-leftarrow and Control-rightarrow move the insertion
-cursor within the cell.
+When [option -selectmode] is [const extended], Shift-End selects all cells
+from the current cell to the last cell in the current row.
 [enum]
-Control-slash selects all the cells.
+Control-Home moves to the [const origin] cell.
 [enum]
-Control-backslash clears selection from all the cells.
+Control-End moves to the [const end] cell.
 [enum]
-Backspace deletes the character before the insertion cursor
-in the active cell.
+Shift-Control-Home extends the selection to the [const origin] cell.
 [enum]
-Delete deletes the character after the insertion cursor
-in the active cell.
+Shift-Control-End extends the selection to the [const end] cell.
+[enum]
+Next or Prior (aka Page Down or Page Up) will move one screen-full down or up.
+[enum]
+Shift-Next or Shift-Prior will move one screen-full right or left.
+[enum]
+Control-Next or Control-Prior will move to the bottom or top cell in the
+current column.
+[enum]
+Control-Shift-Next or Control-Shift-Prior will move to the last or first cell
+in the row.
+[enum]
+When [option -selectmode] is [const extended] or [const multiple], Control-slash
+(Command-a on Mac) selects all the cells in the table.
+[enum]
+When [option -selectmode] is [const extended] or [const multiple], Control-backslash
+(except on Mac) unselects all cells in the table.
+[enum]
+When [option -selectmode] is [const extended] or [const multiple], Shift-space
+will select all cells in the current row.
+[enum]
+When [option -selectmode] is [const extended] or [const multiple], Control-space
+will select all cells in the current column.
+[enum]
+Control-Return will toggle whether the cell is activated or just has the focus.
+[enum]
+ScrollLock and the left, right, up, and down arrow keys will scroll the xview
+or yview by 1 unit in that direction.
+[enum]
+ScrollLock-Home or ScrollLock-End will scroll the xview by 1 page left or right.
+[enum]
+ScrollLock-Prior or ScrollLock-Next will scroll the yview by 1 page up or down.
+[enum]
+ScrollLock-Control-Home or ScrollLock-Control-End will scroll the xview to the
+0.0 or 1.0 position.
+[enum]
+ScrollLock-Control-Prior or ScrollLock-Control-Next will scroll the yview to the
+0.0 or 1.0 position.
+[enum]
+The virtual event <<Copy>> will copy the contents of the selected cells to the
+clipboard.
+[enum]
+The virtual event <<Cut>> will copy the contents of the selected cells to the
+clipboard and clear the cells.
+[enum]
+The virtual event <<Paste>> will paste the clipboard contents into the
+table cells.
+[list_end]
+
+[para]
+When a cell is active, the following bindings are available in addition or in
+place of the above bindings:
+[list_begin enumerated]
+[enum]
+The left or right arrow keys will move the insertion cursor left or right one
+character. If already at the first or last character, the cell to left or right
+will be activated and the insertion cursor set to after the last or before the
+first character, respectively.
+[enum]
+The up and down arrow keys will move to and activate the above or below
+cell and put the insertion cursor at the same location in the new cell.
+[enum]
+Home moves the insertion cursor to the beginning of the active cell.
+[enum]
+End moves the insertion cursor to the end of the active cell.
+[enum]
+Backspace deletes the character before the insertion cursor in the active cell.
+[enum]
+Delete deletes the character after the insertion cursor in the active cell.
+[enum]
+Return accepts any changes made to the cell and activates the below cell.
+[enum]
+Shift-Return accepts any changes made to the cell and activates the above cell.
+[enum]
+Tab accepts any changes made to the cell and activates the cell to the
+right of the current cell.
+[enum]
+Shift-Tab accepts any changes made to the cell and activates the cell to
+the left of the current cell.
+[enum]
+Alt-Return inserts a newline character.
+[enum]
+Alt-Tab inserts a tab character.
 [enum]
 Escape rereads the value of the active cell from the specified data source,
 discarding any edits that have may been performed on the cell.
@@ -1262,12 +1355,10 @@ Control-a moves the insertion cursor to the beginning of the active cell.
 [enum]
 Control-e moves the insertion cursor to the end of the active cell.
 [enum]
+Control-k deletes from the insertion cursor to the end of the active cell.
+[enum]
 Control-minus and Control-equals decrease and increase the
 width of the column with the active cell in it.
-[enum]
-Moving the mouse while Button-3 (the right button on Windows) is pressed
-while you are over a border will cause interactive resizing of that row
-and/or column to occur, based on the value of [option -resizeborders].
 [list_end]
 
 Some bindings may have slightly different behavior dependent on the
@@ -1279,9 +1370,8 @@ but no insertion cursor will be displayed and no cell modifications will
 take place.
 [para]
 The behavior of tables can be changed by defining new bindings for
-individual widgets or by redefining the class bindings.  The default
-bindings are either compiled in or read from a file expected to
-correspond to: "[lb]lindex $tcl_pkgPath 0[rb]/Tktable<version>/tkTable.tcl".
+individual widgets or by redefining the class bindings. See the
+tkTable.tcl file in the same directory as the library.
 
 [section "PERFORMANCE ISSUES"]
 [para]
