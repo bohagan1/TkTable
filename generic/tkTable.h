@@ -444,8 +444,9 @@ typedef struct {
     int invalidX, invalidY, invalidWidth, invalidHeight;
     int seen[4];		/* see TableUndisplay */
 
-    int haveSelection;
-    Tcl_DString selection;
+    int haveSelection;		/* Does selection contain the table selection */
+    int selectFirst, selectLast; /* Start and end index of the active cell selection */
+    Tcl_DString selection;	/* DString with selection elements */
 
 #ifdef POSTSCRIPT
     /* Pointer to information used for generating Postscript for the canvas.
@@ -536,13 +537,7 @@ extern int	Table_ScanCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 extern int	Table_SeeCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern int	Table_SelAnchorCmd(ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern int	Table_SelClearCmd(ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern int	Table_SelIncludesCmd(ClientData clientData,
-			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern int	Table_SelSetCmd(ClientData clientData,
+extern int	Table_SelectionCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 extern int	Table_ViewCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);

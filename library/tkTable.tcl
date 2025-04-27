@@ -256,22 +256,22 @@ if {$::tcl_platform(platform) eq "macintosh"} {
 #
 # ::tktable::MoveHandler
 #
-# This performs cell edit or navigation function
+# This function changes the icursor position or active/focus cell based on
+# the operation.
 #
 # Arguments:
 # w -	The widget for which the operation will be applied.
 # op -	Operation to perform
 # edit - Check cell edit first or not
-# extend - If part of an extend operation
 #
 # Results:
-# Returns current cell, new cell, current icursor position, and new position
+# Returns current cell, new cell, current icursor position, and new icursor position
 #
 proc ::tktable::MoveHandler {w op edit extend} {
     set orig -1
     set pos -1
 
-    if {![catch {$w index active} cell] && $edit &&
+    if {[$w cget -state] eq "normal" && ![catch {$w index active} cell] && $edit &&
 	$op ni [list bottom end origin pageBottom pageLeft pageRight pageTop top]} {
 	# Cell edit mode
 	lassign [split $cell ","] row col
@@ -279,18 +279,20 @@ proc ::tktable::MoveHandler {w op edit extend} {
 	set orig $pos
 
 	switch $op {
-	    "first" - "origin" - "top" {
+	    "first" {
 		# Move to first char
 		set pos 0
 	    }
-	    "last" - "end" - "bottom" {
+	    "last" {
 		# Move to last char
-		set pos "end"
+		set pos end
 	    }
 	    "left" {
 		# Move left 1 char or cell
 		if {$pos > 0} {
 		    incr pos -1
+		} elseif {$extend} {
+		    set pos 0
 		} else {
 		    incr col -1
 		    set pos end
@@ -298,9 +300,12 @@ proc ::tktable::MoveHandler {w op edit extend} {
 	    }
 	    "right" {
 		# Move right 1 char or cell
-		incr pos
 		set len [string length [$w curvalue]]
-		if {$pos > $len || $len == 0} {
+		if {$pos < $len} {
+		    incr pos
+		} elseif {$extend} {
+		    set pos $len
+		} else {
 		    incr col
 		    set pos 0
 		}
@@ -323,11 +328,7 @@ proc ::tktable::MoveHandler {w op edit extend} {
 	}
 
     } elseif {![catch {$w index focus} cell]} {
-	# Cell nav mode. Abort for sel extend in wrong mode
-	if {$extend && [$w cget -selectmode] ni [list "multiple" "extended"]} {
-	    return
-	}
-
+	# Cell navigate mode
 	lassign [split $cell ","] row col
 	switch $op {
 	    "left" {
@@ -404,7 +405,8 @@ proc ::tktable::MoveHandler {w op edit extend} {
 # Returns nothing
 #
 proc ::tktable::KeyNav {w op} {
-    set res [::tktable::MoveHandler $w $op 1 0]
+    # Get position change
+    set res [MoveHandler $w $op 1 0]
     if {[llength $res] == 0} return
     lassign $res cell row col orig pos
 
@@ -414,6 +416,7 @@ proc ::tktable::KeyNav {w op} {
 	::tktable::MoveCell $w [expr {$col - $c}] [expr {$row - $r}] $pos
     } elseif {$pos != $orig} {
 	$w icursor $pos
+	$w selection active 0
     }
 }
 
@@ -430,20 +433,42 @@ proc ::tktable::KeyNav {w op} {
 # Returns nothing
 #
 proc ::tktable::SelectionExtend {w op} {
-    set res [::tktable::MoveHandler $w $op 0 0]
+    # Get position change
+    set res [MoveHandler $w $op 1 1]
     if {[llength $res] == 0} return
     lassign $res cell row col orig pos
 
-    # Extend selection to new cell
+    # Extend selection to new cell or index position
     lassign [split $cell ","] r c
     if {$r != $row || $c != $col} {
 	::tktable::ExtendSelect $w [expr {$col - $c}] [expr {$row - $r}]
 	#::tktable::DataExtend $w origin|end
-    }
 
-    # Extend selection to new index position
-    if {$pos != $orig} {
-	# Not supported
+    } elseif {$pos != $orig} {
+	if {$pos eq "end"} {set pos [string length [$w [$w curvalue]]]}
+	lassign [$w selection active] start end
+	if {$start eq "" || $end eq ""} {
+	    # New selection
+	    if {$pos < $orig} {
+		set start $pos
+		set end $orig
+	    } else {
+		set start $orig
+		set end $pos
+	    }
+	} elseif {($pos < $orig && $pos < $start) || ($pos > $orig && $pos < $end)} {
+	    # Extend/shrink sel to left
+	    set start $pos
+	} elseif {($pos > $orig && $pos > $end) || ($pos < $orig && $pos > $start)} {
+	    # Extend/shrink sel to right
+	    set end $pos
+	} else {
+	    # No selection
+	    set start $pos
+	    set end $pos
+	}
+	$w selection active $start $end
+	$w icursor $pos
     }
 }
 
@@ -694,9 +719,8 @@ proc ::tktable::Delete {w} {
 #
 proc ::tktable::Button1 {w x y} {
     variable Priv
-    #
+
     # $Priv(borderInfo) is null if the user did not click on a border
-    #
     if {$Priv(borderB1) == 1} {
 	set Priv(borderInfo) [$w border mark $x $y]
 	# account for what resizeborders are set [Bug 876320] (ferenc)
@@ -709,10 +733,9 @@ proc ::tktable::Button1 {w x y} {
     } else {
 	set Priv(borderInfo) ""
     }
+
+    # Only do this when a border wasn't selected
     if {$Priv(borderInfo) eq ""} {
-	#
-	# Only do this when a border wasn't selected
-	#
 	if {[winfo exists $w]} {
 	    ::tktable::BeginSelect $w [$w index @$x,$y]
 	    focus $w
@@ -825,6 +848,7 @@ proc ::tktable::DoubleButton1 {w x y} {
 proc ::tktable::BeginSelect {w el} {
     variable Priv
     if {[scan $el %d,%d r c] != 2} return
+    $w selection active 0
     switch [$w cget -selectmode] {
 	multiple {
 	    if {[$w tag includes title $el]} {

@@ -49,6 +49,8 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	tablePtr->flags |= ACTIVE_DISABLED;
 	tablePtr->activeRow = -1;
 	tablePtr->activeCol = -1;
+	tablePtr->selectFirst = -1;
+	tablePtr->selectLast = -1;
 	if (tablePtr->focusRow != -1 || tablePtr->focusCol != -1) {
 	    TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
 	    tablePtr->focusRow = -1;
@@ -103,6 +105,8 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	    tablePtr->flags &= ~ACTIVE_DISABLED;
 	    tablePtr->activeRow = row;
 	    tablePtr->activeCol = col;
+	    tablePtr->selectFirst = -1;
+	    tablePtr->selectLast = -1;
 	    if (tablePtr->focusRow != -1 || tablePtr->focusCol != -1) {
 		TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
 	    }
@@ -222,7 +226,7 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
 	tablePtr->focusRow = row;
 	tablePtr->focusCol = col;
 	TableRefresh(tablePtr, row, col, CELL);
-    } 
+    }
     return TCL_OK;
 }
 
@@ -429,7 +433,7 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	Tcl_WrongNumArgs(interp, 2, objv, "mark|dragto x y ?row|col?");
 	return TCL_ERROR;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[2], bdCmdNames, "option", 0, &cmdIndex) 
+    if (Tcl_GetIndexFromObj(interp, objv[2], bdCmdNames, "option", 0, &cmdIndex)
 	    != TCL_OK || Tcl_GetIntFromObj(interp, objv[3], &x) != TCL_OK ||
 	Tcl_GetIntFromObj(interp, objv[4], &y) != TCL_OK) {
 	return TCL_ERROR;
@@ -564,7 +568,7 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
 	if (cmdIndex == CLEAR_TAGS || cmdIndex == CLEAR_ALL) {
 	    Tcl_HashSearch search;
 	    selchanged = (Tcl_FirstHashEntry(tablePtr->selCells, &search) != NULL);
-	    
+
 	    Tcl_DeleteHashTable(tablePtr->rowStyles);
 	    Tcl_DeleteHashTable(tablePtr->colStyles);
 	    Tcl_DeleteHashTable(tablePtr->cellStyles);
@@ -923,6 +927,71 @@ int Table_ScanCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 /*
  *--------------------------------------------------------------
  *
+ * Table_SelActiveCmd --
+ *	This procedure is invoked to process the selection active method
+ *	that gets, clears, or sets the text selection in the active cell.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	See the user documentation.
+ *
+ *--------------------------------------------------------------
+ */
+int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
+    Table *tablePtr = (Table *) clientData;
+    int start, end;
+
+    if (objc < 3 || objc > 5) {
+	Tcl_WrongNumArgs(interp, 3, objv, "?start? ?end?");
+	return TCL_ERROR;
+    }
+
+    /* Get current, clear, or set new selection in active cell */
+    if (objc == 3 && tablePtr->selectFirst > -1) {
+	Tcl_Obj *resultPtr;
+	start = tablePtr->selectFirst;
+	end = tablePtr->selectLast;
+
+	if ((resultPtr = Tcl_NewListObj(0, NULL)) == NULL ||
+	    Tcl_ListObjAppendElement(interp, resultPtr, Tcl_NewIntObj(start)) != TCL_OK  ||
+	    Tcl_ListObjAppendElement(interp, resultPtr, Tcl_NewIntObj(end)) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	Tcl_SetObjResult(interp, resultPtr);
+	return TCL_OK;
+
+    } else if (objc == 4) {
+	if (tablePtr->selectFirst != -1 || tablePtr->selectLast != -1) {
+	    tablePtr->selectFirst = -1;
+	    tablePtr->selectLast = -1;
+	} else {
+	    return TCL_OK;
+	}
+
+    } else if (objc == 5) {
+	if (TableGetIcursorObj(tablePtr, objv[3], &start) != TCL_OK ||
+	    TableGetIcursorObj(tablePtr, objv[4], &end) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (start < end && start > -1) {
+	    tablePtr->selectFirst = start;
+	    tablePtr->selectLast = end;
+	} else {
+	    tablePtr->selectFirst = -1;
+	    tablePtr->selectLast = -1;
+	}
+    }
+    
+    TableSetActiveIndex(tablePtr);
+    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
+    return TCL_OK;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
  * Table_SelAnchorCmd --
  *	This procedure is invoked to process the selection anchor method
  *	that corresponds to a table widget managed by this module.
@@ -1193,6 +1262,73 @@ SET_CELLS:
 	TableGenerateSelectEvent(tablePtr);
     }
     return TCL_OK;
+}
+
+
+static const char *selCmdNames[] = {
+    "active", "anchor", "clear", "includes", "present", "set", (char *)NULL
+};
+enum selCommand {
+    CMD_SEL_ACTIVE, CMD_SEL_ANCHOR, CMD_SEL_CLEAR, CMD_SEL_INCLUDES,
+    CMD_SEL_PRESENT, CMD_SEL_SET
+};
+
+/*
+ *--------------------------------------------------------------
+ *
+ * Table_SelectionCmd --
+ *	This procedure is invoked to process the selection includes method
+ *	that corresponds to a table widget managed by this module.
+ *	See the user documentation for details on what it does.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	See the user documentation.
+ *
+ *--------------------------------------------------------------
+ */
+int Table_SelectionCmd(ClientData clientData, Tcl_Interp *interp,
+	int objc, Tcl_Obj *const objv[]) {
+    Table *tablePtr = (Table *) clientData;
+    int cmdIndex, result = TCL_OK;
+
+    if (objc < 3) {
+	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg arg ...?");
+	return TCL_ERROR;
+    }
+
+    if (Tcl_GetIndexFromObj(interp, objv[2], selCmdNames, "selection option", 0,
+	    &cmdIndex) != TCL_OK) {
+	return TCL_ERROR;
+    }
+
+    switch ((enum selCommand) cmdIndex) {
+	case CMD_SEL_ACTIVE:
+	    result = Table_SelActiveCmd(clientData, interp, objc, objv);
+	    break;
+	case CMD_SEL_ANCHOR:
+	    result = Table_SelAnchorCmd(clientData, interp, objc, objv);
+	    break;
+	case CMD_SEL_CLEAR:
+	    result = Table_SelClearCmd(clientData, interp, objc, objv);
+	    break;
+	case CMD_SEL_INCLUDES:
+	    result = Table_SelIncludesCmd(clientData, interp, objc, objv);
+	    break;
+	case CMD_SEL_PRESENT: {
+	    Tcl_HashSearch search;
+	    int present = (Tcl_FirstHashEntry(tablePtr->selCells, &search) != NULL);
+
+	    Tcl_SetObjResult(interp, Tcl_NewBooleanObj(present));
+	    break;
+	}
+	case CMD_SEL_SET:
+	    result = Table_SelSetCmd(clientData, interp, objc, objv);
+	    break;
+    }
+    return result;
 }
 
 /*

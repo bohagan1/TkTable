@@ -1560,6 +1560,13 @@ This command is used to adjust the selection within a table\&.  It
 has several forms, depending on \fIoption\fR:
 .RS
 .TP
+\fIpathName\fR \fBselection active\fR ?\fIstart\fR? ?\fIend\fR?
+Sets the selection to include the characters in the active cell starting with
+the one indexed by \fIstart\fR and ending with the one just before \fIend\fR\&.
+Without any arguments, the current start and end index are returned\&.
+If \fIstart\fR equal \fIend\fR or only \fIstart\fR is provided, the selection
+is cleared\&.
+.TP
 \fIpathName\fR \fBselection anchor\fR \fIindex\fR
 Sets the selection anchor to the cell given by \fIindex\fR\&.  The selection
 anchor is the end of the selection that is fixed while dragging out a
@@ -1574,7 +1581,7 @@ the selection from all cells\&.
 .TP
 \fIpathName\fR \fBselection includes\fR \fIindex\fR
 Returns 1 if the cell indicated by \fIindex\fR is currently
-selected, 0 if it isn't\&.
+selected, 0 if not\&.
 .TP
 \fIpathName\fR \fBselection set\fR \fIfirst\fR ?\fIlast\fR?
 Selects all of the cells in the range between \fIfirst\fR and \fIlast\fR,
@@ -1587,9 +1594,9 @@ Sets the specified index to the associated value\&.  Table validation will
 not be triggered via this method\&.  If \fBrow\fR or \fBcol\fR precedes the
 list of index/value pairs, then the value is assumed to be a TCL list whose
 values will be split and set into the subsequent columns (if \fBrow\fR is
-specified) or rows (for \fBcol\fR)\&.  For example, "\fBset row 2,3 {2,3 2,4 2,5}\fR"
-will set 3 cells, from 2,3 to 2,5\&.  The setting of cells
-is silently bounded by the known table dimensions\&.
+specified) or rows (for \fBcol\fR)\&.  For example, "\fBset row 2,3 {a b c}\fR"
+will set 3 cells, from 2,3 to 2,5, to the specified values\&.  The setting of
+cells is silently bounded by the known table dimensions\&.
 .TP
 \fIpathName\fR \fBspans\fR ?\fIindex\fR? ?\fIrows,cols index rows,cols \&.\&.\&.\fR?
 This command is used to manipulate row/col spans\&.  When called with no

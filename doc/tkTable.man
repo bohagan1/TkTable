@@ -955,6 +955,13 @@ This command is used to adjust the selection within a table.  It
 has several forms, depending on [arg option]:
 [list_begin definitions]
 
+[def "[arg pathName] [method "selection active"] [opt [arg start]] [opt [arg end]]"]
+Sets the selection to include the characters in the active cell starting with
+the one indexed by [arg start] and ending with the one just before [arg end].
+Without any arguments, the current start and end index are returned.
+If [arg start] equal [arg end] or only [arg start] is provided, the selection
+is cleared.
+
 [def "[arg pathName] [method "selection anchor"] [arg index]"]
 Sets the selection anchor to the cell given by [arg index].  The selection
 anchor is the end of the selection that is fixed while dragging out a
@@ -969,7 +976,7 @@ the selection from all cells.
 
 [def "[arg pathName] [method "selection includes"] [arg index]"]
 Returns 1 if the cell indicated by [arg index] is currently
-selected, 0 if it isn't.
+selected, 0 if not.
 
 [def "[arg pathName] [method "selection set"] [arg first] [opt [arg last]]"]
 Selects all of the cells in the range between [arg first] and [arg last],
@@ -982,9 +989,9 @@ Sets the specified index to the associated value.  Table validation will
 not be triggered via this method.  If [method row] or [method col] precedes the
 list of index/value pairs, then the value is assumed to be a TCL list whose
 values will be split and set into the subsequent columns (if [method row] is
-specified) or rows (for [method col]).  For example, "[method "set row 2,3 {2,3 2,4 2,5}"]"
-will set 3 cells, from 2,3 to 2,5.  The setting of cells
-is silently bounded by the known table dimensions.
+specified) or rows (for [method col]).  For example, "[method "set row 2,3 {a b c}"]"
+will set 3 cells, from 2,3 to 2,5, to the specified values.  The setting of
+cells is silently bounded by the known table dimensions.
 
 [def "[arg pathName] [method spans] [opt [arg index]] [opt [arg "rows,cols index rows,cols ..."]]"]
 This command is used to manipulate row/col spans.  When called with no

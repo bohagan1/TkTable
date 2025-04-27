@@ -45,22 +45,15 @@ static void	TableDisplay(ClientData clientdata);
  * commands) and map the indexes into the string tables into
  * enumerated types used to dispatch the widget command.
  */
-
-static const char *selCmdNames[] = {
-    "anchor", "clear", "includes", "present", "set", (char *)NULL
-};
-enum selCommand {
-    CMD_SEL_ANCHOR, CMD_SEL_CLEAR, CMD_SEL_INCLUDES, CMD_SEL_PRESENT, CMD_SEL_SET
-};
-
 static const char *commandNames[] = {
-    "activate", "bbox", "border", "cget", "clear", "configure", "curselection", "curvalue",
-    "delete", "focus", "get", "height", "hidden", "icursor", "index", "insert",
+    "activate", "bbox", "border", "cget", "clear", "configure", "curselection",
+    "curvalue", "delete", "focus", "get", "height", "hidden", "icursor",
+    "index", "insert",
 #ifdef POSTSCRIPT
     "postscript",
 #endif
-    "reread", "scan", "see", "selection", "set", "spans", "tag", "validate", "version",
-    "window", "width", "xview", "yview", (char *)NULL
+    "reread", "scan", "see", "selection", "set", "spans", "tag", "validate",
+    "version", "window", "width", "xview", "yview", (char *)NULL
 };
 enum command {
     CMD_ACTIVATE, CMD_BBOX, CMD_BORDER, CMD_CGET, CMD_CLEAR, CMD_CONFIGURE, CMD_CURSEL,
@@ -69,8 +62,8 @@ enum command {
 #ifdef POSTSCRIPT
     CMD_POSTSCRIPT,
 #endif
-    CMD_REREAD, CMD_SCAN, CMD_SEE, CMD_SELECTION, CMD_SET, CMD_SPANS, CMD_TAG, CMD_VALIDATE,
-    CMD_VERSION, CMD_WINDOW, CMD_WIDTH, CMD_XVIEW, CMD_YVIEW
+    CMD_REREAD, CMD_SCAN, CMD_SEE, CMD_SELECTION, CMD_SET, CMD_SPANS, CMD_TAG,
+    CMD_VALIDATE, CMD_VERSION, CMD_WINDOW, CMD_WIDTH, CMD_XVIEW, CMD_YVIEW
 };
 
 /* -selecttype selection type options */
@@ -1140,37 +1133,7 @@ static int TableWidgetObjCmd(
 	    break;
 
 	case CMD_SELECTION:
-	    if (objc < 3) {
-		Tcl_WrongNumArgs(interp, 2, objv, "option ?arg arg ...?");
-		result = TCL_ERROR;
-		break;
-	    }
-	    if (Tcl_GetIndexFromObj(interp, objv[2], selCmdNames, "selection option", 0,
-		    &cmdIndex) != TCL_OK) {
-		result = TCL_ERROR;
-		break;
-	    }
-	    switch ((enum selCommand) cmdIndex) {
-		case CMD_SEL_ANCHOR:
-		    result = Table_SelAnchorCmd(clientData, interp, objc, objv);
-		    break;
-		case CMD_SEL_CLEAR:
-		    result = Table_SelClearCmd(clientData, interp, objc, objv);
-		    break;
-		case CMD_SEL_INCLUDES:
-		    result = Table_SelIncludesCmd(clientData, interp, objc, objv);
-		    break;
-		case CMD_SEL_PRESENT: {
-		    Tcl_HashSearch search;
-		    int present = (Tcl_FirstHashEntry(tablePtr->selCells, &search) != NULL);
-
-		    Tcl_SetObjResult(interp, Tcl_NewBooleanObj(present));
-		    break;
-		}
-		case CMD_SEL_SET:
-		    result = Table_SelSetCmd(clientData, interp, objc, objv);
-		    break;
-	    }
+	    result = Table_SelectionCmd(clientData, interp, objc, objv);
 	    break;
 
 	case CMD_SET:
@@ -1768,6 +1731,10 @@ static int Tk_TableObjCmd(
     tablePtr->oldActRow		= -1;
     tablePtr->oldActCol		= -1;
     tablePtr->seen[0]		= -1;
+
+    tablePtr->icursor		=  0;
+    tablePtr->selectFirst	= -1;
+    tablePtr->selectLast	= -1;
 
     tablePtr->dataSource	= DATA_NONE;
     tablePtr->activeBuf		= ckalloc(1);
@@ -2540,6 +2507,7 @@ static void TableDisplay(ClientData clientdata) {
 		    default:			/* southern position */
 			originY = height - itemH - ipady;
 		}
+
 
 		/*
 		 * If this is the active cell and we are editing,

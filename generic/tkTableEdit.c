@@ -490,14 +490,14 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
  *----------------------------------------------------------------------
  *
  * TableDeleteChars --
- *	Remove one or more characters from an table widget.
+ *	Remove one or more characters from the active cell of a table widget.
  *
  * Results:
  *	None.
  *
  * Side effects:
- *	Memory gets freed, the table gets modified and (eventually)
- *	redisplayed.
+ *	Characters are removed from active cell, the table gets modified, and
+ *	(eventually) redisplayed.
  *
  *----------------------------------------------------------------------
  */
@@ -542,12 +542,33 @@ void TableDeleteChars(
     /* mark the text as changed */
     tablePtr->flags |= TEXT_CHANGED;
 
+    /* Adjust insertion cursor */
     if (tablePtr->icursor >= index) {
 	if (tablePtr->icursor >= (index+count)) {
 	    tablePtr->icursor -= count;
 	} else {
 	    tablePtr->icursor = index;
 	}
+    }
+
+    /* Adjust selction */
+    if (tablePtr->selectFirst >= index) {
+	if (tablePtr->selectFirst >= (index+count)) {
+	    tablePtr->selectFirst -= count;
+	} else {
+	    tablePtr->selectFirst = index;
+	}
+    }
+    if (tablePtr->selectLast >= index) {
+	if (tablePtr->selectLast >= (index+count)) {
+	    tablePtr->selectLast -= count;
+	} else {
+	    tablePtr->selectLast = index;
+	}
+    }
+    if (tablePtr->selectLast <= tablePtr->selectFirst) {
+	tablePtr->selectFirst = -1;
+	tablePtr->selectLast = -1;
     }
 
     TableSetActiveIndex(tablePtr);
@@ -565,7 +586,7 @@ void TableDeleteChars(
  *	None.
  *
  * Side effects:
- *	New information gets added to tablePtr; it will be redisplayed
+ *	New characters get added to cell text; it will be redisplayed
  *	soon, but not necessarily immediately.
  *
  *----------------------------------------------------------------------
@@ -576,7 +597,7 @@ void TableInsertChars(
     char *value) {		/* New characters to add (NULL-terminated
 				 * string). */
 
-    int oldlen, byteIndex, byteCount;
+    int oldlen, byteIndex, byteCount, charsAdded;
     char *new, *string;
 
     byteCount = (int) strlen(value);
@@ -593,6 +614,8 @@ void TableInsertChars(
 	/* the insert position now has to be 0 */
 	index = 0;
 	tablePtr->icursor = 0;
+	tablePtr->selectFirst = -1;
+	tablePtr->selectLast = -1;
     }
 
     string = tablePtr->activeBuf;
@@ -623,10 +646,17 @@ void TableInsertChars(
      * many characters were are in the string now minus the number that
      * used to be there.
      */
+    charsAdded = (int) (Tcl_NumUtfChars(new, (Tcl_Size)(oldlen+byteCount))
+	    - Tcl_NumUtfChars(tablePtr->activeBuf, (Tcl_Size)oldlen));
 
     if (tablePtr->icursor >= index) {
-	tablePtr->icursor += (int) (Tcl_NumUtfChars(new, (Tcl_Size)(oldlen+byteCount))
-	    - Tcl_NumUtfChars(tablePtr->activeBuf, (Tcl_Size)oldlen));
+	tablePtr->icursor += charsAdded;
+    }
+    if (tablePtr->selectFirst >= index) {
+	tablePtr->selectFirst += charsAdded;
+    }
+    if (tablePtr->selectLast >= index) {
+	tablePtr->selectLast += charsAdded;
     }
 
     ckfree(string);

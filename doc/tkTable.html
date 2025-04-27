@@ -1084,6 +1084,12 @@ row or column relative position if <i class="arg">index</i> is in the same row o
 <dd><p>This command is used to adjust the selection within a table.  It
 has several forms, depending on <i class="arg">option</i>:</p>
 <dl class="doctools_definitions">
+<dt><i class="arg">pathName</i> <b class="method">selection active</b> <span class="opt">?<i class="arg">start</i>?</span> <span class="opt">?<i class="arg">end</i>?</span></dt>
+<dd><p>Sets the selection to include the characters in the active cell starting with
+the one indexed by <i class="arg">start</i> and ending with the one just before <i class="arg">end</i>.
+Without any arguments, the current start and end index are returned.
+If <i class="arg">start</i> equal <i class="arg">end</i> or only <i class="arg">start</i> is provided, the selection
+is cleared.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">selection anchor</b> <i class="arg">index</i></dt>
 <dd><p>Sets the selection anchor to the cell given by <i class="arg">index</i>.  The selection
 anchor is the end of the selection that is fixed while dragging out a
@@ -1096,7 +1102,7 @@ outside this range.  <i class="arg">first</i> may be specified as <b class="cons
 the selection from all cells.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">selection includes</b> <i class="arg">index</i></dt>
 <dd><p>Returns 1 if the cell indicated by <i class="arg">index</i> is currently
-selected, 0 if it isn't.</p></dd>
+selected, 0 if not.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">selection set</b> <i class="arg">first</i> <span class="opt">?<i class="arg">last</i>?</span></dt>
 <dd><p>Selects all of the cells in the range between <i class="arg">first</i> and <i class="arg">last</i>,
 inclusive, without affecting the selection state of cells outside that
@@ -1107,9 +1113,9 @@ range. Option <i class="arg">last</i> defaults to <i class="arg">first</i>'s val
 not be triggered via this method.  If <b class="method">row</b> or <b class="method">col</b> precedes the
 list of index/value pairs, then the value is assumed to be a TCL list whose
 values will be split and set into the subsequent columns (if <b class="method">row</b> is
-specified) or rows (for <b class="method">col</b>).  For example, &quot;<b class="method">set row 2,3 {2,3 2,4 2,5}</b>&quot;
-will set 3 cells, from 2,3 to 2,5.  The setting of cells
-is silently bounded by the known table dimensions.</p></dd>
+specified) or rows (for <b class="method">col</b>).  For example, &quot;<b class="method">set row 2,3 {a b c}</b>&quot;
+will set 3 cells, from 2,3 to 2,5, to the specified values.  The setting of
+cells is silently bounded by the known table dimensions.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">spans</b> <span class="opt">?<i class="arg">index</i>?</span> <span class="opt">?<i class="arg">rows,cols index rows,cols ...</i>?</span></dt>
 <dd><p>This command is used to manipulate row/col spans.  When called with no
 arguments, all known spans are returned as a list of tuples of the form
