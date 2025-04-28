@@ -116,6 +116,7 @@
 #	define INSERT_BD	"0"
 #	define INSERT_BG	NORMAL_FG
 #	define INSERT_WIDTH	"2"
+#	define SELECT_BD	"1"
 #	define SELECT_BG	"SystemHighlight"
 #	define SELECT_FG	"SystemHighlightText"
 #   elif defined(MAC_TCL) || defined(MAC_OSX_TK)
@@ -132,6 +133,7 @@
 #	define INSERT_BD	"0"
 #	define INSERT_BG	NORMAL_FG
 #	define INSERT_WIDTH	"1"
+#	define SELECT_BD	"1"
 #	define SELECT_BG	"systemSelectedTextBackgroundColor"
 #	define SELECT_FG	"systemSelectedTextColor"
 #   else
@@ -148,6 +150,7 @@
 #	define INSERT_BD	"0"
 #	define INSERT_BG	NORMAL_FG
 #	define INSERT_WIDTH	"2"
+#	define SELECT_BD	"1"
 #	define SELECT_BG	"#c3c3c3"
 #	define SELECT_FG	NORMAL_FG
 #   endif
@@ -381,6 +384,10 @@ typedef struct {
     int ipadX, ipadY;		/* Space to leave empty around cell borders.
 				 * This differs from pad* in that it is always
 				 * present for the cell (except windows). */
+    XColor *selColorPtr;	/* Border and background color for selected
+				 * characters. */
+    int selBorderWidth;		/* Width of border around selection. */
+    XColor *selFgColorPtr;	/* Foreground color for selected text. */
 
     /*
      * Cached Information

@@ -255,6 +255,12 @@ Tk_ConfigSpec tableSpecs[] = {
 	0, TK_CONFIG_NULL_OK},
     {TK_CONFIG_STRING, "-selectioncommand", "selectionCommand", "SelectionCommand", NULL,
 	offsetof(Table, selCmd), TK_CONFIG_NULL_OK},
+    {TK_CONFIG_COLOR, "-selectbackground", "selectBackground", "Foreground",
+	SELECT_BG, offsetof(Table, selColorPtr), 0},
+    {TK_CONFIG_PIXELS, "-selectborderwidth", "selectBorderWidth", "BorderWidth",
+	SELECT_BD, offsetof(Table, selBorderWidth), TK_CONFIG_COLOR_ONLY},
+    {TK_CONFIG_COLOR, "-selectforeground", "selectForeground", "Background",
+	SELECT_FG, offsetof(Table, selFgColorPtr), TK_CONFIG_NULL_OK},
     {TK_CONFIG_STRING, "-selectmode", "selectMode", "SelectMode", "browse",
 	offsetof(Table, selectMode), TK_CONFIG_NULL_OK},
     {TK_CONFIG_BOOLEAN, "-selecttitles", "selectTitles", "SelectTitles", "0",
@@ -2047,10 +2053,10 @@ static void TableDisplay(ClientData clientdata) {
 	new, boundW, boundH, maxW, maxH, cellType,
 	originX, originY, activeCell, shouldInvert, ipadx, ipady, padx, pady;
     Tcl_Size numChars;
-    GC tagGc = NULL, topGc, bottomGc;
+    GC tagGc = NULL, topGc, bottomGc, selTextGc = NULL;
     char *string = NULL;
     char buf[INDEX_BUFSIZE];
-    TableTag *tagPtr = NULL, *titlePtr, *selPtr, *activePtr, *focusPtr, *flashPtr, *rowPtr, *colPtr;
+    TableTag *tagPtr = NULL, *titlePtr, *selPtr, *activePtr, *focusPtr, *flashPtr, *rowPtr, *colPtr, *selTextPtr = NULL;
     Tcl_HashEntry *entryPtr;
     XPoint rect[3];
     Tcl_HashTable *colTagsCache = NULL;
@@ -2140,6 +2146,7 @@ static void TableDisplay(ClientData clientdata) {
      * We only need one allocated, and we'll reset it for each cell.
      */
     tagPtr = TableNewTag(tablePtr);
+    selTextPtr = TableNewTag(tablePtr);
 
     /* Cycle through the cells and display them */
     for (row = rowFrom; row <= rowTo; row++) {
@@ -2336,13 +2343,26 @@ static void TableDisplay(ClientData clientdata) {
 		TableMergeTag(tablePtr, tagPtr, focusPtr);
 	    }
 	    /* is this cell selected? */
-	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL) {
+	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL && selPtr != NULL) {
 		if (tablePtr->invertSelected && !activeCell) {
 		    shouldInvert = 1;
 		} else {
 		    TableMergeTag(tablePtr, tagPtr, selPtr);
 		}
 	    }
+
+	    /* If active cell, create selected text tag */
+	    if (activeCell && selPtr != NULL) {
+		TableResetTag(tablePtr, selTextPtr);
+		TableMergeTag(tablePtr, selTextPtr, activePtr);
+		TableMergeTag(tablePtr, selTextPtr, selPtr);
+		selTextPtr->bg = Tk_Get3DBorder(tablePtr->interp, tkwin,
+		    Tk_NameOfColor(tablePtr->selColorPtr));
+		selTextPtr->fg = Tk_Get3DBorder(tablePtr->interp, tkwin,
+		    Tk_NameOfColor(tablePtr->selFgColorPtr));
+		selTextPtr->tkfont = tagPtr->tkfont;
+	    }
+
 	    /* if flash mode is on, is this cell flashing? */
 	    if (tablePtr->flashMode && Tcl_FindHashEntry(tablePtr->flashCells, buf) != NULL) {
 		TableMergeTag(tablePtr, tagPtr, flashPtr);
@@ -2447,6 +2467,7 @@ static void TableDisplay(ClientData clientdata) {
 	    /* if this is the active cell, use the buffer */
 	    if (activeCell) {
 		string = tablePtr->activeBuf;
+		TableGetGc(display, window, selTextPtr, &selTextGc);
 	    } else {
 		/* Is there a value in the cell? If so, draw it  */
 		string = TableGetCellValue(tablePtr, urow, ucol);
@@ -2461,6 +2482,7 @@ static void TableDisplay(ClientData clientdata) {
 
 	    /* If there is a string, show it */
 	    if (activeCell || numChars) {
+		int showSelection = 0;
 		int x0 = x + bd[0] + padx;
 		int y0 = y + bd[2] + pady;
 
@@ -2508,7 +2530,6 @@ static void TableDisplay(ClientData clientdata) {
 			originY = height - itemH - ipady;
 		}
 
-
 		/*
 		 * If this is the active cell and we are editing,
 		 * ensure that the cursor will be displayed
@@ -2521,26 +2542,57 @@ static void TableDisplay(ClientData clientdata) {
 		    maxH = height - (cy + ch);
 		    if (originX < bd[0] - cx) {
 			/* cursor off cell to the left */
-			/* use western positioning to cet cursor at left
+			/* use western positioning to set cursor at left
 			 * with slight variation to show some text */
 			originX = bd[0] - cx + MIN(cx, width - tablePtr->insertWidth);
 		    } else if (originX > maxW) {
 			/* cursor off cell to the right */
-			/* use eastern positioning to cet cursor at right */
+			/* use eastern positioning to set cursor at right */
 			originX = maxW;
 		    }
 		    if (originY < bd[2] - cy) {
 			/* cursor before top of cell */
-			/* use northern positioning to cet cursor at top */
+			/* use northern positioning to set cursor at top */
 			originY = bd[2] - cy;
 		    } else if (originY > maxH) {
 			/* cursor beyond bottom of cell */
-			/* use southern positioning to cet cursor at bottom */
+			/* use southern positioning to set cursor at bottom */
 			originY = maxH;
 		    }
 		    tablePtr->activeTagPtr	= tagPtr;
 		    tablePtr->activeX		= originX;
 		    tablePtr->activeY		= originY;
+		}
+
+		/* Show selection background */
+		if (activeCell && (tablePtr->state != STATE_DISABLED)) {
+#if TCL_MAJOR_VERSION > 8
+		    if (Tk_AlwaysShowSelection(tkwin)) {
+			showSelection = 1;
+		    } else {
+#endif
+			showSelection = (tablePtr->flags & HAS_FOCUS) ? 1 : 0;
+#if TCL_MAJOR_VERSION > 8
+		    }
+#endif
+		    if (showSelection && tablePtr->selectFirst < tablePtr->selectLast) {
+			int selStartX, selEndX;
+			Tk_FontMetrics fm;
+			Tk_GetFontMetrics(tagPtr->tkfont, &fm); /* Tag is used to create layout */
+
+			Tk_CharBbox(textLayout, tablePtr->selectFirst,
+				&selStartX, NULL, NULL, NULL);
+			selStartX += x0;
+			Tk_CharBbox(textLayout, tablePtr->selectLast,
+				&selEndX, NULL, NULL, NULL);
+			selEndX += x0;
+			Tk_Fill3DRectangle(tkwin, window, selTextPtr->bg,
+				selStartX + originX - tablePtr->selBorderWidth,
+				y0 + originY - tablePtr->selBorderWidth,
+				(selEndX - selStartX) + 2*tablePtr->selBorderWidth,
+				(fm.ascent + fm.descent) + 2*tablePtr->selBorderWidth,
+				tablePtr->selBorderWidth, TK_RELIEF_FLAT);
+		    }
 		}
 
 		/*
@@ -2598,13 +2650,25 @@ static void TableDisplay(ClientData clientdata) {
 		     * Now draw into the cell space on the special window.
 		     * Don't use x,y base offset for clipWind.
 		     */
-		    Tk_DrawTextLayout(display, clipWind, tagGc, textLayout,
+		    if (!activeCell || !showSelection || tablePtr->selectFirst >= tablePtr->selectLast) {
+			Tk_DrawTextLayout(display, clipWind, tagGc, textLayout,
 			    x0 - x + originX, y0 - y + originY, 0, -1);
+		    } else {
+			if (tablePtr->selectFirst > 0) {
+			    Tk_DrawTextLayout(display, clipWind, tagGc, textLayout,
+				x0 - x + originX, y0 - y + originY, 0, tablePtr->selectFirst);
+			}
+			Tk_DrawTextLayout(display, clipWind, selTextGc, textLayout,
+			    x0 - x + originX, y0 - y + originY, tablePtr->selectFirst,
+			    tablePtr->selectLast);
+			if (tablePtr->selectLast < numChars) {
+			    Tk_DrawTextLayout(display, clipWind, tagGc, textLayout,
+				x0 - x + originX, y0 - y + originY, tablePtr->selectLast, numChars);
+			}
+		    }
 
+		    /* Recopy area the ellipse covers (not efficient) */
 		    if (useEllLen) {
-			/*
-			 * Recopy area the ellipse covers (not efficient)
-			 */
 			XCopyArea(display, window, clipWind, tagGc,
 				x0 + (ellEast ? width - useEllLen : 0), y0, useEllLen, height,
 				x0 - x + (ellEast ? width - useEllLen : 0),
@@ -2636,8 +2700,22 @@ static void TableDisplay(ClientData clientdata) {
 		    DeleteObject(clipR);
 		    /* OffsetClipRgn(dc, 0, 0); */
 
-		    Tk_DrawTextLayout(display, window, tagGc, textLayout,
+		    if (!activeCell || !showSelection || tablePtr->selectFirst >= tablePtr->selectLast) {
+			Tk_DrawTextLayout(display, window, tagGc, textLayout,
 			    x0 + originX, y0 + originY, 0, -1);
+		    } else {
+			if (tablePtr->selectFirst > 0) {
+			    Tk_DrawTextLayout(display, window, tagGc, textLayout,
+				x0 + originX, y0 + originY, 0, tablePtr->selectFirst);
+			}
+			Tk_DrawTextLayout(display, window, selTextGc, textLayout,
+			    x0 + originX, y0 + originY, tablePtr->selectFirst,
+			    tablePtr->selectLast);
+			if (tablePtr->selectLast < numChars) {
+			    Tk_DrawTextLayout(display, window, tagGc, textLayout,
+				x0 + originX, y0 + originY, tablePtr->selectLast, numChars);
+			}
+		    }
 
 		    if (useEllLen) {
 			clipR = CreateRectRgn(x0, y0, x0 + width, y0 + height);
@@ -2660,8 +2738,24 @@ static void TableDisplay(ClientData clientdata) {
 		    clipRect.width  = width - (ellEast ? useEllLen : 0);
 		    clipRect.height = height;
 		    XSetClipRectangles(display, tagGc, 0, 0, &clipRect, 1, Unsorted);
-		    Tk_DrawTextLayout(display, window, tagGc, textLayout,
+
+		    if (!activeCell || !showSelection || tablePtr->selectFirst >= tablePtr->selectLast) {
+			Tk_DrawTextLayout(display, window, tagGc, textLayout,
 			    x0 + originX, y0 + originY, 0, -1);
+		    } else {
+			if (tablePtr->selectFirst > 0) {
+			    Tk_DrawTextLayout(display, window, tagGc, textLayout,
+				x0 + originX, y0 + originY, 0, tablePtr->selectFirst);
+			}
+			Tk_DrawTextLayout(display, window, selTextGc, textLayout,
+			    x0 + originX, y0 + originY, tablePtr->selectFirst,
+			    tablePtr->selectLast);
+			if (tablePtr->selectLast < numChars) {
+			    Tk_DrawTextLayout(display, window, tagGc, textLayout,
+				x0 + originX, y0 + originY, tablePtr->selectLast, numChars);
+			}
+		    }
+
 		    if (useEllLen) {
 			clipRect.x     = x0;
 			clipRect.width = width;
@@ -2673,8 +2767,23 @@ static void TableDisplay(ClientData clientdata) {
 		    XSetClipMask(display, tagGc, None);
 #endif
 		} else {
-		    Tk_DrawTextLayout(display, window, tagGc, textLayout,
+		    /* Not clipped text */
+		    if (!activeCell || !showSelection || tablePtr->selectFirst >= tablePtr->selectLast) {
+			Tk_DrawTextLayout(display, window, tagGc, textLayout,
 			    x0 + originX, y0 + originY, 0, -1);
+		    } else {
+			if (tablePtr->selectFirst > 0) {
+			    Tk_DrawTextLayout(display, window, tagGc, textLayout,
+				x0 + originX, y0 + originY, 0, tablePtr->selectFirst);
+			}
+			Tk_DrawTextLayout(display, window, selTextGc, textLayout,
+			    x0 + originX, y0 + originY, tablePtr->selectFirst,
+			    tablePtr->selectLast);
+			if (tablePtr->selectLast < numChars) {
+			    Tk_DrawTextLayout(display, window, tagGc, textLayout,
+				x0 + originX, y0 + originY, tablePtr->selectLast, numChars);
+			}
+		    }
 		}
 
 		/* if this is the active cell draw the cursor if it's on.
@@ -2793,6 +2902,9 @@ static void TableDisplay(ClientData clientdata) {
 	}
     }
     ckfree((char *) tagPtr);
+    if (selTextPtr != NULL) {
+	ckfree((char *) selTextPtr);
+    }
 #ifdef NO_XSETCLIP
     Tk_FreePixmap(display, clipWind);
 #endif
@@ -2844,6 +2956,9 @@ static void TableDisplay(ClientData clientdata) {
 
     if (tagGc != NULL) {
 	TableFreeGc(display, tagGc);
+    }
+    if (selTextGc != NULL) {
+	TableFreeGc(display, selTextGc);
     }
     TableRedrawHighlight(tablePtr);
     /*

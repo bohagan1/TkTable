@@ -573,11 +573,13 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
 	return TCL_ERROR;
     }
 
-    objv[0] = Tcl_NewStringObj("-bg",-1);
-    objv[1] = Tcl_NewStringObj(SELECT_BG,-1);
-    objv[2] = Tcl_NewStringObj("-fg",-1);
-    objv[3] = Tcl_NewStringObj(SELECT_FG,-1);
-    if (DoTableInitTags(interp, tablePtr, 4, objv, "sel") != TCL_OK) {
+    objv[0] = Tcl_NewStringObj("-bd",-1);
+    objv[1] = Tcl_NewIntObj(tablePtr->selBorderWidth);
+    objv[2] = Tcl_NewStringObj("-bg",-1);
+    objv[3] = Tcl_NewStringObj(Tk_NameOfColor(tablePtr->selColorPtr),-1);
+    objv[4] = Tcl_NewStringObj("-fg",-1);
+    objv[5] = Tcl_NewStringObj(Tk_NameOfColor(tablePtr->selFgColorPtr),-1);
+    if (DoTableInitTags(interp, tablePtr, 6, objv, "sel") != TCL_OK) {
 	return TCL_ERROR;
     }
 
