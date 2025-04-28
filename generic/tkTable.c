@@ -2576,22 +2576,57 @@ static void TableDisplay(ClientData clientdata) {
 		    }
 #endif
 		    if (showSelection && tablePtr->selectFirst < tablePtr->selectLast) {
-			int selStartX, selEndX;
+			int selStartX, selEndX, selStartY, selEndY;
 			Tk_FontMetrics fm;
-			Tk_GetFontMetrics(tagPtr->tkfont, &fm); /* Tag is used to create layout */
+			Tk_GetFontMetrics(tagPtr->tkfont, &fm); /* Tag used to create layout */
 
-			Tk_CharBbox(textLayout, tablePtr->selectFirst,
-				&selStartX, NULL, NULL, NULL);
+			Tk_CharBbox(textLayout, tablePtr->selectFirst, &selStartX, &selStartY, NULL, NULL);
 			selStartX += x0;
-			Tk_CharBbox(textLayout, tablePtr->selectLast,
-				&selEndX, NULL, NULL, NULL);
+			selStartY += y0;
+			Tk_CharBbox(textLayout, tablePtr->selectLast, &selEndX, &selEndY, NULL, NULL);
 			selEndX += x0;
-			Tk_Fill3DRectangle(tkwin, window, selTextPtr->bg,
+			selEndY += y0;
+			if (selStartY == selEndY) {
+			    /* One line */
+			    Tk_Fill3DRectangle(tkwin, window, selTextPtr->bg,
 				selStartX + originX - tablePtr->selBorderWidth,
-				y0 + originY - tablePtr->selBorderWidth,
+				selStartY + originY - tablePtr->selBorderWidth,
 				(selEndX - selStartX) + 2*tablePtr->selBorderWidth,
 				(fm.ascent + fm.descent) + 2*tablePtr->selBorderWidth,
 				tablePtr->selBorderWidth, TK_RELIEF_FLAT);
+
+			} else {
+			    /* Multi-line */
+			    int i, selX, selY, selW, selH;
+			    for (i = tablePtr->selectFirst; i < tablePtr->selectLast; i++) {
+				/* Get bbox for char to highlight */
+				Tk_CharBbox(textLayout, i, &selX, &selY, &selW, &selH);
+				selX = selX + x0 + originX - tablePtr->selBorderWidth;
+				selY = selY + y0 + originY - tablePtr->selBorderWidth;
+				selW = selW + 2*tablePtr->selBorderWidth;
+				selH = (fm.ascent + fm.descent) + tablePtr->selBorderWidth;
+
+				/* Clip if partially or skip if fully out of view */
+				if (selX + selW < x0 || selX > x0+width) {
+				    continue;
+				} else if (selX < x0) {
+				    selW = selW - (x0 - selX);
+				    selX = x0;
+				} else if (selX+selW > x0+width) {
+				    selW = selW - ((selX+selW) - (x0+width));
+				}
+				if (selY + selH < y0 || selY > y0+height) {
+				   continue;
+				} else if (selY < y0) {
+				    selH = selH - (y0 - selY);
+				    selY = y0;
+				} else if (selY+selH > y0+height) {
+				    selH = selH - ((selY+selH) - (y0+height));
+				}
+				Tk_Fill3DRectangle(tkwin, window, selTextPtr->bg, selX, selY,
+				    selW, selH, tablePtr->selBorderWidth, TK_RELIEF_FLAT);
+			    }
+			}
 		    }
 		}
 
