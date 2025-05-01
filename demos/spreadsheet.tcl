@@ -110,7 +110,7 @@ grid columnconfig . 1 -weight 1
 grid rowconfig . 2 -weight 1
 grid config $t -sticky news
 
-bind .active <Return> [list tkTableMoveCell $t 1 0]
+bind .active <Return> [list ::tktable::MoveCell $t 0 1 0]
 
 menu .menu
 menu .menu.file
