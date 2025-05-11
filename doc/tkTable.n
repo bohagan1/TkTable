@@ -280,6 +280,12 @@ package require \fBTktable ?2\&.12?\fR
 .sp
 \fBtable\fR \fIpathName\fR ?\fIoptions\fR?
 .sp
+\fBtk_tableCopy\fR \fIpathName\fR
+.sp
+\fBtk_tableCut\fR \fIpathName\fR
+.sp
+\fBtk_tablePaste\fR \fIpathName\fR ?\fIcell\fR?
+.sp
 .BE
 .SH DESCRIPTION
 .TP
@@ -290,7 +296,6 @@ in the option database to configure aspects of the table such as its background
 color and relief\&. The \fBtree\fR command returns the path name of the new
 window\&. At the time the command is invoked, \fIpathName\fR must not exist,
 but it's parent must\&.
-.PP
 The \fBtable\fR command creates a 2-dimensional grid of cells\&.  The table
 can use a TCL array variable or TCL command for data storage and retrieval,
 as well as an optional data cache in memory for speed\&.  The default variable is
@@ -301,20 +306,34 @@ row, column, or cell (see \fBTAGS\fR for details)\&.  A cell flash can
 also be set so that edited cells will change colors for a specified amount of
 time ("blink")\&.  Cells can have embedded images or windows, as described in
 \fBTAGS\fR and \fBEMBEDDED WINDOWS\fR respectively\&.
-.PP
+.sp
 One or more cells may be selected as described below\&.  If a table is
 exporting its selection (see \fB-exportselection\fR option), then it will
 observe the standard X11 protocols for handling the selection\&.  See
 \fBTHE SELECTION\fR for details\&.
-.PP
+.sp
 It is not necessary for all the cells to be displayed in the table window at
 once; commands described below may be used to change the view in the window\&.
 Tables allow scrolling in both directions using the standard
 \fB-xscrollcommand\fR and \fB-yscrollcommand\fR options\&.  They also support
 scanning, as described below\&.
-.PP
+.sp
 In order to obtain good performance, the table widget supports multiple
 drawing modes, two of which are fully Tk compatible\&.
+.TP
+\fBtk_tableCopy\fR \fIpathName\fR
+Copies contents of selected cells in \fIpathName\fR to clipboard\&.
+.TP
+\fBtk_tableCut\fR \fIpathName\fR
+Copies contents of selected cells in \fIpathName\fR to clipboard, deletes
+the contents of the selected cells, and removes the selection\&.
+.TP
+\fBtk_tablePaste\fR \fIpathName\fR ?\fIcell\fR?
+Pastes contents of the clipboard into table \fIpathName\fR starting at cell
+\fIcell\fR or the active cell if not specified\&. If regular text data is in
+the clipboard and \fIcell\fR is the active cell, then the text will either
+replace the selected text or be inserted at the icursor position\&.
+.PP
 .SH "STANDARD OPTIONS"
 .TP
 \fB\fB-background\fR\fR
@@ -1922,8 +1941,8 @@ The virtual event <<Paste>> will paste the clipboard contents into the
 table cells\&.
 .PP
 .PP
-When a cell is active, the following bindings are available in addition or in
-place of the above bindings:
+When a cell is active, the following bindings are available in addition to or
+in place of the above bindings:
 .IP [1]
 The left or right arrow keys will move the insertion cursor left or right one
 character\&. If already at the first or last character, the cell to left or right
@@ -1966,6 +1985,15 @@ Control-k deletes from the insertion cursor to the end of the active cell\&.
 .IP [17]
 Control-minus and Control-equals decrease and increase the
 width of the column with the active cell in it\&.
+.IP [18]
+The virtual event <<Copy>> will copy the selected text in the active cell to
+the clipboard\&.
+.IP [19]
+The virtual event <<Cut>> will copy the selected text in the active cell to
+the clipboard and clear the selected text\&.
+.IP [20]
+The virtual event <<Paste>> will paste the clipboard contents into the active
+cell at the insertion cursor location replacing any selected text\&.
 .PP
 Some bindings may have slightly different behavior dependent on the
 \fB-selectionmode\fR of the widget\&.

@@ -1238,6 +1238,11 @@ static void TableDestroy(ClientData clientdata) {
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
 
+    /* Delete selection handlers */
+    if (tablePtr->tkwin != NULL) {
+	Tk_DeleteSelHandler(tablePtr->tkwin, XA_PRIMARY, XA_STRING);
+    }
+
     /* These may be repetitive from DestroyNotify, but it doesn't hurt */
     /* cancel any pending update or timer */
     if (tablePtr->flags & REDRAW_PENDING) {
@@ -1247,20 +1252,20 @@ static void TableDestroy(ClientData clientdata) {
     Tcl_DeleteTimerHandler(tablePtr->cursorTimer);
     Tcl_DeleteTimerHandler(tablePtr->flashTimer);
 
-    /* delete the variable trace */
+    /* Delete the variable trace */
     if (tablePtr->arrayVar != NULL) {
 	Tcl_UntraceVar(tablePtr->interp, tablePtr->arrayVar,
 		TCL_TRACE_WRITES | TCL_TRACE_UNSETS | TCL_GLOBAL_ONLY,
 		(Tcl_VarTraceProc *)TableVarProc, (ClientData) tablePtr);
     }
 
-    /* free the int arrays */
+    /* Free the int arrays */
     if (tablePtr->colPixels) ckfree((char *) tablePtr->colPixels);
     if (tablePtr->rowPixels) ckfree((char *) tablePtr->rowPixels);
     if (tablePtr->colStarts) ckfree((char *) tablePtr->colStarts);
     if (tablePtr->rowStarts) ckfree((char *) tablePtr->rowStarts);
 
-    /* delete cached active tag and string */
+    /* Delete cached active tag and string */
     if (tablePtr->activeTagPtr) ckfree((char *) tablePtr->activeTagPtr);
     if (tablePtr->activeBuf != NULL) ckfree(tablePtr->activeBuf);
 
@@ -1302,7 +1307,7 @@ static void TableDestroy(ClientData clientdata) {
 	TableCleanupTag(tablePtr, (TableTag *) Tcl_GetHashValue(entryPtr));
 	ckfree((char *) Tcl_GetHashValue(entryPtr));
     }
-    /* free up the stuff in the default tag */
+    /* Free up the stuff in the default tag */
     TableCleanupTag(tablePtr, &(tablePtr->defaultTag));
     /* And delete the actual hash table */
     Tcl_DeleteHashTable(tablePtr->tagTable);
@@ -1319,7 +1324,7 @@ static void TableDestroy(ClientData clientdata) {
     Tcl_DeleteHashTable(tablePtr->winTable);
     ckfree((char *) (tablePtr->winTable));
 
-    /* free the configuration options in the widget */
+    /* Free the configuration options in the widget */
     Tk_FreeOptions(tableSpecs, (char *) tablePtr, tablePtr->display, 0);
 
     /* Free selection */
@@ -1417,24 +1422,32 @@ static void TableEventProc(
 	    break;
 
 	case DestroyNotify:
-	    /* remove the command from the interpreter */
+	    /* Delete selection handlers */
+	    if (tablePtr->tkwin != NULL) {
+		Tk_DeleteSelHandler(tablePtr->tkwin, XA_PRIMARY, XA_STRING);
+	    }
+
+	    /* Remove the command from the interpreter */
 	    if (tablePtr->tkwin != NULL) {
 		tablePtr->tkwin = NULL;
 		Tcl_DeleteCommandFromToken(tablePtr->interp, tablePtr->widgetCmd);
 	    }
 
-	    /* cancel any pending update or timer */
+	    /* Cancel any pending update or timer */
 	    if (tablePtr->flags & REDRAW_PENDING) {
 		Tcl_CancelIdleCall(TableDisplay, (ClientData) tablePtr);
 		tablePtr->flags &= ~REDRAW_PENDING;
 	    }
 	    Tcl_DeleteTimerHandler(tablePtr->cursorTimer);
 	    Tcl_DeleteTimerHandler(tablePtr->flashTimer);
+	    tablePtr->cursorTimer = NULL;
+	    tablePtr->flashTimer = NULL;
 
 	    Tcl_EventuallyFree((ClientData) tablePtr, (Tcl_FreeProc *) TableDestroy);
 	    break;
 
-	case MapNotify: /* redraw table when remapped if it changed */
+	case MapNotify:
+	    /* Redraw table when remapped if it changed */
 	    if (tablePtr->flags & REDRAW_ON_MAP) {
 		tablePtr->flags &= ~REDRAW_ON_MAP;
 		Tcl_Preserve((ClientData) tablePtr);
@@ -1540,10 +1553,8 @@ static Tcl_Size TableFetchSelection(
     int numcols, numrows, code;
     const char **listArgv;
 
-    /* if we are not exporting the selection ||
-     * we have no data source, return */
-    if (!tablePtr->exportSelection ||
-	(tablePtr->dataSource == DATA_NONE)) {
+    /* if we are not exporting the selection or we have no data source, abort */
+    if (!tablePtr->exportSelection || (tablePtr->dataSource == DATA_NONE)) {
 	return -1;
     }
 

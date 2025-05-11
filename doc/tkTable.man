@@ -23,7 +23,6 @@ in the option database to configure aspects of the table such as its background
 color and relief. The [cmd tree] command returns the path name of the new
 window. At the time the command is invoked, [arg pathName] must not exist,
 but it's parent must.
-[list_end]
 
 The [cmd table] command creates a 2-dimensional grid of cells.  The table
 can use a TCL array variable or TCL command for data storage and retrieval,
@@ -49,6 +48,20 @@ scanning, as described below.
 [para]
 In order to obtain good performance, the table widget supports multiple
 drawing modes, two of which are fully Tk compatible.
+
+[call [cmd tk_tableCopy] [arg pathName]]
+Copies contents of selected cells in [arg pathName] to clipboard.
+
+[call [cmd tk_tableCut] [arg pathName]]
+Copies contents of selected cells in [arg pathName] to clipboard, deletes
+the contents of the selected cells, and removes the selection.
+
+[call [cmd tk_tablePaste] [arg pathName] [opt [arg cell]]]
+Pastes contents of the clipboard into table [arg pathName] starting at cell
+[arg cell] or the active cell if not specified. If regular text data is in
+the clipboard and [arg cell] is the active cell, then the text will either
+replace the selected text or be inserted at the icursor position.
+[list_end]
 
 [section {STANDARD OPTIONS}]
 [list_begin options]
@@ -1321,8 +1334,8 @@ table cells.
 [list_end]
 
 [para]
-When a cell is active, the following bindings are available in addition or in
-place of the above bindings:
+When a cell is active, the following bindings are available in addition to or
+in place of the above bindings:
 [list_begin enumerated]
 [enum]
 The left or right arrow keys will move the insertion cursor left or right one
@@ -1366,6 +1379,15 @@ Control-k deletes from the insertion cursor to the end of the active cell.
 [enum]
 Control-minus and Control-equals decrease and increase the
 width of the column with the active cell in it.
+[enum]
+The virtual event <<Copy>> will copy the selected text in the active cell to
+the clipboard.
+[enum]
+The virtual event <<Cut>> will copy the selected text in the active cell to
+the clipboard and clear the selected text.
+[enum]
+The virtual event <<Paste>> will paste the clipboard contents into the active
+cell at the insertion cursor location replacing any selected text.
 [list_end]
 
 Some bindings may have slightly different behavior dependent on the

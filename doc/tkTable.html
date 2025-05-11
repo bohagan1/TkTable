@@ -136,6 +136,9 @@
 </ul>
 <ul class="doctools_syntax">
 <li><a href="#1"><b class="cmd">table</b> <i class="arg">pathName</i> <span class="opt">?<i class="arg">options</i>?</span></a></li>
+<li><a href="#2"><b class="cmd">tk_tableCopy</b> <i class="arg">pathName</i></a></li>
+<li><a href="#3"><b class="cmd">tk_tableCut</b> <i class="arg">pathName</i></a></li>
+<li><a href="#4"><b class="cmd">tk_tablePaste</b> <i class="arg">pathName</i> <span class="opt">?<i class="arg">cell</i>?</span></a></li>
 </ul>
 </div>
 </div>
@@ -147,9 +150,8 @@ Additional options may be specified on the command line or
 in the option database to configure aspects of the table such as its background
 color and relief. The <b class="cmd">tree</b> command returns the path name of the new
 window. At the time the command is invoked, <i class="arg">pathName</i> must not exist,
-but it's parent must.</p></dd>
-</dl>
-<p>The <b class="cmd">table</b> command creates a 2-dimensional grid of cells.  The table
+but it's parent must.
+The <b class="cmd">table</b> command creates a 2-dimensional grid of cells.  The table
 can use a TCL array variable or TCL command for data storage and retrieval,
 as well as an optional data cache in memory for speed.  The default variable is
 <b class="variable">::tableData</b>. The widget has an active cell, the contents of which can be
@@ -169,7 +171,18 @@ Tables allow scrolling in both directions using the standard
 <b class="option">-xscrollcommand</b> and <b class="option">-yscrollcommand</b> options.  They also support
 scanning, as described below.</p>
 <p>In order to obtain good performance, the table widget supports multiple
-drawing modes, two of which are fully Tk compatible.</p>
+drawing modes, two of which are fully Tk compatible.</p></dd>
+<dt><a name="2"><b class="cmd">tk_tableCopy</b> <i class="arg">pathName</i></a></dt>
+<dd><p>Copies contents of selected cells in <i class="arg">pathName</i> to clipboard.</p></dd>
+<dt><a name="3"><b class="cmd">tk_tableCut</b> <i class="arg">pathName</i></a></dt>
+<dd><p>Copies contents of selected cells in <i class="arg">pathName</i> to clipboard, deletes
+the contents of the selected cells, and removes the selection.</p></dd>
+<dt><a name="4"><b class="cmd">tk_tablePaste</b> <i class="arg">pathName</i> <span class="opt">?<i class="arg">cell</i>?</span></a></dt>
+<dd><p>Pastes contents of the clipboard into table <i class="arg">pathName</i> starting at cell
+<i class="arg">cell</i> or the active cell if not specified. If regular text data is in
+the clipboard and <i class="arg">cell</i> is the active cell, then the text will either
+replace the selected text or be inserted at the icursor position.</p></dd>
+</dl>
 </div>
 <div id="section2" class="doctools_section"><h2><a name="section2">STANDARD OPTIONS</a></h2>
 <dl class="doctools_options">
@@ -1375,8 +1388,8 @@ clipboard and clear the cells.</p></li>
 <li><p>The virtual event &lt;&lt;Paste&gt;&gt; will paste the clipboard contents into the
 table cells.</p></li>
 </ol>
-<p>When a cell is active, the following bindings are available in addition or in
-place of the above bindings:</p>
+<p>When a cell is active, the following bindings are available in addition to or
+in place of the above bindings:</p>
 <ol class="doctools_enumerated">
 <li><p>The left or right arrow keys will move the insertion cursor left or right one
 character. If already at the first or last character, the cell to left or right
@@ -1403,6 +1416,12 @@ discarding any edits that have may been performed on the cell.</p></li>
 <li><p>Control-k deletes from the insertion cursor to the end of the active cell.</p></li>
 <li><p>Control-minus and Control-equals decrease and increase the
 width of the column with the active cell in it.</p></li>
+<li><p>The virtual event &lt;&lt;Copy&gt;&gt; will copy the selected text in the active cell to
+the clipboard.</p></li>
+<li><p>The virtual event &lt;&lt;Cut&gt;&gt; will copy the selected text in the active cell to
+the clipboard and clear the selected text.</p></li>
+<li><p>The virtual event &lt;&lt;Paste&gt;&gt; will paste the clipboard contents into the active
+cell at the insertion cursor location replacing any selected text.</p></li>
 </ol>
 <p>Some bindings may have slightly different behavior dependent on the
 <b class="option">-selectionmode</b> of the widget.</p>
