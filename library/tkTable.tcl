@@ -211,11 +211,9 @@ bind Table <Mod3-Control-End>	{ %W xview moveto 1.0 }
 # Other key navigation
 bind Table <Return>		{ ::tktable::MoveCell %W 0 1 0 }
 bind Table <Shift-Return>	{ ::tktable::MoveCell %W 0 -1 0 }
-bind Table <Alt-Return>		{ ::tktable::Insert %W "\n" }
 bind Table <Control-Return>	{ ::tktable::ToggleFocus %W }
 bind Table <Tab>		{ ::tktable::MoveCell %W 1 0 0; break }
 bind Table <Shift-Tab>		{ ::tktable::MoveCell %W -1 0 end; break }
-bind Table <Alt-Tab>		{ ::tktable::Insert %W "\t" }
 bind Table <Control-Tab>	[bind all <<NextWindow>>]
 bind Table <Control-Shift-Tab>	[bind all <<PrevWindow>>]
 
@@ -229,12 +227,14 @@ bind Table <Select>		{ ::tktable::BeginSelect %W [%W index active] }
 bind Table <Shift-Select>	{ ::tktable::BeginExtend %W [%W index active] }
 
 # Cell edit functions
+bind Table <Alt-Return>		{ ::tktable::Insert %W "\n" }
 bind Table <KeyPress>		{ ::tktable::Insert %W %A }
 bind Table <BackSpace>		{ ::tktable::BackSpace %W }
 bind Table <Delete>		{ ::tktable::Delete %W }
 bind Table <Escape>		{ %W reread }
 bind Table <Control-e>		{ %W icursor end }
 bind Table <Control-a>		{ %W icursor 0 }
+bind Table <Control-i>		{ ::tktable::Insert %W "\t" }
 bind Table <Control-k>		{ %W delete active insert end }
 
 # Column resize functions
@@ -311,16 +311,30 @@ proc ::tktable::MoveHandler {w op edit extend} {
 		}
 	    }
 	    "up" {
-		# Move up 1 cell, keep same position
-		incr row -1
-		#set pos end
-		#set orig -1
+		# Move up 1 line or cell, keep same position
+		set val [$w curvalue]
+		set index [string first \n $val]
+		if {$index > -1 && $index < $pos} {
+		    set pos [expr {$pos - $index - 1}]
+		} else {
+		    incr row -1
+		    set pos [format "nl+%d" $pos]
+		}
 	    }
 	    "down" {
-		# Move down 1 cell, keep same position
-		incr row
-		#set pos 0
-		#set orig -1
+		# Move down 1 line or cell, keep same position
+		set val [$w curvalue]
+		set index [string first \n $val $pos]
+		if {$index > -1} {
+		    set last [string last \n $val [expr {$pos - 1}]]
+		    if {$last == -1} {set last 0}
+		    set pos [expr {$pos - $last + $index + 1}]
+		} else {
+		    set last [string last \n $val [expr {$pos - 1}]]
+		    incr last
+		    incr row
+		    set pos [expr {$pos - $last}]
+		}
 	    }
 	    default {
 		return
@@ -1085,7 +1099,15 @@ proc ::tktable::MoveCell {w x y {index {}}} {
 
     # Move icursor index
     if {$index ne ""} {
+	if {[string match "nl*" $index]} {
+	    set val [$w curvalue]
+	    set last [string last \n $val]
+	    incr last
+	    scan $index "nl+%d" offset
+	    set index [expr {$last + $offset}]
+	}
 	$w icursor $index
+	$w selection active 0
     }
 }
 

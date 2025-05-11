@@ -1972,14 +1972,14 @@ the left of the current cell\&.
 .IP [11]
 Alt-Return inserts a newline character\&.
 .IP [12]
-Alt-Tab inserts a tab character\&.
-.IP [13]
 Escape rereads the value of the active cell from the specified data source,
 discarding any edits that have may been performed on the cell\&.
-.IP [14]
+.IP [13]
 Control-a moves the insertion cursor to the beginning of the active cell\&.
-.IP [15]
+.IP [14]
 Control-e moves the insertion cursor to the end of the active cell\&.
+.IP [15]
+Control-i inserts a tab character\&.
 .IP [16]
 Control-k deletes from the insertion cursor to the end of the active cell\&.
 .IP [17]

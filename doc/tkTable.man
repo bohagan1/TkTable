@@ -1366,14 +1366,14 @@ the left of the current cell.
 [enum]
 Alt-Return inserts a newline character.
 [enum]
-Alt-Tab inserts a tab character.
-[enum]
 Escape rereads the value of the active cell from the specified data source,
 discarding any edits that have may been performed on the cell.
 [enum]
 Control-a moves the insertion cursor to the beginning of the active cell.
 [enum]
 Control-e moves the insertion cursor to the end of the active cell.
+[enum]
+Control-i inserts a tab character.
 [enum]
 Control-k deletes from the insertion cursor to the end of the active cell.
 [enum]
