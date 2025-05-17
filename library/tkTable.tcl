@@ -1322,7 +1322,7 @@ proc ::tktable::ChangeWidth {w i a} {
 #
 proc ::tktable::Selection_Get {w} {
     set result ""
-
+    
     # Commit any edits to active cell
     if {![catch {$w index active} active]} {
 	$w set $active [$w curvalue]
@@ -1529,7 +1529,7 @@ proc ::tktable::Clipboard_Get {w} {
 #
 # Arguments:
 # w -		Name of a table widget.
-# cell -	Cell to pasting into.
+# cell -	Cell to paste text into.
 # text -	Text to paste into cell.
 #
 proc ::tktable::Update_Cell {w cell text} {
@@ -1538,20 +1538,13 @@ proc ::tktable::Update_Cell {w cell text} {
     }
 
     if {$cell eq $active} {
-	set current [$w curvalue]
 	lassign [$w selection active] start end
 	if {$start ne ""} {
-	    set new [string replace $current $start $end $text]
-	    set pos [expr {$start + [string length $text]}]
+	    $w delete active $start $end
+	    $w insert active $start $text
 	} else {
-	    set pos [$w icursor]
-	    set new [string cat [string range $current 0 [expr {$pos - 1}]] \
-		$text [string range $current $pos end]]
-	    incr pos [string length $text]
+	    $w insert active insert $text
 	}
-	$w set $cell $new
-	$w selection active 0
-	$w icursor $pos
     } else {
 	$w set $cell $text
     }
