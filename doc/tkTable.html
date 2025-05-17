@@ -235,7 +235,7 @@ replace the selected text or be inserted at the icursor position.</p></dd>
 <dt><b class="option"><b class="option">-yscrollcommand</b></b></dt>
 <dd></dd>
 </dl>
-<p>See the <b class="syscmd">option</b> manual entry for details on the standard options.</p>
+<p>See the <b class="syscmd">options</b> manual entry for details on the standard options.</p>
 </div>
 <div id="section3" class="doctools_section"><h2><a name="section3">WIDGET SPECIFIC OPTIONS</a></h2>
 <dl class="doctools_tkoptions">
@@ -1323,13 +1323,12 @@ become visible.</p></dd>
 <div id="section12" class="doctools_section"><h2><a name="section12">DEFAULT BINDINGS</a></h2>
 <p>The default class bindings are:</p>
 <ol class="doctools_enumerated">
-<li><p>When <b class="option">-mode</b> is <b class="const">table</b>, clicking Button-1 in a cell activates that
-cell. If <b class="option">-selectmode</b> is not <b class="const">multiple</b>, all other cells are
-unselected. Clicking into an already active cell moves the insertion cursor to
-the character nearest the mouse pointer. When <b class="option">-mode</b> is <b class="const">spreadsheet</b>,
-clicking Button-1 in a cell gives that cell the focus for keyboard navigation.
-A Double-Button-1 will activate that cell. A Triple-Button-1, will move the
-insertion cursor to the character nearest the mouse.</p></li>
+<li><p>If <b class="option">-mode</b> is <b class="const">table</b>, pressing Button-1 in a cell <b class="cmd">activate</b>s that
+cell and moves the insertion cursor to the character nearest the mouse pointer.
+If <b class="option">-selectmode</b> is not <b class="const">multiple</b>, all other cells are unselected.
+If <b class="option">-mode</b> is <b class="const">spreadsheet</b>, pressing Button-1 in a cell only gives
+that cell the <b class="cmd">focus</b> for keyboard navigation. A Double-Button-1 will activate
+that cell and move the insertion cursor to the character nearest the mouse.</p></li>
 <li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, moving the mouse while Button-1 is
 pressed will stroke out a selection area. Exiting the window while Button-1 is
 pressed, will cause scanning to occur on the table along with extending the

@@ -384,7 +384,7 @@ replace the selected text or be inserted at the icursor position\&.
 .TP
 \fB\fB-yscrollcommand\fR\fR
 .PP
-See the \fBoption\fR manual entry for details on the standard options\&.
+See the \fBoptions\fR manual entry for details on the standard options\&.
 .SH "WIDGET SPECIFIC OPTIONS"
 .LP
 .nf
@@ -1843,13 +1843,12 @@ become visible\&.
 .PP
 The default class bindings are:
 .IP [1]
-When \fB-mode\fR is \fBtable\fR, clicking Button-1 in a cell activates that
-cell\&. If \fB-selectmode\fR is not \fBmultiple\fR, all other cells are
-unselected\&. Clicking into an already active cell moves the insertion cursor to
-the character nearest the mouse pointer\&. When \fB-mode\fR is \fBspreadsheet\fR,
-clicking Button-1 in a cell gives that cell the focus for keyboard navigation\&.
-A Double-Button-1 will activate that cell\&. A Triple-Button-1, will move the
-insertion cursor to the character nearest the mouse\&.
+If \fB-mode\fR is \fBtable\fR, pressing Button-1 in a cell \fBactivate\fRs that
+cell and moves the insertion cursor to the character nearest the mouse pointer\&.
+If \fB-selectmode\fR is not \fBmultiple\fR, all other cells are unselected\&.
+If \fB-mode\fR is \fBspreadsheet\fR, pressing Button-1 in a cell only gives
+that cell the \fBfocus\fR for keyboard navigation\&. A Double-Button-1 will activate
+that cell and move the insertion cursor to the character nearest the mouse\&.
 .IP [2]
 When \fB-selectmode\fR is \fBextended\fR, moving the mouse while Button-1 is
 pressed will stroke out a selection area\&. Exiting the window while Button-1 is

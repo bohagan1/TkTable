@@ -90,7 +90,7 @@ replace the selected text or be inserted at the icursor position.
 [opt_def [option -xscrollcommand]]
 [opt_def [option -yscrollcommand]]
 [list_end]
-See the [syscmd option] manual entry for details on the standard options.
+See the [syscmd options] manual entry for details on the standard options.
 
 [section {WIDGET SPECIFIC OPTIONS}]
 [list_begin tkoptions]
@@ -1234,13 +1234,12 @@ become visible.
 The default class bindings are:
 [list_begin enumerated]
 [enum]
-When [option -mode] is [const table], clicking Button-1 in a cell activates that
-cell. If [option -selectmode] is not [const multiple], all other cells are
-unselected. Clicking into an already active cell moves the insertion cursor to
-the character nearest the mouse pointer. When [option -mode] is [const spreadsheet],
-clicking Button-1 in a cell gives that cell the focus for keyboard navigation.
-A Double-Button-1 will activate that cell. A Triple-Button-1, will move the
-insertion cursor to the character nearest the mouse.
+If [option -mode] is [const table], pressing Button-1 in a cell [cmd activate]s that
+cell and moves the insertion cursor to the character nearest the mouse pointer.
+If [option -selectmode] is not [const multiple], all other cells are unselected.
+If [option -mode] is [const spreadsheet], pressing Button-1 in a cell only gives
+that cell the [cmd focus] for keyboard navigation. A Double-Button-1 will activate
+that cell and move the insertion cursor to the character nearest the mouse.
 [enum]
 When [option -selectmode] is [const extended], moving the mouse while Button-1 is
 pressed will stroke out a selection area. Exiting the window while Button-1 is

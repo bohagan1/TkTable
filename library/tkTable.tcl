@@ -56,8 +56,8 @@ bind Table <B1-Motion>		{ ::tktable::B1Motion %W %x %y }
 bind Table <ButtonRelease-1>	{ ::tktable::B1Release %W %x %y }
 bind Table <Double-Button-1>	{ ::tktable::DoubleButton1 %W %x %y }
 
-bind Table <Shift-1>		{ ::tktable::BeginExtend %W [%W index @%x,%y] }
-bind Table <<ToggleSelection>>	{ ::tktable::BeginToggle %W [%W index @%x,%y] }
+bind Table <Shift-1>		{ ::tktable::BeginExtend %W @%x,%y }
+bind Table <<ToggleSelection>>	{ ::tktable::BeginToggle %W @%x,%y }
 bind Table <B1-Enter>		{ ::tktable::CancelRepeat}
 bind Table <B1-Leave>		{
     if {$::tktable::Priv(borderInfo) eq ""} {
@@ -223,8 +223,8 @@ bind Table <<SelectAll>>	{ ::tktable::SelectAll %W }
 bind Table <<SelectNone>>	{ ::tktable::SelectNone %W }
 bind Table <Shift-space>	{ ::tktable::SelectRow %W }
 bind Table <Control-space>	{ ::tktable::SelectColumn %W }
-bind Table <Select>		{ ::tktable::BeginSelect %W [%W index active] }
-bind Table <Shift-Select>	{ ::tktable::BeginExtend %W [%W index active] }
+bind Table <Select>		{ ::tktable::BeginSelect %W active }
+bind Table <Shift-Select>	{ ::tktable::BeginExtend %W active }
 
 # Cell edit functions
 bind Table <Alt-Return>		{ ::tktable::Insert %W "\n" }
@@ -716,7 +716,7 @@ proc ::tktable::Button1 {w x y} {
     # Only do this when a border wasn't selected
     if {$Priv(borderInfo) eq ""} {
 	if {[winfo exists $w]} {
-	    ::tktable::BeginSelect $w [$w index @$x,$y]
+	    ::tktable::BeginSelect $w @$x,$y
 	    focus $w
 	}
 	set fn [expr {[$w cget -mode] eq "table" ? "activate" : "focus"}]
@@ -784,11 +784,17 @@ proc ::tktable::B1Motion {w x y} {
 proc ::tktable::B1Release {w x y} {
     if {$::tktable::Priv(borderInfo) eq "" && [winfo exists $w]} {
 	::tktable::CancelRepeat
-	set fn $::tktable::Priv(bindingMode)
-	if {$fn eq "focus"} {
+	set cell [format "@%d,%d" $x $y]
+	if {$::tktable::Priv(bindingMode) eq "focus"} {
 	    $w activate {}
+	    $w focus $cell
+	} else {
+	    if {[catch {$w index active} old]} {set old ""}
+	    $w activate $cell
+	    if {[$w index active] ne $old} {
+		after idle [list $w activate $cell]
+	    }
 	}
-	$w $fn [format "@%d,%d" $x $y]
     }
 }
 
@@ -826,6 +832,7 @@ proc ::tktable::DoubleButton1 {w x y} {
 #
 proc ::tktable::BeginSelect {w el} {
     variable Priv
+    set el [$w index $el]
     if {[scan $el %d,%d r c] != 2} return
     $w selection active 0
     switch [$w cget -selectmode] {
@@ -879,7 +886,7 @@ proc ::tktable::BeginSelect {w el} {
 	    set Priv(tablePrev) $el
 	}
 	default {
-	    if {![$w tag includes title $el]} {
+	    if {[$w cget -selecttitle] || ![$w tag includes title $el]} {
 		$w selection clear all
 		$w selection set $el
 		set Priv(tablePrev) $el
@@ -959,7 +966,7 @@ proc ::tktable::BeginExtend {w el} {
     # avoid tables that have no anchor index yet.
     if {[catch {$w index anchor}]} { return }
     if {[$w cget -selectmode] eq "extended" && [$w selection includes anchor]} {
-	::tktable::Motion $w $el
+	::tktable::Motion $w [$w index $el]
     }
 }
 
@@ -979,6 +986,7 @@ proc ::tktable::BeginExtend {w el} {
 proc ::tktable::BeginToggle {w el} {
     if {[$w cget -selectmode] eq "extended"} {
 	variable Priv
+	set el [$w index $el]
 	set Priv(tablePrev) $el
 	$w selection anchor $el
 	if {[$w tag includes title $el]} {
@@ -1314,7 +1322,7 @@ proc ::tktable::ChangeWidth {w i a} {
 #
 proc ::tktable::Selection_Get {w} {
     set result ""
-    
+
     # Commit any edits to active cell
     if {![catch {$w index active} active]} {
 	$w set $active [$w curvalue]
