@@ -24,7 +24,7 @@
 namespace eval ::tktable {
     variable Priv
     array set Priv [list x 0 y 0 afterId {} mouseMoved 0 \
-	    borderInfo {} borderB1 1 bindingMode focus]
+	    borderInfo {} borderB1 1 bindingMode focus hidden {}]
     namespace export tk_tableCopy tk_tableCut tk_tablePaste
 }
 
@@ -661,9 +661,9 @@ proc ::tktable::Insert {w s} {
 # Returns nothing
 #
 proc ::tktable::BackSpace {w} {
-    set cur [$w icursor]
-    if {$cur > 0} {
-	$w delete active [incr cur -1]
+    set index [$w icursor]
+    if {$index > 0} {
+	$w delete active [incr index -1]
     }
 }
 
@@ -1061,6 +1061,8 @@ proc ::tktable::AutoScan {w} {
 #	index = New icursor index
 #
 proc ::tktable::MoveCell {w x y {index {}}} {
+    variable Priv
+
     if {![catch {$w index active} cell]} {
 	set fn activate
     } elseif {![catch {$w index focus} cell]} {
@@ -1068,24 +1070,41 @@ proc ::tktable::MoveCell {w x y {index {}}} {
     } else {
 	return
     }
-
     set orig $cell
+
+    if {$Priv(hidden) ne "" && [$w hidden $Priv(hidden)] eq $cell} {
+	set cell $Priv(hidden)
+    }
+
     lassign [split $cell ","] r c
     lassign [split [$w index origin] ","] r0 c0
     lassign [split [$w index end] ","] r1 c1
-    incr c $x
-    if {$c < $c0} {set c $c0} elseif {$c > $c1} {set c $c1}
-    incr r $y
-    if {$r < $r0} {set r $r0} elseif {$r > $r1} {set r $r1}
 
-    set cell [format "%d,%d" $r $c]
-    set new [$w hidden $cell]
-    if {$new ne "" && $new ne $cell} {
-	set cell $new
-    }
-    # We couldn't find a non-hidden cell, just don't move
-    if {$cell eq $orig} {
-	return
+    # Find next cell
+    while 1 {
+	incr c $x
+	if {$c < $c0} {set c $c0} elseif {$c > $c1} {set c $c1}
+	incr r $y
+	if {$r < $r0} {set r $r0} elseif {$r > $r1} {set r $r1}
+	set cell [format "%d,%d" $r $c]
+
+	# Abort if we couldn't find a next cell
+	if {$cell eq $orig} {
+	    return
+	}
+
+	# Skip hidden cells
+	set hidden [$w hidden $cell]
+	if {$hidden eq ""} {
+	    set Priv(hidden) ""
+	    break
+	} elseif {$hidden ne "" && $hidden ne $orig} {
+	    set Priv(hidden) $cell
+	    set cell $hidden
+	    break
+	}
+	if {$x > 0} {set x 1} elseif {$x < 0} {set x -1}
+	if {$y > 0} {set y 1} elseif {$y < 0} {set y -1}
     }
 
     # Move to new cell
@@ -1097,7 +1116,6 @@ proc ::tktable::MoveCell {w x y {index {}}} {
 	    $w selection set $cell
 	}
 	extended {
-	    variable Priv
 	    $w selection clear all
 	    $w selection set $cell
 	    $w selection anchor $cell
@@ -1322,7 +1340,7 @@ proc ::tktable::ChangeWidth {w i a} {
 #
 proc ::tktable::Selection_Get {w} {
     set result ""
-    
+
     # Commit any edits to active cell
     if {![catch {$w index active} active]} {
 	$w set $active [$w curvalue]
