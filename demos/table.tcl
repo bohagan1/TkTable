@@ -11,7 +11,7 @@ proc create_menubar {w table} {
     set m [menu $w]
 
     # Add items
-    foreach name [list file edit settings column row cell help] {
+    foreach name [list file edit column row cell help] {
 	set title [string totitle $name]
 	set $name [menu [format "%s.%s" $m $name] -title $title -tearoff 0]
 	$m add cascade -label $title -menu [set $name]
@@ -36,13 +36,59 @@ proc create_menubar {w table} {
 	}
     }
 
-    # Settings menu
-
     # Column menu
+    # Column: -cols, -colorigin, -colwidth, -colstretchmode, -titlecols
+    foreach {name fn} [list \
+	"Delete" delete_col \
+	"Insert Before" insert_before \
+	"Insert After" insert_after \
+	- - \
+	"Hide" none \
+	"Unhide" none \
+	- - \
+	"Sort" none] {
+	if {$name ne "-"} {
+	    $column add command -label $name -command [list perform_fn $table $fn] \
+		-state [expr {$fn ne "none" ? "normal" : "disabled"}]
+	} else {
+	    $column add separator
+	}
+    }
 
     # Row menu
+    # Row: -rows, -roworigin, -titlerows
+    foreach {name fn} [list \
+	"Delete" delete_row \
+	"Insert Above" insert_above \
+	"Insert Below" insert_below \
+	- - \
+	"Hide" none \
+	"Unhide" none \
+	- - \
+	"Sort" none] {
+	if {$name ne "-"} {
+	    $row add command -label $name -command [list perform_fn $table $fn] \
+		-state [expr {$fn ne "none" ? "normal" : "disabled"}]
+	} else {
+	    $row add separator
+	}
+    }
 
     # Cell menu
+    # clear contents, reset, sort
+    foreach {name fn} [list \
+	"Clear" curvalue \
+	"Abort Changes" reread \
+	- - \
+	"Make Span" spans \
+	"Remove Span" nospan] {
+	if {$name ne "-"} {
+	    $cell add command -label $name -command [list perform_fn $table $fn] \
+		-state [expr {$fn ne "none" ? "normal" : "disabled"}]
+	} else {
+	    $cell add separator
+	}
+    }
 
     return $m
 }
@@ -292,9 +338,6 @@ proc modes_toolbar {w table} {
     return $f
 }
 
-# Column: -cols, -colorigin, -colwidth, -colstretchmode, -titlecols
-# Row: -rows, -roworigin, -titlerows
-
 #
 # Get max size
 #
@@ -329,6 +372,62 @@ proc get_selection {w var} {
 proc clear_selection {w var} {
     $w selection clear all
     set $var ""
+}
+
+#
+#
+#
+proc perform_fn {w fn} {
+    if {[catch {$w index active} cell] &&  [catch {$w index focus} cell]} {
+	return
+    }
+    lassign [split $cell ","] row col
+    switch -- $fn {
+	"curvalue" {
+	    $w curvalue {}
+	}
+	"insert_above" {
+	    $w insert rows -- $row -1
+	}
+	"insert_below" {
+	    $w insert rows -- $row 1
+	}
+	"insert_before" {
+	    $w insert cols -- $col -1
+	}
+	"insert_after" {
+	    $w insert cols -- $col 1
+	}
+	"delete_col" {
+	    $w delete cols -- $col
+	}
+	"delete_row" {
+	    $w delete rows -- $row
+	}
+	"nospan" {
+	    $w spans $cell 0,0
+	}
+	"reread" {
+	    $w reread
+	}
+	"spans" {
+	    lassign [lrepeat 2 {*}[split $cell ","]] r1 c1 r2 c2
+	    foreach cell [$w curselection] {
+		lassign [split $cell ","] r c
+		if {$r < $r1} {set r1 $r}
+		if {$r > $r2} {set r2 $r}
+		if {$c < $c1} {set c1 $c}
+		if {$c > $c2} {set c2 $c}
+	    }
+	    if {$r2 > $r1 || $c2 > $c1} {
+		set cell [format "%d,%d" $r1 $c1]
+		$w spans $cell [format "%d,%d" [expr {$r2 - $r1}] [expr {$c2 - $c1}]]
+		$w selection clear all
+		$w activate $cell
+		$w selection set $cell
+	    }
+	}
+    }
 }
 
 #
