@@ -698,7 +698,7 @@ int Table_PostscriptCmd(
      *--------------------------------------------------------
      */
 
-    sprintf(string, " %d,%d => %d,%d\n", firstRow, firstCol, lastRow, lastCol);
+    snprintf(string, STRING_LENGTH, " %d,%d => %d,%d\n", firstRow, firstCol, lastRow, lastCol);
     Tcl_DStringAppendAll(&postscript,
 			 "%!PS-Adobe-3.0 EPSF-3.0\n",
 			 "%%Creator: Tk Table Widget ", PACKAGE_VERSION, "\n",
@@ -707,7 +707,7 @@ int Table_PostscriptCmd(
 			 "%%BoundingBox: ",
 			 (char *) NULL);
     if (!psInfo.rotate) {
-	sprintf(string, "%d %d %d %d\n",
+	snprintf(string, STRING_LENGTH, "%d %d %d %d\n",
 		(int) (psInfo.pageX + psInfo.scale*deltaX),
 		(int) (psInfo.pageY + psInfo.scale*deltaY),
 		(int) (psInfo.pageX + psInfo.scale*(deltaX + psInfo.width)
@@ -715,7 +715,7 @@ int Table_PostscriptCmd(
 		(int) (psInfo.pageY + psInfo.scale*(deltaY + psInfo.height)
 		       + 1.0));
     } else {
-	sprintf(string, "%d %d %d %d\n",
+	snprintf(string, STRING_LENGTH, "%d %d %d %d\n",
 		(int) (psInfo.pageX - psInfo.scale*(deltaY + psInfo.height)),
 		(int) (psInfo.pageY + psInfo.scale*deltaX),
 		(int) (psInfo.pageX - psInfo.scale*deltaY + 1.0),
@@ -729,8 +729,9 @@ int Table_PostscriptCmd(
 			 (char *) NULL);
     p = "%%DocumentNeededResources: font ";
     for (hPtr = Tcl_FirstHashEntry(&psInfo.fontTable, &search);
-	 hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-	sprintf(string, "%s%s\n", p, (char *) Tcl_GetHashKey(&psInfo.fontTable, hPtr));
+	    hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
+	snprintf(string, STRING_LENGTH, "%s%s\n", p,
+	    (char *) Tcl_GetHashKey(&psInfo.fontTable, hPtr));
 	Tcl_DStringAppend(&postscript, string, -1);
 	p = "%%+ font ";
     }
@@ -754,11 +755,11 @@ int Table_PostscriptCmd(
      * This is where we start using &postscript
      */
 
-    sprintf(string, "/CL %d def\n", psInfo.colorLevel);
+    snprintf(string, STRING_LENGTH, "/CL %d def\n", psInfo.colorLevel);
     Tcl_DStringAppendAll(&postscript, "%%BeginSetup\n", string, (char *) NULL);
     for (hPtr = Tcl_FirstHashEntry(&psInfo.fontTable, &search);
 	 hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-	sprintf(string, "%s%s\n", "%%IncludeResource: font ",
+	snprintf(string, STRING_LENGTH, "%s%s\n", "%%IncludeResource: font ",
 		(char *) Tcl_GetHashKey(&psInfo.fontTable, hPtr));
 	Tcl_DStringAppend(&postscript, string, -1);
     }
@@ -770,15 +771,15 @@ int Table_PostscriptCmd(
      * and set clip region.
      */
 
-    sprintf(string, "%.1f %.1f translate\n",
+    snprintf(string, STRING_LENGTH, "%.1f %.1f translate\n",
 	    psInfo.pageX, psInfo.pageY);
     Tcl_DStringAppendAll(&postscript, "%%Page: 1 1\nsave\n",
 			 string, psInfo.rotate?"90 rotate\n":"",
 			 (char *) NULL);
-    sprintf(string, "%.4g %.4g scale\n%d %d translate\n",
+    snprintf(string, STRING_LENGTH, "%.4g %.4g scale\n%d %d translate\n",
 	    psInfo.scale, psInfo.scale, deltaX - psInfo.x, deltaY);
     Tcl_DStringAppend(&postscript, string, -1);
-    sprintf(string, "%d %.15g moveto %d %.15g lineto %d %.15g lineto %d %.15g",
+    snprintf(string, STRING_LENGTH, "%d %.15g moveto %d %.15g lineto %d %.15g lineto %d %.15g",
 	    psInfo.x, (double) psInfo.y2-psInfo.y,
 	    psInfo.x2,(double) psInfo.y2-psInfo.y,
 	    psInfo.x2, 0.0, psInfo.x, 0.0);
@@ -837,7 +838,7 @@ int Table_PostscriptCmd(
 	    }
 	    /* Does this have a cell tag */
 	    TableMakeArrayIndex(row+tablePtr->rowOffset,
-				col+tablePtr->colOffset, string);
+		col+tablePtr->colOffset, string, STRING_LENGTH);
 	    hPtr = Tcl_FindHashEntry(tablePtr->cellStyles, string);
 	    if (hPtr != NULL) {
 		TableMergeTag(tablePtr, tagPtr, (TableTag *) Tcl_GetHashValue(hPtr));
@@ -862,29 +863,29 @@ int Table_PostscriptCmd(
 	    if (result != TCL_OK) {
 		char msg[64 + TCL_INTEGER_SPACE];
 
-		sprintf(msg, "\n    (generating Postscript for cell %s)",
+		snprintf(msg, STRING_LENGTH, "\n    (generating Postscript for cell %s)",
 			string);
 		Tcl_AddErrorInfo(interp, msg);
 		goto cleanup;
 	    }
 	    Tcl_DStringAppend(&buffer, Tcl_GetStringResult(interp), -1);
 	}
-	sprintf(string, "/row%d %d def\n", row, tablePtr->psInfoPtr->y2 - total);
+	snprintf(string, STRING_LENGTH, "/row%d %d def\n", row, tablePtr->psInfoPtr->y2 - total);
 	Tcl_DStringAppend(&postscript, string, -1);
 	total += rowHeight + tablePtr->defaultTag.bd[0] + tablePtr->defaultTag.bd[2];
     }
     Tcl_DStringAppend(&buffer, "grestore\n", -1);
-    sprintf(string, "/row%d %d def\n", row, tablePtr->psInfoPtr->y2 - total);
+    snprintf(string, STRING_LENGTH, "/row%d %d def\n", row, tablePtr->psInfoPtr->y2 - total);
     Tcl_DStringAppend(&postscript, string, -1);
 
     total = 0;
     for (col = firstCol; col <= lastCol; col++) {
-	sprintf(string, "/col%d %d def\n", col, total);
+	snprintf(string, STRING_LENGTH, "/col%d %d def\n", col, total);
 	Tcl_DStringAppend(&postscript, string, -1);
 	total += colWidths[col-firstCol] + tablePtr->defaultTag.bd[1] +
 	    tablePtr->defaultTag.bd[3];
     }
-    sprintf(string, "/col%d %d def\n", col, total);
+    snprintf(string, STRING_LENGTH, "/col%d %d def\n", col, total);
     Tcl_DStringAppend(&postscript, string, -1);
 
     Tcl_DStringAppend(&postscript, Tcl_DStringValue(&buffer), -1);
@@ -1034,7 +1035,7 @@ int Tk_TablePsColor(
     green = ((double) (tmp >> 8))/255.0;
     tmp = colorPtr->blue;
     blue = ((double) (tmp >> 8))/255.0;
-    sprintf(string, "%.3f %.3f %.3f AdjustColor\n",
+    snprintf(string, 200, "%.3f %.3f %.3f AdjustColor\n",
 	    red, green, blue);
     Tcl_AppendResult(interp, string, (char *) NULL);
     return TCL_OK;
@@ -1120,7 +1121,7 @@ int Tk_TablePsFont(
     points = Tk_PostscriptFontName(tkfont, &ds);
 
 findfont:
-    sprintf(pointString, "%d", points);
+    snprintf(pointString, TCL_INTEGER_SPACE, "%d", points);
     Tcl_AppendResult(interp, pointString, " /", Tcl_DStringValue(&ds),
 		     " SetFont\n", (char *) NULL);
     Tcl_CreateHashEntry(&psInfoPtr->fontTable, Tcl_DStringValue(&ds), &i);
@@ -1247,10 +1248,10 @@ static int TextToPostscript(
 	return TCL_ERROR;
     }
 
-    sprintf(buffer, "%% %.15g %.15g [\n", (tagX+width)/2.0,
+    snprintf(buffer, 500, "%% %.15g %.15g [\n", (tagX+width)/2.0,
 	    tablePtr->psInfoPtr->y2 - ((tagY+height)/2.0));
     Tcl_AppendResult(interp, buffer, (char *) NULL);
-    sprintf(buffer, "col%d row%d [\n", col, row);
+    snprintf(buffer, 500, "col%d row%d [\n", col, row);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
 
     Tk_TextLayoutToPostscript(interp, textLayout);
@@ -1276,7 +1277,7 @@ static int TextToPostscript(
     }
 
     Tk_GetFontMetrics(tagPtr->tkfont, &fm);
-    sprintf(buffer, "] %d %g %g %s %d %d DrawCellText\n",
+    snprintf(buffer, 500, "] %d %g %g %s %d %d DrawCellText\n",
 	    fm.linespace, (x / -2.0), (y / 2.0), justify,
 	    width, height);
     Tcl_AppendResult(interp, buffer, (char *) NULL);

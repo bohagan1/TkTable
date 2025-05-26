@@ -101,12 +101,12 @@ static void TableModifyRC(
     }
     for (j = lo; j <= hi; j++) {
 	if (doRows /* rows */) {
-	    TableMakeArrayIndex(from, j, buf);
-	    TableMakeArrayIndex(to, j, buf1);
+	    TableMakeArrayIndex(from, j, buf, INDEX_BUFSIZE);
+	    TableMakeArrayIndex(to, j, buf1, INDEX_BUFSIZE);
 	    TableMoveCellValue(tablePtr, to, j, buf1, from, j, buf, outOfBounds);
 	} else {
-	    TableMakeArrayIndex(j, from, buf);
-	    TableMakeArrayIndex(j, to, buf1);
+	    TableMakeArrayIndex(j, from, buf, INDEX_BUFSIZE);
+	    TableMakeArrayIndex(j, to, buf1, INDEX_BUFSIZE);
 	    TableMoveCellValue(tablePtr, j, to, buf1, j, from, buf, outOfBounds);
 	}
 	/*

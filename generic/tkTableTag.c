@@ -633,7 +633,7 @@ TableTag * FindRowColTag(Table *tablePtr, int cell, int mode) {
 	     * Since no specific row/col tag exists, eval the given command
 	     * with row/col appended
 	     */
-	    sprintf(buf, " %d", cell);
+	    snprintf(buf, INDEX_BUFSIZE, " %d", cell);
 	    Tcl_Preserve((ClientData) interp);
 	    if (Tcl_VarEval(interp, cmd, buf, (char *)NULL) == TCL_OK) {
 		const char *name = Tcl_GetStringResult(interp);
@@ -785,12 +785,12 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 
 		if ((tablePtr->flags & HAS_ACTIVE) && STREQ(tagname, "active")) {
 		    TableMakeArrayIndex(tablePtr->activeRow+tablePtr->rowOffset,
-			tablePtr->activeCol+tablePtr->colOffset, buf);
+			tablePtr->activeCol+tablePtr->colOffset, buf, INDEX_BUFSIZE);
 		    resultPtr = Tcl_NewStringObj(buf, -1);
 
 		} else if ((tablePtr->focusRow > -1) && STREQ(tagname, "focus")) {
 		    TableMakeArrayIndex(tablePtr->focusRow+tablePtr->rowOffset,
-			tablePtr->focusCol+tablePtr->colOffset, buf);
+			tablePtr->focusCol+tablePtr->colOffset, buf, INDEX_BUFSIZE);
 		    resultPtr = Tcl_NewStringObj(buf, -1);
 
 		} else if ((tablePtr->flashMode && STREQ(tagname, "flash"))
@@ -813,7 +813,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 			for (col = tablePtr->colOffset;
 			     col < tablePtr->colOffset+tablePtr->titleCols;
 			     col++) {
-			    TableMakeArrayIndex(row, col, buf);
+			    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 			    Tcl_ListObjAppendElement(NULL, resultPtr,
 				    Tcl_NewStringObj(buf, -1));
 			}
@@ -822,7 +822,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 			 row < tablePtr->rowOffset+tablePtr->titleRows; row++) {
 			for (col = tablePtr->colOffset+tablePtr->titleCols;
 			     col < tablePtr->colOffset+tablePtr->cols; col++) {
-			    TableMakeArrayIndex(row, col, buf);
+			    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 			    Tcl_ListObjAppendElement(NULL, resultPtr,
 				    Tcl_NewStringObj(buf, -1));
 			}
@@ -857,7 +857,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		/*
 		 * Get the hash key ready
 		 */
-		TableMakeArrayIndex(row, col, buf);
+		TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 
 		if (tagPtr == NULL) {
 		    /*
@@ -1200,7 +1200,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		return TCL_ERROR;
 	    }
 	    /* create hash key */
-	    TableMakeArrayIndex(row, col, buf);
+	    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 	    resultPtr = Tcl_NewListObj(0, NULL);
 
 	    if (Tcl_FindHashEntry(tablePtr->flashCells, buf) != NULL) {
@@ -1265,7 +1265,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		return TCL_ERROR;
 	    }
 	    /* create hash key */
-	    TableMakeArrayIndex(row, col, buf);
+	    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 
 	    if (STREQ(tagname, "active")) {
 		result = (tablePtr->activeRow+tablePtr->rowOffset==row &&

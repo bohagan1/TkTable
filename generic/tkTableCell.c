@@ -41,7 +41,7 @@ int TableTrueCell(Table *tablePtr, int r, int c, int *row, int *col) {
 	char buf[INDEX_BUFSIZE];
 	Tcl_HashEntry *entryPtr;
 
-	TableMakeArrayIndex(r, c, buf);
+	TableMakeArrayIndex(r, c, buf, INDEX_BUFSIZE);
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
 	if ((entryPtr != NULL) && ((char *)Tcl_GetHashValue(entryPtr) != NULL)) {
 	    /*
@@ -97,7 +97,8 @@ int TableCellCoords(Table *tablePtr, int row, int col, int *x, int *y, int *w, i
 	char buf[INDEX_BUFSIZE];
 	Tcl_HashEntry *entryPtr;
 
-	TableMakeArrayIndex(row+tablePtr->rowOffset, col+tablePtr->colOffset, buf);
+	TableMakeArrayIndex(row+tablePtr->rowOffset, col+tablePtr->colOffset,
+	    buf, INDEX_BUFSIZE);
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
 	if (entryPtr != NULL) {
 	    int rs, cs;
@@ -150,11 +151,13 @@ int TableCellCoords(Table *tablePtr, int row, int col, int *x, int *y, int *w, i
 setxy:
     *x = hl + tablePtr->colStarts[col];
     if (col >= tablePtr->titleCols) {
-	*x -= tablePtr->colStarts[tablePtr->leftCol] - tablePtr->colStarts[tablePtr->titleCols];
+	*x -= tablePtr->colStarts[tablePtr->leftCol] -
+	    tablePtr->colStarts[tablePtr->titleCols];
     }
     *y = hl + tablePtr->rowStarts[row];
     if (row >= tablePtr->titleRows) {
-	*y -= tablePtr->rowStarts[tablePtr->topRow] - tablePtr->rowStarts[tablePtr->titleRows];
+	*y -= tablePtr->rowStarts[tablePtr->topRow] -
+	    tablePtr->rowStarts[tablePtr->titleRows];
     }
     return result;
 }
@@ -302,7 +305,8 @@ void TableWhatCell(Table *tablePtr, int x, int y, int *row, int *col) {
 	Tcl_HashEntry *entryPtr;
 
 	/* We now correct the returned cell if this was "hidden" */
-	TableMakeArrayIndex(*row+tablePtr->rowOffset, *col+tablePtr->colOffset, buf);
+	TableMakeArrayIndex(*row+tablePtr->rowOffset, *col+tablePtr->colOffset,
+	    buf, INDEX_BUFSIZE);
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
 	if ((entryPtr != NULL) &&
 	    /* We have to make sure this was not already hidden
@@ -386,8 +390,10 @@ int TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col) {
 	char *val;
 
 	if (*row != -1) {
-	    TableMakeArrayIndex(brow+tablePtr->rowOffset, bcol+tablePtr->colOffset+1, buf1);
-	    TableMakeArrayIndex(brow+tablePtr->rowOffset+1, bcol+tablePtr->colOffset+1, buf2);
+	    TableMakeArrayIndex(brow+tablePtr->rowOffset, bcol+tablePtr->colOffset+1,
+		buf1, INDEX_BUFSIZE);
+	    TableMakeArrayIndex(brow+tablePtr->rowOffset+1, bcol+tablePtr->colOffset+1,
+		buf2, INDEX_BUFSIZE);
 	    entryPtr1 = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf1);
 	    entryPtr2 = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf2);
 	    if (entryPtr1 != NULL && entryPtr2 != NULL) {
@@ -404,8 +410,10 @@ int TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col) {
 	    }
 	}
 	if (*col != -1) {
-	    TableMakeArrayIndex(brow+tablePtr->rowOffset+1, bcol+tablePtr->colOffset, buf1);
-	    TableMakeArrayIndex(brow+tablePtr->rowOffset+1, bcol+tablePtr->colOffset+1, buf2);
+	    TableMakeArrayIndex(brow+tablePtr->rowOffset+1, bcol+tablePtr->colOffset,
+		buf1, INDEX_BUFSIZE);
+	    TableMakeArrayIndex(brow+tablePtr->rowOffset+1, bcol+tablePtr->colOffset+1,
+		buf2, INDEX_BUFSIZE);
 	    entryPtr1 = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf1);
 	    entryPtr2 = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf2);
 	    if (entryPtr1 != NULL && entryPtr2 != NULL) {
@@ -449,7 +457,7 @@ char * TableGetCellValue(Table *tablePtr, int r, int c) {
     Tcl_HashEntry *entryPtr = NULL;
     int new, code;
 
-    TableMakeArrayIndex(r, c, buf);
+    TableMakeArrayIndex(r, c, buf, INDEX_BUFSIZE);
 
     if (tablePtr->dataSource == DATA_CACHE) {
 	/*
@@ -571,7 +579,7 @@ int TableSetCellValue(Table *tablePtr, int r, int c, char *value) {
     int code = TCL_OK, flash = 0;
     Tcl_Interp *interp = tablePtr->interp;
 
-    TableMakeArrayIndex(r, c, buf);
+    TableMakeArrayIndex(r, c, buf, INDEX_BUFSIZE);
 
     if (tablePtr->state == STATE_DISABLED) {
 	return TCL_OK;
@@ -1069,7 +1077,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
     row = urow - tablePtr->rowOffset;
     col = ucol - tablePtr->colOffset;
 
-    TableMakeArrayIndex(urow, ucol, cell);
+    TableMakeArrayIndex(urow, ucol, cell, INDEX_BUFSIZE);
 
     if (tablePtr->spanTbl == NULL) {
 	tablePtr->spanTbl = (Tcl_HashTable *)ckalloc(sizeof(Tcl_HashTable));
@@ -1109,7 +1117,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 	Tcl_DeleteHashEntry(entryPtr);
 	for (i = urow; i <= urow+ors; i++) {
 	    for (j = ucol; j <= ucol+ocs; j++) {
-		TableMakeArrayIndex(i, j, buf);
+		TableMakeArrayIndex(i, j, buf, INDEX_BUFSIZE);
 		entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
 		if (entryPtr != NULL) {
 		    Tcl_DeleteHashEntry(entryPtr);
@@ -1124,7 +1132,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
     /* calc to make sure that span is OK */
     for (i = urow; i <= urow+rs; i++) {
 	for (j = ucol; j <= ucol+cs; j++) {
-	    TableMakeArrayIndex(i, j, buf);
+	    TableMakeArrayIndex(i, j, buf, INDEX_BUFSIZE);
 	    entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
 	    if (entryPtr != NULL) {
 		/* Something already spans here */
@@ -1165,7 +1173,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
     }
 
     /* Make sure there is no extra stuff */
-    TableMakeArrayIndex(rs, cs, span);
+    TableMakeArrayIndex(rs, cs, span, INDEX_BUFSIZE);
 
     /* Set affected cell table to a NULL value */
     entryPtr = Tcl_CreateHashEntry(tablePtr->spanAffTbl, cell, &new);
@@ -1180,7 +1188,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
     EmbWinUnmap(tablePtr, row, row + rs, col, col + cs);
     for (i = urow; i <= urow+rs; i++) {
 	for (j = ucol; j <= ucol+cs; j++) {
-	    TableMakeArrayIndex(i, j, buf);
+	    TableMakeArrayIndex(i, j, buf, INDEX_BUFSIZE);
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->spanAffTbl, buf, &new);
 	    if (!(i == urow && j == ucol)) {
 		Tcl_SetHashValue(entryPtr, (char *) dbuf);

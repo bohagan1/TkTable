@@ -58,7 +58,7 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 		Tcl_DString script;
 		tablePtr->flags |= BROWSE_CMD;
 		char buf1[INDEX_BUFSIZE], buf2[1];
-		TableMakeArrayIndex(row, col, buf1);
+		TableMakeArrayIndex(row, col, buf1, INDEX_BUFSIZE);
 		buf2[0] = '\0';
 		Tcl_DStringInit(&script);
 		ExpandPercents(tablePtr, tablePtr->browseCmd, tablePtr->rowOffset - 1,
@@ -93,7 +93,7 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	if (row != tablePtr->activeRow || col != tablePtr->activeCol) {
 	    if (tablePtr->flags & HAS_ACTIVE) {
 		TableMakeArrayIndex(tablePtr->activeRow+tablePtr->rowOffset,
-		    tablePtr->activeCol+tablePtr->colOffset, buf1);
+		    tablePtr->activeCol+tablePtr->colOffset, buf1, INDEX_BUFSIZE);
 	    } else {
 		buf1[0] = '\0';
 	    }
@@ -127,7 +127,7 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 		tablePtr->flags |= BROWSE_CMD;
 		rt = tablePtr->activeRow+tablePtr->rowOffset;
 		ct = tablePtr->activeCol+tablePtr->colOffset;
-		TableMakeArrayIndex(rt, ct, buf2);
+		TableMakeArrayIndex(rt, ct, buf2, INDEX_BUFSIZE);
 		Tcl_DStringInit(&script);
 		ExpandPercents(tablePtr, tablePtr->browseCmd, rt, ct,
 			buf1, buf2, tablePtr->icursor, &script, 0);
@@ -158,8 +158,8 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 		p++;
 		y = strtol(p, &p, 0) - y - tablePtr->activeY;
 
-		textLayout = Tk_ComputeTextLayout(tagPtr->tkfont, tablePtr->activeBuf, -1,
-			(tagPtr->wrap) ? w : 0, tagPtr->justify, 0, &w, &h);
+		textLayout = Tk_ComputeTextLayout(tagPtr->tkfont, tablePtr->activeBuf,
+			-1, (tagPtr->wrap) ? w : 0, tagPtr->justify, 0, &w, &h);
 
 		tablePtr->icursor = Tk_PointToChar(textLayout, x, y);
 		Tk_FreeTextLayout(textLayout);
@@ -213,7 +213,7 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
 		Tcl_DString script;
 		tablePtr->flags |= BROWSE_CMD;
 		char buf1[INDEX_BUFSIZE], buf2[1];
-		TableMakeArrayIndex(row, col, buf1);
+		TableMakeArrayIndex(row, col, buf1, INDEX_BUFSIZE);
 		buf2[0] = '\0';
 		Tcl_DStringInit(&script);
 		ExpandPercents(tablePtr, tablePtr->browseCmd, tablePtr->rowOffset - 1,
@@ -249,7 +249,8 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
 
 	if (tablePtr->focusRow > -1 || tablePtr->focusCol > -1) {
 	    TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
-	    TableMakeArrayIndex(tablePtr->focusRow, tablePtr->focusCol, buf1);
+	    TableMakeArrayIndex(tablePtr->focusRow, tablePtr->focusCol, buf1,
+		INDEX_BUFSIZE);
 	} else {
 	    buf1[0] = '\0';
 	}
@@ -263,7 +264,7 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
 	    tablePtr->flags |= BROWSE_CMD;
 	    row = tablePtr->focusRow+tablePtr->rowOffset;
 	    col = tablePtr->focusCol+tablePtr->colOffset;
-	    TableMakeArrayIndex(row, col, buf2);
+	    TableMakeArrayIndex(row, col, buf2, INDEX_BUFSIZE);
 	    Tcl_DStringInit(&script);
 	    ExpandPercents(tablePtr, tablePtr->browseCmd, row, col,
 		buf1, buf2, tablePtr->icursor, &script, 0);
@@ -324,7 +325,7 @@ int Table_AdjustCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	while (entryPtr != NULL) {
 	    posn = PTR2INT(Tcl_GetHashKey(hashTablePtr, entryPtr)) + offset;
 	    value = PTR2INT(Tcl_GetHashValue(entryPtr));
-	    sprintf(buf1, "%d %d", posn, value);
+	    snprintf(buf1, INDEX_BUFSIZE, "%d %d", posn, value);
 	    /* OBJECTIFY */
 	    Tcl_AppendElement(interp, buf1);
 	    entryPtr = Tcl_NextHashEntry(&search);
@@ -686,7 +687,7 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
 	    }
 
 	    for (col = c1; col <= c2; col++) {
-		TableMakeArrayIndex(row, col, buf);
+		TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 
 		if (cmdIndex == CLEAR_TAGS || cmdIndex == CLEAR_ALL) {
 		    if ((row == r1) && (entryPtr = Tcl_FindHashEntry(tablePtr->colStyles,
@@ -1152,7 +1153,7 @@ int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp,
 CLEAR_CELLS:
     for ( row = r1; row <= r2; row++ ) {
 	for ( col = c1; col <= c2; col++ ) {
-	    TableMakeArrayIndex(row, col, buf1);
+	    TableMakeArrayIndex(row, col, buf1, INDEX_BUFSIZE);
 	    entryPtr = Tcl_FindHashEntry(tablePtr->selCells, buf1);
 	    if (entryPtr != NULL) {
 		Tcl_DeleteHashEntry(entryPtr);
@@ -1198,7 +1199,7 @@ int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp,
 	return TCL_ERROR;
     } else {
 	char buf[INDEX_BUFSIZE];
-	TableMakeArrayIndex(row, col, buf);
+	TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 	Tcl_SetBooleanObj(Tcl_GetObjResult(interp),
 			  (Tcl_FindHashEntry(tablePtr->selCells, buf)!=NULL));
     }
@@ -1288,7 +1289,7 @@ SET_CELLS:
     entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
     for ( row = r1; row <= r2; row++ ) {
 	for ( col = c1; col <= c2; col++ ) {
-	    TableMakeArrayIndex(row, col, buf1);
+	    TableMakeArrayIndex(row, col, buf1, INDEX_BUFSIZE);
 	    if (Tcl_FindHashEntry(tablePtr->selCells, buf1) == NULL) {
 		Tcl_CreateHashEntry(tablePtr->selCells, buf1, &dummy);
 		TableRefresh(tablePtr, row-tablePtr->rowOffset, col-tablePtr->colOffset, CELL);

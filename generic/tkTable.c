@@ -486,7 +486,7 @@ static char * TableVarProc(
 	char buf[INDEX_BUFSIZE];
 
 	/* Make sure it won't trigger on array(2,3extrastuff) */
-	TableMakeArrayIndex(row, col, buf);
+	TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 	if (strcmp(buf, index)) {
 	    return (char *)NULL;
 	}
@@ -1099,7 +1099,7 @@ static int TableWidgetObjCmd(
 	    } else if (objc == 3) {
 		char buf[INDEX_BUFSIZE];
 		/* recreate the index, just in case it got bounded */
-		TableMakeArrayIndex(row, col, buf);
+		TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 		Tcl_SetObjResult(interp, Tcl_NewStringObj(buf, -1));
 	    } else {
 		/* INDEX row|col */
@@ -2195,7 +2195,7 @@ static void TableDisplay(ClientData clientdata) {
 		 * width,height holds the real start row,col of the span.
 		 * Put the use cell ref into a buffer for the hash lookups.
 		 */
-		TableMakeArrayIndex(width, height, buf);
+		TableMakeArrayIndex(width, height, buf, INDEX_BUFSIZE);
 		Tcl_CreateHashEntry(drawnCache, buf, &new);
 		if (!new) {
 		    /* Not new in the entry, so it's already drawn */
@@ -2234,7 +2234,7 @@ static void TableDisplay(ClientData clientdata) {
 	    ucol = col+tablePtr->colOffset;
 
 	    /* put the use cell ref into a buffer for the hash lookups */
-	    TableMakeArrayIndex(urow, ucol, buf);
+	    TableMakeArrayIndex(urow, ucol, buf, INDEX_BUFSIZE);
 	    if (cellType != CELL_HIDDEN) {
 		Tcl_CreateHashEntry(drawnCache, buf, &new);
 	    }
@@ -3190,7 +3190,7 @@ void TableAddFlash(Table *tablePtr, int row, int col) {
     }
 
     /* create the array index in user coords */
-    TableMakeArrayIndex(row+tablePtr->rowOffset, col+tablePtr->colOffset, buf);
+    TableMakeArrayIndex(row+tablePtr->rowOffset, col+tablePtr->colOffset, buf, INDEX_BUFSIZE);
 
     /* add the flash to the hash table */
     entryPtr = Tcl_CreateHashEntry(tablePtr->flashCells, buf, &dummy);
@@ -3708,7 +3708,7 @@ void TableAdjustParams(Table *tablePtr) {
 		    last  = (height+tablePtr->rowStarts[row]-diff) / last;
 		}
 	    }
-	    sprintf(buf, " %g %g", first, last);
+	    snprintf(buf, INDEX_BUFSIZE, " %g %g", first, last);
 	    if ((code = Tcl_VarEval(interp, tablePtr->yScrollCmd, buf, (char *)NULL)) != TCL_OK) {
 		Tcl_AddErrorInfo(interp, "\n\t(vertical scrolling command executed by table)");
 		Tcl_BackgroundException(interp, code);
@@ -3730,7 +3730,7 @@ void TableAdjustParams(Table *tablePtr) {
 		    last  = (width+tablePtr->colStarts[col]-diff) / last;
 		}
 	    }
-	    sprintf(buf, " %g %g", first, last);
+	    snprintf(buf, INDEX_BUFSIZE, " %g %g", first, last);
 	    if ((code = Tcl_VarEval(interp, tablePtr->xScrollCmd, buf, (char *)NULL)) != TCL_OK) {
 		Tcl_AddErrorInfo(interp, "\n\t(horizontal scrolling command executed by table)");
 		Tcl_BackgroundException(interp, code);
@@ -4064,19 +4064,19 @@ void ExpandPercents(
 	}
 	switch (ch) {
 	case 'c':
-	    sprintf(buf, "%d", c);
+	    snprintf(buf, INDEX_BUFSIZE, "%d", c);
 	    string = buf;
 	    break;
 	case 'C': /* index of cell */
-	    TableMakeArrayIndex(r, c, buf);
+	    TableMakeArrayIndex(r, c, buf, INDEX_BUFSIZE);
 	    string = buf;
 	    break;
 	case 'r':
-	    sprintf(buf, "%d", r);
+	    snprintf(buf, INDEX_BUFSIZE, "%d", r);
 	    string = buf;
 	    break;
 	case 'i': /* index of cursor OR |number| of cells selected */
-	    sprintf(buf, "%" TCL_SIZE_MODIFIER "d", index);
+	    snprintf(buf, INDEX_BUFSIZE, "%" TCL_SIZE_MODIFIER "d", index);
 	    string = buf;
 	    break;
 	case 's': /* Current cell value */

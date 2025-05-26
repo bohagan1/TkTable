@@ -347,7 +347,7 @@ void EmbWinUnmap(Table *tablePtr, int rlo, int rhi, int clo, int chi) {
     for (row = rlo; row <= rhi; row++) {
 	for (col = clo; col <= chi; col++) {
 	    TableTrueCell(tablePtr, row, col, &trow, &tcol);
-	    TableMakeArrayIndex(trow, tcol, buf);
+	    TableMakeArrayIndex(trow, tcol, buf, INDEX_BUFSIZE);
 	    entryPtr = Tcl_FindHashEntry(tablePtr->winTable, buf);
 	    if (entryPtr != NULL) {
 		ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
@@ -797,7 +797,7 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	if (TableGetIndexObj(tablePtr, objv[3], &row, &col) == TCL_ERROR) {
 	    return TCL_ERROR;
 	}
-	TableMakeArrayIndex(row, col, buf);
+	TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 	entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, buf, &new);
 
 	if (new) {

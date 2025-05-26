@@ -668,7 +668,7 @@ extern void	TableAddFlash(Table *tablePtr, int row, int col);
      /*
       * Turn row/col into an index into the table
       */
-#define TableMakeArrayIndex(r, c, i)	sprintf((i), "%d,%d", (r), (c))
+#define TableMakeArrayIndex(r, c, i, l)	snprintf((i), (l), "%d,%d", (r), (c))
 
      /*
       * Turn array index back into row/col
