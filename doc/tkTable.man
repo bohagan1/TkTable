@@ -429,7 +429,7 @@ Indicates the cell that has the keyboard input focus and cursor.
 It is set by the [method activate] widget command.
 
 [opt_def anchor]
-Indicates the cell with selection anchor point. It is set by the
+Indicates the cell with the selection anchor point. It is set by the
 [method "selection anchor"] widget command.
 
 [opt_def bottomright]
@@ -456,11 +456,12 @@ Indicates the cell that covers the point in the table window
 specified by [arg x] and [arg y] (in pixel coordinates).  If no
 cell covers that point, then the closest cell to that
 point is used.
-
-In the widget command descriptions below, arguments named [arg index],
-[arg first], and [arg last] always contain text indices in one of
-the above forms.
 [list_end]
+
+[para]
+In the widget command descriptions below, arguments named [arg index],
+[arg first], and [arg last] always contain cell indices in one of
+the above forms.
 
 [section "TAGS"]
 [para]
@@ -742,7 +743,7 @@ command. The following commands are possible for table widgets:
 Sets the keyboard input focus (aka active item) cell to [arg index]. Once the
 cell is active, the insertion cursor will be displayed and all keyboard events
 will be directed to that item. If [arg index] is set to the empty string {},
-then no cell will be active.
+then no cell will be active. Activating a cell also sets the focus to that cell.
 
 [def "[arg pathName] [method bbox] [arg first] [opt [arg last]]"]
 It returns the bounding box for the specified cell (range) as a 4-tuple of
@@ -875,7 +876,9 @@ as those for column deletion.
 
 [def "[arg pathName] [method focus] [arg index]"]
 Sets the keyboard navigation focus cell to [arg index]. If [arg index] is set
-to the empty string {}, then no cell will have the focus.
+to the empty string {}, then no cell will have the focus. Activating a cell
+also sets the focus to that cell. Setting the focus does not change the active
+cell.
 
 [def "[arg pathName] [method get] [arg first] [opt [arg last]]"]
 Returns the value of the cells specified by the table indices [arg first]
@@ -1234,17 +1237,23 @@ become visible.
 The default class bindings are:
 [list_begin enumerated]
 [enum]
-If [option -mode] is [const table], pressing Button-1 in a cell [cmd activate]s that
-cell and moves the insertion cursor to the character nearest the mouse pointer.
-If [option -selectmode] is not [const multiple], all other cells are unselected.
-If [option -mode] is [const spreadsheet], pressing Button-1 in a cell only gives
-that cell the [cmd focus] for keyboard navigation. A Double-Button-1 will activate
-that cell and move the insertion cursor to the character nearest the mouse.
+If [option -mode] is [const table], pressing Button-1 in a cell will activate
+that cell and move the insertion cursor to the character nearest the mouse
+pointer. If [option -mode] is [const spreadsheet], pressing Button-1 in a cell
+will only focus that cell for keyboard navigation. A Double-Button-1 will be
+needed to activate it and move the insertion cursor to the character nearest
+the mouse. For either mode, if [option -selectmode] is not [const multiple],
+all other cells are unselected.
 [enum]
-When [option -selectmode] is [const extended], moving the mouse while Button-1 is
-pressed will stroke out a selection area. Exiting the window while Button-1 is
-pressed, will cause scanning to occur on the table along with extending the
-selection. Re-entering the window will terminate the scanning.
+When [option -selectmode] is [const extended], moving the mouse while Button-1
+is pressed will select text in active cell or extend the cell selection area.
+Exiting the window while Button-1 is pressed, will cause scanning to occur on
+the table along with extending the selection. Re-entering the window will
+terminate the scanning.
+[enum]
+A Double-Button-1 in an active cell will select the underlying word.
+[enum]
+A Triple-Button-1 in an active cell will select all text in the cell.
 [enum]
 Moving the mouse while Button-2 is pressed causes scanning to
 occur without any selection.

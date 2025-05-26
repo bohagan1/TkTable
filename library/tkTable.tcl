@@ -128,12 +128,12 @@ bind Table <TouchpadScroll> {
     if {%# %% 5 != 0} {
         return
     }
-    lassign [tk::PreciseScrollDeltas %D] tk::Priv(deltaX) tk::Priv(deltaY)
-    if {$tk::Priv(deltaX) != 0} {
- 	%W xview scroll [expr {-$tk::Priv(deltaX)}] units
+    lassign [tk::PreciseScrollDeltas %D] ::tktable::Priv(deltaX) ::tktable::Priv(deltaY)
+    if {$::tktable::Priv(deltaX) != 0} {
+ 	%W xview scroll [expr {-$::tktable::Priv(deltaX)}] units
     }
-    if {$tk::Priv(deltaY) != 0} {
-	%W yview scroll [expr {-$tk::Priv(deltaY)}] units
+    if {$::tktable::Priv(deltaY) != 0} {
+	%W yview scroll [expr {-$::tktable::Priv(deltaY)}] units
     }
 }
 }
@@ -526,6 +526,9 @@ proc ::tktable::PageNav {w op} {
 	}
     }
     $w $fn [format "@%d,%d" [expr {$x+($width/2)}] [expr {$y+($height/2)}]]
+    set cell [$w index focus]
+    $w selection clear all
+    $w selection set $cell
 }
 
 #
@@ -589,7 +592,10 @@ proc ::tktable::ScreenNav {w op} {
 
     # Do move if cell changed
     if {$c != $col || $r != $row} {
-	$w $fn [format "%d,%d" $r $c]
+	set cell [format "%d,%d" $r $c]
+	$w $fn $cell
+	$w selection clear all
+	$w selection set $cell
     }
 }
 
@@ -714,12 +720,14 @@ proc ::tktable::Button1 {w x y} {
     }
 
     # Only do this when a border wasn't selected
-    if {$Priv(borderInfo) eq ""} {
-	if {[winfo exists $w]} {
-	    ::tktable::BeginSelect $w @$x,$y
-	    focus $w
-	}
+    if {$Priv(borderInfo) eq "" && [winfo exists $w]} {
 	set fn [expr {[$w cget -mode] eq "table" ? "activate" : "focus"}]
+	if {$fn eq "focus"} {
+	    $w activate {}
+	}
+	$w $fn @$x,$y
+	::tktable::BeginSelect $w @$x,$y
+	focus $w
 	array set Priv [list x $x y $y mouseMoved 0 bindingMode $fn]
     }
 }

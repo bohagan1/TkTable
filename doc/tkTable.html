@@ -659,7 +659,7 @@ which means a valid cell is always found.</p></dd>
 <dd><p>Indicates the cell that has the keyboard input focus and cursor.
 It is set by the <b class="method">activate</b> widget command.</p></dd>
 <dt><b class="option">anchor</b></dt>
-<dd><p>Indicates the cell with selection anchor point. It is set by the
+<dd><p>Indicates the cell with the selection anchor point. It is set by the
 <b class="method">selection anchor</b> widget command.</p></dd>
 <dt><b class="option">bottomright</b></dt>
 <dd><p>Indicates the bottom-right most cell currently visible in the table.</p></dd>
@@ -679,11 +679,11 @@ excluding the title cells.</p></dd>
 <dd><p>Indicates the cell that covers the point in the table window
 specified by <i class="arg">x</i> and <i class="arg">y</i> (in pixel coordinates).  If no
 cell covers that point, then the closest cell to that
-point is used.
-In the widget command descriptions below, arguments named <i class="arg">index</i>,
-<i class="arg">first</i>, and <i class="arg">last</i> always contain text indices in one of
-the above forms.</p></dd>
+point is used.</p></dd>
 </dl>
+<p>In the widget command descriptions below, arguments named <i class="arg">index</i>,
+<i class="arg">first</i>, and <i class="arg">last</i> always contain cell indices in one of
+the above forms.</p>
 </div>
 <div id="section6" class="doctools_section"><h2><a name="section6">TAGS</a></h2>
 <p>A tag is a textual string that is associated with zero or more rows,
@@ -911,7 +911,7 @@ command. The following commands are possible for table widgets:</p>
 <dd><p>Sets the keyboard input focus (aka active item) cell to <i class="arg">index</i>. Once the
 cell is active, the insertion cursor will be displayed and all keyboard events
 will be directed to that item. If <i class="arg">index</i> is set to the empty string {},
-then no cell will be active.</p></dd>
+then no cell will be active. Activating a cell also sets the focus to that cell.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">bbox</b> <i class="arg">first</i> <span class="opt">?<i class="arg">last</i>?</span></dt>
 <dd><p>It returns the bounding box for the specified cell (range) as a 4-tuple of
 x, y, width and height in pixels.  It clips the box to the visible portion,
@@ -1020,7 +1020,9 @@ as those for column deletion.</p></dd>
 </dl></dd>
 <dt><i class="arg">pathName</i> <b class="method">focus</b> <i class="arg">index</i></dt>
 <dd><p>Sets the keyboard navigation focus cell to <i class="arg">index</i>. If <i class="arg">index</i> is set
-to the empty string {}, then no cell will have the focus.</p></dd>
+to the empty string {}, then no cell will have the focus. Activating a cell
+also sets the focus to that cell. Setting the focus does not change the active
+cell.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">get</b> <i class="arg">first</i> <span class="opt">?<i class="arg">last</i>?</span></dt>
 <dd><p>Returns the value of the cells specified by the table indices <i class="arg">first</i>
 and (optionally) <i class="arg">last</i> in a list.</p></dd>
@@ -1323,16 +1325,20 @@ become visible.</p></dd>
 <div id="section12" class="doctools_section"><h2><a name="section12">DEFAULT BINDINGS</a></h2>
 <p>The default class bindings are:</p>
 <ol class="doctools_enumerated">
-<li><p>If <b class="option">-mode</b> is <b class="const">table</b>, pressing Button-1 in a cell <b class="cmd">activate</b>s that
-cell and moves the insertion cursor to the character nearest the mouse pointer.
-If <b class="option">-selectmode</b> is not <b class="const">multiple</b>, all other cells are unselected.
-If <b class="option">-mode</b> is <b class="const">spreadsheet</b>, pressing Button-1 in a cell only gives
-that cell the <b class="cmd">focus</b> for keyboard navigation. A Double-Button-1 will activate
-that cell and move the insertion cursor to the character nearest the mouse.</p></li>
-<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, moving the mouse while Button-1 is
-pressed will stroke out a selection area. Exiting the window while Button-1 is
-pressed, will cause scanning to occur on the table along with extending the
-selection. Re-entering the window will terminate the scanning.</p></li>
+<li><p>If <b class="option">-mode</b> is <b class="const">table</b>, pressing Button-1 in a cell will activate
+that cell and move the insertion cursor to the character nearest the mouse
+pointer. If <b class="option">-mode</b> is <b class="const">spreadsheet</b>, pressing Button-1 in a cell
+will only focus that cell for keyboard navigation. A Double-Button-1 will be
+needed to activate it and move the insertion cursor to the character nearest
+the mouse. For either mode, if <b class="option">-selectmode</b> is not <b class="const">multiple</b>,
+all other cells are unselected.</p></li>
+<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, moving the mouse while Button-1
+is pressed will select text in active cell or extend the cell selection area.
+Exiting the window while Button-1 is pressed, will cause scanning to occur on
+the table along with extending the selection. Re-entering the window will
+terminate the scanning.</p></li>
+<li><p>A Double-Button-1 in an active cell will select the underlying word.</p></li>
+<li><p>A Triple-Button-1 in an active cell will select all text in the cell.</p></li>
 <li><p>Moving the mouse while Button-2 is pressed causes scanning to
 occur without any selection.</p></li>
 <li><p>Moving the mouse while Button-3 (the right button on Windows) is pressed

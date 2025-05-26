@@ -17,9 +17,8 @@
  *--------------------------------------------------------------
  *
  * Table_ActivateCmd --
- *	This procedure is invoked to process the activate method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This procedure is invoked to process the activate method.
+ *	This sets which cell has the keyboard focus for input.
  *
  * Results:
  *	A standard Tcl result.
@@ -32,8 +31,7 @@
 int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int result = TCL_OK;
-    int row, col;
+    int result = TCL_OK, row, col;
     Tcl_Size templen;
 
     if (objc != 3) {
@@ -41,63 +39,61 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	return TCL_ERROR;
     }
 
+    /* If empty value, Clear active cell */
     if (Tcl_GetStringFromObj(objv[2], &templen), templen == 0) {
-	/*
-	 * Test implementation to clear active cell (becroft)
-	 */
-	tablePtr->flags &= ~HAS_ACTIVE;
-	tablePtr->flags |= ACTIVE_DISABLED;
-	tablePtr->activeRow = -1;
-	tablePtr->activeCol = -1;
-	tablePtr->selectFirst = -1;
-	tablePtr->selectLast = -1;
-	if (tablePtr->focusRow != -1 || tablePtr->focusCol != -1) {
-	    TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
-	    tablePtr->focusRow = -1;
-	    tablePtr->focusCol = -1;
-	}
-	TableAdjustActive(tablePtr);
-	TableConfigCursor(tablePtr);
+	if (tablePtr->flags & HAS_ACTIVE) {
+	    tablePtr->flags &= ~HAS_ACTIVE;
+	    tablePtr->flags |= ACTIVE_DISABLED;
+	    row = tablePtr->activeRow + tablePtr->rowOffset;
+	    col = tablePtr->activeCol + tablePtr->colOffset;
+	    tablePtr->activeRow = -1;
+	    tablePtr->activeCol = -1;
+	    tablePtr->selectFirst = -1;
+	    tablePtr->selectLast = -1;
+	    TableAdjustActive(tablePtr);
+	    TableConfigCursor(tablePtr);
 
-	/* Eval deactivate callback */
-	if (tablePtr->flags & HAS_ACTIVE && !(tablePtr->flags & BROWSE_CMD) &&
-	    tablePtr->browseCmd != NULL) {
-	    tablePtr->flags |= BROWSE_CMD;
-	    Tcl_DString script;
-	    char buf1[INDEX_BUFSIZE], buf2[1];
-	    row = tablePtr->activeRow+tablePtr->rowOffset;
-	    col = tablePtr->activeCol+tablePtr->colOffset;
-	    TableMakeArrayIndex(row, col, buf1);
-	    buf2[0] = '\0';
-	    Tcl_DStringInit(&script);
-	    ExpandPercents(tablePtr, tablePtr->browseCmd, tablePtr->rowOffset - 1,
-		tablePtr->colOffset - 1, buf1, buf2, tablePtr->icursor, &script, 0);
-	    result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
-		Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
-	    if (result == TCL_OK || result == TCL_RETURN) {
-		 Tcl_ResetResult(interp);
+	    /* Eval activate callback */
+	    if (!(tablePtr->flags & BROWSE_CMD) && tablePtr->browseCmd != NULL) {
+		Tcl_DString script;
+		tablePtr->flags |= BROWSE_CMD;
+		char buf1[INDEX_BUFSIZE], buf2[1];
+		TableMakeArrayIndex(row, col, buf1);
+		buf2[0] = '\0';
+		Tcl_DStringInit(&script);
+		ExpandPercents(tablePtr, tablePtr->browseCmd, tablePtr->rowOffset - 1,
+		    tablePtr->colOffset - 1, buf1, buf2, tablePtr->icursor, &script, 0);
+		result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
+		    Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
+		if (result == TCL_OK || result == TCL_RETURN) {
+		    Tcl_ResetResult(interp);
+		}
+		Tcl_DStringFree(&script);
+		tablePtr->flags &= ~BROWSE_CMD;
 	    }
-	    Tcl_DStringFree(&script);
-	    tablePtr->flags &= ~BROWSE_CMD;
 	}
+
+    /* Set new active cell */
     } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) == TCL_OK) {
-	int x, y, w, dummy;
+	int x, y, w, rt, ct, dummy;
 	char buf1[INDEX_BUFSIZE], buf2[INDEX_BUFSIZE];
 
-	/* convert to valid active index in real coords */
+	/* Convert to valid active index in real coords */
 	row -= tablePtr->rowOffset;
 	col -= tablePtr->colOffset;
-	/* we do this regardless, to avoid cell commit problems */
-	if ((tablePtr->flags & HAS_ACTIVE) &&
-	    (tablePtr->flags & TEXT_CHANGED)) {
+
+	/* Commit changes. We do this regardless, to avoid cell commit problems. */
+	if ((tablePtr->flags & HAS_ACTIVE) && (tablePtr->flags & TEXT_CHANGED)) {
 	    tablePtr->flags &= ~TEXT_CHANGED;
 	    TableSetCellValue(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
 		tablePtr->activeCol+tablePtr->colOffset, tablePtr->activeBuf);
 	}
+
+	/* Activate cell or set icursor position */
 	if (row != tablePtr->activeRow || col != tablePtr->activeCol) {
 	    if (tablePtr->flags & HAS_ACTIVE) {
 		TableMakeArrayIndex(tablePtr->activeRow+tablePtr->rowOffset,
-			tablePtr->activeCol+tablePtr->colOffset, buf1);
+		    tablePtr->activeCol+tablePtr->colOffset, buf1);
 	    } else {
 		buf1[0] = '\0';
 	    }
@@ -107,11 +103,16 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	    tablePtr->activeCol = col;
 	    tablePtr->selectFirst = -1;
 	    tablePtr->selectLast = -1;
-	    if (tablePtr->focusRow != -1 || tablePtr->focusCol != -1) {
-		TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
+	    if (tablePtr->focusRow != row || tablePtr->focusCol != col) {
+		rt = tablePtr->focusRow;
+		ct = tablePtr->focusCol;
+		tablePtr->focusRow = row;
+		tablePtr->focusCol = col;
+		TableRefresh(tablePtr, rt, ct, CELL);
+	    } else {
+		tablePtr->focusRow = row;
+		tablePtr->focusCol = col;
 	    }
-	    tablePtr->focusRow = row;
-	    tablePtr->focusCol = col;
 	    if (tablePtr->activeTagPtr != NULL) {
 		ckfree((char *) (tablePtr->activeTagPtr));
 		tablePtr->activeTagPtr = NULL;
@@ -120,15 +121,14 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	    TableConfigCursor(tablePtr);
 
 	    /* Eval activate callback */
-	    if (!(tablePtr->flags & BROWSE_CMD) &&
-		tablePtr->browseCmd != NULL) {
+	    if (!(tablePtr->flags & BROWSE_CMD) && tablePtr->browseCmd != NULL) {
 		Tcl_DString script;
 		tablePtr->flags |= BROWSE_CMD;
-		row = tablePtr->activeRow+tablePtr->rowOffset;
-		col = tablePtr->activeCol+tablePtr->colOffset;
-		TableMakeArrayIndex(row, col, buf2);
+		rt = tablePtr->activeRow+tablePtr->rowOffset;
+		ct = tablePtr->activeCol+tablePtr->colOffset;
+		TableMakeArrayIndex(rt, ct, buf2);
 		Tcl_DStringInit(&script);
-		ExpandPercents(tablePtr, tablePtr->browseCmd, row, col,
+		ExpandPercents(tablePtr, tablePtr->browseCmd, rt, ct,
 			buf1, buf2, tablePtr->icursor, &script, 0);
 		result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
 			Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
@@ -189,7 +189,7 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
 	int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int row, col;
+    int result = TCL_OK, row, col;
     Tcl_Size templen;
 
     if (objc != 3) {
@@ -199,12 +199,33 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
 
     /* If empty value, clear focus */
     if (Tcl_GetStringFromObj(objv[2], &templen), templen == 0) {
-	if (tablePtr->focusRow != -1 || tablePtr->focusCol != -1) {
-	    TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
+	if (tablePtr->focusRow > -1 || tablePtr->focusCol > -1) {
+	    row = tablePtr->focusRow;
+	    col = tablePtr->focusCol;
+	    tablePtr->focusRow = -1;
+	    tablePtr->focusCol = -1;
+	    TableRefresh(tablePtr, row, col, CELL);
+
+	    /* Eval focus callback */
+	    if (!(tablePtr->flags & BROWSE_CMD) && tablePtr->browseCmd != NULL) {
+		Tcl_DString script;
+		tablePtr->flags |= BROWSE_CMD;
+		char buf1[INDEX_BUFSIZE], buf2[1];
+		TableMakeArrayIndex(row, col, buf1);
+		buf2[0] = '\0';
+		Tcl_DStringInit(&script);
+		ExpandPercents(tablePtr, tablePtr->browseCmd, tablePtr->rowOffset - 1,
+		    tablePtr->colOffset - 1, buf1, buf2, tablePtr->icursor, &script, 0);
+		result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
+		    Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
+		if (result == TCL_OK || result == TCL_RETURN) {
+		    Tcl_ResetResult(interp);
+		}
+		Tcl_DStringFree(&script);
+		tablePtr->flags &= ~BROWSE_CMD;
+	    }
 	}
-	tablePtr->focusRow = -1;
-	tablePtr->focusCol = -1;
-	return TCL_OK;
+	return result;
     }
 
     /* Get cell index */
@@ -222,12 +243,38 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
 
     /* If focus cell changed, set new focus cell */
     if (row != tablePtr->focusRow || col != tablePtr->focusCol) {
-	TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
+	char buf1[INDEX_BUFSIZE], buf2[INDEX_BUFSIZE];
+
+	if (tablePtr->focusRow > -1 || tablePtr->focusCol > -1) {
+	    TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
+	    TableMakeArrayIndex(tablePtr->focusRow, tablePtr->focusCol, buf1);
+	} else {
+	    buf1[0] = '\0';
+	}
 	tablePtr->focusRow = row;
 	tablePtr->focusCol = col;
 	TableRefresh(tablePtr, row, col, CELL);
+
+	/* Eval focus callback */
+	if (!(tablePtr->flags & BROWSE_CMD) && tablePtr->browseCmd != NULL) {
+	    Tcl_DString script;
+	    tablePtr->flags |= BROWSE_CMD;
+	    row = tablePtr->focusRow+tablePtr->rowOffset;
+	    col = tablePtr->focusCol+tablePtr->colOffset;
+	    TableMakeArrayIndex(row, col, buf2);
+	    Tcl_DStringInit(&script);
+	    ExpandPercents(tablePtr, tablePtr->browseCmd, row, col,
+		buf1, buf2, tablePtr->icursor, &script, 0);
+	    result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
+		Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
+	    if (result == TCL_OK || result == TCL_RETURN) {
+		Tcl_ResetResult(interp);
+	    }
+	    Tcl_DStringFree(&script);
+	    tablePtr->flags &= ~BROWSE_CMD;
+	}
     }
-    return TCL_OK;
+    return result;
 }
 
 /*
@@ -983,7 +1030,7 @@ int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
 	    tablePtr->selectLast = -1;
 	}
     }
-    
+
     TableSetActiveIndex(tablePtr);
     TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
     return TCL_OK;

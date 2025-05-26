@@ -1053,7 +1053,7 @@ Indicates the cell that has the keyboard input focus and cursor\&.
 It is set by the \fBactivate\fR widget command\&.
 .TP
 \fBanchor\fR
-Indicates the cell with selection anchor point\&. It is set by the
+Indicates the cell with the selection anchor point\&. It is set by the
 \fBselection anchor\fR widget command\&.
 .TP
 \fBbottomright\fR
@@ -1080,10 +1080,11 @@ Indicates the cell that covers the point in the table window
 specified by \fIx\fR and \fIy\fR (in pixel coordinates)\&.  If no
 cell covers that point, then the closest cell to that
 point is used\&.
-In the widget command descriptions below, arguments named \fIindex\fR,
-\fIfirst\fR, and \fIlast\fR always contain text indices in one of
-the above forms\&.
 .PP
+.PP
+In the widget command descriptions below, arguments named \fIindex\fR,
+\fIfirst\fR, and \fIlast\fR always contain cell indices in one of
+the above forms\&.
 .SH TAGS
 .PP
 A tag is a textual string that is associated with zero or more rows,
@@ -1353,7 +1354,7 @@ command\&. The following commands are possible for table widgets:
 Sets the keyboard input focus (aka active item) cell to \fIindex\fR\&. Once the
 cell is active, the insertion cursor will be displayed and all keyboard events
 will be directed to that item\&. If \fIindex\fR is set to the empty string {},
-then no cell will be active\&.
+then no cell will be active\&. Activating a cell also sets the focus to that cell\&.
 .TP
 \fIpathName\fR \fBbbox\fR \fIfirst\fR ?\fIlast\fR?
 It returns the bounding box for the specified cell (range) as a 4-tuple of
@@ -1486,7 +1487,9 @@ as those for column deletion\&.
 .TP
 \fIpathName\fR \fBfocus\fR \fIindex\fR
 Sets the keyboard navigation focus cell to \fIindex\fR\&. If \fIindex\fR is set
-to the empty string {}, then no cell will have the focus\&.
+to the empty string {}, then no cell will have the focus\&. Activating a cell
+also sets the focus to that cell\&. Setting the focus does not change the active
+cell\&.
 .TP
 \fIpathName\fR \fBget\fR \fIfirst\fR ?\fIlast\fR?
 Returns the value of the cells specified by the table indices \fIfirst\fR
@@ -1843,99 +1846,105 @@ become visible\&.
 .PP
 The default class bindings are:
 .IP [1]
-If \fB-mode\fR is \fBtable\fR, pressing Button-1 in a cell \fBactivate\fRs that
-cell and moves the insertion cursor to the character nearest the mouse pointer\&.
-If \fB-selectmode\fR is not \fBmultiple\fR, all other cells are unselected\&.
-If \fB-mode\fR is \fBspreadsheet\fR, pressing Button-1 in a cell only gives
-that cell the \fBfocus\fR for keyboard navigation\&. A Double-Button-1 will activate
-that cell and move the insertion cursor to the character nearest the mouse\&.
+If \fB-mode\fR is \fBtable\fR, pressing Button-1 in a cell will activate
+that cell and move the insertion cursor to the character nearest the mouse
+pointer\&. If \fB-mode\fR is \fBspreadsheet\fR, pressing Button-1 in a cell
+will only focus that cell for keyboard navigation\&. A Double-Button-1 will be
+needed to activate it and move the insertion cursor to the character nearest
+the mouse\&. For either mode, if \fB-selectmode\fR is not \fBmultiple\fR,
+all other cells are unselected\&.
 .IP [2]
-When \fB-selectmode\fR is \fBextended\fR, moving the mouse while Button-1 is
-pressed will stroke out a selection area\&. Exiting the window while Button-1 is
-pressed, will cause scanning to occur on the table along with extending the
-selection\&. Re-entering the window will terminate the scanning\&.
+When \fB-selectmode\fR is \fBextended\fR, moving the mouse while Button-1
+is pressed will select text in active cell or extend the cell selection area\&.
+Exiting the window while Button-1 is pressed, will cause scanning to occur on
+the table along with extending the selection\&. Re-entering the window will
+terminate the scanning\&.
 .IP [3]
+A Double-Button-1 in an active cell will select the underlying word\&.
+.IP [4]
+A Triple-Button-1 in an active cell will select all text in the cell\&.
+.IP [5]
 Moving the mouse while Button-2 is pressed causes scanning to
 occur without any selection\&.
-.IP [4]
+.IP [6]
 Moving the mouse while Button-3 (the right button on Windows) is pressed
 while you are over a border will cause interactive resizing of that row
 and/or column to occur, based on the value of \fB-resizeborders\fR\&.
-.IP [5]
+.IP [7]
 The left, right, up, and down arrow keys move to the next cell in that
 direction\&.
-.IP [6]
+.IP [8]
 When \fB-selectmode\fR is \fBextended\fR, Shift and the left, right, up
 and down arrow keys extend the selection one cell in that direction\&.
-.IP [7]
+.IP [9]
 Control (or Option on Mac) and the left, right, up, and down arrow keys move to
 the first/last visible cell in that row or column\&.
-.IP [8]
+.IP [10]
 When \fB-selectmode\fR is \fBextended\fR, Control (or Option on Mac) plus
 Shift and the left, right, up, and down arrow keys extend the selection to the
 first/last visible column or row in that direction\&.
-.IP [9]
-Home moves to the first cell in the current row\&.
-.IP [10]
-End moves to the last cell in the current row\&.
 .IP [11]
+Home moves to the first cell in the current row\&.
+.IP [12]
+End moves to the last cell in the current row\&.
+.IP [13]
 When \fB-selectmode\fR is \fBextended\fR, Shift-Home selects all cells
 from the current cell to the first cell in the current row\&.
-.IP [12]
+.IP [14]
 When \fB-selectmode\fR is \fBextended\fR, Shift-End selects all cells
 from the current cell to the last cell in the current row\&.
-.IP [13]
-Control-Home moves to the \fBorigin\fR cell\&.
-.IP [14]
-Control-End moves to the \fBend\fR cell\&.
 .IP [15]
-Shift-Control-Home extends the selection to the \fBorigin\fR cell\&.
+Control-Home moves to the \fBorigin\fR cell\&.
 .IP [16]
-Shift-Control-End extends the selection to the \fBend\fR cell\&.
+Control-End moves to the \fBend\fR cell\&.
 .IP [17]
-Next or Prior (aka Page Down or Page Up) will move one screen-full down or up\&.
+Shift-Control-Home extends the selection to the \fBorigin\fR cell\&.
 .IP [18]
-Shift-Next or Shift-Prior will move one screen-full right or left\&.
+Shift-Control-End extends the selection to the \fBend\fR cell\&.
 .IP [19]
+Next or Prior (aka Page Down or Page Up) will move one screen-full down or up\&.
+.IP [20]
+Shift-Next or Shift-Prior will move one screen-full right or left\&.
+.IP [21]
 Control-Next or Control-Prior will move to the bottom or top cell in the
 current column\&.
-.IP [20]
+.IP [22]
 Control-Shift-Next or Control-Shift-Prior will move to the last or first cell
 in the row\&.
-.IP [21]
+.IP [23]
 When \fB-selectmode\fR is \fBextended\fR or \fBmultiple\fR, Control-slash
 (Command-a on Mac) selects all the cells in the table\&.
-.IP [22]
+.IP [24]
 When \fB-selectmode\fR is \fBextended\fR or \fBmultiple\fR, Control-backslash
 (except on Mac) unselects all cells in the table\&.
-.IP [23]
+.IP [25]
 When \fB-selectmode\fR is \fBextended\fR or \fBmultiple\fR, Shift-space
 will select all cells in the current row\&.
-.IP [24]
+.IP [26]
 When \fB-selectmode\fR is \fBextended\fR or \fBmultiple\fR, Control-space
 will select all cells in the current column\&.
-.IP [25]
+.IP [27]
 Control-Return will toggle whether the cell is activated or just has the focus\&.
-.IP [26]
+.IP [28]
 ScrollLock and the left, right, up, and down arrow keys will scroll the xview
 or yview by 1 unit in that direction\&.
-.IP [27]
-ScrollLock-Home or ScrollLock-End will scroll the xview by 1 page left or right\&.
-.IP [28]
-ScrollLock-Prior or ScrollLock-Next will scroll the yview by 1 page up or down\&.
 .IP [29]
+ScrollLock-Home or ScrollLock-End will scroll the xview by 1 page left or right\&.
+.IP [30]
+ScrollLock-Prior or ScrollLock-Next will scroll the yview by 1 page up or down\&.
+.IP [31]
 ScrollLock-Control-Home or ScrollLock-Control-End will scroll the xview to the
 0\&.0 or 1\&.0 position\&.
-.IP [30]
+.IP [32]
 ScrollLock-Control-Prior or ScrollLock-Control-Next will scroll the yview to the
 0\&.0 or 1\&.0 position\&.
-.IP [31]
+.IP [33]
 The virtual event <<Copy>> will copy the contents of the selected cells to the
 clipboard\&.
-.IP [32]
+.IP [34]
 The virtual event <<Cut>> will copy the contents of the selected cells to the
 clipboard and clear the cells\&.
-.IP [33]
+.IP [35]
 The virtual event <<Paste>> will paste the clipboard contents into the
 table cells\&.
 .PP

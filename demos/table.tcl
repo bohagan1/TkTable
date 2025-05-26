@@ -114,7 +114,7 @@ proc create_table {w} {
 	-titlecols 1 -titlerows 1 -exportselection 0 -selectmode extended \
 	-cols $cols -rows $rows  -colorigin $corigin -roworigin $rorigin \
 	-xscrollcommand [list $f.sx set] -yscrollcommand [list $f.sy set] \
-	-browsecommand {select_handler %W %C}]
+	-browsecommand {select_handler %W %s %S}]
     set sx [ttk::scrollbar $f.sx -orient horizontal -command [list $table xview]]
     set sy [ttk::scrollbar $f.sy -orient vertical -command [list $table yview]]
 
@@ -146,9 +146,17 @@ proc callback_handler {w opt var} {
 #
 # Cell select handler
 #
-proc select_handler {table {cell {}}} {
-    set ::data(cell) $cell
-    set ::data(value) [$table get $cell]
+proc select_handler {w prev cell} {
+    if {$cell ne ""} {
+	set ::data(cell) $cell
+	set ::data(value) [$w get $cell]
+    } elseif {![catch {$w index focus} cell]} {
+	set ::data(cell) $cell
+	set ::data(value) [$w get $cell]
+    } else {
+	set ::data(cell) ""
+	set ::data(value) ""
+    }
 }
 
 #
@@ -188,7 +196,7 @@ proc edit_handler {e table fn} {
 
     if {$fn eq "abort"} {
 	$table reread
-	select_handler $table $cell
+	select_handler $table $cell $cell
 	return
     }
 
