@@ -18,13 +18,14 @@
 # borderB1 -		Boolean that set whether B1 can be used for the
 #			interactiving resizing
 # bindingMode -		Should B1 focus or activate a cell
+# icursor -		Last set icursor index
 #--------------------------------------------------------------------------
 
 # Ensure that a namespace is created for us
 namespace eval ::tktable {
     variable Priv
-    array set Priv [list x 0 y 0 afterId {} mouseMoved 0 \
-	    borderInfo {} borderB1 1 bindingMode focus hidden {}]
+    array set Priv [list x 0 y 0 afterId {} mouseMoved 0 borderInfo {} \
+	borderB1 1 bindingMode focus hidden {} icursor -1]
     namespace export tk_tableCopy tk_tableCut tk_tablePaste
 }
 
@@ -55,6 +56,7 @@ bind Table <1>			{ ::tktable::Button1 %W %x %y }
 bind Table <B1-Motion>		{ ::tktable::B1Motion %W %x %y }
 bind Table <ButtonRelease-1>	{ ::tktable::B1Release %W %x %y }
 bind Table <Double-Button-1>	{ ::tktable::DoubleButton1 %W %x %y }
+bind Table <Triple-Button-1>	{ ::tktable::TripleButton1 %W %x %y }
 
 bind Table <Shift-1>		{ ::tktable::BeginExtend %W @%x,%y }
 bind Table <<ToggleSelection>>	{ ::tktable::BeginToggle %W @%x,%y }
@@ -274,7 +276,7 @@ proc ::tktable::MoveHandler {w op edit extend} {
     if {[$w cget -state] eq "normal" && ![catch {$w index active} cell] && $edit &&
 	$op ni [list bottom end origin pageBottom pageLeft pageRight pageTop top]} {
 	# Cell edit mode
-	lassign [split $cell ","] row col
+	if {[scan $cell %d,%d row col] != 2} return
 	set pos [$w icursor]
 	set orig $pos
 
@@ -343,7 +345,7 @@ proc ::tktable::MoveHandler {w op edit extend} {
 
     } elseif {![catch {$w index focus} cell]} {
 	# Cell navigate mode
-	lassign [split $cell ","] row col
+	if {[scan $cell %d,%d row col] != 2} return
 	switch $op {
 	    "left" {
 		# Move left 1 cell
@@ -373,11 +375,11 @@ proc ::tktable::MoveHandler {w op edit extend} {
 	    }
 	    "origin" - "top" {
 		# Move to origin cell
-		lassign [split [$w index origin] ","] row col
+		if {[scan [$w index origin] %d,%d row col] != 2} return
 	    }
 	    "end" - "bottom" {
 		# Move to end cell
-		lassign [split [$w index end] ","] row col
+		if {[scan [$w index end] %d,%d row col] != 2} return
 	    }
 	    "pageLeft" {
 		# Move to first visible cell in row
@@ -728,7 +730,7 @@ proc ::tktable::Button1 {w x y} {
 	$w $fn @$x,$y
 	::tktable::BeginSelect $w @$x,$y
 	focus $w
-	array set Priv [list x $x y $y mouseMoved 0 bindingMode $fn]
+	array set Priv [list x $x y $y mouseMoved 0 bindingMode $fn icursor [$w icursor]]
     }
 }
 
@@ -753,25 +755,16 @@ proc ::tktable::B1Motion {w x y} {
     # If we already had motion, or we moved more than 1 pixel,
     # then we start the Motion routine
     if {$Priv(borderInfo) ne ""} {
-	#
-	# If the motion is on a border, drag it and skip the rest
-	# of this binding.
-	#
+	# If the motion is on a border, drag it
 	$w border dragto $x $y
     } else {
-	#
-	# If we already had motion, or we moved more than 1 pixel,
-	# then we start the Motion routine
-	#
-	if {
-	    $::tktable::Priv(mouseMoved)
-	    || abs($x-$::tktable::Priv(x)) > 1
-	    || abs($y-$::tktable::Priv(y)) > 1
-	} {
-	    set ::tktable::Priv(mouseMoved) 1
+	# If we already had motion, or we moved more than 1 pixel, then we
+	# start the Motion routine
+	if {$Priv(mouseMoved) || abs($x-$Priv(x)) > 1 || abs($y-$Priv(y)) > 1} {
+	    set Priv(mouseMoved) 1
 	}
-	if {$::tktable::Priv(mouseMoved)} {
-	    ::tktable::Motion $w [$w index @$x,$y]
+	if {$Priv(mouseMoved)} {
+	    ::tktable::Motion $w [format "@%d,%d" $x $y]
 	}
     }
 }
@@ -779,7 +772,7 @@ proc ::tktable::B1Motion {w x y} {
 #
 # ::tktable::B1Release --
 #
-# This procedure when B1 is released to activate cell.
+# This procedure is called when B1 is released to set icursor to x,y location.
 #
 # Arguments:
 # w -	the table widget
@@ -790,26 +783,17 @@ proc ::tktable::B1Motion {w x y} {
 # Returns nothing
 #
 proc ::tktable::B1Release {w x y} {
-    if {$::tktable::Priv(borderInfo) eq "" && [winfo exists $w]} {
+    variable Priv
+
+    if {$Priv(borderInfo) eq "" && [winfo exists $w]} {
 	::tktable::CancelRepeat
-	set cell [format "@%d,%d" $x $y]
-	if {$::tktable::Priv(bindingMode) eq "focus"} {
-	    $w activate {}
-	    $w focus $cell
-	} else {
-	    if {[catch {$w index active} old]} {set old ""}
-	    $w activate $cell
-	    if {[$w index active] ne $old} {
-		after idle [list $w activate $cell]
-	    }
-	}
     }
 }
 
 #
 # ::tktable::DoubleButton1 --
 #
-# This procedure is used to activate a cell
+# This procedure is used to activate a cell or select a word
 #
 # Arguments:
 #   w	- the table widget
@@ -820,10 +804,49 @@ proc ::tktable::B1Release {w x y} {
 # Returns nothing
 #
 proc ::tktable::DoubleButton1 {w x y} {
-    if {$::tktable::Priv(borderInfo) eq "" && [winfo exists $w]} {
-	set ::tktable::Priv(bindingMode) activate
+    variable Priv
+
+    if {$Priv(borderInfo) eq "" && [winfo exists $w]} {
+	if {$Priv(bindingMode) ne "activate"} {
+	    $w activate @$x,$y
+	    set Priv(bindingMode) activate
+	    after idle [info level 0]
+	} else {
+	    set index [$w icursor]
+	    set text [$w curvalue]
+	    set len [string length $text]
+	    if {$len > 0} {
+		set start [tcl_wordBreakBefore $text $index]
+		set end [tcl_wordBreakAfter $text $index]
+		if {$start == -1} {set start 0} 
+		if {$end == -1} {set end $len}
+		$w selection active $start $end
+	    }
+	}
     }
 }
+
+#
+# ::tktable::TripleButton1 --
+#
+# This procedure is used to select the whole cell text
+#
+# Arguments:
+#   w	- the table widget
+#   x	- x coord
+#   y	- y coord
+#
+# Results:
+# Returns nothing
+#
+proc ::tktable::TripleButton1 {w x y} {
+    variable Priv
+
+    if {$Priv(borderInfo) eq "" && [winfo exists $w]} {
+	$w selection active 0 [string length [$w curvalue]]
+    }
+}
+
 
 #
 # ::tktable::BeginSelect --
@@ -835,17 +858,18 @@ proc ::tktable::DoubleButton1 {w x y} {
 #
 # Arguments:
 # w	- The table widget.
-# el	- The element for the selection operation (typically the
-#	one under the pointer).  Must be in row,col form.
+# el	- The index of the cell for the selection operation (typically
+#	the one under the pointer).
 #
 proc ::tktable::BeginSelect {w el} {
     variable Priv
-    set el [$w index $el]
-    if {[scan $el %d,%d r c] != 2} return
+    set cell [$w index $el]
+
+    if {[scan $cell %d,%d r c] != 2} return
     $w selection active 0
     switch [$w cget -selectmode] {
 	multiple {
-	    if {[$w tag includes title $el]} {
+	    if {[$w tag includes title $cell]} {
 		## in the title area
 		if {$r < [$w cget -titlerows]+[$w cget -roworigin]} {
 		    ## We're in a column header
@@ -863,43 +887,43 @@ proc ::tktable::BeginSelect {w el} {
 		    set el2 $r,[$w index end col]
 		}
 	    } else {
-		set inc $el
-		set el2 $el
+		set inc $cell
+		set el2 $cell
 	    }
 	    if {[$w selection includes $inc]} {
-		$w selection clear $el $el2
+		$w selection clear $cell $el2
 	    } else {
-		$w selection set $el $el2
+		$w selection set $cell $el2
 	    }
 	}
 	extended {
 	    $w selection clear all
-	    if {[$w tag includes title $el]} {
+	    if {[$w tag includes title $cell]} {
 		if {$r < [$w cget -titlerows]+[$w cget -roworigin]} {
 		    ## We're in a column header
 		    if {$c < [$w cget -titlecols]+[$w cget -colorigin]} {
 			## We're in the topleft title area
-			$w selection set $el end
+			$w selection set $cell end
 		    } else {
-			$w selection set $el [$w index end row],$c
+			$w selection set $cell [$w index end row],$c
 		    }
 		} else {
 		    ## We're in a row header
-		    $w selection set $el $r,[$w index end col]
+		    $w selection set $cell $r,[$w index end col]
 		}
 	    } else {
-		$w selection set $el
+		$w selection set $cell
 	    }
-	    $w selection anchor $el
-	    set Priv(tablePrev) $el
+	    $w selection anchor $cell
+	    set Priv(tablePrev) $cell
 	}
 	default {
-	    if {[$w cget -selecttitle] || ![$w tag includes title $el]} {
+	    if {[$w cget -selecttitle] || ![$w tag includes title $cell]} {
 		$w selection clear all
-		$w selection set $el
-		set Priv(tablePrev) $el
+		$w selection set $cell
+		set Priv(tablePrev) $cell
 	    }
-	    $w selection anchor $el
+	    $w selection anchor $cell
 	}
     }
 }
@@ -913,27 +937,50 @@ proc ::tktable::BeginSelect {w el} {
 #
 # Arguments:
 # w	- The table widget.
-# el	- The element under the pointer (must be in row,col form).
+# el	- The index of the cell under the pointer.
 #
 proc ::tktable::Motion {w el} {
     variable Priv
+    set cell [$w index $el]
+    
     if {![info exists Priv(tablePrev)]} {
-	set Priv(tablePrev) $el
+	set Priv(tablePrev) $cell
 	return
     }
-    if {$Priv(tablePrev) eq $el} return
+
+    # Select text in active cell or if moved to new cell switch to nav mode
+    if {$Priv(tablePrev) eq $cell} {
+	if {![catch {$w index active} cell]} {
+	    $w activate $el
+	    set index [$w icursor]
+	    set anchor $Priv(icursor)
+	    if {$index < $anchor} {
+		$w selection active $index $anchor
+	    } elseif {$index > $anchor} {
+		$w selection active $anchor $index
+	    } else {
+		$w selection active 0
+	    }
+	}
+	return
+    } else {
+	$w selection active 0
+	$w activate {}
+    }
+
+    # Select Cells
     switch [$w cget -selectmode] {
 	browse {
 	    $w selection clear all
-	    $w selection set $el
-	    set Priv(tablePrev) $el
+	    $w selection set $cell
+	    set Priv(tablePrev) $cell
 	}
 	extended {
 	    # avoid tables that have no anchor index yet.
 	    if {[catch {$w index anchor}]} { return }
 	    scan $Priv(tablePrev) %d,%d r c
-	    scan $el %d,%d elr elc
-	    if {[$w tag includes title $el]} {
+	    scan $cell %d,%d elr elc
+	    if {[$w tag includes title $cell]} {
 		if {$r < [$w cget -titlerows]+[$w cget -roworigin]} {
 		    ## We're in a column header
 		    if {$c < [$w cget -titlecols]+[$w cget -colorigin]} {
@@ -950,9 +997,9 @@ proc ::tktable::Motion {w el} {
 		}
 	    } else {
 		$w selection clear anchor $Priv(tablePrev)
-		$w selection set anchor $el
+		$w selection set anchor $cell
 	    }
-	    set Priv(tablePrev) $el
+	    set Priv(tablePrev) $cell
 	}
     }
 }
@@ -974,7 +1021,7 @@ proc ::tktable::BeginExtend {w el} {
     # avoid tables that have no anchor index yet.
     if {[catch {$w index anchor}]} { return }
     if {[$w cget -selectmode] eq "extended" && [$w selection includes anchor]} {
-	::tktable::Motion $w [$w index $el]
+	::tktable::Motion $w $el
     }
 }
 
@@ -1005,20 +1052,20 @@ proc ::tktable::BeginToggle {w el} {
 		    ## We're in the topleft title area
 		    set end end
 		} else {
-		    set end [$w index end row],$c
+		    set end [format "%d,%d" [$w index end row] $c]
 		}
 	    } else {
 		## We're in a row header
-		set end $r,[$w index end col]
+		set end [format "%d,%d" $r [$w index end col]]
 	    }
 	} else {
 	    ## We're in a non-title cell
 	    set end $el
 	}
-	if {[$w selection includes  $end]} {
+	if {[$w selection includes $end]} {
 	    $w selection clear $el $end
 	} else {
-	    $w selection set   $el $end
+	    $w selection set $el $end
         }
     }
 }
@@ -1050,7 +1097,7 @@ proc ::tktable::AutoScan {w} {
     } else {
 	return
     }
-    ::tktable::Motion $w [$w index @$x,$y]
+    ::tktable::Motion $w @$x,$y
     set Priv(afterId) [after 50 [list ::tktable::AutoScan $w]]
 }
 
@@ -1179,7 +1226,7 @@ proc ::tktable::ExtendSelect {w x y} {
     }
     $w see $id
     $w selection set $id
-    ::tktable::Motion $w [$w index $id]
+    ::tktable::Motion $w $id
 }
 
 #
@@ -1286,7 +1333,7 @@ proc ::tktable::SelectRow {w} {
 	$w selection clear all
 	$w selection set $cell
     } else {
-	lassign [split $cell ","] row col
+	if {[scan $cell %d,%d row col] != 2} return
 	set col1 [$w index origin col]
 	set col2 [$w index end col]
 	$w selection set [format "%d,%d" $row $col1] [format "%d,%d" $row $col2]
@@ -1312,7 +1359,7 @@ proc ::tktable::SelectColumn {w} {
 	$w selection clear all
 	$w selection set $cell
     } else {
-	lassign [split $cell ","] row col
+	if {[scan $cell %d,%d row col] != 2} return
 	set row1 [$w index origin row]
 	set row2 [$w index end row]
 	$w selection set [format "%d,%d" $row1 $col] [format "%d,%d" $row2 $col]
@@ -1626,7 +1673,7 @@ proc ::tktable::tk_tablePaste {w {cell {}}} {
     }
 
     # Set cells to values
-    lassign [split $cell ","] row col
+    if {[scan $cell %d,%d row col] != 2} return
     if {$vcmd eq ""} {
 	foreach values $data {
 	    $w set row [format "%d,%d" $row $col] $values

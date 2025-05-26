@@ -75,7 +75,7 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 
     /* Set new active cell */
     } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) == TCL_OK) {
-	int x, y, w, rt, ct, dummy;
+	int x, y, w, h, rt, ct;
 	char buf1[INDEX_BUFSIZE], buf2[INDEX_BUFSIZE];
 
 	/* Convert to valid active index in real coords */
@@ -119,6 +119,7 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	    }
 	    TableAdjustActive(tablePtr);
 	    TableConfigCursor(tablePtr);
+	    TableRefresh(tablePtr, row, col, CELL|INV_FORCE);
 
 	    /* Eval activate callback */
 	    if (!(tablePtr->flags & BROWSE_CMD) && tablePtr->browseCmd != NULL) {
@@ -138,12 +139,13 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 		Tcl_DStringFree(&script);
 		tablePtr->flags &= ~BROWSE_CMD;
 	    }
-	} else {
+	}
+	{
 	    char *p = Tcl_GetString(objv[2]);
 
 	    if ((tablePtr->activeTagPtr != NULL) && *p == '@' &&
 		!(tablePtr->flags & ACTIVE_DISABLED) &&
-		TableCellVCoords(tablePtr, row, col, &x, &y, &w, &dummy, 0)) {
+		TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 0)) {
 		/* we are clicking into the same cell
 		 * If it was activated with @x,y indexing,
 		 * find the closest char */
@@ -157,7 +159,7 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 		y = strtol(p, &p, 0) - y - tablePtr->activeY;
 
 		textLayout = Tk_ComputeTextLayout(tagPtr->tkfont, tablePtr->activeBuf, -1,
-			(tagPtr->wrap) ? w : 0, tagPtr->justify, 0, &dummy, &dummy);
+			(tagPtr->wrap) ? w : 0, tagPtr->justify, 0, &w, &h);
 
 		tablePtr->icursor = Tk_PointToChar(textLayout, x, y);
 		Tk_FreeTextLayout(textLayout);

@@ -1854,15 +1854,16 @@ needed to activate it and move the insertion cursor to the character nearest
 the mouse\&. For either mode, if \fB-selectmode\fR is not \fBmultiple\fR,
 all other cells are unselected\&.
 .IP [2]
-When \fB-selectmode\fR is \fBextended\fR, moving the mouse while Button-1
-is pressed will select text in active cell or extend the cell selection area\&.
+Moving the mouse while Button-1 is pressed will extend the character selection
+in the active cell, if any, or extend the cell selection area if
+\fB-selectmode\fR is \fBextended\fR\&.
 Exiting the window while Button-1 is pressed, will cause scanning to occur on
 the table along with extending the selection\&. Re-entering the window will
 terminate the scanning\&.
 .IP [3]
-A Double-Button-1 in an active cell will select the underlying word\&.
+A Double-Button-1 in the active cell will select the underlying word\&.
 .IP [4]
-A Triple-Button-1 in an active cell will select all text in the cell\&.
+A Triple-Button-1 in the active cell will select all text in the cell\&.
 .IP [5]
 Moving the mouse while Button-2 is pressed causes scanning to
 occur without any selection\&.

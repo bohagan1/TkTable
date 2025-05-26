@@ -2608,17 +2608,17 @@ static void TableDisplay(ClientData clientdata) {
 
 			} else {
 			    /* Multi-line */
-			    int i, selX, selY, selW, selH;
+			    int i, selX, selY, selW, selH, haveSel = 0;
 			    for (i = tablePtr->selectFirst; i < tablePtr->selectLast; i++) {
 				/* Get bbox for char to highlight */
 				Tk_CharBbox(textLayout, i, &selX, &selY, &selW, &selH);
 				selX = selX + x0 + originX - tablePtr->selBorderWidth;
 				selY = selY + y0 + originY - tablePtr->selBorderWidth;
-				selW = selW + 2*tablePtr->selBorderWidth;
-				selH = (fm.ascent + fm.descent) + tablePtr->selBorderWidth;
+				selH = (fm.ascent + fm.descent) + 2*tablePtr->selBorderWidth;
 
-				/* Clip if partially or skip if fully out of view */
+				/* Clip if partial or skip if fully out of view */
 				if (selX + selW < x0 || selX > x0+width) {
+				    if (haveSel) goto ShowSel;
 				    continue;
 				} else if (selX < x0) {
 				    selW = selW - (x0 - selX);
@@ -2627,6 +2627,7 @@ static void TableDisplay(ClientData clientdata) {
 				    selW = selW - ((selX+selW) - (x0+width));
 				}
 				if (selY + selH < y0 || selY > y0+height) {
+				    if (haveSel) goto ShowSel;
 				   continue;
 				} else if (selY < y0) {
 				    selH = selH - (y0 - selY);
@@ -2634,8 +2635,36 @@ static void TableDisplay(ClientData clientdata) {
 				} else if (selY+selH > y0+height) {
 				    selH = selH - ((selY+selH) - (y0+height));
 				}
-				Tk_Fill3DRectangle(tkwin, window, selTextPtr->bg, selX, selY,
-				    selW, selH, tablePtr->selBorderWidth, TK_RELIEF_FLAT);
+				
+				/* Init new selection */
+				if (!haveSel) {
+				    selStartX = selX;
+				    selStartY = selY;
+				    selEndX = selW;
+				    selEndY = selH;
+				    haveSel = 1;
+				}
+				/* Show or extend an existing selection */
+				if ((selY != selStartY || i == tablePtr->selectLast) && haveSel) {
+				    Tk_Fill3DRectangle(tkwin, window, selTextPtr->bg,
+					selStartX, selStartY, selEndX + tablePtr->selBorderWidth, selEndY,
+					tablePtr->selBorderWidth, TK_RELIEF_FLAT);
+				    selStartX = selX;
+				    selStartY = selY;
+				    selEndX = selW;
+				    selEndY = selH;
+				    haveSel = 1;
+				} else {
+				    selEndX += selW;
+				    if (selH > selEndY) selEndY = selH;
+				    haveSel = 1;
+				}
+				continue;
+ShowSel:
+				Tk_Fill3DRectangle(tkwin, window, selTextPtr->bg,
+					selStartX, selStartY, selEndX + tablePtr->selBorderWidth, selEndY,
+					tablePtr->selBorderWidth, TK_RELIEF_FLAT);
+				haveSel = 0;
 			    }
 			}
 		    }

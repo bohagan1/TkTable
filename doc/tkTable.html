@@ -1332,13 +1332,14 @@ will only focus that cell for keyboard navigation. A Double-Button-1 will be
 needed to activate it and move the insertion cursor to the character nearest
 the mouse. For either mode, if <b class="option">-selectmode</b> is not <b class="const">multiple</b>,
 all other cells are unselected.</p></li>
-<li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, moving the mouse while Button-1
-is pressed will select text in active cell or extend the cell selection area.
+<li><p>Moving the mouse while Button-1 is pressed will extend the character selection
+in the active cell, if any, or extend the cell selection area if
+<b class="option">-selectmode</b> is <b class="const">extended</b>.
 Exiting the window while Button-1 is pressed, will cause scanning to occur on
 the table along with extending the selection. Re-entering the window will
 terminate the scanning.</p></li>
-<li><p>A Double-Button-1 in an active cell will select the underlying word.</p></li>
-<li><p>A Triple-Button-1 in an active cell will select all text in the cell.</p></li>
+<li><p>A Double-Button-1 in the active cell will select the underlying word.</p></li>
+<li><p>A Triple-Button-1 in the active cell will select all text in the cell.</p></li>
 <li><p>Moving the mouse while Button-2 is pressed causes scanning to
 occur without any selection.</p></li>
 <li><p>Moving the mouse while Button-3 (the right button on Windows) is pressed
