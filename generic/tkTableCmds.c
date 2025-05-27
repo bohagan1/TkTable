@@ -176,113 +176,6 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 /*
  *--------------------------------------------------------------
  *
- * Table_FocusCmd --
- *	This procedure is invoked to process the focus method.
- *	This sets which cell has the focus for keyboard navigation.
- *
- * Results:
- *	A standard Tcl result.
- *
- * Side effects:
- *	See the user documentation.
- *
- *--------------------------------------------------------------
- */
-int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
-	int objc, Tcl_Obj *const objv[]) {
-    Table *tablePtr = (Table *) clientData;
-    int result = TCL_OK, row, col;
-    Tcl_Size templen;
-
-    if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "index");
-	return TCL_ERROR;
-    }
-
-    /* If empty value, clear focus */
-    if (Tcl_GetStringFromObj(objv[2], &templen), templen == 0) {
-	if (tablePtr->focusRow > -1 || tablePtr->focusCol > -1) {
-	    row = tablePtr->focusRow;
-	    col = tablePtr->focusCol;
-	    tablePtr->focusRow = -1;
-	    tablePtr->focusCol = -1;
-	    TableRefresh(tablePtr, row, col, CELL);
-
-	    /* Eval focus callback */
-	    if (!(tablePtr->flags & BROWSE_CMD) && tablePtr->browseCmd != NULL) {
-		Tcl_DString script;
-		tablePtr->flags |= BROWSE_CMD;
-		char buf1[INDEX_BUFSIZE], buf2[1];
-		TableMakeArrayIndex(row, col, buf1, INDEX_BUFSIZE);
-		buf2[0] = '\0';
-		Tcl_DStringInit(&script);
-		ExpandPercents(tablePtr, tablePtr->browseCmd, tablePtr->rowOffset - 1,
-		    tablePtr->colOffset - 1, buf1, buf2, tablePtr->icursor, &script, 0);
-		result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
-		    Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
-		if (result == TCL_OK || result == TCL_RETURN) {
-		    Tcl_ResetResult(interp);
-		}
-		Tcl_DStringFree(&script);
-		tablePtr->flags &= ~BROWSE_CMD;
-	    }
-	}
-	return result;
-    }
-
-    /* Get cell index */
-    if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
-	return TCL_ERROR;
-    }
-
-    /* Convert to valid index in real coords */
-    row -= tablePtr->rowOffset;
-    col -= tablePtr->colOffset;
-
-    /* Make sure the cell has a reasonable real index */
-    CONSTRAIN(row, 0, tablePtr->rows-1);
-    CONSTRAIN(col, 0, tablePtr->cols-1);
-
-    /* If focus cell changed, set new focus cell */
-    if (row != tablePtr->focusRow || col != tablePtr->focusCol) {
-	char buf1[INDEX_BUFSIZE], buf2[INDEX_BUFSIZE];
-
-	if (tablePtr->focusRow > -1 || tablePtr->focusCol > -1) {
-	    TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
-	    TableMakeArrayIndex(tablePtr->focusRow, tablePtr->focusCol, buf1,
-		INDEX_BUFSIZE);
-	} else {
-	    buf1[0] = '\0';
-	}
-	tablePtr->focusRow = row;
-	tablePtr->focusCol = col;
-	TableRefresh(tablePtr, row, col, CELL);
-
-	/* Eval focus callback */
-	if (!(tablePtr->flags & BROWSE_CMD) && tablePtr->browseCmd != NULL) {
-	    Tcl_DString script;
-	    tablePtr->flags |= BROWSE_CMD;
-	    row = tablePtr->focusRow+tablePtr->rowOffset;
-	    col = tablePtr->focusCol+tablePtr->colOffset;
-	    TableMakeArrayIndex(row, col, buf2, INDEX_BUFSIZE);
-	    Tcl_DStringInit(&script);
-	    ExpandPercents(tablePtr, tablePtr->browseCmd, row, col,
-		buf1, buf2, tablePtr->icursor, &script, 0);
-	    result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
-		Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
-	    if (result == TCL_OK || result == TCL_RETURN) {
-		Tcl_ResetResult(interp);
-	    }
-	    Tcl_DStringFree(&script);
-	    tablePtr->flags &= ~BROWSE_CMD;
-	}
-    }
-    return result;
-}
-
-/*
- *--------------------------------------------------------------
- *
  * Table_AdjustCmd --
  *	This procedure is invoked to process the width/height method
  *	that corresponds to a table widget managed by this module.
@@ -866,6 +759,113 @@ int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp,
 
     Tcl_SetObjResult(interp, Tcl_NewStringObj(tablePtr->activeBuf, -1));
     return TCL_OK;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * Table_FocusCmd --
+ *	This procedure is invoked to process the focus method.
+ *	This sets which cell has the focus for keyboard navigation.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	See the user documentation.
+ *
+ *--------------------------------------------------------------
+ */
+int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
+	int objc, Tcl_Obj *const objv[]) {
+    Table *tablePtr = (Table *) clientData;
+    int result = TCL_OK, row, col;
+    Tcl_Size templen;
+
+    if (objc != 3) {
+	Tcl_WrongNumArgs(interp, 2, objv, "index");
+	return TCL_ERROR;
+    }
+
+    /* If empty value, clear focus */
+    if (Tcl_GetStringFromObj(objv[2], &templen), templen == 0) {
+	if (tablePtr->focusRow > -1 || tablePtr->focusCol > -1) {
+	    row = tablePtr->focusRow;
+	    col = tablePtr->focusCol;
+	    tablePtr->focusRow = -1;
+	    tablePtr->focusCol = -1;
+	    TableRefresh(tablePtr, row, col, CELL);
+
+	    /* Eval focus callback */
+	    if (!(tablePtr->flags & BROWSE_CMD) && tablePtr->browseCmd != NULL) {
+		Tcl_DString script;
+		tablePtr->flags |= BROWSE_CMD;
+		char buf1[INDEX_BUFSIZE], buf2[1];
+		TableMakeArrayIndex(row, col, buf1, INDEX_BUFSIZE);
+		buf2[0] = '\0';
+		Tcl_DStringInit(&script);
+		ExpandPercents(tablePtr, tablePtr->browseCmd, tablePtr->rowOffset - 1,
+		    tablePtr->colOffset - 1, buf1, buf2, tablePtr->icursor, &script, 0);
+		result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
+		    Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
+		if (result == TCL_OK || result == TCL_RETURN) {
+		    Tcl_ResetResult(interp);
+		}
+		Tcl_DStringFree(&script);
+		tablePtr->flags &= ~BROWSE_CMD;
+	    }
+	}
+	return result;
+    }
+
+    /* Get cell index */
+    if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
+	return TCL_ERROR;
+    }
+
+    /* Convert to valid index in real coords */
+    row -= tablePtr->rowOffset;
+    col -= tablePtr->colOffset;
+
+    /* Make sure the cell has a reasonable real index */
+    CONSTRAIN(row, 0, tablePtr->rows-1);
+    CONSTRAIN(col, 0, tablePtr->cols-1);
+
+    /* If focus cell changed, set new focus cell */
+    if (row != tablePtr->focusRow || col != tablePtr->focusCol) {
+	char buf1[INDEX_BUFSIZE], buf2[INDEX_BUFSIZE];
+
+	if (tablePtr->focusRow > -1 || tablePtr->focusCol > -1) {
+	    TableRefresh(tablePtr, tablePtr->focusRow, tablePtr->focusCol, CELL);
+	    TableMakeArrayIndex(tablePtr->focusRow, tablePtr->focusCol, buf1,
+		INDEX_BUFSIZE);
+	} else {
+	    buf1[0] = '\0';
+	}
+	tablePtr->focusRow = row;
+	tablePtr->focusCol = col;
+	TableRefresh(tablePtr, row, col, CELL);
+
+	/* Eval focus callback */
+	if (!(tablePtr->flags & BROWSE_CMD) && tablePtr->browseCmd != NULL) {
+	    Tcl_DString script;
+	    tablePtr->flags |= BROWSE_CMD;
+	    row = tablePtr->focusRow+tablePtr->rowOffset;
+	    col = tablePtr->focusCol+tablePtr->colOffset;
+	    TableMakeArrayIndex(row, col, buf2, INDEX_BUFSIZE);
+	    Tcl_DStringInit(&script);
+	    ExpandPercents(tablePtr, tablePtr->browseCmd, row, col,
+		buf1, buf2, tablePtr->icursor, &script, 0);
+	    result = Tcl_EvalEx(interp, Tcl_DStringValue(&script),
+		Tcl_DStringLength(&script), TCL_EVAL_GLOBAL);
+	    if (result == TCL_OK || result == TCL_RETURN) {
+		Tcl_ResetResult(interp);
+	    }
+	    Tcl_DStringFree(&script);
+	    tablePtr->flags &= ~BROWSE_CMD;
+	}
+    }
+    return result;
 }
 
 /*
