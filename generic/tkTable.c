@@ -619,6 +619,20 @@ void TableLostSelection(
 	    Tcl_DeleteHashEntry(entryPtr);
 	    TableRefresh(tablePtr, row-tablePtr->rowOffset, col-tablePtr->colOffset, CELL);
 	}
+	
+	/* Remove cell text selection */
+	if (tablePtr->selectFirst != -1 && tablePtr->exportSelection
+	    && (!Tcl_IsSafe(tablePtr->interp))
+#if TCL_MAJOR_VERSION > 8
+	    && Tk_AlwaysShowSelection(tablePtr->tkwin)
+#endif
+	    ) {
+	    tablePtr->selectFirst = -1;
+	    tablePtr->selectLast = -1;
+	    if (tablePtr->activeRow > -1 || tablePtr->activeCol > -1) {
+		TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
+	    }
+	}
 	TableGenerateSelectEvent(tablePtr);
     }
 }

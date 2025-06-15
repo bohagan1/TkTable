@@ -34,9 +34,22 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
     int result = TCL_OK, row, col;
     Tcl_Size templen;
 
-    if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "index");
+    if (objc < 2 || objc > 3) {
+	Tcl_WrongNumArgs(interp, 2, objv, "?index?");
 	return TCL_ERROR;
+    }
+
+    /* Get active cell index */
+    if (objc == 2) {
+	if (tablePtr->flags & HAS_ACTIVE) {
+	    char buf[INDEX_BUFSIZE];
+
+	    row = tablePtr->activeRow + tablePtr->rowOffset;
+	    col = tablePtr->activeCol + tablePtr->colOffset;
+	    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(buf, -1));
+	}
+	return TCL_OK;
     }
 
     /* If empty value, Clear active cell */
@@ -782,9 +795,22 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
     int result = TCL_OK, row, col;
     Tcl_Size templen;
 
-    if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "index");
+    if (objc < 2 || objc > 3) {
+	Tcl_WrongNumArgs(interp, 2, objv, "?index?");
 	return TCL_ERROR;
+    }
+
+    /* Get focus cell index */
+    if (objc == 2) {
+	if (tablePtr->focusRow > -1 || tablePtr->focusCol > -1) {
+	    char buf[INDEX_BUFSIZE];
+
+	    row = tablePtr->focusRow + tablePtr->rowOffset;
+	    col = tablePtr->focusCol + tablePtr->colOffset;
+	    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(buf, -1));
+	}
+	return TCL_OK;
     }
 
     /* If empty value, clear focus */

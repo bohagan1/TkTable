@@ -18,13 +18,14 @@ static CONST86 char *	TableOptionReliefGet(ClientData clientData, Tk_Window tkwi
 			char *widgRec, Tcl_Size offset, Tcl_FreeProc **freeProcPtr);
 
 static const char *tagCmdNames[] = {
-    "celltag", "cget", "coltag", "configure", "delete", "exists", "get",
+    "celltag", "cget", "coltag", "column", "configure", "delete", "exists", "get",
     "includes", "lower", "names", "priority", "raise", "rowtag", (char *) NULL
 };
 
 enum tagCmd {
-    TAG_CELLTAG, TAG_CGET, TAG_COLTAG, TAG_CONFIGURE, TAG_DELETE, TAG_EXISTS,
-    TAG_GET, TAG_INCLUDES, TAG_LOWER, TAG_NAMES, TAG_PRIORITY, TAG_RAISE, TAG_ROWTAG
+    TAG_CELL, TAG_CGET, TAG_COL, TAG_COLUMN, TAG_CONFIGURE, TAG_DELETE,
+    TAG_EXISTS, TAG_GET, TAG_INCLUDES, TAG_LOWER, TAG_NAMES, TAG_PRIORITY,
+    TAG_RAISE, TAG_ROW
 };
 
 static Cmd_Struct tagState_vals[]= {
@@ -756,7 +757,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
     Tcl_ResetResult(interp);
 
     switch ((enum tagCmd) cmdIndex) {
-	case TAG_CELLTAG:
+	case TAG_CELL:
 	    /* add named tag to a (group of) cell(s) */
 	    if (objc < 4) {
 		Tcl_WrongNumArgs(interp, 3, objv, "tagName ?arg arg ...?");
@@ -889,10 +890,11 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    }
 	    return TCL_OK;
 
-	case TAG_COLTAG:
-	case TAG_ROWTAG: {
+	case TAG_COL:
+	case TAG_COLUMN:
+	case TAG_ROW: {
 	    /* tag a row or a column */
-	    int forRows = (cmdIndex == TAG_ROWTAG);
+	    int forRows = (cmdIndex == TAG_ROW);
 
 	    if (objc < 4) {
 		Tcl_WrongNumArgs(interp, 3, objv, "tagName ?arg arg ..?");
@@ -1022,7 +1024,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		}
 		/* and invalidate the row or column affected */
 		if (refresh) {
-		    if (cmdIndex == TAG_ROWTAG) {
+		    if (cmdIndex == TAG_ROW) {
 			TableRefresh(tablePtr, value-tablePtr->rowOffset, 0, ROW);
 		    } else {
 			TableRefresh(tablePtr, 0, value-tablePtr->colOffset, COL);
