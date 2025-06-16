@@ -273,7 +273,7 @@ proc ::tktable::MoveHandler {w op edit extend} {
     set orig -1
     set pos -1
 
-    if {[$w cget -state] eq "normal" && ![catch {$w index active} cell] && $edit &&
+    if {[$w cget -state] eq "normal" && [set cell [$w activate]] ne "" && $edit &&
 	$op ni [list bottom end origin pageBottom pageLeft pageRight pageTop top]} {
 	# Cell edit mode
 	if {[scan $cell %d,%d row col] != 2} return
@@ -343,7 +343,7 @@ proc ::tktable::MoveHandler {w op edit extend} {
 	    }
 	}
 
-    } elseif {![catch {$w index focus} cell]} {
+    } elseif {[set cell [$w focus]] ne ""} {
 	# Cell navigate mode
 	if {[scan $cell %d,%d row col] != 2} return
 	switch $op {
@@ -501,9 +501,9 @@ proc ::tktable::SelectionExtend {w op} {
 # Returns nothing
 #
 proc ::tktable::PageNav {w op} {
-    if {![catch {$w index active} cell]} {
+    if {[set cell [$w activate]] ne ""} {
 	set fn activate
-    } elseif {![catch {$w index focus} cell]} {
+    } elseif {[set cell [$w focus]] ne ""} {
 	set fn focus
     } else {
 	return
@@ -546,9 +546,9 @@ proc ::tktable::PageNav {w op} {
 # Returns nothing
 #
 proc ::tktable::ScreenNav {w op} {
-    if {![catch {$w index active} cell]} {
+    if {[set cell [$w activate]] ne ""} {
 	set fn activate
-    } elseif {![catch {$w index focus} cell]} {
+    } elseif {[set cell [$w focus]] ne ""} {
 	set fn focus
     } else {
 	return
@@ -604,7 +604,7 @@ proc ::tktable::ScreenNav {w op} {
 #
 # ::tktable::ToggleFocus
 #
-# Toggle between cell edit and navigation modes
+# Toggle between cell edit (activate) and navigation (focus) modes
 #
 # Arguments:
 # w -	The widget for which the selection will be retrieved.
@@ -613,10 +613,10 @@ proc ::tktable::ScreenNav {w op} {
 # Returns nothing
 #
 proc ::tktable::ToggleFocus {w} {
-    if {![catch {$w index active} cell]} {
+     if {[set cell [$w activate]] ne ""} {
 	$w activate {}
 	$w focus $cell
-    } elseif {![catch {$w index focus} cell]} {
+    } elseif {[set cell [$w focus]] ne ""} {
 	$w activate $cell
     }
 }
@@ -847,7 +847,6 @@ proc ::tktable::TripleButton1 {w x y} {
     }
 }
 
-
 #
 # ::tktable::BeginSelect --
 #
@@ -950,7 +949,7 @@ proc ::tktable::Motion {w el} {
 
     # Select text in active cell or if moved to new cell switch to nav mode
     if {$Priv(tablePrev) eq $cell} {
-	if {![catch {$w index active} cell]} {
+	if {[$w activate] ne ""} {
 	    $w activate $el
 	    set index [$w icursor]
 	    set anchor $Priv(icursor)
@@ -1118,9 +1117,9 @@ proc ::tktable::AutoScan {w} {
 proc ::tktable::MoveCell {w x y {index {}}} {
     variable Priv
 
-    if {![catch {$w index active} cell]} {
+    if {[set cell [$w activate]] ne ""} {
 	set fn activate
-    } elseif {![catch {$w index focus} cell]} {
+    } elseif {[set cell [$w focus]] ne ""} {
 	set fn focus
     } else {
 	return
@@ -1208,10 +1207,10 @@ proc ::tktable::ExtendSelect {w x y} {
     if {[$w cget -selectmode] ni [list "extended" "multiple"]} {
 	return
     }
-    if {![catch {$w index active} cell]} {
+    if {[set cell [$w activate]] ne ""} {
 	set fn activate
 	set id active
-    } elseif {![catch {$w index focus} cell]} {
+    } elseif {[set cell [$w focus]] ne ""} {
 	set fn focus
 	set id focus
     } else {
@@ -1242,9 +1241,9 @@ proc ::tktable::ExtendSelect {w x y} {
 # el -	An integer cell number.
 #
 proc ::tktable::DataExtend {w el} {
-    if {![catch {$w index active} cell]} {
+    if {[set cell [$w activate]] ne ""} {
 	set fn activate
-    } elseif {![catch {$w index focus} cell]} {
+    } elseif {[set cell [$w focus]] ne ""} {
 	set fn focus
     } else {
 	return
@@ -1276,8 +1275,8 @@ proc ::tktable::DataExtend {w el} {
 proc ::tktable::SelectAll {w} {
     if {[$w cget -selectmode] in [list single browse]} {
 	$w selection clear all
-	if {[catch {$w selection set active}]} {
-	    catch {$w selection set focus}
+	if {[set cell [$w activate]] ne "" || [set cell [$w focus]] ne ""} {
+	    $w selection set $cell
 	}
     } elseif {[$w cget -selecttitle]} {
 	$w selection set [$w cget -roworigin],[$w cget -colorigin] end
@@ -1323,10 +1322,8 @@ proc ::tktable::SelectClear {w} {
 # w -	The table widget.
 #
 proc ::tktable::SelectRow {w} {
-    if {[catch {$w index active} cell]} {
-	if {[catch {$w index focus} cell]} {
-	    return
-	}
+    if {[set cell [$w activate]] eq "" && [set cell [$w focus]] eq ""} {
+	return
     }
 
     if {[$w cget -selectmode] in [list single browse]} {
@@ -1349,10 +1346,8 @@ proc ::tktable::SelectRow {w} {
 # w -	The table widget.
 #
 proc ::tktable::SelectColumn {w} {
-    if {[catch {$w index active} cell]} {
-	if {[catch {$w index focus} cell]} {
-	    return
-	}
+    if {[set cell [$w activate]] eq "" && [set cell [$w focus]] eq ""} {
+	return
     }
 
     if {[$w cget -selectmode] in [list single browse]} {
@@ -1397,8 +1392,8 @@ proc ::tktable::Selection_Get {w} {
     set result ""
 
     # Commit any edits to active cell
-    if {![catch {$w index active} active]} {
-	$w set $active [$w curvalue]
+    if {[$w activate] ne ""} {
+	$w activate active
     }
 
     # Sort cells by row
@@ -1482,7 +1477,7 @@ proc ::tktable::Selecton_to_Clipboard {w {clear 0}} {
     set type [expr {$::tcl_platform(platform) eq "unix" ? "UTF8_STRING" : "STRING"}]
 
     # If active cell has selected text, get that
-    if {![catch {$w index active} cell]} {
+    if {[$w activate] ne ""} {
 	foreach {start end} [$w selection active] {
 	    clipboard clear -displayof $w
 	    clipboard append -displayof $w -format STRING -type $type -- \
@@ -1606,11 +1601,7 @@ proc ::tktable::Clipboard_Get {w} {
 # text -	Text to paste into cell.
 #
 proc ::tktable::Update_Cell {w cell text} {
-    if {[catch {$w index active} active]} {
-	set active ""
-    }
-
-    if {$cell eq $active} {
+    if {$cell eq [$w activate]} {
 	lassign [$w selection active] start end
 	if {$start ne ""} {
 	    $w delete active $start $end
@@ -1651,9 +1642,12 @@ proc ::tktable::tk_tablePaste {w {cell {}}} {
 	    return
 	}
     } else {
-	if {![catch {$w index active} cell]} {
+	set active [$w activate]
+	set focus [$w focus]
+	
+	if {[set cell [$w activate]] ne ""} {
 	    set is_active 1
-	} elseif {[catch {$w index focus} cell]} {
+	} elseif {[set cell [$w focus]] eq ""} {
 	    return
 	}
     }
