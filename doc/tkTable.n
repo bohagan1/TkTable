@@ -1085,6 +1085,21 @@ point is used\&.
 In the widget command descriptions below, arguments named \fIindex\fR,
 \fIfirst\fR, and \fIlast\fR always contain cell indices in one of
 the above forms\&.
+.SH "ACTIVE CELL INDEX"
+.PP
+Several of the widget commands use an index for the position of the text in the
+active cell\&. The valid forms are:
+.TP
+\fB\fInumber\fR\fR
+The position in the text starting from 0 to the last character\&.
+Use 0 for before the first character\&.
+.TP
+\fBend\fR
+The position after the last character in the text
+.TP
+\fBinsert\fR
+The current insertion index set by \fBicursor\fR\&.
+.PP
 .SH TAGS
 .PP
 A tag is a textual string that is associated with zero or more rows,
@@ -1092,29 +1107,30 @@ columns or cells in a table\&.  Tags may contain arbitrary characters, but it
 is probably best to avoid using names which look like indices to reduce
 coding confusion\&.  A tag can apply to an entire row or column, or just a
 single cell\&.  There are several permanent tags in each table that can be
-configured by the user and will determine the attributes for special cells:
-.TP
-\fBactive\fR
-This tag is given to the \fBactive\fR cell
+configured by the user and will determine the attributes for special cells\&.
+They are in default priority order:
 .TP
 \fBflash\fR
-If flash mode is on, this tag is given to any recently edited cells\&.
+If flash mode is on, this tag is associated with any recently edited cells\&.
+.TP
+\fBactive\fR
+This tag is associated with the \fBactive\fR cell\&.
 .TP
 \fBfocus\fR
-This tag is given to the \fBfocus\fR cell
+This tag is associated with the \fBfocus\fR cell\&.
 .TP
 \fBsel\fR
-This tag is given to any selected cells\&.
+This tag is associated with all selected cells\&.
 .TP
 \fBtitle\fR
-This tag is given to any cells in the title rows and columns\&.  This
-tag has \fB-state\fR \fBdisabled\fR by default\&.
+This tag is associated with all title row and column cells\&.
+This tag has \fB-state\fR \fBdisabled\fR by default\&.
 .PP
 .PP
 Tags control the way cells are displayed on the screen\&.  Where appropriate,
 the default for displaying cells is determined by the options for the table
 widget\&.  However, display options may be associated with individual tags
-using \fBtag configure\fRwidget command\&.  If a cell, row or column has
+using \fBtag configure\fR widget command\&.  If a cell, row or column has
 been tagged, then the display options associated with the tag override the
 default display style\&.  The following options are currently supported for tags:
 .TP
@@ -1350,16 +1366,23 @@ operations on the widget\&. It has the following general form:
 widget's path name\&. Option and the args determine the exact behavior of the
 command\&. The following commands are possible for table widgets:
 .TP
-\fIpathName\fR \fBactivate\fR \fIindex\fR
-Sets the keyboard input focus (aka active item) cell to \fIindex\fR\&. Once the
+\fIpathName\fR \fBactivate\fR ?\fIindex\fR?
+Activates cell \fIindex\fR and sets the keyboard input focus to it\&. Once a
 cell is active, the insertion cursor will be displayed and all keyboard events
-will be directed to that item\&. If \fIindex\fR is set to the empty string {},
-then no cell will be active\&. Activating a cell also sets the focus to that cell\&.
+will be directed to that item\&. Activating a cell also sets the \fBfocus\fR
+to that cell\&. If \fIindex\fR is set to the empty string {}, then no cell will
+be active without changing the focus cell\&. Without \fIindex\fR the current
+active cell is returned, if any, otherwise an empty string is returned\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBbbox\fR \fIfirst\fR ?\fIlast\fR?
-It returns the bounding box for the specified cell (range) as a 4-tuple of
-x, y, width and height in pixels\&.  It clips the box to the visible portion,
-if any, otherwise an empty string is returned\&.
+Returns the bounding box for the specified cell or rectangle of cells as a
+4-tuple of x, y, width and height in pixels\&.  When both \fIfirst\fR and
+\fIlast\fR are specified, \fIfirst\fR is the top left corner of the rectangle
+of cells and \fIlast\fR is the bottom right corner\&. The returned value is
+clipped to just the visible portion, if any, otherwise an empty string is
+returned\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBborder\fR \fIoption args\fR
 This command is a voodoo hack to implement border sizing for tables\&.
@@ -1391,7 +1414,8 @@ by the \fBtable\fR command\&.
 This command is a convenience routine to clear certain state information
 managed by the table\&.  \fIfirst\fR and \fIlast\fR represent valid table
 indices\&.  If neither are specified, then the command operates on the
-whole table\&.  The following options are recognized:
+whole table\&.  See \fBINDICES\fR for valid forms of index\&.
+The following options are recognized:
 .RS
 .TP
 \fIpathName\fR \fBclear cache\fR ?\fIfirst\fR? ?\fIlast\fR?
@@ -1415,63 +1439,67 @@ Query or modify the configuration options of the widget\&.
 If no \fIoption\fR is specified, returns a list describing all of
 the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
 information on the format of this list)\&.  If \fIoption\fR is specified
-with no \fIvalue\fR, then the command returns a list describing the
+without \fIvalue\fR, then the command returns a list describing the
 one named option (this list will be identical to the corresponding
 sublist of the value returned if no \fIoption\fR is specified)\&.  If
 one or more \fIoption-value\fR pairs are specified, then the command
 modifies the given widget option(s) to have the given value(s);  in
-this case the command returns an empty string\&.
-\fIOption\fR may have any of the values accepted by the \fBtable\fR
+this case the command returns an empty string {}\&.
+\fIoption\fR may have any of the values accepted by the \fBtable\fR
 command\&.
 .TP
 \fIpathName\fR \fBcurselection\fR ?\fIvalue\fR?
-With no arguments, it returns the sorted indices of the currently selected
-cells\&.  Otherwise it sets all the selected cells to the given value\&.  The
-set has no effect if there is no associated TCL array or the state is
-disabled\&.
+without arguments, returns a sorted list of the currently selected cell
+indices, otherwise all the selected cells will be set to \fIvalue\fR\&.  This
+has no effect if there is no associated TCL array or the state is disabled\&.
 .TP
 \fIpathName\fR \fBcurvalue\fR ?\fIvalue\fR?
-If no value is given, the value of the cell being edited (indexed by
-\fBactive\fR) is returned, else it is set to the given value\&.
+Sets the current active cell edit buffer to \fIvalue\fR\&.
+Without \fIvalue\fR, the current contents of the edit buffer are returned\&.
+The edit buffer holds the edited text prior to writing it to the cell\&.
 .TP
 \fIpathName\fR \fBdelete\fR \fIoption arg\fR ?\fIarg\fR?
-This command is used to delete various things in a table\&.  It has several
-forms, depending on the \fIoption\fR:
+This command is used to delete text, columns, and rows\&.
+It has several forms, depending on the \fIoption\fR:
 .RS
 .TP
-\fIpathName\fR \fBdelete active\fR \fIindex\fR ?\fIindex\fR?
-Deletes text from the active cell\&.  If only one index is given, it deletes
-the character after that index, otherwise it deletes from the first index to
-the second\&.  \fIindex\fR can be a number, \fBinsert\fR or \fBend\fR\&.
+\fIpathName\fR \fBdelete active\fR \fIstart\fR ?\fIend\fR?
+Deletes text in the active cell\&.  With only \fIstart\fR, only the character
+after index \fIstart\fR is deleted\&.  With both \fIstart\fR and \fIend\fR, all
+characters from index \fIstart\fR to just before index \fIend\fR are deleted\&.
+See \fBACTIVE CELL INDEX\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBdelete cols\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
-Deletes \fIcount\fR cols starting at (and including) col \fIindex\fR\&.  The
-\fIindex\fR will be constrained to the limits of the tables\&.  If
-\fIcount\fR is negative, it deletes cols to the left\&.  Otherwise it deletes
-cols to the right\&.  \fIcount\fR defaults to 1 (meaning just the column
-specified)\&.  At the moment, spans are
-not adjusted with this action\&.  Optional switches are:
+.TP
+\fIpathName\fR \fBdelete columns\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
+Delete \fIcount\fR columns at column \fIindex\fR where \fIcount\fR
+defaults to 1 (only delete column \fIindex\fR)\&.  The \fIindex\fR will be
+constrained to the limits of the table\&.  If \fIcount\fR is negative, then
+\fIcount\fR columns to the left of \fIindex\fR will be deleted, otherwise columns
+to the right will be deleted\&.  Currently, spans are not adjusted with this action\&.
+Optional switches are:
 .RS
 .TP
 \fB-holddimensions\fR
-Causes the table cols to be unaffected by the deletion (empty cols may
-appear)\&.  By default the dimensions are adjusted by \fIcount\fR\&.
+Specifies that the table dimensions not change by replacing deleted columns
+with empty columns\&.  By default the dimensions are adjusted by \fIcount\fR\&.
 .TP
 \fB-holdselection\fR
-Causes the selection to be maintained on the absolute cells values\&.
-Otherwise, the selection will be cleared\&.\&.
+Specifies that the selection be maintained on the absolute cells values\&.
+Otherwise, the selection will be cleared\&.
 .TP
 \fB-holdtags\fR
-Causes the tags specified by the \fItag\fR method to not move along
-with the data\&.  Also prevents specific widths set by the \fIwidth\fR method
-from being adjusted\&.  By default, these tags are properly adjusted\&.
+Specifies that tags created with the \fBtag\fR method and associated with
+the columns and cells not move along with the data\&.  Also prevents specific
+widths set by the \fIwidth\fR method from being adjusted\&.  By default, these
+tags are properly adjusted\&.
 .TP
 \fB-holdwindows\fR
-Causes the embedded windows created with the \fIwindow\fR method to not
-move along with the data\&.  By default, these windows are properly adjusted\&.
+Specifies that the embedded windows created with the \fBwindow\fR method to
+not move along with the data\&.  By default, these windows are properly adjusted\&.
 .TP
 \fB-keeptitles\fR
-Prevents title area cells from being changed\&.  Otherwise they are
+Specifies that title area cells not be changed\&.  Otherwise they are
 treated just like regular cells and will move as specified\&.
 .TP
 \fB--\fR
@@ -1479,77 +1507,84 @@ Signifies the end of the switches\&.
 .RE
 .TP
 \fIpathName\fR \fBdelete rows\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
-Deletes \fIcount\fR rows starting at (and including) row \fIindex\fR\&.  If
-\fIcount\fR is negative, it deletes rows going up\&.  Otherwise it deletes
-rows going down\&.  The selection will be cleared\&.  The switches are the same
-as those for column deletion\&.
+Deletes \fIcount\fR rows at row \fIindex\fR where \fIcount\fR defaults
+to 1 (only delete row \fIindex\fR)\&.  If \fIcount\fR is negative, then \fIcount\fR
+rows before \fIindex\fR will be deleted, otherwise rows after will be deleted\&.
+Will clear the selection\&.  Uses the same switches as \fBdelete columns\fR\&.
 .RE
 .TP
-\fIpathName\fR \fBfocus\fR \fIindex\fR
-Sets the keyboard navigation focus cell to \fIindex\fR\&. If \fIindex\fR is set
-to the empty string {}, then no cell will have the focus\&. Activating a cell
-also sets the focus to that cell\&. Setting the focus does not change the active
-cell\&.
+\fIpathName\fR \fBfocus\fR ?\fIindex\fR?
+Sets the keyboard navigation focus to cell \fIindex\fR\&. Activating a cell also
+sets the focus to that cell\&. Setting the focus does not change the active cell\&.
+If \fIindex\fR is set to the empty string {}, then no cell will have the focus\&.
+Without \fIindex\fR the current focus cell is returned, if any, otherwise an
+empty string is returned\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBget\fR \fIfirst\fR ?\fIlast\fR?
-Returns the value of the cells specified by the table indices \fIfirst\fR
-and (optionally) \fIlast\fR in a list\&.
+Returns the value of the cell \fIfirst\fR or range of cells from \fIfirst\fR
+to \fIlast\fR as a list\&. When both \fIfirst\fR and \fIlast\fR are specified,
+\fIfirst\fR is the top left corner of the rectangle of cells and \fIlast\fR
+is the bottom right corner\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBheight\fR ?\fIrow\fR? ?\fIvalue row value \&.\&.\&.\fR?
-If no \fIrow\fR is specified, returns a list describing all rows for which
-a height has been set\&.  If \fIrow\fR is specified with no value, it prints
-out the height of that row in characters (positive number) or pixels
-(negative number)\&.  If one or more \fIrow-value\fR pairs are specified,
-then it sets each row to be that height in lines (positive number) or
-pixels (negative number)\&.  If \fIvalue\fR is \fIdefault\fR, then the row
-uses the default height, specified by \fB-rowheight\fR\&.
+If no \fIrow\fR is specified, a list describing all rows for which a height has
+been set will be returned\&.  If \fIrow\fR is specified without a value, the height
+of that row in characters (positive number) or pixels (negative number) will be
+returned\&.  If one or more \fIrow-value\fR pairs are specified, then each row is
+set to be that height in lines (positive number) or pixels (negative number)\&.
+If \fIvalue\fR is \fIdefault\fR, then the row uses the default height,
+specified by \fB-rowheight\fR\&.
 .TP
 \fIpathName\fR \fBhidden\fR ?\fIindex\fR? ?\fIindex \&.\&.\&.\fR?
-When called without args, it returns all the \fIhidden\fR cells (those
-cells covered by a spanning cell)\&.  If one index is specified, it returns
-the spanning cell covering that index, if any\&.  If multiple indices are
-specified, it returns 1 if all indices are hidden cells, 0 otherwise\&.
+Without any args, returns a list of all the \fIhidden\fR cells (those cells
+covered by a spanning cell)\&.  If one index is specified, returns the
+spanning cell covering that index, if any\&.  If multiple indices are
+specified, returns 1 if all indices are hidden cells, 0 if not\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
-\fIpathName\fR \fBicursor\fR ?\fIarg\fR?
-With no arguments, prints out the location of the insertion cursor in the
-active cell\&.  With one argument, sets the cursor to that point in the
-string\&.  0 is before the first character, you can also use \fBinsert\fR or
-\fBend\fR for the current insertion point or the end of the text\&.  If
-there is no active cell, or the cell or table is disabled, this will
-return -1\&.
+\fIpathName\fR \fBicursor\fR ?\fIindex\fR?
+Sets the insertion cursor position in the active cell to index \fIindex\fR\&.
+Without any arguments, the current insertion index is returned\&. If there is
+no active cell, or the cell or table is disabled, -1 is returned\&.
+See \fBACTIVE CELL INDEX\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBindex\fR \fIindex\fR ?\fBrow|col\fR?
-Returns the integer cell coordinate that corresponds to \fIindex\fR in the
-form row,col\&.  If \fBrow\fR or \fBcol\fR is specified, then only the row or
-column index is returned\&. Will return an error if \fIindex\fR does not exist\&.
+Returns the cell that corresponds to index \fIindex\fR in the form of row,col\&.
+If \fBrow\fR or \fBcol\fR is specified, then only the row or column index
+is returned\&. If \fIindex\fR does not exist, an error will be returned\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBinsert\fR \fIoption arg arg\fR
-This command is used to into various things into a table\&.  It has several
-forms, depending on the \fIoption\fR:
+This command is used to insert text, columns, and rows\&.
+It has several forms, depending on the \fIoption\fR:
 .RS
 .TP
 \fIpathName\fR \fBinsert active\fR \fIindex value\fR
-The \fIvalue\fR is a text string which is inserted at the \fIindex\fR
-position of the active cell\&.  The cursor is then positioned after the
-new text\&. \fIindex\fR can be a number, \fBinsert\fR or \fBend\fR\&.
+Insert string \fIvalue\fR at index \fIindex\fR in the active cell\&.  The
+insertion cursor is then positioned after the inserted text\&.
+See \fBACTIVE CELL INDEX\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBinsert cols\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
-Inserts \fIcount\fR cols starting at col \fIindex\fR\&.  If \fIcount\fR is
-negative, it inserts before the specified col\&.  Otherwise it inserts after
-the specified col\&.  The selection will be cleared\&.  The switches are the
-same as those for column deletion\&.
+.TP
+\fIpathName\fR \fBinsert columns\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
+Inserts \fIcount\fR columns at column \fIindex\fR where \fIcount\fR
+defaults to 1\&.  If \fIcount\fR is negative, the columns are inserted to the
+left of column \fIindex\fR, otherwise they are inserted to the right\&.  Will
+clear the selection\&. Uses the same switches as \fBdelete columns\fR\&.
 .TP
 \fIpathName\fR \fBinsert rows\fR ?\fIswitches\fR? \fIindex\fR ?\fIcount\fR?
-Inserts \fIcount\fR rows starting at row \fIindex\fR\&.  If \fIcount\fR is
-negative, it inserts before the specified row\&.  Otherwise it inserts after
-the specified row\&.  The selection will be cleared\&.  The switches are the
-same as those for column deletion\&.
+Inserts \fIcount\fR rows at row \fIindex\fR where \fIcount\fR defaults
+to 1\&.  If \fIcount\fR is negative, the rows are inserted before row \fIindex\fR,
+otherwise they are inserted after it\&.  Will clear the selection\&.  Uses the same
+switches as \fBdelete columns\fR\&.
 .RE
 .TP
 \fIpathName\fR \fBreread\fR
-Rereads the old contents of the cell back into the editing buffer\&.  Useful
-for a key binding when <Escape> is pressed to abort the edit (a default
-binding)\&.
+Rereads the old contents of the cell back into the active cell edit buffer\&.
+This is useful for a key binding when <Escape> is pressed to abort the edit
+(a default binding)\&.
 .TP
 \fIpathName\fR \fBscan\fR \fIoption args\fR
 This command is used to implement scanning on tables\&.  It has
@@ -1572,10 +1607,11 @@ speed through the window\&.  The return value is an empty string\&.
 .RE
 .TP
 \fIpathName\fR \fBsee\fR \fIindex\fR
-Adjust the view in the table so that the cell given by \fIindex\fR is
-positioned within the view if the cell is not currently visible on the screen\&.
-The view will be shifted left/right or up/down to maintain the current
-row or column relative position if \fIindex\fR is in the same row or column\&.
+Adjust the view in the table so that cell \fIindex\fR is positioned within the
+view if the cell is not currently visible on the screen\&. The view will be
+shifted left/right or up/down to maintain the current row or column relative
+position if \fIindex\fR is in the same row or column\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBselection\fR \fIoption arg\fR
 This command is used to adjust the selection within a table\&.  It
@@ -1583,52 +1619,59 @@ has several forms, depending on \fIoption\fR:
 .RS
 .TP
 \fIpathName\fR \fBselection active\fR ?\fIstart\fR? ?\fIend\fR?
-Sets the selection to include the characters in the active cell starting with
-the one indexed by \fIstart\fR and ending with the one just before \fIend\fR\&.
-Without any arguments, the current start and end index are returned\&.
-If \fIstart\fR equal \fIend\fR or only \fIstart\fR is provided, the selection
-is cleared\&.
+Sets the active cell text selection to the characters from index \fIstart\fR to
+just before index \fIend\fR\&. Without any arguments, the current start and end
+index are returned or an empty string if none\&. If \fIstart\fR equals \fIend\fR
+or only \fIstart\fR is provided, the selection is cleared\&.
+See \fBACTIVE CELL INDEX\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBselection anchor\fR \fIindex\fR
-Sets the selection anchor to the cell given by \fIindex\fR\&.  The selection
+Sets the selection anchor to cell \fIindex\fR\&.  The selection
 anchor is the end of the selection that is fixed while dragging out a
 selection with the mouse\&.  The index \fBanchor\fR may be used to refer to
 the anchor cell\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBselection clear\fR \fIfirst\fR ?\fIlast\fR?
 If any of the cells between \fIfirst\fR and \fIlast\fR (inclusive) are
 selected, they are deselected\&.  The selection state is not changed for cells
 outside this range\&.  \fIfirst\fR may be specified as \fBall\fR to remove
 the selection from all cells\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBselection includes\fR \fIindex\fR
-Returns 1 if the cell indicated by \fIindex\fR is currently
-selected, 0 if not\&.
+Returns 1 if cell \fIindex\fR is currently selected or 0 if not\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBselection set\fR \fIfirst\fR ?\fIlast\fR?
-Selects all of the cells in the range between \fIfirst\fR and \fIlast\fR,
-inclusive, without affecting the selection state of cells outside that
-range\&. Option \fIlast\fR defaults to \fIfirst\fR's value\&.
+Selects all of the cells in the range between index \fIfirst\fR and \fIlast\fR,
+inclusive, without affecting the selection state of cells outside that range\&.
+When both \fIfirst\fR and \fIlast\fR are specified, \fIfirst\fR is the top left
+corner of the rectangle of cells and \fIlast\fR is the bottom right corner\&.
+Option \fIlast\fR defaults to \fIfirst\fR's value\&.
+See \fBINDICES\fR for valid forms of index\&.
 .RE
 .TP
 \fIpathName\fR \fBset\fR \fBrow|col\fR \fIindex\fR ?\fIvalue\fR? ?\fIindex value \&.\&.\&.\fR?
-Sets the specified index to the associated value\&.  Table validation will
+Sets each cell \fIindex\fR to the following \fIvalue\fR\&.  Table validation will
 not be triggered via this method\&.  If \fBrow\fR or \fBcol\fR precedes the
 list of index/value pairs, then the value is assumed to be a TCL list whose
 values will be split and set into the subsequent columns (if \fBrow\fR is
 specified) or rows (for \fBcol\fR)\&.  For example, "\fBset row 2,3 {a b c}\fR"
 will set 3 cells, from 2,3 to 2,5, to the specified values\&.  The setting of
 cells is silently bounded by the known table dimensions\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBspans\fR ?\fIindex\fR? ?\fIrows,cols index rows,cols \&.\&.\&.\fR?
-This command is used to manipulate row/col spans\&.  When called with no
+This command is used to manipulate row/column spans\&.  When called without
 arguments, all known spans are returned as a list of tuples of the form
 {index span}\&.  When called with only the \fIindex\fR, the span for that
 \fIindex\fR only is returned, if any\&.  Otherwise an even number of
 \fIindex rows,cols\fR pairs are used to set spans\&.  A span starts at the
-\fIindex\fR and continues for the specified number of rows and cols\&.
+\fIindex\fR and continues for the specified number of rows and columns\&.
 Negative spans are not supported\&.  A span of 0,0 unsets any span on that
 cell\&.  See \fBEXAMPLES\fR for more info\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBtag\fR option ?\fIarg arg \&.\&.\&.\fR?
 This command is used to manipulate tags\&.  The exact behavior of the command
@@ -1638,13 +1681,13 @@ The following forms of the command are currently supported:
 .RS
 .TP
 \fIpathName\fR \fBtag cell\fR \fItagName ?index \&.\&.\&.?\fR
-With no arguments, prints out the list of cells that use the \fItag\fR\&.
-Otherwise it sets the specified cells to use the named tag, replacing any
-tag that may have been set using this method before\&.  If \fItagName\fR is
-{}, the cells are reset to the default \fItag\fR\&.  Tags added during
-\fB-coltagcommand\fR or \fB-rowtagcommand\fR evaluation do not
-register here\&.  If \fItagName\fR does not exist, it will be created with
+Apply tag \fItagName\fR to each cell \fIindex\fR replacing any previous cell
+tag\&. If \fItagName\fR is {}, the cells are reset to the default tag\&. Without
+any arguments, a list of cell indices that use tag \fItagName\fR is returned\&.
+Tags added during \fB-coltagcommand\fR or \fB-rowtagcommand\fR evaluation
+do not register here\&.  If \fItagName\fR does not exist, it will be created with
 the default options\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBtag cget\fR \fItagName option\fR
 This command returns the current value of the option named \fIoption\fR
@@ -1652,81 +1695,78 @@ associated with the tag given by \fItagName\fR\&.  \fIOption\fR may have any
 of the values accepted by the \fBtag configure\fR widget command\&.
 .TP
 \fIpathName\fR \fBtag col\fR \fItagName ?col \&.\&.\&.?\fR
-With no arguments, prints out the list of cols that use the \fItag\fR\&.
-Otherwise it sets the specified columns to use the named tag, replacing any
-tag that may have been set using this method before\&.  If \fItagName\fR is
-{}, the cols are reset to the default \fItag\fR\&.  Tags added during
-\fB-coltagcommand\fR evaluation do not register here\&.  If \fItagName\fR does
-not exist, it will be created with the default options\&.
+.TP
+\fIpathName\fR \fBtag column\fR \fItagName ?col \&.\&.\&.?\fR
+Applies tag \fItagName\fR to each column \fIcol\fR replacing any previous
+column tag\&. If \fItagName\fR is {}, the columns are reset to the default tag\&.
+Without any arguments, a list of columns that use tag \fItagName\fR is returned\&.
+Tags added during \fB-coltagcommand\fR evaluation do not register here\&.
+If \fItagName\fR does not exist, it will be created with the default options\&.
 .TP
 \fIpathName\fR \fBtag configure\fR \fItagName\fR ?\fIoption\fR? ?\fIvalue\fR? ?\fIoption value \&.\&.\&.\fR?
-This command is similar to the \fBconfigure\fR widget command except that
-it modifies options associated with the tag given by \fItagName\fR instead
-of modifying options for the overall table widget\&.  If no \fIoption\fR is
-specified, the command returns a list describing all of the available
-options for \fItagName\fR (see \fBTk_ConfigureInfo\fR for information on
-the format of this list)\&.  If \fIoption\fR is specified with no
-\fIvalue\fR, then the command returns a list describing the one named
-option (this list will be identical to the corresponding sublist of the
-value returned if no \fIoption\fR is specified)\&.  If one or more
-\fIoption-value\fR pairs are specified, then the command modifies the
-given option(s) to have the given value(s) in \fItagName\fR; in this case
-the command returns an empty string\&.
-See \fBTAGS\fR above for details on the options available for tags\&.
+Query or modify the configuration options of tag \fItagName\fR\&. If no
+\fIoption\fR is specified, a list describing all of the available options for
+\fItagName\fR ts returned (see \fBTk_ConfigureInfo\fR for info on the format of
+this list)\&.  If \fIoption\fR is specified without \fIvalue\fR,
+then a list describing option \fIoption\fR is returned (this list will
+be identical to the corresponding sublist of the value returned if no
+\fIoption\fR is specified)\&.  If one or more \fIoption-value\fR pairs are
+specified, then the command modifies the given option(s) to have the given
+value(s) in \fItagName\fR and returns an empty string\&. See \fBTAGS\fR
+for details on the options available for tags\&.
 .TP
 \fIpathName\fR \fBtag delete\fR \fItagName\fR
-Deletes a tag\&.  No error if the tag does not exist\&.
+Deletes tag \fItagName\fR\&.  No error if the tag does not exist\&.
 .TP
 \fIpathName\fR \fBtag exists\fR \fItagName\fR
-Returns 1 if the named tag exists, 0 otherwise\&.
+Returns 1 if the tag \fItagName\fR exists, 0 if not\&.
 .TP
 \fIpathName\fR \fBtag get\fR \fIindex\fR
 Returns list of tags for cell \fIindex\fR\&.
 .TP
 \fIpathName\fR \fBtag includes\fR \fItagName index\fR
-Returns 1 if the specified index has the named tag, 0 otherwise\&.
+Returns 1 if cell \fIindex\fR has tag \fItagName\fR, 0 if not\&.
 .TP
 \fIpathName\fR \fBtag lower\fR \fItagName\fR ?\fIbelowThis\fR?
-Lower the priority of the named tag\&.  If \fIbelowThis\fR is not specified,
+Lower the priority of tag \fItagName\fR\&.  If \fIbelowThis\fR is not specified,
 then the tag's priority is lowered to the bottom, otherwise it is lowered
 to one below \fIbelowThis\fR\&.
 .TP
 \fIpathName\fR \fBtag names\fR ?\fIpattern\fR?
-If no pattern is specified, shows the names of all defined tags\&.
-Otherwise the \fIpattern\fR is used as a glob pattern to show only
-tags matching that pattern\&.  Tag names are returned in priority order
+If no pattern is specified, returns a list of all defined tag names\&. With
+\fIpattern\fR, only those tags that match \fBglob\fR \fIpattern\fR
+will be returned\&.  Tag names are returned in priority order
 (highest priority tag first)\&.
 .TP
 \fIpathName\fR \fBtag priority\fR \fItagName\fR
 Returns the numeric priority for tag \fItagName\fR\&.
 .TP
 \fIpathName\fR \fBtag raise\fR \fItagName\fR ?\fIaboveThis\fR?
-Raise the priority of the named tag\&.  If \fIaboveThis\fR is not specified,
+Raise the priority of tag \fItagName\fR\&.  If \fIaboveThis\fR is not specified,
 then the tag's priority is raised to the top, otherwise it is raised to
 one above \fIaboveThis\fR\&.
 .TP
 \fIpathName\fR \fBtag row\fR \fItagName\fR ?\fIrow \&.\&.\&.\fR?
-With no arguments, prints out the list of rows that use the \fItag\fR\&.
-Otherwise it sets the specified rows to use the named tag, replacing any
-tag that may have been set using this method before\&.  If \fItagName\fR is
-{}, the rows are reset to use the default tag\&.  Tags added during
-\fB-rowtagcommand\fR evaluation do not register here\&.  If \fItagName\fR does
-not exist, it will be created with the default options\&.
+Applies tag \fItagName\fR to each row \fIrow\fR replacing any previous row
+tag\&. If \fItagName\fR is {}, the rows are reset to the default tag\&.
+Without any arguments, a list of rows that use tag \fItagName\fR is returned\&.
+Tags added during \fB-rowtagcommand\fR evaluation do not register here\&.
+If \fItagName\fR does not exist, it will be created with the default options\&.
 .RE
 .TP
 \fIpathName\fR \fBvalidate\fR \fIindex\fR
-Explicitly validates the specified index based on the current
-\fB-validatecommand\fR and returns 0 or 1 based on whether the cell was
-validated\&.
+Validate the contents of cell \fIindex\fR using the current
+\fB-validatecommand\fR callback and return 1 if valid or 0 if not\&.
+See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBwidth\fR ?\fIcol\fR? ?\fIvalue col value \&.\&.\&.\fR?
-If no \fIcol\fR is specified, returns a list describing all cols for which
-a width has been set\&.  If \fIcol\fR is specified with no value, it prints
-out the width of that col in characters (positive number) or pixels
-(negative number)\&.  If one or more \fIcol-value\fR pairs are specified,
-then it sets each col to be that width in characters (positive number) or
-pixels (negative number)\&.  If \fIvalue\fR is \fIdefault\fR, then the col
-uses the default width, specified by \fB-colwidth\fR\&.
+If no \fIcol\fR is specified, a list describing all columns for which a width
+has been set will be returned\&.  If \fIcol\fR is specified without a value, the width of
+that column in characters (positive number) or pixels (negative number) will be
+returned\&.  If one or more \fIcol-value\fR pairs are specified, then each
+column is set to be that width in characters (positive number) or pixels
+(negative number)\&.  If \fIvalue\fR is \fIdefault\fR, then the column uses the
+default width, specified by \fB-colwidth\fR\&.
 .TP
 \fIpathName\fR \fBwindow\fR option ?\fIarg arg \&.\&.\&.\fR?
 This command is used to manipulate embedded windows\&.  The exact behavior of
@@ -1741,58 +1781,52 @@ associated with the window given by \fIindex\fR\&.  \fIOption\fR may have any
 of the values accepted by the \fBwindow configure\fR widget command\&.
 .TP
 \fIpathName\fR \fBwindow configure\fR \fIindex\fR ?\fIoption\fR? ?\fIvalue\fR? ?\fIoption value \&.\&.\&.\fR?
-This command is similar to the \fBconfigure\fR widget command except that
-it modifies options associated with the embedded window given by
-\fIindex\fR instead of modifying options for the overall table widget\&.  If
-no \fIoption\fR is specified, the command returns a list describing all of
-the available options for \fIindex\fR (see \fBTk_ConfigureInfo\fR for
-information on the format of this list)\&.  If \fIoption\fR is specified with
-no \fIvalue\fR, then the command returns a list describing the one named
-option (this list will be identical to the corresponding sublist of the
-value returned if no \fIoption\fR is specified)\&.  If one or more
-\fIoption-value\fR pairs are specified, then the command modifies the
-given option(s) to have the given value(s) in \fIindex\fR; in this case
-the command returns an empty string\&.
+Query or modify the configuration options of window \fIindex\fR\&. If no
+\fIoption\fR is specified, a list describing all of the available options for
+\fIindex\fR is returned (see \fBTk_ConfigureInfo\fR for info on the format of
+this list)\&. If \fIoption\fR is specified without \fIvalue\fR, then a list
+describing the option is returned (this list will be identical to the
+corresponding sublist of the value returned if no \fIoption\fR is specified)\&.
+If one or more \fIoption-value\fR pairs are specified, then the command modifies
+the given option(s) to have the given value(s) in \fIindex\fR and returns an
+empty string\&.
 See \fBEMBEDDED WINDOWS\fR above for details on the options available for windows\&.
 .TP
 \fIpathName\fR \fBwindow delete\fR \fIindex\fR ?\fIindex \&.\&.\&.\fR?
-Deletes an embedded window from the table\&.  The associated window will
+Deletes embedded window \fIindex\fR from the table\&.  The associated window will
 also be deleted\&.
 .TP
 \fIpathName\fR \fBwindow move\fR \fIindexFrom indexTo\fR
-Moves an embedded window from one cell to another\&.  If a window already
-exists in the target cell, it will be deleted\&.
+Moves an embedded window from cell \fIindexFrom\fR to cell \fIindexTo\fR\&.
+If a window already exists in the target cell, it will be deleted\&.
 .TP
 \fIpathName\fR \fBwindow names\fR ?\fIpattern\fR?
-If no pattern is specified, shows the cells of all embedded windows\&.
-Otherwise the \fIpattern\fR is used as a glob pattern to show only
+If no pattern is specified, returns a list of cell indices with embedded windows\&.
+Otherwise the \fIpattern\fR is used as a \fBglob\fR pattern to show only
 cells matching that pattern\&.
 .RE
 .TP
-\fIpathName\fR \fBxview\fR \fIargs\fR
-This command is used to query and change the horizontal position of the
-information in the widget's window\&.  It can take any of the following
-forms:
+\fIpathName\fR \fBxview\fR \fI?args?\fR
+This command is used to query and change the horizontal position of the content
+in the widget's window\&. It can take any of the following forms:
 .RS
 .TP
 \fIpathName\fR \fBxview\fR
-Returns a list containing two elements\&.
-Each element is a real fraction between 0 and 1;  together they describe
-the horizontal span that is visible in the window\&.
-For example, if the first element is \&.2 and the second element is \&.6,
-20% of the table's text is off-screen to the left, the middle 40% is visible
-in the window, and 40% of the text is off-screen to the right\&.
-These are the same values passed to scrollbars via the \fB-xscrollcommand\fR
-option\&.
+Returns a list containing two elements\&. Each element is a real fraction
+between 0 and 1; together they describe the horizontal span that is visible in
+the window\&. For example, if the first element is \&.2 and the second element is
+\&.6, 20% of the table's text is off-screen to the left, the middle 40% is
+visible in the window, and 40% of the text is off-screen to the right\&. These
+are the same values passed to scrollbars via the -xscrollcommand option\&.
 .TP
 \fIpathName\fR \fBxview\fR \fIindex\fR
-Adjusts the view in the window so that the column given by
-\fIindex\fR is displayed at the left edge of the window\&.
+Adjusts the view in the window so that the column given by \fIindex\fR is
+displayed at the left edge of the window\&.
 .TP
 \fIpathName\fR \fBxview moveto\fR \fIfraction\fR
-Adjusts the view in the window so that \fIfraction\fR of the
-total width of the table text is off-screen to the left\&.
-\fIfraction\fR must be a fraction between 0 and 1\&.
+Adjusts the view in the window so that \fIfraction\fR of the total width of
+the table is off-screen to the left\&. \fIfraction\fR must be a fraction
+between 0 and 1\&.
 .TP
 \fIpathName\fR \fBxview scroll\fR \fInumber what\fR
 This command shifts the view in the window left or right according to
@@ -1809,21 +1843,21 @@ become visible\&.
 .TP
 \fIpathName\fR \fByview\fR \fI?args?\fR
 This command is used to query and change the vertical position of the
-text in the widget's window\&.  It can take any of the following forms:
+rows in the widget's window\&.  It can take any of the following forms:
 .RS
 .TP
 \fIpathName\fR \fByview\fR
-Returns a list containing two elements, both of which are real fractions
-between 0 and 1\&.  The first element gives the position of the table element
-at the top of the window, relative to the table as a whole (0\&.5 means it is
-halfway through the table, for example)\&.  The second element gives the
-position of the table element just after the last one in the window,
-relative to the table as a whole\&.  These are the same values passed to
-scrollbars via the \fB-yscrollcommand\fR option\&.
+Returns a list containing two elements\&. Each element is a real fraction between
+0 and 1; together they describe the vertical span that is visible in the window\&.
+The first element gives the position of the table element at the top of the
+window, relative to the table as a whole (0\&.5 means it is halfway through the
+table, for example)\&. The second element gives the position of the table element
+just after the last one in the window, relative to the table as a whole\&. These
+are the same values passed to scrollbars via the -yscrollcommand option\&.
 .TP
 \fIpathName\fR \fByview\fR \fIindex\fR
-Adjusts the view in the window so that the row given by
-\fIindex\fR is displayed at the top of the window\&.
+Adjusts the view in the window so that the row given by \fIindex\fR is
+displayed at the top of the window\&.
 .TP
 \fIpathName\fR \fByview moveto\fR \fIfraction\fR
 Adjusts the view in the window so that the element given by \fIfraction\fR

@@ -463,6 +463,23 @@ In the widget command descriptions below, arguments named [arg index],
 [arg first], and [arg last] always contain cell indices in one of
 the above forms.
 
+[section "ACTIVE CELL INDEX"]
+[para]
+Several of the widget commands use an index for the position of the text in the
+active cell. The valid forms are:
+[list_begin options]
+
+[opt_def "[arg number]"]
+The position in the text starting from 0 to the last character.
+Use 0 for before the first character.
+
+[opt_def end]
+The position after the last character in the text
+
+[opt_def insert]
+The current insertion index set by [method icursor].
+[list_end]
+
 [section "TAGS"]
 [para]
 A tag is a textual string that is associated with zero or more rows,
@@ -470,31 +487,32 @@ columns or cells in a table.  Tags may contain arbitrary characters, but it
 is probably best to avoid using names which look like indices to reduce
 coding confusion.  A tag can apply to an entire row or column, or just a
 single cell.  There are several permanent tags in each table that can be
-configured by the user and will determine the attributes for special cells:
+configured by the user and will determine the attributes for special cells.
+They are in default priority order:
 [list_begin options]
 
-[opt_def active]
-This tag is given to the [const active] cell
-
 [opt_def flash]
-If flash mode is on, this tag is given to any recently edited cells.
+If flash mode is on, this tag is associated with any recently edited cells.
+
+[opt_def active]
+This tag is associated with the [const active] cell.
 
 [opt_def focus]
-This tag is given to the [const focus] cell
+This tag is associated with the [const focus] cell.
 
 [opt_def sel]
-This tag is given to any selected cells.
+This tag is associated with all selected cells.
 
 [opt_def title]
-This tag is given to any cells in the title rows and columns.  This
-tag has [option -state] [const disabled] by default.
+This tag is associated with all title row and column cells.
+This tag has [option -state] [const disabled] by default.
 [list_end]
 
 [para]
 Tags control the way cells are displayed on the screen.  Where appropriate,
 the default for displaying cells is determined by the options for the table
 widget.  However, display options may be associated with individual tags
-using [method "tag configure"]widget command.  If a cell, row or column has
+using [method "tag configure"] widget command.  If a cell, row or column has
 been tagged, then the display options associated with the tag override the
 default display style.  The following options are currently supported for tags:
 [list_begin options]
@@ -730,25 +748,32 @@ The pathname to the window for which the command was generated.
 [para]
 The [cmd table] command creates a new Tcl command whose name is the same as the
 path name of the table's window. This command may be used to invoke various
-operations on the widget. It has the following general form: 
+operations on the widget. It has the following general form:
 
 [example "[arg pathName] [arg option] [arg [opt "arg ..."]]"]
 
 [arg PathName] is the name of the command, which is the same as the table
 widget's path name. Option and the args determine the exact behavior of the
-command. The following commands are possible for table widgets: 
+command. The following commands are possible for table widgets:
 
 [list_begin definitions]
-[def "[arg pathName] [method activate] [arg index]"]
-Sets the keyboard input focus (aka active item) cell to [arg index]. Once the
+[def "[arg pathName] [method activate] [opt [arg index]]"]
+Activates cell [arg index] and sets the keyboard input focus to it. Once a
 cell is active, the insertion cursor will be displayed and all keyboard events
-will be directed to that item. If [arg index] is set to the empty string {},
-then no cell will be active. Activating a cell also sets the focus to that cell.
+will be directed to that item. Activating a cell also sets the [method focus]
+to that cell. If [arg index] is set to the empty string {}, then no cell will
+be active without changing the focus cell. Without [arg index] the current
+active cell is returned, if any, otherwise an empty string is returned.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method bbox] [arg first] [opt [arg last]]"]
-It returns the bounding box for the specified cell (range) as a 4-tuple of
-x, y, width and height in pixels.  It clips the box to the visible portion,
-if any, otherwise an empty string is returned.
+Returns the bounding box for the specified cell or rectangle of cells as a
+4-tuple of x, y, width and height in pixels.  When both [arg first] and
+[arg last] are specified, [arg first] is the top left corner of the rectangle
+of cells and [arg last] is the bottom right corner. The returned value is
+clipped to just the visible portion, if any, otherwise an empty string is
+returned.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method border] [arg "option args"]"]
 This command is a voodoo hack to implement border sizing for tables.
@@ -780,7 +805,8 @@ by the [cmd table] command.
 This command is a convenience routine to clear certain state information
 managed by the table.  [arg first] and [arg last] represent valid table
 indices.  If neither are specified, then the command operates on the
-whole table.  The following options are recognized:
+whole table.  See [sectref INDICES] for valid forms of index.
+The following options are recognized:
 [list_begin definitions]
 
 [def "[arg pathName] [method "clear cache"] [opt [arg first]] [opt [arg last]]"]
@@ -802,65 +828,68 @@ Performs all of the above clear functions on the specified area.
 [def "[arg pathName] [method configure] [opt [arg option]] [opt [arg "value option value ..."]]"]
 Query or modify the configuration options of the widget.
 If no [arg option] is specified, returns a list describing all of
-the available options for [arg pathName] (see [fun Tk_ConfigureInfo] for
+the available options for [arg pathName] (see [syscmd Tk_ConfigureInfo] for
 information on the format of this list).  If [arg option] is specified
-with no [arg value], then the command returns a list describing the
+without [arg value], then the command returns a list describing the
 one named option (this list will be identical to the corresponding
 sublist of the value returned if no [arg option] is specified).  If
 one or more [arg option-value] pairs are specified, then the command
 modifies the given widget option(s) to have the given value(s);  in
-this case the command returns an empty string.
-[arg Option] may have any of the values accepted by the [cmd table]
+this case the command returns an empty string {}.
+[arg option] may have any of the values accepted by the [cmd table]
 command.
 
 [def "[arg pathName] [method curselection] [opt [arg value]]"]
-With no arguments, it returns the sorted indices of the currently selected
-cells.  Otherwise it sets all the selected cells to the given value.  The
-set has no effect if there is no associated TCL array or the state is
-disabled.
+without arguments, returns a sorted list of the currently selected cell
+indices, otherwise all the selected cells will be set to [arg value].  This
+has no effect if there is no associated TCL array or the state is disabled.
 
 [def "[arg pathName] [method curvalue] [opt [arg value]]"]
-If no value is given, the value of the cell being edited (indexed by
-[const active]) is returned, else it is set to the given value.
+Sets the current active cell edit buffer to [arg value].
+Without [arg value], the current contents of the edit buffer are returned.
+The edit buffer holds the edited text prior to writing it to the cell.
 
 [def "[arg pathName] [method delete] [arg "option arg"] [opt [arg arg]]"]
-This command is used to delete various things in a table.  It has several
-forms, depending on the [arg option]:
+This command is used to delete text, columns, and rows.
+It has several forms, depending on the [arg option]:
 [list_begin definitions]
 
-[def "[arg pathName] [method "delete active"] [arg index] [opt [arg index]]"]
-Deletes text from the active cell.  If only one index is given, it deletes
-the character after that index, otherwise it deletes from the first index to
-the second.  [arg index] can be a number, [const insert] or [const end].
+[def "[arg pathName] [method "delete active"] [arg start] [opt [arg end]]"]
+Deletes text in the active cell.  With only [arg start], only the character
+after index [arg start] is deleted.  With both [arg start] and [arg end], all
+characters from index [arg start] to just before index [arg end] are deleted.
+See [sectref "ACTIVE CELL INDEX"] for valid forms of index.
 
 [def "[arg pathName] [method "delete cols"] [opt [arg switches]] [arg index] [opt [arg count]]"]
-Deletes [arg count] cols starting at (and including) col [arg index].  The
-[arg index] will be constrained to the limits of the tables.  If
-[arg count] is negative, it deletes cols to the left.  Otherwise it deletes
-cols to the right.  [arg count] defaults to 1 (meaning just the column
-specified).  At the moment, spans are
-not adjusted with this action.  Optional switches are:
+[def "[arg pathName] [method "delete columns"] [opt [arg switches]] [arg index] [opt [arg count]]"]
+Delete [arg count] columns at column [arg index] where [arg count]
+defaults to 1 (only delete column [arg index]).  The [arg index] will be
+constrained to the limits of the table.  If [arg count] is negative, then
+[arg count] columns to the left of [arg index] will be deleted, otherwise columns
+to the right will be deleted.  Currently, spans are not adjusted with this action.
+Optional switches are:
 [list_begin options]
 
 [opt_def -holddimensions]
-Causes the table cols to be unaffected by the deletion (empty cols may
-appear).  By default the dimensions are adjusted by [arg count].
+Specifies that the table dimensions not change by replacing deleted columns
+with empty columns.  By default the dimensions are adjusted by [arg count].
 
 [opt_def -holdselection]
-Causes the selection to be maintained on the absolute cells values.
-Otherwise, the selection will be cleared..
+Specifies that the selection be maintained on the absolute cells values.
+Otherwise, the selection will be cleared.
 
 [opt_def -holdtags]
-Causes the tags specified by the [arg tag] method to not move along
-with the data.  Also prevents specific widths set by the [arg width] method
-from being adjusted.  By default, these tags are properly adjusted.
+Specifies that tags created with the [method tag] method and associated with
+the columns and cells not move along with the data.  Also prevents specific
+widths set by the [arg width] method from being adjusted.  By default, these
+tags are properly adjusted.
 
 [opt_def -holdwindows]
-Causes the embedded windows created with the [arg window] method to not
-move along with the data.  By default, these windows are properly adjusted.
+Specifies that the embedded windows created with the [method window] method to
+not move along with the data.  By default, these windows are properly adjusted.
 
 [opt_def -keeptitles]
-Prevents title area cells from being changed.  Otherwise they are
+Specifies that title area cells not be changed.  Otherwise they are
 treated just like regular cells and will move as specified.
 
 [opt_def --]
@@ -868,77 +897,83 @@ Signifies the end of the switches.
 [list_end]
 
 [def "[arg pathName] [method "delete rows"] [opt [arg switches]] [arg index] [opt [arg count]]"]
-Deletes [arg count] rows starting at (and including) row [arg index].  If
-[arg count] is negative, it deletes rows going up.  Otherwise it deletes
-rows going down.  The selection will be cleared.  The switches are the same
-as those for column deletion.
+Deletes [arg count] rows at row [arg index] where [arg count] defaults
+to 1 (only delete row [arg index]).  If [arg count] is negative, then [arg count]
+rows before [arg index] will be deleted, otherwise rows after will be deleted.
+ Will clear the selection.  Uses the same switches as [method "delete columns"].
 [list_end]
 
-[def "[arg pathName] [method focus] [arg index]"]
-Sets the keyboard navigation focus cell to [arg index]. If [arg index] is set
-to the empty string {}, then no cell will have the focus. Activating a cell
-also sets the focus to that cell. Setting the focus does not change the active
-cell.
+[def "[arg pathName] [method focus] [opt [arg index]]"]
+Sets the keyboard navigation focus to cell [arg index]. Activating a cell also
+sets the focus to that cell. Setting the focus does not change the active cell.
+If [arg index] is set to the empty string {}, then no cell will have the focus.
+Without [arg index] the current focus cell is returned, if any, otherwise an
+empty string is returned.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method get] [arg first] [opt [arg last]]"]
-Returns the value of the cells specified by the table indices [arg first]
-and (optionally) [arg last] in a list.
+Returns the value of the cell [arg first] or range of cells from [arg first]
+to [arg last] as a list. When both [arg first] and [arg last] are specified,
+[arg first] is the top left corner of the rectangle of cells and [arg last]
+is the bottom right corner.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method height] [opt [arg row]] [opt [arg "value row value ..."]]"]
-If no [arg row] is specified, returns a list describing all rows for which
-a height has been set.  If [arg row] is specified with no value, it prints
-out the height of that row in characters (positive number) or pixels
-(negative number).  If one or more [arg row-value] pairs are specified,
-then it sets each row to be that height in lines (positive number) or
-pixels (negative number).  If [arg value] is [arg default], then the row
-uses the default height, specified by [option -rowheight].
+If no [arg row] is specified, a list describing all rows for which a height has
+been set will be returned.  If [arg row] is specified without a value, the height
+of that row in characters (positive number) or pixels (negative number) will be
+returned.  If one or more [arg row-value] pairs are specified, then each row is
+set to be that height in lines (positive number) or pixels (negative number).
+If [arg value] is [arg default], then the row uses the default height,
+specified by [option -rowheight].
 
 [def "[arg pathName] [method hidden] [opt [arg index]] [opt [arg "index ..."]]"]
-When called without args, it returns all the [arg hidden] cells (those
-cells covered by a spanning cell).  If one index is specified, it returns
-the spanning cell covering that index, if any.  If multiple indices are
-specified, it returns 1 if all indices are hidden cells, 0 otherwise.
+Without any args, returns a list of all the [arg hidden] cells (those cells
+covered by a spanning cell).  If one index is specified, returns the
+spanning cell covering that index, if any.  If multiple indices are
+specified, returns 1 if all indices are hidden cells, 0 if not.
+See [sectref INDICES] for valid forms of index.
 
-[def "[arg pathName] [method icursor] [opt [arg arg]]"]
-With no arguments, prints out the location of the insertion cursor in the
-active cell.  With one argument, sets the cursor to that point in the
-string.  0 is before the first character, you can also use [const insert] or
-[const end] for the current insertion point or the end of the text.  If
-there is no active cell, or the cell or table is disabled, this will
-return -1.
+[def "[arg pathName] [method icursor] [opt [arg index]]"]
+Sets the insertion cursor position in the active cell to index [arg index].
+Without any arguments, the current insertion index is returned. If there is
+no active cell, or the cell or table is disabled, -1 is returned.
+See [sectref "ACTIVE CELL INDEX"] for valid forms of index.
 
 [def "[arg pathName] [method index] [arg index] [opt [const "row|col"]]"]
-Returns the integer cell coordinate that corresponds to [arg index] in the
-form row,col.  If [const row] or [const col] is specified, then only the row or
-column index is returned. Will return an error if [arg index] does not exist.
+Returns the cell that corresponds to index [arg index] in the form of row,col.
+If [const row] or [const col] is specified, then only the row or column index
+is returned. If [arg index] does not exist, an error will be returned.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method insert] [arg "option arg arg"]"]
-This command is used to into various things into a table.  It has several
-forms, depending on the [arg option]:
+This command is used to insert text, columns, and rows.
+It has several forms, depending on the [arg option]:
 [list_begin definitions]
 
 [def "[arg pathName] [method "insert active"] [arg "index value"]"]
-The [arg value] is a text string which is inserted at the [arg index]
-position of the active cell.  The cursor is then positioned after the
-new text. [arg index] can be a number, [const insert] or [const end].
+Insert string [arg value] at index [arg index] in the active cell.  The
+insertion cursor is then positioned after the inserted text.
+See [sectref "ACTIVE CELL INDEX"] for valid forms of index.
 
 [def "[arg pathName] [method "insert cols"] [opt [arg switches]] [arg index] [opt [arg count]]"]
-Inserts [arg count] cols starting at col [arg index].  If [arg count] is
-negative, it inserts before the specified col.  Otherwise it inserts after
-the specified col.  The selection will be cleared.  The switches are the
-same as those for column deletion.
+[def "[arg pathName] [method "insert columns"] [opt [arg switches]] [arg index] [opt [arg count]]"]
+Inserts [arg count] columns at column [arg index] where [arg count]
+defaults to 1.  If [arg count] is negative, the columns are inserted to the
+left of column [arg index], otherwise they are inserted to the right.  Will
+clear the selection. Uses the same switches as [method "delete columns"].
 
 [def "[arg pathName] [method "insert rows"] [opt [arg switches]] [arg index] [opt [arg count]]"]
-Inserts [arg count] rows starting at row [arg index].  If [arg count] is
-negative, it inserts before the specified row.  Otherwise it inserts after
-the specified row.  The selection will be cleared.  The switches are the
-same as those for column deletion.
+Inserts [arg count] rows at row [arg index] where [arg count] defaults
+to 1.  If [arg count] is negative, the rows are inserted before row [arg index],
+otherwise they are inserted after it.  Will clear the selection.  Uses the same
+switches as [method "delete columns"].
 [list_end]
 
 [def "[arg pathName] [method reread]"]
-Rereads the old contents of the cell back into the editing buffer.  Useful
-for a key binding when <Escape> is pressed to abort the edit (a default
-binding).
+Rereads the old contents of the cell back into the active cell edit buffer.
+This is useful for a key binding when <Escape> is pressed to abort the edit
+(a default binding).
 
 [def "[arg pathName] [method scan] [arg "option args"]"]
 This command is used to implement scanning on tables.  It has
@@ -961,10 +996,11 @@ speed through the window.  The return value is an empty string.
 [list_end]
 
 [def "[arg pathName] [method see] [arg index]"]
-Adjust the view in the table so that the cell given by [arg index] is
-positioned within the view if the cell is not currently visible on the screen.
-The view will be shifted left/right or up/down to maintain the current
-row or column relative position if [arg index] is in the same row or column.
+Adjust the view in the table so that cell [arg index] is positioned within the
+view if the cell is not currently visible on the screen. The view will be
+shifted left/right or up/down to maintain the current row or column relative
+position if [arg index] is in the same row or column.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method selection] [arg "option arg"]"]
 This command is used to adjust the selection within a table.  It
@@ -972,52 +1008,59 @@ has several forms, depending on [arg option]:
 [list_begin definitions]
 
 [def "[arg pathName] [method "selection active"] [opt [arg start]] [opt [arg end]]"]
-Sets the selection to include the characters in the active cell starting with
-the one indexed by [arg start] and ending with the one just before [arg end].
-Without any arguments, the current start and end index are returned.
-If [arg start] equal [arg end] or only [arg start] is provided, the selection
-is cleared.
+Sets the active cell text selection to the characters from index [arg start] to
+just before index [arg end]. Without any arguments, the current start and end
+index are returned or an empty string if none. If [arg start] equals [arg end]
+or only [arg start] is provided, the selection is cleared.
+See [sectref "ACTIVE CELL INDEX"] for valid forms of index.
 
 [def "[arg pathName] [method "selection anchor"] [arg index]"]
-Sets the selection anchor to the cell given by [arg index].  The selection
+Sets the selection anchor to cell [arg index].  The selection
 anchor is the end of the selection that is fixed while dragging out a
 selection with the mouse.  The index [const anchor] may be used to refer to
 the anchor cell.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method "selection clear"] [arg first] [opt [arg last]]"]
 If any of the cells between [arg first] and [arg last] (inclusive) are
 selected, they are deselected.  The selection state is not changed for cells
 outside this range.  [arg first] may be specified as [const all] to remove
 the selection from all cells.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method "selection includes"] [arg index]"]
-Returns 1 if the cell indicated by [arg index] is currently
-selected, 0 if not.
+Returns 1 if cell [arg index] is currently selected or 0 if not.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method "selection set"] [arg first] [opt [arg last]]"]
-Selects all of the cells in the range between [arg first] and [arg last],
-inclusive, without affecting the selection state of cells outside that
-range. Option [arg last] defaults to [arg first]'s value.
+Selects all of the cells in the range between index [arg first] and [arg last],
+inclusive, without affecting the selection state of cells outside that range.
+When both [arg first] and [arg last] are specified, [arg first] is the top left
+corner of the rectangle of cells and [arg last] is the bottom right corner.
+Option [arg last] defaults to [arg first]'s value.
+See [sectref INDICES] for valid forms of index.
 [list_end]
 
 [def "[arg pathName] [method set] [method row|col] [arg index] [opt [arg value]] [opt [arg "index value ..."]]"]
-Sets the specified index to the associated value.  Table validation will
-not be triggered via this method.  If [method row] or [method col] precedes the
+Sets each cell [arg index] to the following [arg value].  Table validation will
+not be triggered via this method.  If [const row] or [const col] precedes the
 list of index/value pairs, then the value is assumed to be a TCL list whose
 values will be split and set into the subsequent columns (if [method row] is
 specified) or rows (for [method col]).  For example, "[method "set row 2,3 {a b c}"]"
 will set 3 cells, from 2,3 to 2,5, to the specified values.  The setting of
 cells is silently bounded by the known table dimensions.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method spans] [opt [arg index]] [opt [arg "rows,cols index rows,cols ..."]]"]
-This command is used to manipulate row/col spans.  When called with no
+This command is used to manipulate row/column spans.  When called without
 arguments, all known spans are returned as a list of tuples of the form
 {index span}.  When called with only the [arg index], the span for that
 [arg index] only is returned, if any.  Otherwise an even number of
 [arg "index rows,cols"] pairs are used to set spans.  A span starts at the
-[arg index] and continues for the specified number of rows and cols.
+[arg index] and continues for the specified number of rows and columns.
 Negative spans are not supported.  A span of 0,0 unsets any span on that
 cell.  See [sectref EXAMPLES] for more info.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method tag] option [opt [arg "arg arg ..."]]"]
 This command is used to manipulate tags.  The exact behavior of the command
@@ -1027,13 +1070,13 @@ The following forms of the command are currently supported:
 [list_begin definitions]
 
 [def "[arg pathName] [method "tag cell"] [arg "tagName [opt "index ..."]"]"]
-With no arguments, prints out the list of cells that use the [arg tag].
-Otherwise it sets the specified cells to use the named tag, replacing any
-tag that may have been set using this method before.  If [arg tagName] is
-{}, the cells are reset to the default [arg tag].  Tags added during
-[option -coltagcommand] or [option -rowtagcommand] evaluation do not
-register here.  If [arg tagName] does not exist, it will be created with
+Apply tag [arg tagName] to each cell [arg index] replacing any previous cell
+tag. If [arg tagName] is {}, the cells are reset to the default tag. Without
+any arguments, a list of cell indices that use tag [arg tagName] is returned.
+Tags added during [option -coltagcommand] or [option -rowtagcommand] evaluation
+do not register here.  If [arg tagName] does not exist, it will be created with
 the default options.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method "tag cget"] [arg "tagName option"]"]
 This command returns the current value of the option named [arg option]
@@ -1041,81 +1084,77 @@ associated with the tag given by [arg tagName].  [arg Option] may have any
 of the values accepted by the [method "tag configure"] widget command.
 
 [def "[arg pathName] [method "tag col"] [arg "tagName [opt "col ..."]"]"]
-With no arguments, prints out the list of cols that use the [arg tag].
-Otherwise it sets the specified columns to use the named tag, replacing any
-tag that may have been set using this method before.  If [arg tagName] is
-{}, the cols are reset to the default [arg tag].  Tags added during
-[option -coltagcommand] evaluation do not register here.  If [arg tagName] does
-not exist, it will be created with the default options.
+[def "[arg pathName] [method "tag column"] [arg "tagName [opt "col ..."]"]"]
+Applies tag [arg tagName] to each column [arg col] replacing any previous
+column tag. If [arg tagName] is {}, the columns are reset to the default tag. 
+Without any arguments, a list of columns that use tag [arg tagName] is returned.
+Tags added during [option -coltagcommand] evaluation do not register here.
+If [arg tagName] does not exist, it will be created with the default options.
 
 [def "[arg pathName] [method "tag configure"] [arg tagName] [opt [arg option]] [opt [arg value]] [opt [arg "option value ..."]]"]
-This command is similar to the [method configure] widget command except that
-it modifies options associated with the tag given by [arg tagName] instead
-of modifying options for the overall table widget.  If no [arg option] is
-specified, the command returns a list describing all of the available
-options for [arg tagName] (see [fun Tk_ConfigureInfo] for information on
-the format of this list).  If [arg option] is specified with no
-[arg value], then the command returns a list describing the one named
-option (this list will be identical to the corresponding sublist of the
-value returned if no [arg option] is specified).  If one or more
-[arg option-value] pairs are specified, then the command modifies the
-given option(s) to have the given value(s) in [arg tagName]; in this case
-the command returns an empty string.
-See [sectref TAGS] above for details on the options available for tags.
+Query or modify the configuration options of tag [arg tagName]. If no
+[arg option] is specified, a list describing all of the available options for
+[arg tagName] ts returned (see [fun Tk_ConfigureInfo] for info on the format of
+this list).  If [arg option] is specified without [arg value],
+then a list describing option [arg option] is returned (this list will
+be identical to the corresponding sublist of the value returned if no
+[arg option] is specified).  If one or more [arg option-value] pairs are
+specified, then the command modifies the given option(s) to have the given
+value(s) in [arg tagName] and returns an empty string. See [sectref TAGS]
+for details on the options available for tags.
 
 [def "[arg pathName] [method "tag delete"] [arg tagName]"]
-Deletes a tag.  No error if the tag does not exist.
+Deletes tag [arg tagName].  No error if the tag does not exist.
 
 [def "[arg pathName] [method "tag exists"] [arg tagName]"]
-Returns 1 if the named tag exists, 0 otherwise.
+Returns 1 if the tag [arg tagName] exists, 0 if not.
 
 [def "[arg pathName] [method "tag get"] [arg index]"]
 Returns list of tags for cell [arg index].
 
 [def "[arg pathName] [method "tag includes"] [arg "tagName index"]"]
-Returns 1 if the specified index has the named tag, 0 otherwise.
+Returns 1 if cell [arg index] has tag [arg tagName], 0 if not.
 
 [def "[arg pathName] [method "tag lower"] [arg tagName] [opt [arg belowThis]]"]
-Lower the priority of the named tag.  If [arg belowThis] is not specified,
+Lower the priority of tag [arg tagName].  If [arg belowThis] is not specified,
 then the tag's priority is lowered to the bottom, otherwise it is lowered
 to one below [arg belowThis].
 
 [def "[arg pathName] [method "tag names"] [opt [arg pattern]]"]
-If no pattern is specified, shows the names of all defined tags.
-Otherwise the [arg pattern] is used as a glob pattern to show only
-tags matching that pattern.  Tag names are returned in priority order
+If no pattern is specified, returns a list of all defined tag names. With
+[arg pattern], only those tags that match [syscmd glob] [arg pattern]
+will be returned.  Tag names are returned in priority order
 (highest priority tag first).
 
 [def "[arg pathName] [method "tag priority"] [arg tagName]"]
 Returns the numeric priority for tag [arg tagName].
 
 [def "[arg pathName] [method "tag raise"] [arg tagName] [opt [arg aboveThis]]"]
-Raise the priority of the named tag.  If [arg aboveThis] is not specified,
+Raise the priority of tag [arg tagName].  If [arg aboveThis] is not specified,
 then the tag's priority is raised to the top, otherwise it is raised to
 one above [arg aboveThis].
 
 [def "[arg pathName] [method "tag row"] [arg tagName] [opt [arg "row ..."]]"]
-With no arguments, prints out the list of rows that use the [arg tag].
-Otherwise it sets the specified rows to use the named tag, replacing any
-tag that may have been set using this method before.  If [arg tagName] is
-{}, the rows are reset to use the default tag.  Tags added during
-[option -rowtagcommand] evaluation do not register here.  If [arg tagName] does
-not exist, it will be created with the default options.
+Applies tag [arg tagName] to each row [arg row] replacing any previous row
+tag. If [arg tagName] is {}, the rows are reset to the default tag. 
+Without any arguments, a list of rows that use tag [arg tagName] is returned.
+Tags added during [option -rowtagcommand] evaluation do not register here.
+If [arg tagName] does not exist, it will be created with the default options.
 [list_end]
 
 [def "[arg pathName] [method validate] [arg index]"]
-Explicitly validates the specified index based on the current
-[option -validatecommand] and returns 0 or 1 based on whether the cell was
-validated.
+Validate the contents of cell [arg index] using the current
+[option -validatecommand] callback and return 1 if valid or 0 if not.
+See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method width] [opt [arg col]] [opt [arg "value col value ..."]]"]
-If no [arg col] is specified, returns a list describing all cols for which
-a width has been set.  If [arg col] is specified with no value, it prints
-out the width of that col in characters (positive number) or pixels
-(negative number).  If one or more [arg col-value] pairs are specified,
-then it sets each col to be that width in characters (positive number) or
-pixels (negative number).  If [arg value] is [arg default], then the col
-uses the default width, specified by [option -colwidth].
+If no [arg col] is specified, a list describing all columns for which a width
+has been set will be returned.  If [arg col] is specified without a value, the width of
+that column in characters (positive number) or pixels (negative number) will be
+returned.  If one or more [arg col-value] pairs are specified, then each
+column is set to be that width in characters (positive number) or pixels
+(negative number).  If [arg value] is [arg default], then the column uses the
+default width, specified by [option -colwidth].
 
 [def "[arg pathName] [method window] option [opt [arg "arg arg ..."]]"]
 This command is used to manipulate embedded windows.  The exact behavior of
@@ -1130,58 +1169,52 @@ associated with the window given by [arg index].  [arg Option] may have any
 of the values accepted by the [method "window configure"] widget command.
 
 [def "[arg pathName] [method "window configure"] [arg index] [opt [arg option]] [opt [arg value]] [opt [arg "option value ..."]]"]
-This command is similar to the [method configure] widget command except that
-it modifies options associated with the embedded window given by
-[arg index] instead of modifying options for the overall table widget.  If
-no [arg option] is specified, the command returns a list describing all of
-the available options for [arg index] (see [fun Tk_ConfigureInfo] for
-information on the format of this list).  If [arg option] is specified with
-no [arg value], then the command returns a list describing the one named
-option (this list will be identical to the corresponding sublist of the
-value returned if no [arg option] is specified).  If one or more
-[arg option-value] pairs are specified, then the command modifies the
-given option(s) to have the given value(s) in [arg index]; in this case
-the command returns an empty string.
+Query or modify the configuration options of window [arg index]. If no
+[arg option] is specified, a list describing all of the available options for
+[arg index] is returned (see [fun Tk_ConfigureInfo] for info on the format of
+this list). If [arg option] is specified without [arg value], then a list
+describing the option is returned (this list will be identical to the
+corresponding sublist of the value returned if no [arg option] is specified).
+If one or more [arg option-value] pairs are specified, then the command modifies
+the given option(s) to have the given value(s) in [arg index] and returns an
+empty string.
 See [sectref "EMBEDDED WINDOWS"] above for details on the options available for windows.
 
 [def "[arg pathName] [method "window delete"] [arg index] [opt [arg "index ..."]]"]
-Deletes an embedded window from the table.  The associated window will
+Deletes embedded window [arg index] from the table.  The associated window will
 also be deleted.
 
 [def "[arg pathName] [method "window move"] [arg "indexFrom indexTo"]"]
-Moves an embedded window from one cell to another.  If a window already
-exists in the target cell, it will be deleted.
+Moves an embedded window from cell [arg indexFrom] to cell [arg indexTo]. 
+If a window already exists in the target cell, it will be deleted.
 
 [def "[arg pathName] [method "window names"] [opt [arg pattern]]"]
-If no pattern is specified, shows the cells of all embedded windows.
-Otherwise the [arg pattern] is used as a glob pattern to show only
+If no pattern is specified, returns a list of cell indices with embedded windows.
+Otherwise the [arg pattern] is used as a [syscmd glob] pattern to show only
 cells matching that pattern.
 [list_end]
 
-[def "[arg pathName] [method xview] [arg args]"]
-This command is used to query and change the horizontal position of the
-information in the widget's window.  It can take any of the following
-forms:
+[def "[arg pathName] [method xview] [arg [opt args]]"]
+This command is used to query and change the horizontal position of the content
+in the widget's window. It can take any of the following forms: 
 [list_begin definitions]
 
 [def "[arg pathName] [method xview]"]
-Returns a list containing two elements.
-Each element is a real fraction between 0 and 1;  together they describe
-the horizontal span that is visible in the window.
-For example, if the first element is .2 and the second element is .6,
-20% of the table's text is off-screen to the left, the middle 40% is visible
-in the window, and 40% of the text is off-screen to the right.
-These are the same values passed to scrollbars via the [option -xscrollcommand]
-option.
+Returns a list containing two elements. Each element is a real fraction
+between 0 and 1; together they describe the horizontal span that is visible in
+the window. For example, if the first element is .2 and the second element is
+.6, 20% of the table's text is off-screen to the left, the middle 40% is
+visible in the window, and 40% of the text is off-screen to the right. These
+are the same values passed to scrollbars via the -xscrollcommand option.
 
 [def "[arg pathName] [method xview] [arg index]"]
-Adjusts the view in the window so that the column given by
-[arg index] is displayed at the left edge of the window.
+Adjusts the view in the window so that the column given by [arg index] is
+displayed at the left edge of the window.
 
 [def "[arg pathName] [method "xview moveto"] [arg fraction]"]
-Adjusts the view in the window so that [arg fraction] of the
-total width of the table text is off-screen to the left.
-[arg fraction] must be a fraction between 0 and 1.
+Adjusts the view in the window so that [arg fraction] of the total width of
+the table is off-screen to the left. [arg fraction] must be a fraction
+between 0 and 1.
 
 [def "[arg pathName] [method "xview scroll"] [arg "number what"]"]
 This command shifts the view in the window left or right according to
@@ -1198,21 +1231,21 @@ become visible.
 
 [def "[arg pathName] [method yview] [arg [opt args]]"]
 This command is used to query and change the vertical position of the
-text in the widget's window.  It can take any of the following forms:
+rows in the widget's window.  It can take any of the following forms:
 [list_begin definitions]
 
 [def "[arg pathName] [method yview]"]
-Returns a list containing two elements, both of which are real fractions
-between 0 and 1.  The first element gives the position of the table element
-at the top of the window, relative to the table as a whole (0.5 means it is
-halfway through the table, for example).  The second element gives the
-position of the table element just after the last one in the window,
-relative to the table as a whole.  These are the same values passed to
-scrollbars via the [option -yscrollcommand] option.
+Returns a list containing two elements. Each element is a real fraction between
+0 and 1; together they describe the vertical span that is visible in the window.
+The first element gives the position of the table element at the top of the
+window, relative to the table as a whole (0.5 means it is halfway through the
+table, for example). The second element gives the position of the table element
+just after the last one in the window, relative to the table as a whole. These
+are the same values passed to scrollbars via the -yscrollcommand option.
 
 [def "[arg pathName] [method yview] [arg index]"]
-Adjusts the view in the window so that the row given by
-[arg index] is displayed at the top of the window.
+Adjusts the view in the window so that the row given by [arg index] is
+displayed at the top of the window.
 
 [def "[arg pathName] [method "yview moveto"] [arg fraction]"]
 Adjusts the view in the window so that the element given by [arg fraction]

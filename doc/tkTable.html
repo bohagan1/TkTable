@@ -113,15 +113,16 @@
 <li class="doctools_section"><a href="#section3">WIDGET SPECIFIC OPTIONS</a></li>
 <li class="doctools_section"><a href="#section4">INITIALIZATION</a></li>
 <li class="doctools_section"><a href="#section5">INDICES</a></li>
-<li class="doctools_section"><a href="#section6">TAGS</a></li>
-<li class="doctools_section"><a href="#section7">EMBEDDED WINDOWS</a></li>
-<li class="doctools_section"><a href="#section8">THE SELECTION</a></li>
-<li class="doctools_section"><a href="#section9">ROW/COL SPANNING</a></li>
-<li class="doctools_section"><a href="#section10">COMMAND SUBSTITUTION</a></li>
-<li class="doctools_section"><a href="#section11">WIDGET COMMAND</a></li>
-<li class="doctools_section"><a href="#section12">DEFAULT BINDINGS</a></li>
-<li class="doctools_section"><a href="#section13">PERFORMANCE ISSUES</a></li>
-<li class="doctools_section"><a href="#section14">EXAMPLES</a></li>
+<li class="doctools_section"><a href="#section6">ACTIVE CELL INDEX</a></li>
+<li class="doctools_section"><a href="#section7">TAGS</a></li>
+<li class="doctools_section"><a href="#section8">EMBEDDED WINDOWS</a></li>
+<li class="doctools_section"><a href="#section9">THE SELECTION</a></li>
+<li class="doctools_section"><a href="#section10">ROW/COL SPANNING</a></li>
+<li class="doctools_section"><a href="#section11">COMMAND SUBSTITUTION</a></li>
+<li class="doctools_section"><a href="#section12">WIDGET COMMAND</a></li>
+<li class="doctools_section"><a href="#section13">DEFAULT BINDINGS</a></li>
+<li class="doctools_section"><a href="#section14">PERFORMANCE ISSUES</a></li>
+<li class="doctools_section"><a href="#section15">EXAMPLES</a></li>
 <li class="doctools_section"><a href="#see-also">See Also</a></li>
 <li class="doctools_section"><a href="#keywords">Keywords</a></li>
 <li class="doctools_section"><a href="#category">Category</a></li>
@@ -157,14 +158,14 @@ as well as an optional data cache in memory for speed.  The default variable is
 <b class="variable">::tableData</b>. The widget has an active cell, the contents of which can be
 edited (when the state is normal).  The widget supports a default style for
 the cells and also multiple tags which can be used to change the style of a
-row, column, or cell (see <span class="sectref"><a href="#section6">TAGS</a></span> for details).  A cell flash can
+row, column, or cell (see <span class="sectref"><a href="#section7">TAGS</a></span> for details).  A cell flash can
 also be set so that edited cells will change colors for a specified amount of
 time (&quot;blink&quot;).  Cells can have embedded images or windows, as described in
-<span class="sectref"><a href="#section6">TAGS</a></span> and <span class="sectref"><a href="#section7">EMBEDDED WINDOWS</a></span> respectively.</p>
+<span class="sectref"><a href="#section7">TAGS</a></span> and <span class="sectref"><a href="#section8">EMBEDDED WINDOWS</a></span> respectively.</p>
 <p>One or more cells may be selected as described below.  If a table is
 exporting its selection (see <b class="option">-exportselection</b> option), then it will
 observe the standard X11 protocols for handling the selection.  See
-<span class="sectref"><a href="#section8">THE SELECTION</a></span> for details.</p>
+<span class="sectref"><a href="#section9">THE SELECTION</a></span> for details.</p>
 <p>It is not necessary for all the cells to be displayed in the table window at
 once; commands described below may be used to change the view in the window.
 Tables allow scrolling in both directions using the standard
@@ -271,7 +272,7 @@ Database Name:	<b class="optdbname">browseCommand</b><br>
 Database Class:	<b class="optdbclass">BrowseCommand</b><br>
 </dt>
 <dd><p>Specifies a command which will be evaluated anytime the active cell changes.
-It uses the % substitution model described in <span class="sectref"><a href="#section10">COMMAND SUBSTITUTION</a></span> below.
+It uses the % substitution model described in <span class="sectref"><a href="#section11">COMMAND SUBSTITUTION</a></span> below.
 Any changes to the active cell while the command is running are ignored to
 prevent recursion.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-cache</b><br>
@@ -354,7 +355,7 @@ Database Class:	<b class="optdbclass">Command</b><br>
 If <b class="option">-usecommand</b> is true, this command will be used instead of any
 reference to the <b class="option">-variable</b> array.  When retrieving cell values,
 the return value of the command is used as the value for the cell.
-It uses the % substitution model described in <span class="sectref"><a href="#section10">COMMAND SUBSTITUTION</a></span> below.</p></dd>
+It uses the % substitution model described in <span class="sectref"><a href="#section11">COMMAND SUBSTITUTION</a></span> below.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-drawmode</b><br>
 Database Name:	<b class="optdbname">drawMode</b><br>
 Database Class:	<b class="optdbclass">DrawMode</b><br>
@@ -528,7 +529,7 @@ Database Class:	<b class="optdbclass">SelectionCommand</b><br>
 table via the selection mechanism (ie: evaluating <b class="method">selection get</b>).
 The return value from this command will become the string passed on by the
 selection mechanism.  It uses the % substitution model described in
-<span class="sectref"><a href="#section10">COMMAND SUBSTITUTION</a></span> below.  If an error occurs, a TCL background
+<span class="sectref"><a href="#section11">COMMAND SUBSTITUTION</a></span> below.  If an error occurs, a TCL background
 error is generated and nothing is returned.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-selectmode</b><br>
 Database Name:	<b class="optdbname">selectMode</b><br>
@@ -602,7 +603,7 @@ Database Class:	<b class="optdbclass">ValidateCommand</b><br>
 is expected to return a TCL boolean.  If it returns true, then it is assumed
 the new value is OK, otherwise the new value is rejected (the edition will
 not take place).  Errors in this command are handled in the background.  It
-uses the % substitution model described in <span class="sectref"><a href="#section10">COMMAND SUBSTITUTION</a></span> below.</p></dd>
+uses the % substitution model described in <span class="sectref"><a href="#section11">COMMAND SUBSTITUTION</a></span> below.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-variable</b><br>
 Database Name:	<b class="optdbname">variable</b><br>
 Database Class:	<b class="optdbclass">Variable</b><br>
@@ -685,30 +686,44 @@ point is used.</p></dd>
 <i class="arg">first</i>, and <i class="arg">last</i> always contain cell indices in one of
 the above forms.</p>
 </div>
-<div id="section6" class="doctools_section"><h2><a name="section6">TAGS</a></h2>
+<div id="section6" class="doctools_section"><h2><a name="section6">ACTIVE CELL INDEX</a></h2>
+<p>Several of the widget commands use an index for the position of the text in the
+active cell. The valid forms are:</p>
+<dl class="doctools_options">
+<dt><b class="option"><i class="arg">number</i></b></dt>
+<dd><p>The position in the text starting from 0 to the last character.
+Use 0 for before the first character.</p></dd>
+<dt><b class="option">end</b></dt>
+<dd><p>The position after the last character in the text</p></dd>
+<dt><b class="option">insert</b></dt>
+<dd><p>The current insertion index set by <b class="method">icursor</b>.</p></dd>
+</dl>
+</div>
+<div id="section7" class="doctools_section"><h2><a name="section7">TAGS</a></h2>
 <p>A tag is a textual string that is associated with zero or more rows,
 columns or cells in a table.  Tags may contain arbitrary characters, but it
 is probably best to avoid using names which look like indices to reduce
 coding confusion.  A tag can apply to an entire row or column, or just a
 single cell.  There are several permanent tags in each table that can be
-configured by the user and will determine the attributes for special cells:</p>
+configured by the user and will determine the attributes for special cells.
+They are in default priority order:</p>
 <dl class="doctools_options">
-<dt><b class="option">active</b></dt>
-<dd><p>This tag is given to the <b class="const">active</b> cell</p></dd>
 <dt><b class="option">flash</b></dt>
-<dd><p>If flash mode is on, this tag is given to any recently edited cells.</p></dd>
+<dd><p>If flash mode is on, this tag is associated with any recently edited cells.</p></dd>
+<dt><b class="option">active</b></dt>
+<dd><p>This tag is associated with the <b class="const">active</b> cell.</p></dd>
 <dt><b class="option">focus</b></dt>
-<dd><p>This tag is given to the <b class="const">focus</b> cell</p></dd>
+<dd><p>This tag is associated with the <b class="const">focus</b> cell.</p></dd>
 <dt><b class="option">sel</b></dt>
-<dd><p>This tag is given to any selected cells.</p></dd>
+<dd><p>This tag is associated with all selected cells.</p></dd>
 <dt><b class="option">title</b></dt>
-<dd><p>This tag is given to any cells in the title rows and columns.  This
-tag has <b class="option">-state</b> <b class="const">disabled</b> by default.</p></dd>
+<dd><p>This tag is associated with all title row and column cells.
+This tag has <b class="option">-state</b> <b class="const">disabled</b> by default.</p></dd>
 </dl>
 <p>Tags control the way cells are displayed on the screen.  Where appropriate,
 the default for displaying cells is determined by the options for the table
 widget.  However, display options may be associated with individual tags
-using <b class="method">tag configure</b>widget command.  If a cell, row or column has
+using <b class="method">tag configure</b> widget command.  If a cell, row or column has
 been tagged, then the display options associated with the tag override the
 default display style.  The following options are currently supported for tags:</p>
 <dl class="doctools_options">
@@ -776,7 +791,7 @@ widget will be used.</p>
 be enabled and any querying of the cell will show the text value of the cell,
 regardless of the value of <b class="option">-showtext</b>.</p>
 </div>
-<div id="section7" class="doctools_section"><h2><a name="section7">EMBEDDED WINDOWS</a></h2>
+<div id="section8" class="doctools_section"><h2><a name="section8">EMBEDDED WINDOWS</a></h2>
 <p>There may be any number of embedded windows in a table widget (one per
 cell), and any widget may be used as an embedded window (subject to the
 usual rules for geometry management, which require the table window to be
@@ -826,7 +841,7 @@ must exist before being specified here. When an empty string is specified,
 if a window was displayed it will cease to be managed by the table widget.</p></dd>
 </dl>
 </div>
-<div id="section8" class="doctools_section"><h2><a name="section8">THE SELECTION</a></h2>
+<div id="section9" class="doctools_section"><h2><a name="section9">THE SELECTION</a></h2>
 <p>Table selections are available as type STRING.  By default, the value of
 the selection will be the values of the selected cells in nested TCL list
 form where each row is a list and each column is an element of a row list.
@@ -844,7 +859,7 @@ It might also be generated when selection is affected but not actually
 changed. Further, multiple selection changes could happen before events can
 be processed leading to multiple events with the same visible selection.</p>
 </div>
-<div id="section9" class="doctools_section"><h2><a name="section9">ROW/COL SPANNING</a></h2>
+<div id="section10" class="doctools_section"><h2><a name="section10">ROW/COL SPANNING</a></h2>
 <p>Individual cells can span multiple rows and/or columns.  This is done
 via the <b class="method">spans</b> command (see below for exact arguments).  Cells in
 the title area that span are not permitted to span beyond the title area,
@@ -866,7 +881,7 @@ then when viewing any portion of those columns, it will appear centered
 in the visible area. The non-visible column area will not be considered
 in the centering calculations.</p>
 </div>
-<div id="section10" class="doctools_section"><h2><a name="section10">COMMAND SUBSTITUTION</a></h2>
+<div id="section11" class="doctools_section"><h2><a name="section11">COMMAND SUBSTITUTION</a></h2>
 <p>The table widget supports percent substitutions for several of the command
 options using the Tk % substitutions method (see <b class="syscmd">bind</b> for more
 details).  The following % substitution sequences are recognized and
@@ -898,7 +913,7 @@ For <b class="option">-browsecommand</b>, it is the index of the new active cell
 <dd><p>The pathname to the window for which the command was generated.</p></dd>
 </dl>
 </div>
-<div id="section11" class="doctools_section"><h2><a name="section11">WIDGET COMMAND</a></h2>
+<div id="section12" class="doctools_section"><h2><a name="section12">WIDGET COMMAND</a></h2>
 <p>The <b class="cmd">table</b> command creates a new Tcl command whose name is the same as the
 path name of the table's window. This command may be used to invoke various
 operations on the widget. It has the following general form:</p>
@@ -907,15 +922,22 @@ operations on the widget. It has the following general form:</p>
 widget's path name. Option and the args determine the exact behavior of the
 command. The following commands are possible for table widgets:</p>
 <dl class="doctools_definitions">
-<dt><i class="arg">pathName</i> <b class="method">activate</b> <i class="arg">index</i></dt>
-<dd><p>Sets the keyboard input focus (aka active item) cell to <i class="arg">index</i>. Once the
+<dt><i class="arg">pathName</i> <b class="method">activate</b> <span class="opt">?<i class="arg">index</i>?</span></dt>
+<dd><p>Activates cell <i class="arg">index</i> and sets the keyboard input focus to it. Once a
 cell is active, the insertion cursor will be displayed and all keyboard events
-will be directed to that item. If <i class="arg">index</i> is set to the empty string {},
-then no cell will be active. Activating a cell also sets the focus to that cell.</p></dd>
+will be directed to that item. Activating a cell also sets the <b class="method">focus</b>
+to that cell. If <i class="arg">index</i> is set to the empty string {}, then no cell will
+be active without changing the focus cell. Without <i class="arg">index</i> the current
+active cell is returned, if any, otherwise an empty string is returned.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">bbox</b> <i class="arg">first</i> <span class="opt">?<i class="arg">last</i>?</span></dt>
-<dd><p>It returns the bounding box for the specified cell (range) as a 4-tuple of
-x, y, width and height in pixels.  It clips the box to the visible portion,
-if any, otherwise an empty string is returned.</p></dd>
+<dd><p>Returns the bounding box for the specified cell or rectangle of cells as a
+4-tuple of x, y, width and height in pixels.  When both <i class="arg">first</i> and
+<i class="arg">last</i> are specified, <i class="arg">first</i> is the top left corner of the rectangle
+of cells and <i class="arg">last</i> is the bottom right corner. The returned value is
+clipped to just the visible portion, if any, otherwise an empty string is
+returned.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">border</b> <i class="arg">option args</i></dt>
 <dd><p>This command is a voodoo hack to implement border sizing for tables.
 This is normally called through bindings, with the following as valid options:</p>
@@ -942,7 +964,8 @@ by the <b class="cmd">table</b> command.</p></dd>
 <dd><p>This command is a convenience routine to clear certain state information
 managed by the table.  <i class="arg">first</i> and <i class="arg">last</i> represent valid table
 indices.  If neither are specified, then the command operates on the
-whole table.  The following options are recognized:</p>
+whole table.  See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.
+The following options are recognized:</p>
 <dl class="doctools_definitions">
 <dt><i class="arg">pathName</i> <b class="method">clear cache</b> <span class="opt">?<i class="arg">first</i>?</span> <span class="opt">?<i class="arg">last</i>?</span></dt>
 <dd><p>Clears the specified section of the cache, if the table has been
@@ -959,120 +982,131 @@ that is interpreted as row 2 and column 0.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">configure</b> <span class="opt">?<i class="arg">option</i>?</span> <span class="opt">?<i class="arg">value option value ...</i>?</span></dt>
 <dd><p>Query or modify the configuration options of the widget.
 If no <i class="arg">option</i> is specified, returns a list describing all of
-the available options for <i class="arg">pathName</i> (see <b class="function">Tk_ConfigureInfo</b> for
+the available options for <i class="arg">pathName</i> (see <b class="syscmd">Tk_ConfigureInfo</b> for
 information on the format of this list).  If <i class="arg">option</i> is specified
-with no <i class="arg">value</i>, then the command returns a list describing the
+without <i class="arg">value</i>, then the command returns a list describing the
 one named option (this list will be identical to the corresponding
 sublist of the value returned if no <i class="arg">option</i> is specified).  If
 one or more <i class="arg">option-value</i> pairs are specified, then the command
 modifies the given widget option(s) to have the given value(s);  in
-this case the command returns an empty string.
-<i class="arg">Option</i> may have any of the values accepted by the <b class="cmd">table</b>
+this case the command returns an empty string {}.
+<i class="arg">option</i> may have any of the values accepted by the <b class="cmd">table</b>
 command.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">curselection</b> <span class="opt">?<i class="arg">value</i>?</span></dt>
-<dd><p>With no arguments, it returns the sorted indices of the currently selected
-cells.  Otherwise it sets all the selected cells to the given value.  The
-set has no effect if there is no associated TCL array or the state is
-disabled.</p></dd>
+<dd><p>without arguments, returns a sorted list of the currently selected cell
+indices, otherwise all the selected cells will be set to <i class="arg">value</i>.  This
+has no effect if there is no associated TCL array or the state is disabled.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">curvalue</b> <span class="opt">?<i class="arg">value</i>?</span></dt>
-<dd><p>If no value is given, the value of the cell being edited (indexed by
-<b class="const">active</b>) is returned, else it is set to the given value.</p></dd>
+<dd><p>Sets the current active cell edit buffer to <i class="arg">value</i>.
+Without <i class="arg">value</i>, the current contents of the edit buffer are returned.
+The edit buffer holds the edited text prior to writing it to the cell.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">delete</b> <i class="arg">option arg</i> <span class="opt">?<i class="arg">arg</i>?</span></dt>
-<dd><p>This command is used to delete various things in a table.  It has several
-forms, depending on the <i class="arg">option</i>:</p>
+<dd><p>This command is used to delete text, columns, and rows.
+It has several forms, depending on the <i class="arg">option</i>:</p>
 <dl class="doctools_definitions">
-<dt><i class="arg">pathName</i> <b class="method">delete active</b> <i class="arg">index</i> <span class="opt">?<i class="arg">index</i>?</span></dt>
-<dd><p>Deletes text from the active cell.  If only one index is given, it deletes
-the character after that index, otherwise it deletes from the first index to
-the second.  <i class="arg">index</i> can be a number, <b class="const">insert</b> or <b class="const">end</b>.</p></dd>
+<dt><i class="arg">pathName</i> <b class="method">delete active</b> <i class="arg">start</i> <span class="opt">?<i class="arg">end</i>?</span></dt>
+<dd><p>Deletes text in the active cell.  With only <i class="arg">start</i>, only the character
+after index <i class="arg">start</i> is deleted.  With both <i class="arg">start</i> and <i class="arg">end</i>, all
+characters from index <i class="arg">start</i> to just before index <i class="arg">end</i> are deleted.
+See <span class="sectref"><a href="#section6">ACTIVE CELL INDEX</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">delete cols</b> <span class="opt">?<i class="arg">switches</i>?</span> <i class="arg">index</i> <span class="opt">?<i class="arg">count</i>?</span></dt>
-<dd><p>Deletes <i class="arg">count</i> cols starting at (and including) col <i class="arg">index</i>.  The
-<i class="arg">index</i> will be constrained to the limits of the tables.  If
-<i class="arg">count</i> is negative, it deletes cols to the left.  Otherwise it deletes
-cols to the right.  <i class="arg">count</i> defaults to 1 (meaning just the column
-specified).  At the moment, spans are
-not adjusted with this action.  Optional switches are:</p>
+<dd></dd>
+<dt><i class="arg">pathName</i> <b class="method">delete columns</b> <span class="opt">?<i class="arg">switches</i>?</span> <i class="arg">index</i> <span class="opt">?<i class="arg">count</i>?</span></dt>
+<dd><p>Delete <i class="arg">count</i> columns at column <i class="arg">index</i> where <i class="arg">count</i>
+defaults to 1 (only delete column <i class="arg">index</i>).  The <i class="arg">index</i> will be
+constrained to the limits of the table.  If <i class="arg">count</i> is negative, then
+<i class="arg">count</i> columns to the left of <i class="arg">index</i> will be deleted, otherwise columns
+to the right will be deleted.  Currently, spans are not adjusted with this action.
+Optional switches are:</p>
 <dl class="doctools_options">
 <dt><b class="option">-holddimensions</b></dt>
-<dd><p>Causes the table cols to be unaffected by the deletion (empty cols may
-appear).  By default the dimensions are adjusted by <i class="arg">count</i>.</p></dd>
+<dd><p>Specifies that the table dimensions not change by replacing deleted columns
+with empty columns.  By default the dimensions are adjusted by <i class="arg">count</i>.</p></dd>
 <dt><b class="option">-holdselection</b></dt>
-<dd><p>Causes the selection to be maintained on the absolute cells values.
-Otherwise, the selection will be cleared..</p></dd>
+<dd><p>Specifies that the selection be maintained on the absolute cells values.
+Otherwise, the selection will be cleared.</p></dd>
 <dt><b class="option">-holdtags</b></dt>
-<dd><p>Causes the tags specified by the <i class="arg">tag</i> method to not move along
-with the data.  Also prevents specific widths set by the <i class="arg">width</i> method
-from being adjusted.  By default, these tags are properly adjusted.</p></dd>
+<dd><p>Specifies that tags created with the <b class="method">tag</b> method and associated with
+the columns and cells not move along with the data.  Also prevents specific
+widths set by the <i class="arg">width</i> method from being adjusted.  By default, these
+tags are properly adjusted.</p></dd>
 <dt><b class="option">-holdwindows</b></dt>
-<dd><p>Causes the embedded windows created with the <i class="arg">window</i> method to not
-move along with the data.  By default, these windows are properly adjusted.</p></dd>
+<dd><p>Specifies that the embedded windows created with the <b class="method">window</b> method to
+not move along with the data.  By default, these windows are properly adjusted.</p></dd>
 <dt><b class="option">-keeptitles</b></dt>
-<dd><p>Prevents title area cells from being changed.  Otherwise they are
+<dd><p>Specifies that title area cells not be changed.  Otherwise they are
 treated just like regular cells and will move as specified.</p></dd>
 <dt><b class="option">--</b></dt>
 <dd><p>Signifies the end of the switches.</p></dd>
 </dl></dd>
 <dt><i class="arg">pathName</i> <b class="method">delete rows</b> <span class="opt">?<i class="arg">switches</i>?</span> <i class="arg">index</i> <span class="opt">?<i class="arg">count</i>?</span></dt>
-<dd><p>Deletes <i class="arg">count</i> rows starting at (and including) row <i class="arg">index</i>.  If
-<i class="arg">count</i> is negative, it deletes rows going up.  Otherwise it deletes
-rows going down.  The selection will be cleared.  The switches are the same
-as those for column deletion.</p></dd>
+<dd><p>Deletes <i class="arg">count</i> rows at row <i class="arg">index</i> where <i class="arg">count</i> defaults
+to 1 (only delete row <i class="arg">index</i>).  If <i class="arg">count</i> is negative, then <i class="arg">count</i>
+rows before <i class="arg">index</i> will be deleted, otherwise rows after will be deleted.
+ Will clear the selection.  Uses the same switches as <b class="method">delete columns</b>.</p></dd>
 </dl></dd>
-<dt><i class="arg">pathName</i> <b class="method">focus</b> <i class="arg">index</i></dt>
-<dd><p>Sets the keyboard navigation focus cell to <i class="arg">index</i>. If <i class="arg">index</i> is set
-to the empty string {}, then no cell will have the focus. Activating a cell
-also sets the focus to that cell. Setting the focus does not change the active
-cell.</p></dd>
+<dt><i class="arg">pathName</i> <b class="method">focus</b> <span class="opt">?<i class="arg">index</i>?</span></dt>
+<dd><p>Sets the keyboard navigation focus to cell <i class="arg">index</i>. Activating a cell also
+sets the focus to that cell. Setting the focus does not change the active cell.
+If <i class="arg">index</i> is set to the empty string {}, then no cell will have the focus.
+Without <i class="arg">index</i> the current focus cell is returned, if any, otherwise an
+empty string is returned.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">get</b> <i class="arg">first</i> <span class="opt">?<i class="arg">last</i>?</span></dt>
-<dd><p>Returns the value of the cells specified by the table indices <i class="arg">first</i>
-and (optionally) <i class="arg">last</i> in a list.</p></dd>
+<dd><p>Returns the value of the cell <i class="arg">first</i> or range of cells from <i class="arg">first</i>
+to <i class="arg">last</i> as a list. When both <i class="arg">first</i> and <i class="arg">last</i> are specified,
+<i class="arg">first</i> is the top left corner of the rectangle of cells and <i class="arg">last</i>
+is the bottom right corner.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">height</b> <span class="opt">?<i class="arg">row</i>?</span> <span class="opt">?<i class="arg">value row value ...</i>?</span></dt>
-<dd><p>If no <i class="arg">row</i> is specified, returns a list describing all rows for which
-a height has been set.  If <i class="arg">row</i> is specified with no value, it prints
-out the height of that row in characters (positive number) or pixels
-(negative number).  If one or more <i class="arg">row-value</i> pairs are specified,
-then it sets each row to be that height in lines (positive number) or
-pixels (negative number).  If <i class="arg">value</i> is <i class="arg">default</i>, then the row
-uses the default height, specified by <b class="option">-rowheight</b>.</p></dd>
+<dd><p>If no <i class="arg">row</i> is specified, a list describing all rows for which a height has
+been set will be returned.  If <i class="arg">row</i> is specified without a value, the height
+of that row in characters (positive number) or pixels (negative number) will be
+returned.  If one or more <i class="arg">row-value</i> pairs are specified, then each row is
+set to be that height in lines (positive number) or pixels (negative number).
+If <i class="arg">value</i> is <i class="arg">default</i>, then the row uses the default height,
+specified by <b class="option">-rowheight</b>.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">hidden</b> <span class="opt">?<i class="arg">index</i>?</span> <span class="opt">?<i class="arg">index ...</i>?</span></dt>
-<dd><p>When called without args, it returns all the <i class="arg">hidden</i> cells (those
-cells covered by a spanning cell).  If one index is specified, it returns
-the spanning cell covering that index, if any.  If multiple indices are
-specified, it returns 1 if all indices are hidden cells, 0 otherwise.</p></dd>
-<dt><i class="arg">pathName</i> <b class="method">icursor</b> <span class="opt">?<i class="arg">arg</i>?</span></dt>
-<dd><p>With no arguments, prints out the location of the insertion cursor in the
-active cell.  With one argument, sets the cursor to that point in the
-string.  0 is before the first character, you can also use <b class="const">insert</b> or
-<b class="const">end</b> for the current insertion point or the end of the text.  If
-there is no active cell, or the cell or table is disabled, this will
-return -1.</p></dd>
+<dd><p>Without any args, returns a list of all the <i class="arg">hidden</i> cells (those cells
+covered by a spanning cell).  If one index is specified, returns the
+spanning cell covering that index, if any.  If multiple indices are
+specified, returns 1 if all indices are hidden cells, 0 if not.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
+<dt><i class="arg">pathName</i> <b class="method">icursor</b> <span class="opt">?<i class="arg">index</i>?</span></dt>
+<dd><p>Sets the insertion cursor position in the active cell to index <i class="arg">index</i>.
+Without any arguments, the current insertion index is returned. If there is
+no active cell, or the cell or table is disabled, -1 is returned.
+See <span class="sectref"><a href="#section6">ACTIVE CELL INDEX</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">index</b> <i class="arg">index</i> <span class="opt">?<b class="const">row|col</b>?</span></dt>
-<dd><p>Returns the integer cell coordinate that corresponds to <i class="arg">index</i> in the
-form row,col.  If <b class="const">row</b> or <b class="const">col</b> is specified, then only the row or
-column index is returned. Will return an error if <i class="arg">index</i> does not exist.</p></dd>
+<dd><p>Returns the cell that corresponds to index <i class="arg">index</i> in the form of row,col.
+If <b class="const">row</b> or <b class="const">col</b> is specified, then only the row or column index
+is returned. If <i class="arg">index</i> does not exist, an error will be returned.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">insert</b> <i class="arg">option arg arg</i></dt>
-<dd><p>This command is used to into various things into a table.  It has several
-forms, depending on the <i class="arg">option</i>:</p>
+<dd><p>This command is used to insert text, columns, and rows.
+It has several forms, depending on the <i class="arg">option</i>:</p>
 <dl class="doctools_definitions">
 <dt><i class="arg">pathName</i> <b class="method">insert active</b> <i class="arg">index value</i></dt>
-<dd><p>The <i class="arg">value</i> is a text string which is inserted at the <i class="arg">index</i>
-position of the active cell.  The cursor is then positioned after the
-new text. <i class="arg">index</i> can be a number, <b class="const">insert</b> or <b class="const">end</b>.</p></dd>
+<dd><p>Insert string <i class="arg">value</i> at index <i class="arg">index</i> in the active cell.  The
+insertion cursor is then positioned after the inserted text.
+See <span class="sectref"><a href="#section6">ACTIVE CELL INDEX</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">insert cols</b> <span class="opt">?<i class="arg">switches</i>?</span> <i class="arg">index</i> <span class="opt">?<i class="arg">count</i>?</span></dt>
-<dd><p>Inserts <i class="arg">count</i> cols starting at col <i class="arg">index</i>.  If <i class="arg">count</i> is
-negative, it inserts before the specified col.  Otherwise it inserts after
-the specified col.  The selection will be cleared.  The switches are the
-same as those for column deletion.</p></dd>
+<dd></dd>
+<dt><i class="arg">pathName</i> <b class="method">insert columns</b> <span class="opt">?<i class="arg">switches</i>?</span> <i class="arg">index</i> <span class="opt">?<i class="arg">count</i>?</span></dt>
+<dd><p>Inserts <i class="arg">count</i> columns at column <i class="arg">index</i> where <i class="arg">count</i>
+defaults to 1.  If <i class="arg">count</i> is negative, the columns are inserted to the
+left of column <i class="arg">index</i>, otherwise they are inserted to the right.  Will
+clear the selection. Uses the same switches as <b class="method">delete columns</b>.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">insert rows</b> <span class="opt">?<i class="arg">switches</i>?</span> <i class="arg">index</i> <span class="opt">?<i class="arg">count</i>?</span></dt>
-<dd><p>Inserts <i class="arg">count</i> rows starting at row <i class="arg">index</i>.  If <i class="arg">count</i> is
-negative, it inserts before the specified row.  Otherwise it inserts after
-the specified row.  The selection will be cleared.  The switches are the
-same as those for column deletion.</p></dd>
+<dd><p>Inserts <i class="arg">count</i> rows at row <i class="arg">index</i> where <i class="arg">count</i> defaults
+to 1.  If <i class="arg">count</i> is negative, the rows are inserted before row <i class="arg">index</i>,
+otherwise they are inserted after it.  Will clear the selection.  Uses the same
+switches as <b class="method">delete columns</b>.</p></dd>
 </dl></dd>
 <dt><i class="arg">pathName</i> <b class="method">reread</b></dt>
-<dd><p>Rereads the old contents of the cell back into the editing buffer.  Useful
-for a key binding when &lt;Escape&gt; is pressed to abort the edit (a default
-binding).</p></dd>
+<dd><p>Rereads the old contents of the cell back into the active cell edit buffer.
+This is useful for a key binding when &lt;Escape&gt; is pressed to abort the edit
+(a default binding).</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">scan</b> <i class="arg">option args</i></dt>
 <dd><p>This command is used to implement scanning on tables.  It has
 two forms, depending on <i class="arg">option</i>:</p>
@@ -1091,55 +1125,63 @@ events in the widget, to produce the effect of dragging the list at high
 speed through the window.  The return value is an empty string.</p></dd>
 </dl></dd>
 <dt><i class="arg">pathName</i> <b class="method">see</b> <i class="arg">index</i></dt>
-<dd><p>Adjust the view in the table so that the cell given by <i class="arg">index</i> is
-positioned within the view if the cell is not currently visible on the screen.
-The view will be shifted left/right or up/down to maintain the current
-row or column relative position if <i class="arg">index</i> is in the same row or column.</p></dd>
+<dd><p>Adjust the view in the table so that cell <i class="arg">index</i> is positioned within the
+view if the cell is not currently visible on the screen. The view will be
+shifted left/right or up/down to maintain the current row or column relative
+position if <i class="arg">index</i> is in the same row or column.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">selection</b> <i class="arg">option arg</i></dt>
 <dd><p>This command is used to adjust the selection within a table.  It
 has several forms, depending on <i class="arg">option</i>:</p>
 <dl class="doctools_definitions">
 <dt><i class="arg">pathName</i> <b class="method">selection active</b> <span class="opt">?<i class="arg">start</i>?</span> <span class="opt">?<i class="arg">end</i>?</span></dt>
-<dd><p>Sets the selection to include the characters in the active cell starting with
-the one indexed by <i class="arg">start</i> and ending with the one just before <i class="arg">end</i>.
-Without any arguments, the current start and end index are returned.
-If <i class="arg">start</i> equal <i class="arg">end</i> or only <i class="arg">start</i> is provided, the selection
-is cleared.</p></dd>
+<dd><p>Sets the active cell text selection to the characters from index <i class="arg">start</i> to
+just before index <i class="arg">end</i>. Without any arguments, the current start and end
+index are returned or an empty string if none. If <i class="arg">start</i> equals <i class="arg">end</i>
+or only <i class="arg">start</i> is provided, the selection is cleared.
+See <span class="sectref"><a href="#section6">ACTIVE CELL INDEX</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">selection anchor</b> <i class="arg">index</i></dt>
-<dd><p>Sets the selection anchor to the cell given by <i class="arg">index</i>.  The selection
+<dd><p>Sets the selection anchor to cell <i class="arg">index</i>.  The selection
 anchor is the end of the selection that is fixed while dragging out a
 selection with the mouse.  The index <b class="const">anchor</b> may be used to refer to
-the anchor cell.</p></dd>
+the anchor cell.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">selection clear</b> <i class="arg">first</i> <span class="opt">?<i class="arg">last</i>?</span></dt>
 <dd><p>If any of the cells between <i class="arg">first</i> and <i class="arg">last</i> (inclusive) are
 selected, they are deselected.  The selection state is not changed for cells
 outside this range.  <i class="arg">first</i> may be specified as <b class="const">all</b> to remove
-the selection from all cells.</p></dd>
+the selection from all cells.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">selection includes</b> <i class="arg">index</i></dt>
-<dd><p>Returns 1 if the cell indicated by <i class="arg">index</i> is currently
-selected, 0 if not.</p></dd>
+<dd><p>Returns 1 if cell <i class="arg">index</i> is currently selected or 0 if not.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">selection set</b> <i class="arg">first</i> <span class="opt">?<i class="arg">last</i>?</span></dt>
-<dd><p>Selects all of the cells in the range between <i class="arg">first</i> and <i class="arg">last</i>,
-inclusive, without affecting the selection state of cells outside that
-range. Option <i class="arg">last</i> defaults to <i class="arg">first</i>'s value.</p></dd>
+<dd><p>Selects all of the cells in the range between index <i class="arg">first</i> and <i class="arg">last</i>,
+inclusive, without affecting the selection state of cells outside that range.
+When both <i class="arg">first</i> and <i class="arg">last</i> are specified, <i class="arg">first</i> is the top left
+corner of the rectangle of cells and <i class="arg">last</i> is the bottom right corner.
+Option <i class="arg">last</i> defaults to <i class="arg">first</i>'s value.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 </dl></dd>
 <dt><i class="arg">pathName</i> <b class="method">set</b> <b class="method">row|col</b> <i class="arg">index</i> <span class="opt">?<i class="arg">value</i>?</span> <span class="opt">?<i class="arg">index value ...</i>?</span></dt>
-<dd><p>Sets the specified index to the associated value.  Table validation will
-not be triggered via this method.  If <b class="method">row</b> or <b class="method">col</b> precedes the
+<dd><p>Sets each cell <i class="arg">index</i> to the following <i class="arg">value</i>.  Table validation will
+not be triggered via this method.  If <b class="const">row</b> or <b class="const">col</b> precedes the
 list of index/value pairs, then the value is assumed to be a TCL list whose
 values will be split and set into the subsequent columns (if <b class="method">row</b> is
 specified) or rows (for <b class="method">col</b>).  For example, &quot;<b class="method">set row 2,3 {a b c}</b>&quot;
 will set 3 cells, from 2,3 to 2,5, to the specified values.  The setting of
-cells is silently bounded by the known table dimensions.</p></dd>
+cells is silently bounded by the known table dimensions.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">spans</b> <span class="opt">?<i class="arg">index</i>?</span> <span class="opt">?<i class="arg">rows,cols index rows,cols ...</i>?</span></dt>
-<dd><p>This command is used to manipulate row/col spans.  When called with no
+<dd><p>This command is used to manipulate row/column spans.  When called without
 arguments, all known spans are returned as a list of tuples of the form
 {index span}.  When called with only the <i class="arg">index</i>, the span for that
 <i class="arg">index</i> only is returned, if any.  Otherwise an even number of
 <i class="arg">index rows,cols</i> pairs are used to set spans.  A span starts at the
-<i class="arg">index</i> and continues for the specified number of rows and cols.
+<i class="arg">index</i> and continues for the specified number of rows and columns.
 Negative spans are not supported.  A span of 0,0 unsets any span on that
-cell.  See <span class="sectref"><a href="#section14">EXAMPLES</a></span> for more info.</p></dd>
+cell.  See <span class="sectref"><a href="#section15">EXAMPLES</a></span> for more info.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag</b> option <span class="opt">?<i class="arg">arg arg ...</i>?</span></dt>
 <dd><p>This command is used to manipulate tags.  The exact behavior of the command
 depends on the <i class="arg">option</i> argument that follows the <b class="method">tag</b> argument.
@@ -1147,81 +1189,78 @@ depends on the <i class="arg">option</i> argument that follows the <b class="met
 The following forms of the command are currently supported:</p>
 <dl class="doctools_definitions">
 <dt><i class="arg">pathName</i> <b class="method">tag cell</b> <i class="arg">tagName <span class="opt">?index ...?</span></i></dt>
-<dd><p>With no arguments, prints out the list of cells that use the <i class="arg">tag</i>.
-Otherwise it sets the specified cells to use the named tag, replacing any
-tag that may have been set using this method before.  If <i class="arg">tagName</i> is
-{}, the cells are reset to the default <i class="arg">tag</i>.  Tags added during
-<b class="option">-coltagcommand</b> or <b class="option">-rowtagcommand</b> evaluation do not
-register here.  If <i class="arg">tagName</i> does not exist, it will be created with
-the default options.</p></dd>
+<dd><p>Apply tag <i class="arg">tagName</i> to each cell <i class="arg">index</i> replacing any previous cell
+tag. If <i class="arg">tagName</i> is {}, the cells are reset to the default tag. Without
+any arguments, a list of cell indices that use tag <i class="arg">tagName</i> is returned.
+Tags added during <b class="option">-coltagcommand</b> or <b class="option">-rowtagcommand</b> evaluation
+do not register here.  If <i class="arg">tagName</i> does not exist, it will be created with
+the default options.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag cget</b> <i class="arg">tagName option</i></dt>
 <dd><p>This command returns the current value of the option named <i class="arg">option</i>
 associated with the tag given by <i class="arg">tagName</i>.  <i class="arg">Option</i> may have any
 of the values accepted by the <b class="method">tag configure</b> widget command.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag col</b> <i class="arg">tagName <span class="opt">?col ...?</span></i></dt>
-<dd><p>With no arguments, prints out the list of cols that use the <i class="arg">tag</i>.
-Otherwise it sets the specified columns to use the named tag, replacing any
-tag that may have been set using this method before.  If <i class="arg">tagName</i> is
-{}, the cols are reset to the default <i class="arg">tag</i>.  Tags added during
-<b class="option">-coltagcommand</b> evaluation do not register here.  If <i class="arg">tagName</i> does
-not exist, it will be created with the default options.</p></dd>
+<dd></dd>
+<dt><i class="arg">pathName</i> <b class="method">tag column</b> <i class="arg">tagName <span class="opt">?col ...?</span></i></dt>
+<dd><p>Applies tag <i class="arg">tagName</i> to each column <i class="arg">col</i> replacing any previous
+column tag. If <i class="arg">tagName</i> is {}, the columns are reset to the default tag. 
+Without any arguments, a list of columns that use tag <i class="arg">tagName</i> is returned.
+Tags added during <b class="option">-coltagcommand</b> evaluation do not register here.
+If <i class="arg">tagName</i> does not exist, it will be created with the default options.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag configure</b> <i class="arg">tagName</i> <span class="opt">?<i class="arg">option</i>?</span> <span class="opt">?<i class="arg">value</i>?</span> <span class="opt">?<i class="arg">option value ...</i>?</span></dt>
-<dd><p>This command is similar to the <b class="method">configure</b> widget command except that
-it modifies options associated with the tag given by <i class="arg">tagName</i> instead
-of modifying options for the overall table widget.  If no <i class="arg">option</i> is
-specified, the command returns a list describing all of the available
-options for <i class="arg">tagName</i> (see <b class="function">Tk_ConfigureInfo</b> for information on
-the format of this list).  If <i class="arg">option</i> is specified with no
-<i class="arg">value</i>, then the command returns a list describing the one named
-option (this list will be identical to the corresponding sublist of the
-value returned if no <i class="arg">option</i> is specified).  If one or more
-<i class="arg">option-value</i> pairs are specified, then the command modifies the
-given option(s) to have the given value(s) in <i class="arg">tagName</i>; in this case
-the command returns an empty string.
-See <span class="sectref"><a href="#section6">TAGS</a></span> above for details on the options available for tags.</p></dd>
+<dd><p>Query or modify the configuration options of tag <i class="arg">tagName</i>. If no
+<i class="arg">option</i> is specified, a list describing all of the available options for
+<i class="arg">tagName</i> ts returned (see <b class="function">Tk_ConfigureInfo</b> for info on the format of
+this list).  If <i class="arg">option</i> is specified without <i class="arg">value</i>,
+then a list describing option <i class="arg">option</i> is returned (this list will
+be identical to the corresponding sublist of the value returned if no
+<i class="arg">option</i> is specified).  If one or more <i class="arg">option-value</i> pairs are
+specified, then the command modifies the given option(s) to have the given
+value(s) in <i class="arg">tagName</i> and returns an empty string. See <span class="sectref"><a href="#section7">TAGS</a></span>
+for details on the options available for tags.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag delete</b> <i class="arg">tagName</i></dt>
-<dd><p>Deletes a tag.  No error if the tag does not exist.</p></dd>
+<dd><p>Deletes tag <i class="arg">tagName</i>.  No error if the tag does not exist.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag exists</b> <i class="arg">tagName</i></dt>
-<dd><p>Returns 1 if the named tag exists, 0 otherwise.</p></dd>
+<dd><p>Returns 1 if the tag <i class="arg">tagName</i> exists, 0 if not.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag get</b> <i class="arg">index</i></dt>
 <dd><p>Returns list of tags for cell <i class="arg">index</i>.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag includes</b> <i class="arg">tagName index</i></dt>
-<dd><p>Returns 1 if the specified index has the named tag, 0 otherwise.</p></dd>
+<dd><p>Returns 1 if cell <i class="arg">index</i> has tag <i class="arg">tagName</i>, 0 if not.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag lower</b> <i class="arg">tagName</i> <span class="opt">?<i class="arg">belowThis</i>?</span></dt>
-<dd><p>Lower the priority of the named tag.  If <i class="arg">belowThis</i> is not specified,
+<dd><p>Lower the priority of tag <i class="arg">tagName</i>.  If <i class="arg">belowThis</i> is not specified,
 then the tag's priority is lowered to the bottom, otherwise it is lowered
 to one below <i class="arg">belowThis</i>.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag names</b> <span class="opt">?<i class="arg">pattern</i>?</span></dt>
-<dd><p>If no pattern is specified, shows the names of all defined tags.
-Otherwise the <i class="arg">pattern</i> is used as a glob pattern to show only
-tags matching that pattern.  Tag names are returned in priority order
+<dd><p>If no pattern is specified, returns a list of all defined tag names. With
+<i class="arg">pattern</i>, only those tags that match <b class="syscmd">glob</b> <i class="arg">pattern</i>
+will be returned.  Tag names are returned in priority order
 (highest priority tag first).</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag priority</b> <i class="arg">tagName</i></dt>
 <dd><p>Returns the numeric priority for tag <i class="arg">tagName</i>.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag raise</b> <i class="arg">tagName</i> <span class="opt">?<i class="arg">aboveThis</i>?</span></dt>
-<dd><p>Raise the priority of the named tag.  If <i class="arg">aboveThis</i> is not specified,
+<dd><p>Raise the priority of tag <i class="arg">tagName</i>.  If <i class="arg">aboveThis</i> is not specified,
 then the tag's priority is raised to the top, otherwise it is raised to
 one above <i class="arg">aboveThis</i>.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag row</b> <i class="arg">tagName</i> <span class="opt">?<i class="arg">row ...</i>?</span></dt>
-<dd><p>With no arguments, prints out the list of rows that use the <i class="arg">tag</i>.
-Otherwise it sets the specified rows to use the named tag, replacing any
-tag that may have been set using this method before.  If <i class="arg">tagName</i> is
-{}, the rows are reset to use the default tag.  Tags added during
-<b class="option">-rowtagcommand</b> evaluation do not register here.  If <i class="arg">tagName</i> does
-not exist, it will be created with the default options.</p></dd>
+<dd><p>Applies tag <i class="arg">tagName</i> to each row <i class="arg">row</i> replacing any previous row
+tag. If <i class="arg">tagName</i> is {}, the rows are reset to the default tag. 
+Without any arguments, a list of rows that use tag <i class="arg">tagName</i> is returned.
+Tags added during <b class="option">-rowtagcommand</b> evaluation do not register here.
+If <i class="arg">tagName</i> does not exist, it will be created with the default options.</p></dd>
 </dl></dd>
 <dt><i class="arg">pathName</i> <b class="method">validate</b> <i class="arg">index</i></dt>
-<dd><p>Explicitly validates the specified index based on the current
-<b class="option">-validatecommand</b> and returns 0 or 1 based on whether the cell was
-validated.</p></dd>
+<dd><p>Validate the contents of cell <i class="arg">index</i> using the current
+<b class="option">-validatecommand</b> callback and return 1 if valid or 0 if not.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">width</b> <span class="opt">?<i class="arg">col</i>?</span> <span class="opt">?<i class="arg">value col value ...</i>?</span></dt>
-<dd><p>If no <i class="arg">col</i> is specified, returns a list describing all cols for which
-a width has been set.  If <i class="arg">col</i> is specified with no value, it prints
-out the width of that col in characters (positive number) or pixels
-(negative number).  If one or more <i class="arg">col-value</i> pairs are specified,
-then it sets each col to be that width in characters (positive number) or
-pixels (negative number).  If <i class="arg">value</i> is <i class="arg">default</i>, then the col
-uses the default width, specified by <b class="option">-colwidth</b>.</p></dd>
+<dd><p>If no <i class="arg">col</i> is specified, a list describing all columns for which a width
+has been set will be returned.  If <i class="arg">col</i> is specified without a value, the width of
+that column in characters (positive number) or pixels (negative number) will be
+returned.  If one or more <i class="arg">col-value</i> pairs are specified, then each
+column is set to be that width in characters (positive number) or pixels
+(negative number).  If <i class="arg">value</i> is <i class="arg">default</i>, then the column uses the
+default width, specified by <b class="option">-colwidth</b>.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">window</b> option <span class="opt">?<i class="arg">arg arg ...</i>?</span></dt>
 <dd><p>This command is used to manipulate embedded windows.  The exact behavior of
 the command depends on the <i class="arg">option</i> argument that follows the
@@ -1233,51 +1272,45 @@ supported:</p>
 associated with the window given by <i class="arg">index</i>.  <i class="arg">Option</i> may have any
 of the values accepted by the <b class="method">window configure</b> widget command.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">window configure</b> <i class="arg">index</i> <span class="opt">?<i class="arg">option</i>?</span> <span class="opt">?<i class="arg">value</i>?</span> <span class="opt">?<i class="arg">option value ...</i>?</span></dt>
-<dd><p>This command is similar to the <b class="method">configure</b> widget command except that
-it modifies options associated with the embedded window given by
-<i class="arg">index</i> instead of modifying options for the overall table widget.  If
-no <i class="arg">option</i> is specified, the command returns a list describing all of
-the available options for <i class="arg">index</i> (see <b class="function">Tk_ConfigureInfo</b> for
-information on the format of this list).  If <i class="arg">option</i> is specified with
-no <i class="arg">value</i>, then the command returns a list describing the one named
-option (this list will be identical to the corresponding sublist of the
-value returned if no <i class="arg">option</i> is specified).  If one or more
-<i class="arg">option-value</i> pairs are specified, then the command modifies the
-given option(s) to have the given value(s) in <i class="arg">index</i>; in this case
-the command returns an empty string.
-See <span class="sectref"><a href="#section7">EMBEDDED WINDOWS</a></span> above for details on the options available for windows.</p></dd>
+<dd><p>Query or modify the configuration options of window <i class="arg">index</i>. If no
+<i class="arg">option</i> is specified, a list describing all of the available options for
+<i class="arg">index</i> is returned (see <b class="function">Tk_ConfigureInfo</b> for info on the format of
+this list). If <i class="arg">option</i> is specified without <i class="arg">value</i>, then a list
+describing the option is returned (this list will be identical to the
+corresponding sublist of the value returned if no <i class="arg">option</i> is specified).
+If one or more <i class="arg">option-value</i> pairs are specified, then the command modifies
+the given option(s) to have the given value(s) in <i class="arg">index</i> and returns an
+empty string.
+See <span class="sectref"><a href="#section8">EMBEDDED WINDOWS</a></span> above for details on the options available for windows.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">window delete</b> <i class="arg">index</i> <span class="opt">?<i class="arg">index ...</i>?</span></dt>
-<dd><p>Deletes an embedded window from the table.  The associated window will
+<dd><p>Deletes embedded window <i class="arg">index</i> from the table.  The associated window will
 also be deleted.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">window move</b> <i class="arg">indexFrom indexTo</i></dt>
-<dd><p>Moves an embedded window from one cell to another.  If a window already
-exists in the target cell, it will be deleted.</p></dd>
+<dd><p>Moves an embedded window from cell <i class="arg">indexFrom</i> to cell <i class="arg">indexTo</i>. 
+If a window already exists in the target cell, it will be deleted.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">window names</b> <span class="opt">?<i class="arg">pattern</i>?</span></dt>
-<dd><p>If no pattern is specified, shows the cells of all embedded windows.
-Otherwise the <i class="arg">pattern</i> is used as a glob pattern to show only
+<dd><p>If no pattern is specified, returns a list of cell indices with embedded windows.
+Otherwise the <i class="arg">pattern</i> is used as a <b class="syscmd">glob</b> pattern to show only
 cells matching that pattern.</p></dd>
 </dl></dd>
-<dt><i class="arg">pathName</i> <b class="method">xview</b> <i class="arg">args</i></dt>
-<dd><p>This command is used to query and change the horizontal position of the
-information in the widget's window.  It can take any of the following
-forms:</p>
+<dt><i class="arg">pathName</i> <b class="method">xview</b> <i class="arg"><span class="opt">?args?</span></i></dt>
+<dd><p>This command is used to query and change the horizontal position of the content
+in the widget's window. It can take any of the following forms:</p>
 <dl class="doctools_definitions">
 <dt><i class="arg">pathName</i> <b class="method">xview</b></dt>
-<dd><p>Returns a list containing two elements.
-Each element is a real fraction between 0 and 1;  together they describe
-the horizontal span that is visible in the window.
-For example, if the first element is .2 and the second element is .6,
-20% of the table's text is off-screen to the left, the middle 40% is visible
-in the window, and 40% of the text is off-screen to the right.
-These are the same values passed to scrollbars via the <b class="option">-xscrollcommand</b>
-option.</p></dd>
+<dd><p>Returns a list containing two elements. Each element is a real fraction
+between 0 and 1; together they describe the horizontal span that is visible in
+the window. For example, if the first element is .2 and the second element is
+.6, 20% of the table's text is off-screen to the left, the middle 40% is
+visible in the window, and 40% of the text is off-screen to the right. These
+are the same values passed to scrollbars via the -xscrollcommand option.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">xview</b> <i class="arg">index</i></dt>
-<dd><p>Adjusts the view in the window so that the column given by
-<i class="arg">index</i> is displayed at the left edge of the window.</p></dd>
+<dd><p>Adjusts the view in the window so that the column given by <i class="arg">index</i> is
+displayed at the left edge of the window.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">xview moveto</b> <i class="arg">fraction</i></dt>
-<dd><p>Adjusts the view in the window so that <i class="arg">fraction</i> of the
-total width of the table text is off-screen to the left.
-<i class="arg">fraction</i> must be a fraction between 0 and 1.</p></dd>
+<dd><p>Adjusts the view in the window so that <i class="arg">fraction</i> of the total width of
+the table is off-screen to the left. <i class="arg">fraction</i> must be a fraction
+between 0 and 1.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">xview scroll</b> <i class="arg">number what</i></dt>
 <dd><p>This command shifts the view in the window left or right according to
 <i class="arg">number</i> and <i class="arg">what</i>. <i class="arg">Number</i> must be an integer.
@@ -1292,19 +1325,19 @@ become visible.</p></dd>
 </dl></dd>
 <dt><i class="arg">pathName</i> <b class="method">yview</b> <i class="arg"><span class="opt">?args?</span></i></dt>
 <dd><p>This command is used to query and change the vertical position of the
-text in the widget's window.  It can take any of the following forms:</p>
+rows in the widget's window.  It can take any of the following forms:</p>
 <dl class="doctools_definitions">
 <dt><i class="arg">pathName</i> <b class="method">yview</b></dt>
-<dd><p>Returns a list containing two elements, both of which are real fractions
-between 0 and 1.  The first element gives the position of the table element
-at the top of the window, relative to the table as a whole (0.5 means it is
-halfway through the table, for example).  The second element gives the
-position of the table element just after the last one in the window,
-relative to the table as a whole.  These are the same values passed to
-scrollbars via the <b class="option">-yscrollcommand</b> option.</p></dd>
+<dd><p>Returns a list containing two elements. Each element is a real fraction between
+0 and 1; together they describe the vertical span that is visible in the window.
+The first element gives the position of the table element at the top of the
+window, relative to the table as a whole (0.5 means it is halfway through the
+table, for example). The second element gives the position of the table element
+just after the last one in the window, relative to the table as a whole. These
+are the same values passed to scrollbars via the -yscrollcommand option.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">yview</b> <i class="arg">index</i></dt>
-<dd><p>Adjusts the view in the window so that the row given by
-<i class="arg">index</i> is displayed at the top of the window.</p></dd>
+<dd><p>Adjusts the view in the window so that the row given by <i class="arg">index</i> is
+displayed at the top of the window.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">yview moveto</b> <i class="arg">fraction</i></dt>
 <dd><p>Adjusts the view in the window so that the element given by <i class="arg">fraction</i>
 appears at the top of the window.
@@ -1322,7 +1355,7 @@ become visible.</p></dd>
 </dl></dd>
 </dl>
 </div>
-<div id="section12" class="doctools_section"><h2><a name="section12">DEFAULT BINDINGS</a></h2>
+<div id="section13" class="doctools_section"><h2><a name="section13">DEFAULT BINDINGS</a></h2>
 <p>The default class bindings are:</p>
 <ol class="doctools_enumerated">
 <li><p>If <b class="option">-mode</b> is <b class="const">table</b>, pressing Button-1 in a cell will activate
@@ -1439,7 +1472,7 @@ take place.</p>
 individual widgets or by redefining the class bindings. See the
 tkTable.tcl file in the same directory as the library.</p>
 </div>
-<div id="section13" class="doctools_section"><h2><a name="section13">PERFORMANCE ISSUES</a></h2>
+<div id="section14" class="doctools_section"><h2><a name="section14">PERFORMANCE ISSUES</a></h2>
 <p>The number of rows and columns or a table widget should not significantly
 affect the speed of redraw.  Recalculation and redraw of table parameters
 and cells is restricted as much as possible.</p>
@@ -1449,7 +1482,7 @@ blinks, which causes a steady stream of graphics traffic.  Set the
 with the table without a cache can cause significant slow-down, as the
 command is called once for each request of a cell value.</p>
 </div>
-<div id="section14" class="doctools_section"><h2><a name="section14">EXAMPLES</a></h2>
+<div id="section15" class="doctools_section"><h2><a name="section15">EXAMPLES</a></h2>
 <p>Set the topleft title area to be one spanning cell.  This overestimates both
 row and column span by one, but the command does all the constraining for us.</p>
 <pre class="doctools_example">$table span [$table cget -roworigin],[$table cget -colorigin] [$table cget -titlerows],[$table cget -titlecols]</pre>
