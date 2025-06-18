@@ -1039,6 +1039,9 @@ When both [arg first] and [arg last] are specified, [arg first] is the top left
 corner of the rectangle of cells and [arg last] is the bottom right corner.
 Option [arg last] defaults to [arg first]'s value.
 See [sectref INDICES] for valid forms of index.
+
+[def "[arg pathName] [method "selection size"]"]
+Returns number of selected cells.
 [list_end]
 
 [def "[arg pathName] [method set] [method row|col] [arg index] [opt [arg value]] [opt [arg "index value ..."]]"]

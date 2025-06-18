@@ -1650,6 +1650,9 @@ When both \fIfirst\fR and \fIlast\fR are specified, \fIfirst\fR is the top left
 corner of the rectangle of cells and \fIlast\fR is the bottom right corner\&.
 Option \fIlast\fR defaults to \fIfirst\fR's value\&.
 See \fBINDICES\fR for valid forms of index\&.
+.TP
+\fIpathName\fR \fBselection size\fR
+Returns number of selected cells\&.
 .RE
 .TP
 \fIpathName\fR \fBset\fR \fBrow|col\fR \fIindex\fR ?\fIvalue\fR? ?\fIindex value \&.\&.\&.\fR?

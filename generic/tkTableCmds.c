@@ -28,8 +28,8 @@
  *
  *--------------------------------------------------------------
  */
-int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
-	int objc, Tcl_Obj *const objv[]) {
+int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int result = TCL_OK, row, col;
     Tcl_Size templen;
@@ -355,6 +355,7 @@ int Table_BboxCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
     return TCL_OK;
 }
 
+/* Scan subcommands */
 static const char *bdCmdNames[] = {
     "mark", "dragto", (char *)NULL
 };
@@ -674,8 +675,8 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
  *
  *--------------------------------------------------------------
  */
-int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp,
-	int objc, Tcl_Obj *const objv[]) {
+int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
@@ -732,8 +733,8 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp,
  *
  *--------------------------------------------------------------
  */
-int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp,
-	int objc, Tcl_Obj *const objv[]) {
+int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
 
     if (objc > 3) {
@@ -789,8 +790,8 @@ int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp,
  *
  *--------------------------------------------------------------
  */
-int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp,
-	int objc, Tcl_Obj *const objv[]) {
+int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int result = TCL_OK, row, col;
     Tcl_Size templen;
@@ -1121,8 +1122,8 @@ int Table_SelAnchorCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
  *
  *--------------------------------------------------------------
  */
-int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp,
-	int objc, Tcl_Obj *const objv[]) {
+int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int result = TCL_OK;
     char buf1[INDEX_BUFSIZE];
@@ -1213,8 +1214,8 @@ done:
  *
  *--------------------------------------------------------------
  */
-int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp,
-	int objc, Tcl_Obj *const objv[]) {
+int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int row, col;
 
@@ -1248,8 +1249,8 @@ int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp,
  *
  *--------------------------------------------------------------
  */
-int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp,
-	int objc, Tcl_Obj *const objv[]) {
+int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int row, col, dummy, key, selchanged = 0;
     char buf1[INDEX_BUFSIZE];
@@ -1340,13 +1341,13 @@ SET_CELLS:
     return TCL_OK;
 }
 
-
+/* Selection subcommands */
 static const char *selCmdNames[] = {
-    "active", "anchor", "clear", "includes", "present", "set", (char *)NULL
+    "active", "anchor", "clear", "includes", "present", "set", "size", (char *)NULL
 };
 enum selCommand {
     CMD_SEL_ACTIVE, CMD_SEL_ANCHOR, CMD_SEL_CLEAR, CMD_SEL_INCLUDES,
-    CMD_SEL_PRESENT, CMD_SEL_SET
+    CMD_SEL_PRESENT, CMD_SEL_SET, CMD_SEL_SIZE
 };
 
 /*
@@ -1365,8 +1366,8 @@ enum selCommand {
  *
  *--------------------------------------------------------------
  */
-int Table_SelectionCmd(ClientData clientData, Tcl_Interp *interp,
-	int objc, Tcl_Obj *const objv[]) {
+int Table_SelectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int cmdIndex, result = TCL_OK;
 
@@ -1402,6 +1403,9 @@ int Table_SelectionCmd(ClientData clientData, Tcl_Interp *interp,
 	}
 	case CMD_SEL_SET:
 	    result = Table_SelSetCmd(clientData, interp, objc, objv);
+	    break;
+	case CMD_SEL_SIZE:
+	    Tcl_SetObjResult(interp, Tcl_NewIntObj((tablePtr->selCells)->numEntries));
 	    break;
     }
     return result;
