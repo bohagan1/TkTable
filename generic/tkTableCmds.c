@@ -680,21 +680,75 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
     Table *tablePtr = (Table *) clientData;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
-    char *value = NULL;
     int row, col;
 
     if (objc > 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "?value?");
 	return TCL_ERROR;
     }
-    if (objc == 3) {
+
+    /* Get sorted list of selected cells */
+    if (objc == 2) {
+	int numEntries, i = 0, j;
+	uint64_t *elementArray;
+	Tcl_Obj *listPtr;
+	char buf[INDEX_BUFSIZE];
+
+	listPtr = Tcl_NewListObj(0, NULL);
+	numEntries = (tablePtr->selCells)->numEntries;
+	elementArray = (uint64_t *) ckalloc(numEntries * sizeof(uint64_t));
+	if (listPtr == NULL || elementArray == NULL) {
+	    Tcl_DecrRefCount(listPtr);
+	    return TCL_ERROR;
+	}
+
+	/* Get entries */
+	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search); entryPtr != NULL
+		&& i < numEntries; entryPtr = Tcl_NextHashEntry(&search)) {
+	    TableParseArrayIndex(&row, &col, Tcl_GetHashKey(tablePtr->selCells, entryPtr));
+	    row -= tablePtr->rowOffset;
+	    col -= tablePtr->colOffset;
+	    elementArray[i++] = (uint64_t) row << 32 | (uint64_t) col;;
+	}
+
+	/* Sort entries */
+	for (i = 0; i < numEntries; i++) {
+	    int min = i;
+	    for (j = i; j < numEntries; j++) {
+		if (elementArray[j] < elementArray[min]) {
+		    min = j;
+		}
+	    }
+	    if (min != i) {
+		uint64_t temp = elementArray[i];
+		elementArray[i] = elementArray[min];
+		elementArray[min] = temp;
+	    }
+	}
+
+	/* Convert entries to Tcl list */
+	for (i = 0; i < numEntries; i++) {
+	    row = (int) (elementArray[i] >> 32);
+	    col = (int) (elementArray[i] & 0xFFFFFFFF);
+	    row += tablePtr->rowOffset;
+	    col += tablePtr->colOffset;
+	    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
+	    Tcl_ListObjAppendElement(interp, listPtr, Tcl_NewStringObj(buf, -1));
+	}
+	Tcl_SetObjResult(interp, listPtr);
+	ckfree((char *) elementArray);
+
+    /* Set selected cells to value */
+    } else {
+	char *value = NULL;
+	
 	/* make sure there is a data source to accept a set value */
 	if ((tablePtr->state == STATE_DISABLED) || (tablePtr->dataSource == DATA_NONE)) {
 	    return TCL_OK;
 	}
 	value = Tcl_GetString(objv[2]);
 	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
-	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
+		entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
 	    TableParseArrayIndex(&row, &col, Tcl_GetHashKey(tablePtr->selCells, entryPtr));
 	    TableSetCellValue(tablePtr, row, col, value);
 	    row -= tablePtr->rowOffset;
@@ -704,15 +758,6 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	    }
 	    TableRefresh(tablePtr, row, col, CELL);
 	}
-    } else {
-	Tcl_Obj *objPtr = Tcl_NewObj();
-
-	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
-	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	    value = Tcl_GetHashKey(tablePtr->selCells, entryPtr);
-	    Tcl_ListObjAppendElement(NULL, objPtr, Tcl_NewStringObj(value, -1));
-	}
-	Tcl_SetObjResult(interp, TableCellSortObj(interp, objPtr));
     }
     return TCL_OK;
 }
