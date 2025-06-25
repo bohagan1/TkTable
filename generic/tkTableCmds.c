@@ -718,26 +718,30 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
     if (objc == 2) {
 	int numEntries, index = 0;
 	selSortType *indexArray;
-	char *hashKey;
 	Tcl_Obj *listPtr;
 
-	listPtr = Tcl_NewListObj(0, NULL);
+	/* Abort if no entries */
 	numEntries = (tablePtr->selCells)->numEntries;
+	if (numEntries == 0) {
+	    return TCL_OK;
+	}
+
+	/* Allocate storage */
+	listPtr = Tcl_NewListObj(numEntries, NULL);
 	indexArray = (selSortType *)ckalloc(numEntries * sizeof(selSortType));
 	if (listPtr == NULL || indexArray == NULL) {
+	    Tcl_IncrRefCount(listPtr);
 	    Tcl_DecrRefCount(listPtr);
 	    return TCL_ERROR;
 	}
 
 	/* Get entries and add to array */
-	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
-		entryPtr != NULL && index < numEntries;
-		entryPtr = Tcl_NextHashEntry(&search), index++) {
-	    hashKey = Tcl_GetHashKey(tablePtr->selCells, entryPtr);
-	    TableParseArrayIndex(&row, &col, hashKey);
-	    indexArray[index].row = row;
-	    indexArray[index].col = col;
-	    indexArray[index].hashKey = hashKey;
+	entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
+	while (entryPtr != NULL && index < numEntries) {
+	    indexArray[index].hashKey = Tcl_GetHashKey(tablePtr->selCells, entryPtr);
+	    TableParseArrayIndex(&(indexArray[index].row), &(indexArray[index].col),
+		indexArray[index++].hashKey);
+	    entryPtr = Tcl_NextHashEntry(&search);
 	}
 
 	/* Sort entries */
@@ -1088,7 +1092,7 @@ int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
 	start = tablePtr->selectFirst;
 	end = tablePtr->selectLast;
 
-	if ((resultPtr = Tcl_NewListObj(0, NULL)) == NULL ||
+	if ((resultPtr = Tcl_NewListObj(2, NULL)) == NULL ||
 	    Tcl_ListObjAppendElement(interp, resultPtr, Tcl_NewIntObj(start)) != TCL_OK  ||
 	    Tcl_ListObjAppendElement(interp, resultPtr, Tcl_NewIntObj(end)) != TCL_OK) {
 	    return TCL_ERROR;
