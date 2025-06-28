@@ -62,8 +62,7 @@ set i 1
 foreach test {
     {-anchor n n left {bad anchor* "left": must be n, ne, e, se, s, sw, w, nw, or center}}
     {-autoclear yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-background #ff0000 #ff0000 non-existent
-	    {unknown color name "non-existent"}}
+    {-background #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
     {-bd "4 2" "4 2" badValue {*screen distance* "badValue"}}
     {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
     {-bordercursor arrow arrow badValue {bad cursor spec "badValue"}}
@@ -103,10 +102,12 @@ foreach test {
     {-justify left left wrong {bad justification "wrong": must be left, right, or center}}
     {-maxheight 300 300 2.6x {*screen distance* "2.6x"}}
     {-maxwidth 300 300 2.6x {*screen distance* "2.6x"}}
+    {-mode spreadsheet spreadsheet xyzzy {bad option "xyzzy" must be table, spreadsheet}}
     {-multiline yes 1 xyzzy {expected boolean value but got "xyzzy"}}
     {-padx 1.3 1 2.6x {*screen distance* "2.6x"}}
     {-pady 1.3 1 2.6x {*screen distance* "2.6x"}}
     {-relief groove groove 1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
+    {-resizeborders none none xyzzy {bad option "xyzzy" must be row, col, both, none}}
     {-rowheight -20 -20 xyzzy {expected integer but got "xyzzy"}}
     {-roworigin -20 -20 xyzzy {expected integer but got "xyzzy"}}
     {-rows 20 20 xyzzy {expected integer but got "xyzzy"}}
@@ -114,6 +115,9 @@ foreach test {
     {-rowstretchmode unset unset bogus {bad option "bogus" must be none, unset, all, last, fill}}
     {-rowtagcommand {Some command} {Some command} {} {}}
     {-selcmd {Some command} {Some command} {} {}}
+    {-selectbackground #110022 #110022 bogus {unknown color name "bogus"}}
+    {-selectborderwidth 1 1 badValue {*screen distance* "badValue"}}
+    {-selectforeground #112233 #112233 bogus {unknown color name "bogus"}}
     {-selectioncommand {Some command} {Some command} {} {}}
     {-selectmode extended extended {} {}}
     {-selecttitles yes 1 xyzzy {expected boolean value but got "xyzzy"}}
@@ -133,16 +137,16 @@ foreach test {
     {-xscrollcommand {Some command} {Some command} {} {}}
     {-yscrollcommand {Another command} {Another command} {} {}}
 } {
-    set name [lindex $test 0]
+    lassign $test name value valid invalid errmsg
     test table-1.$i "configuration options, $name" -body {
-	.t configure $name [lindex $test 1]
+	.t configure $name $value
 	list [lindex [.t configure $name] 4] [.t cget $name]
-    } -result [list [lindex $test 2] [lindex $test 2]]
+    } -result [list $valid $valid]
     incr i
-    if {[lindex $test 3] ne ""} {
+    if {$invalid ne ""} {
 	test table-1.$i "configuration options, $name" -body {
-	    list [catch {.t configure $name [lindex $test 3]} msg] $msg
-	} -match glob -result [list 1 [lindex $test 4]]
+	    list [catch {.t configure $name $invalid} msg] $msg
+	} -match glob -result [list 1 $errmsg]
     }
     .t configure $name [lindex [.t configure $name] 3]
     incr i
@@ -223,18 +227,19 @@ test table-3.3 {TableWidgetCmd procedure, commands} {
 } {1 {ambiguous option "c": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, focus, get, height, hidden, icursor, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview}}
 
 test table-4.1 {TableWidgetCmd procedure, "activate" option} {
-    list [catch {.t activate} msg] $msg
-} {1 {wrong # args: should be ".t activate index"}}
-test table-4.2 {TableWidgetCmd procedure, "activate" option} {
     list [catch {.t activate a b} msg] $msg
-} {1 {wrong # args: should be ".t activate index"}}
-test table-4.3 {TableWidgetCmd procedure, "activate" option} {
+} {1 {wrong # args: should be ".t activate ?index?"}}
+test table-4.2 {TableWidgetCmd procedure, "activate" option} {
     list [catch {.t activate fooey} msg] $msg
 } {1 {bad table index "fooey": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>}}
-test table-4.4 {TableWidgetCmd procedure, "activate" option} {
+test table-4.3 {TableWidgetCmd procedure, "activate" option} {
     .t activate 3,0
     .t index active
 } 3,0
+test table-4.4 {TableWidgetCmd procedure, "activate" option} {
+    .t activate 3,1
+    .t activate
+} 3,1
 test table-4.5 {TableWidgetCmd procedure, "activate" option} {
     .t activate -1,0
     .t index active
@@ -251,6 +256,10 @@ test table-4.8 {TableWidgetCmd procedure, "activate" option} {
     .t activate end
     .t index active
 } {9,9}
+test table-4.9 {TableWidgetCmd procedure, "activate" option} {
+    .t activate {}
+    list [catch {.t index active} msg] $msg
+} {1 {no "active" cell in table}}
 
 test table-5.1 {TableWidgetCmd procedure, "bbox" option} {
     list [catch {.t bbox} msg] $msg
@@ -277,7 +286,7 @@ test table-6.4 {TableWidgetCmd procedure, "cget" option} {
 
 test table-7.1 {TableWidgetCmd procedure, "configure" option} {
     llength [.t configure]
-} {72}
+} {75}
 test table-7.2 {TableWidgetCmd procedure, "configure" option} {
     list [catch {.t configure -gorp} msg] $msg
 } {1 {unknown option "-gorp"}}
@@ -325,6 +334,41 @@ test table-11.1 {TableWidgetCmd procedure, "curvalue" option} {
 test table-12.1 {TableWidgetCmd procedure, "delete" option} {
     list [catch {.t delete} msg] $msg
 } {1 {wrong # args: should be ".t delete option ?switches? arg ?arg?"}}
+
+test table-31.1 {TableWidgetCmd procedure, "focus" option} {
+    list [catch {.t focus a b} msg] $msg
+} {1 {wrong # args: should be ".t focus ?index?"}}
+test table-31.2 {TableWidgetCmd procedure, "focus" option} {
+    list [catch {.t focus fooey} msg] $msg
+} {1 {bad table index "fooey": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>}}
+test table-31.3 {TableWidgetCmd procedure, "focus" option} {
+    .t focus 3,0
+    .t index focus
+} 3,0
+test table-31.4 {TableWidgetCmd procedure, "focus" option} {
+    .t focus 3,1
+    .t focus
+} 3,1
+test table-31.5 {TableWidgetCmd procedure, "focus" option} {
+    .t focus -1,0
+    .t index focus
+} {0,0}
+test table-31.6 {TableWidgetCmd procedure, "focus" option} {
+    .t focus 30,30
+    .t index focus
+} {9,9}
+test table-31.7 {TableWidgetCmd procedure, "focus" option} {
+    .t focus origin
+    .t index focus
+} {0,0}
+test table-31.8 {TableWidgetCmd procedure, "focus" option} {
+    .t focus end
+    .t index focus
+} {9,9}
+test table-31.9 {TableWidgetCmd procedure, "focus" option} {
+    .t focus {}
+    list [catch {.t index focus} msg] $msg
+} {1 {no "focus" cell in table}}
 
 test table-13.1 {TableWidgetCmd procedure, "get" option} {
     list [catch {.t get} msg] $msg
