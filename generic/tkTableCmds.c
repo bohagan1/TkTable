@@ -660,32 +660,6 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
     return TCL_OK;
 }
 
-typedef struct selSortStruct {
-    int row, col;
-    char *hashKey;
-} selSortType;
-
-/*
- * Compare selection items
- *
- * Returns -1 if the item1 < item2, 0 if same, or 1 if item1 > item2.
- */
-int IndexCmp(const void *item1, const void *item2) {
-    int res;
-    selSortType *a, *b;
-    a = (selSortType*) item1;
-    b = (selSortType*) item2;
-
-    if (a->row < b->row || (a->row == b->row && a->col < b->col)) {
-	res = -1;
-    } else if (a->row > b->row || (a->row == b->row && a->col > b->col)) {
-	res = 1;
-    } else {
-	res = 0;
-    }
-    return res;
-}
-
 /*
  *--------------------------------------------------------------
  *
@@ -705,9 +679,6 @@ int IndexCmp(const void *item1, const void *item2) {
 int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    Tcl_HashEntry *entryPtr;
-    Tcl_HashSearch search;
-    int row, col;
 
     if (objc > 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "?value?");
@@ -716,47 +687,20 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 
     /* Get sorted list of selected cells */
     if (objc == 2) {
-	int numEntries, index = 0;
-	selSortType *indexArray;
-	Tcl_Obj *listPtr;
-
-	/* Abort if no entries */
-	numEntries = (tablePtr->selCells)->numEntries;
-	if (numEntries == 0) {
-	    return TCL_OK;
-	}
-
-	/* Allocate storage */
-	listPtr = Tcl_NewListObj(numEntries, NULL);
-	indexArray = (selSortType *)ckalloc(numEntries * sizeof(selSortType));
-	if (listPtr == NULL || indexArray == NULL) {
-	    Tcl_IncrRefCount(listPtr);
-	    Tcl_DecrRefCount(listPtr);
+	Tcl_Obj *listPtr = TableGetSortedIndices(tablePtr->selCells);
+	if (listPtr != NULL) {
+	    Tcl_SetObjResult(interp, listPtr);
+	} else {
+	    Tcl_AppendResult(interp, "Memory allocation error", (char *)NULL);
 	    return TCL_ERROR;
 	}
-
-	/* Get entries and add to array */
-	entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
-	while (entryPtr != NULL && index < numEntries) {
-	    indexArray[index].hashKey = Tcl_GetHashKey(tablePtr->selCells, entryPtr);
-	    TableParseArrayIndex(&(indexArray[index].row), &(indexArray[index].col),
-		indexArray[index++].hashKey);
-	    entryPtr = Tcl_NextHashEntry(&search);
-	}
-
-	/* Sort entries */
-	qsort((void *)indexArray, (size_t)numEntries, sizeof(selSortType), IndexCmp);
-
-	/* Convert array entries to TCL list */
-	for (index = 0; index < numEntries; index++) {
-	    Tcl_ListObjAppendElement(interp, listPtr, Tcl_NewStringObj(indexArray[index].hashKey, -1));
-	}
-	Tcl_SetObjResult(interp, listPtr);
-	ckfree((char *) indexArray);
 
     /* Set selected cells to value */
     } else {
 	char *value = NULL;
+	Tcl_HashEntry *entryPtr;
+	Tcl_HashSearch search;
+	int row, col;
 	
 	/* make sure there is a data source to accept a set value */
 	if ((tablePtr->state == STATE_DISABLED) || (tablePtr->dataSource == DATA_NONE)) {

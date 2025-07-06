@@ -629,8 +629,9 @@ extern char *	TableCellSort(Table *tablePtr, char *str);
 #ifdef NO_SORT_CELLS
 #  define TableCellSortObj(interp, objPtr) (objPtr)
 #else
-extern Tcl_Obj*	TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr);
+extern Tcl_Obj *TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr);
 #endif
+extern Tcl_Obj *TableGetSortedIndices(Tcl_HashTable *hashTablePtr);
 
 /*
  * HEADERS IN TKTABLEPS

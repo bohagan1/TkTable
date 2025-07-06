@@ -384,3 +384,110 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
     return sortedObjPtr;
 }
 #endif
+
+/*
+ * Structure used to store cell index info for sort operation.
+ */
+
+typedef struct indexTypeStruct {
+    int row, col;
+    char *hashKey;
+} indexType;
+
+/*
+ *--------------------------------------------------------------
+ *
+ * CellIndexComp --
+ *	Compares two cell index values and returns the result.
+ *
+ * Results:
+ *	-1 if index1 before, 0 if same, or 1 if after index2.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+int CellIndexComp(const void *index1, const void *index2) {
+    int res;
+    indexType *a, *b;
+    a = (indexType*) index1;
+    b = (indexType*) index2;
+
+    if (a->row < b->row || (a->row == b->row && a->col < b->col)) {
+	res = -1;
+    } else if (a->row > b->row || (a->row == b->row && a->col > b->col)) {
+	res = 1;
+    } else {
+	res = 0;
+    }
+    return res;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * TableGetSortedIndices --
+ *	This returns the cell indices (in row,col format) from a
+ *	hash table as a sorted list.
+ *
+ * Results:
+ *	A Tcl list object or NULL for error.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+Tcl_Obj * TableGetSortedIndices(Tcl_HashTable *hashTablePtr) {
+    int numEntries, index = 0;
+    Tcl_HashEntry *entryPtr;
+    Tcl_HashSearch search;
+    indexType *indexArray;
+    Tcl_Obj *listPtr, *tempPtr;
+
+    /* Abort if no entries */
+    numEntries = hashTablePtr->numEntries;
+    if (numEntries == 0) {
+	return Tcl_NewListObj(0, NULL);
+    }
+
+    /* Allocate storage */
+    listPtr = Tcl_NewListObj(numEntries, NULL);
+    indexArray = (indexType *)ckalloc(numEntries * sizeof(indexType));
+    if (listPtr == NULL || indexArray == NULL) {
+	Tcl_IncrRefCount(listPtr);
+	Tcl_DecrRefCount(listPtr);
+	return NULL;
+    }
+
+    /* Get entries and add to array */
+    for (entryPtr = Tcl_FirstHashEntry(hashTablePtr, &search);
+	    entryPtr != NULL && index < numEntries;
+	    entryPtr = Tcl_NextHashEntry(&search), index++) {
+	indexArray[index].hashKey = Tcl_GetHashKey(hashTablePtr, entryPtr);
+	TableParseArrayIndex(&(indexArray[index].row), &(indexArray[index].col),
+	    indexArray[index].hashKey);
+    }
+    if (index < numEntries) {
+	numEntries = index;
+    }
+
+    /* Sort entries */
+    qsort((void *)indexArray, (size_t)numEntries, sizeof(indexType), CellIndexComp);
+
+    /* Convert array entries to TCL list */
+    for (index = 0; index < numEntries; index++) {
+	if ((tempPtr = Tcl_NewStringObj(indexArray[index].hashKey, -1)) != NULL
+	    && Tcl_ListObjAppendElement(NULL, listPtr, tempPtr) == TCL_OK) {
+	} else {
+	    Tcl_IncrRefCount(listPtr);
+	    Tcl_DecrRefCount(listPtr);
+	    listPtr = NULL;
+	    break;
+	}
+    }
+    ckfree((char *) indexArray);
+    return listPtr;
+}
+
