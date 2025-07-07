@@ -675,7 +675,17 @@ extern void	TableAddFlash(Table *tablePtr, int row, int col);
       * Turn array index back into row/col
       * return the number of args parsed (should be two)
       */
-#define TableParseArrayIndex(r, c, i)	sscanf((i), "%d,%d", (r), (c))
+inline int TableParseArrayIndex(int *row, int *col, char *str) {
+    char *next;
+
+    errno = 0;
+    *row = strtol((const char *) str, &next, 10);
+    if (next != str && errno == 0) {
+	*col = strtol((const char *) ++next, NULL, 10);
+	return (errno == 0 ? 2 : 0);
+    }
+    return 0;
+}
 
      /*
       * Macro for finding the last cell of the table
