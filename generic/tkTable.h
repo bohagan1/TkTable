@@ -676,15 +676,29 @@ extern void	TableAddFlash(Table *tablePtr, int row, int col);
       * return the number of args parsed (should be two)
       */
 inline int TableParseArrayIndex(int *row, int *col, char *str) {
-    char *next;
-
-    errno = 0;
-    *row = strtol((const char *) str, &next, 10);
-    if (next != str && errno == 0) {
-	*col = strtol((const char *) ++next, NULL, 10);
-	return (errno == 0 ? 2 : 0);
+    int pos = 1, val = 0;
+    if (*str == '-') {
+        pos = 0;
+        str++;
     }
-    return 0;
+    while (*str >= '0' && *str <= '9') {
+        val = (val*10) + (*str - '0');
+        str++;
+    }
+    *row = pos ? val : -val;
+    str++;
+    pos = 1;
+    val = 0;
+    if (*str == '-') {
+        pos = 0;
+        str++;
+    }
+    while (*str >= '0' && *str <= '9') {
+        val = (val*10) + (*str - '0');
+        str++;
+    }
+    *col = pos ? val : -val;
+    return 2;
 }
 
      /*
