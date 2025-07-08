@@ -17,6 +17,100 @@
 /*
  *--------------------------------------------------------------
  *
+ * TableMakeArrayIndex --
+ *	This procedure formats a row and column index into a
+ *	cell index string.
+ *
+ * Results:
+ *	Returns string length.
+ *
+ * Side effects:
+ *	None
+ *
+ *--------------------------------------------------------------
+ */
+char *Int2Str(int value, char *str) {
+    char *endptr = str;
+    int quotient = (value >= 0 ? value : -value);
+    int i, j;
+
+    /* Add digits in reverse order */
+    do {
+	const int tmp = quotient / 10;
+	*endptr++ = "0123456789"[quotient - (tmp*10)];
+	quotient = tmp;
+    } while (quotient);
+
+    /* Add negative sign */
+    if (value < 0) {
+	*endptr++ = '-';
+    }
+    *endptr = '\0';
+
+    /* Reverse chars */
+    for (i = 0, j = (int) (endptr-str-1); i < j; i++, j--) {
+	char c = str[i];
+	str[i] = str[j];
+	str[j] = c;
+    }
+    return endptr;
+}
+
+int TableMakeArrayIndex(int row, int col, char *str, int len) {
+    char *endptr = Int2Str(row, str);
+    *endptr++ = ',';
+    return (int) (Int2Str(col, endptr) - str);
+}
+
+
+/*
+ *--------------------------------------------------------------
+ *
+ * TableParseArrayIndex --
+ *	This procedure parses a cell index string into row and
+ *	column values.
+ *
+ * Results:
+ *	Returns 2.
+ *
+ * Side effects:
+ *	None
+ *
+ *--------------------------------------------------------------
+ */
+inline int TableParseArrayIndex(int *row, int *col, char *str) {
+    int pos = 1, val = 0;
+
+    /* Get row */
+    if (*str == '-') {
+        pos = 0;
+        str++;
+    }
+    while (*str >= '0' && *str <= '9') {
+        val = (val*10) + (*str - '0');
+        str++;
+    }
+    *row = pos ? val : -val;
+    str++;
+
+    /* Get column */
+    pos = 1;
+    val = 0;
+    if (*str == '-') {
+        pos = 0;
+        str++;
+    }
+    while (*str >= '0' && *str <= '9') {
+        val = (val*10) + (*str - '0');
+        str++;
+    }
+    *col = pos ? val : -val;
+    return 2;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
  * Table_ActivateCmd --
  *	This procedure is invoked to process the activate method.
  *	This sets which cell has the keyboard focus for input.

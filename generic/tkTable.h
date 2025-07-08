@@ -522,6 +522,8 @@ extern void	TableSetActiveIndex(Table *tablePtr);
  * HEADERS IN tkTableCmds.c
  */
 
+extern int	TableMakeArrayIndex(int row, int col, char *str, int len);
+extern int	TableParseArrayIndex(int *row, int *col, char *str);
 extern int	Table_ActivateCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 extern int	Table_AdjustCmd(ClientData clientData,
@@ -665,41 +667,6 @@ extern void	TableAddFlash(Table *tablePtr, int row, int col);
 #define TableInvalidateAll(tablePtr, flags) \
 	TableInvalidate((tablePtr), 0, 0, Tk_Width((tablePtr)->tkwin),\
 		Tk_Height((tablePtr)->tkwin), (flags))
-
-     /*
-      * Turn row/col into an index into the table
-      */
-#define TableMakeArrayIndex(r, c, i, l)	snprintf((i), (l), "%d,%d", (r), (c))
-
-     /*
-      * Turn array index back into row/col
-      * return the number of args parsed (should be two)
-      */
-inline int TableParseArrayIndex(int *row, int *col, char *str) {
-    int pos = 1, val = 0;
-    if (*str == '-') {
-        pos = 0;
-        str++;
-    }
-    while (*str >= '0' && *str <= '9') {
-        val = (val*10) + (*str - '0');
-        str++;
-    }
-    *row = pos ? val : -val;
-    str++;
-    pos = 1;
-    val = 0;
-    if (*str == '-') {
-        pos = 0;
-        str++;
-    }
-    while (*str >= '0' && *str <= '9') {
-        val = (val*10) + (*str - '0');
-        str++;
-    }
-    *col = pos ? val : -val;
-    return 2;
-}
 
      /*
       * Macro for finding the last cell of the table

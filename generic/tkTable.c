@@ -397,8 +397,6 @@ static int Tk_ClassOptionObjCmd(
     return offset;
 }
 
-extern int	TableParseArrayIndex(int *row, int *col, char *str);
-
 /*
  *----------------------------------------------------------------------
  *
