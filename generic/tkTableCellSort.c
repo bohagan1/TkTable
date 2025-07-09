@@ -181,6 +181,7 @@ static int DictionaryCompare(
  *
  *----------------------------------------------------------------------
  */
+
 static int TableSortCompareProc(
     const void *first, const void *second) {		/* Elements to be compared. */
 
@@ -205,6 +206,7 @@ static int TableSortCompareProc(
  *
  *----------------------------------------------------------------------
  */
+
 char * TableCellSort(Table *tablePtr, char *str) {
     Tcl_Size listArgc;
     const char **listArgv;
@@ -349,6 +351,7 @@ static SortElement * MergeSort(
  *
  *----------------------------------------------------------------------
  */
+
 Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
     int length, i;
     Tcl_Size len;
@@ -408,6 +411,7 @@ typedef struct indexTypeStruct {
  *
  *--------------------------------------------------------------
  */
+
 int CellIndexComp(const void *index1, const void *index2) {
     int res;
     indexType *a, *b;
@@ -439,6 +443,7 @@ int CellIndexComp(const void *index1, const void *index2) {
  *
  *--------------------------------------------------------------
  */
+
 Tcl_Obj * TableGetSortedIndices(Tcl_HashTable *hashTablePtr) {
     int numEntries, index = 0;
     Tcl_HashEntry *entryPtr;
@@ -468,6 +473,80 @@ Tcl_Obj * TableGetSortedIndices(Tcl_HashTable *hashTablePtr) {
 	indexArray[index].hashKey = Tcl_GetHashKey(hashTablePtr, entryPtr);
 	TableParseArrayIndex(&(indexArray[index].row), &(indexArray[index].col),
 	    indexArray[index].hashKey);
+    }
+    if (index < numEntries) {
+	numEntries = index;
+    }
+
+    /* Sort entries */
+    qsort((void *)indexArray, (size_t)numEntries, sizeof(indexType), CellIndexComp);
+
+    /* Convert array entries to TCL list */
+    for (index = 0; index < numEntries; index++) {
+	if ((tempPtr = Tcl_NewStringObj(indexArray[index].hashKey, -1)) != NULL
+	    && Tcl_ListObjAppendElement(NULL, listPtr, tempPtr) == TCL_OK) {
+	} else {
+	    Tcl_IncrRefCount(listPtr);
+	    Tcl_DecrRefCount(listPtr);
+	    listPtr = NULL;
+	    break;
+	}
+    }
+    ckfree((char *) indexArray);
+    return listPtr;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * TableGetSortedIndicesFiltered --
+ *	This returns the cell indices (in row,col format) from a
+ *	hash table that match the pattern criteria as a sorted list.
+ *
+ * Results:
+ *	A Tcl list object or NULL for error.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+
+Tcl_Obj * TableGetSortedIndicesFiltered(Tcl_HashTable *hashTablePtr, int has_value, char *pattern) {
+    int numEntries, index = 0;
+    Tcl_HashEntry *entryPtr;
+    Tcl_HashSearch search;
+    indexType *indexArray;
+    Tcl_Obj *listPtr, *tempPtr;
+    char *hashKey;
+
+    /* Abort if no entries */
+    numEntries = hashTablePtr->numEntries;
+    if (numEntries == 0) {
+	return Tcl_NewListObj(0, NULL);
+    }
+
+    /* Allocate storage */
+    listPtr = Tcl_NewListObj(numEntries, NULL);
+    indexArray = (indexType *)ckalloc(numEntries * sizeof(indexType));
+    if (listPtr == NULL || indexArray == NULL) {
+	Tcl_IncrRefCount(listPtr);
+	Tcl_DecrRefCount(listPtr);
+	return NULL;
+    }
+
+    /* Get entries, apply patterns, and add to array */
+    for (entryPtr = Tcl_FirstHashEntry(hashTablePtr, &search);
+	    entryPtr != NULL && index < numEntries;
+	    entryPtr = Tcl_NextHashEntry(&search)) {
+	hashKey = Tcl_GetHashKey(hashTablePtr, entryPtr);
+	if ((has_value && Tcl_GetHashValue(entryPtr) != NULL) ||
+		(pattern != NULL && Tcl_StringMatch(hashKey, pattern)) ||
+		(!has_value && pattern == NULL)) {
+	    indexArray[index].hashKey = hashKey;
+	    TableParseArrayIndex(&(indexArray[index].row), &(indexArray[index].col), hashKey);
+	    index++;
+	}
     }
     if (index < numEntries) {
 	numEntries = index;

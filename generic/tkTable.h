@@ -634,6 +634,7 @@ extern char *	TableCellSort(Table *tablePtr, char *str);
 extern Tcl_Obj *TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr);
 #endif
 extern Tcl_Obj *TableGetSortedIndices(Tcl_HashTable *hashTablePtr);
+extern Tcl_Obj *TableGetSortedIndicesFiltered(Tcl_HashTable *hashTablePtr, int has_value, char *pattern);
 
 /*
  * HEADERS IN TKTABLEPS

@@ -759,8 +759,7 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
     int result = TCL_OK, row, col, x, y, width, height, i, new, cmdIndex;
     TableEmbWindow *ewPtr;
     Tcl_HashEntry *entryPtr;
-    Tcl_HashSearch search;
-    char buf[INDEX_BUFSIZE], *keybuf, *winname;
+    char buf[INDEX_BUFSIZE], *winname;
 
     if (objc < 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg arg ...?");
@@ -870,23 +869,13 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	break;
 
     case WIN_NAMES: {
-	Tcl_Obj *objPtr = Tcl_NewObj();
-
 	/* just print out the window names */
 	if (objc < 3 || objc > 4) {
 	    Tcl_WrongNumArgs(interp, 3, objv, "?pattern?");
 	    return TCL_ERROR;
 	}
 	winname = (objc == 4) ? Tcl_GetString(objv[3]) : NULL;
-	entryPtr = Tcl_FirstHashEntry(tablePtr->winTable, &search);
-	while (entryPtr != NULL) {
-	    keybuf = Tcl_GetHashKey(tablePtr->winTable, entryPtr);
-	    if (objc == 3 || Tcl_StringMatch(keybuf, winname)) {
-		Tcl_ListObjAppendElement(NULL, objPtr, Tcl_NewStringObj(keybuf, -1));
-	    }
-	    entryPtr = Tcl_NextHashEntry(&search);
-	}
-	Tcl_SetObjResult(interp, TableCellSortObj(interp, objPtr));
+	Tcl_SetObjResult(interp, TableGetSortedIndicesFiltered(tablePtr->winTable, 0, winname));
 	break;
     }
     }
