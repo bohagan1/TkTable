@@ -166,65 +166,6 @@ static int DictionaryCompare(
 /*
  *----------------------------------------------------------------------
  *
- * TableSortCompareProc --
- *	This procedure is invoked by qsort to determine the proper
- *	ordering between two elements.
- *
- * Results:
- *	< 0 means first is "smaller" than "second", > 0 means "first"
- *	is larger than "second", and 0 means they should be treated
- *	as equal.
- *
- * Side effects:
- *	None, unless a user-defined comparison command does something
- *	weird.
- *
- *----------------------------------------------------------------------
- */
-
-static int TableSortCompareProc(
-    const void *first, const void *second) {		/* Elements to be compared. */
-
-    char *str1 = *((char **) first);
-    char *str2 = *((char **) second);
-
-    return DictionaryCompare(str1, str2);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TableCellSort --
- *	Sort a list of table cell elements (of form row,col)
- *
- * Results:
- *	Returns the sorted list of elements.  Because Tcl_Merge allocs
- *	the space for result, it must later be Tcl_Free'd by caller.
- *
- * Side effects:
- *	Behaviour undefined for ill-formed input list of elements.
- *
- *----------------------------------------------------------------------
- */
-
-char * TableCellSort(Table *tablePtr, char *str) {
-    Tcl_Size listArgc;
-    const char **listArgv;
-    char *result;
-
-    if (Tcl_SplitList(tablePtr->interp, str, &listArgc, &listArgv) != TCL_OK) {
-	return str;
-    }
-    /* Thread safety: qsort is reportedly not thread-safe... */
-    qsort((void *) listArgv, (size_t) listArgc, sizeof (char *), TableSortCompareProc);
-    result = Tcl_Merge(listArgc, listArgv);
-    ckfree((char *) listArgv);
-    return result;
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * MergeLists -
  *
  *	This procedure combines two sorted lists of SortElement structures
@@ -336,7 +277,6 @@ static SortElement * MergeSort(
     return elementPtr;
 }
 
-#ifndef NO_SORT_CELLS
 /*
  *----------------------------------------------------------------------
  *
@@ -386,7 +326,6 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
 
     return sortedObjPtr;
 }
-#endif
 
 /*
  * Structure used to store cell index info for sort operation.

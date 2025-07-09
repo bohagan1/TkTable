@@ -1559,23 +1559,20 @@ static Tcl_Size TableFetchSelection(
 
     Table *tablePtr = (Table *) clientData;
     Tcl_Interp *interp = tablePtr->interp;
-    char *value, *data, *rowsep = tablePtr->rowSep, *colsep = tablePtr->colSep;
-    Tcl_HashEntry *entryPtr;
-    Tcl_HashSearch search;
+    char *data, *rowsep = tablePtr->rowSep, *colsep = tablePtr->colSep;
     int lastrow=0, needcs=0, r, c, rslen=0, cslen=0;
-    Tcl_Size count, length, listArgc;
-    int numcols, numrows, code;
-    const char **listArgv;
+    Tcl_Size count, length, index;
+    int numcols, numrows;
+    Tcl_Obj *listPtr, *objPtr;
 
     /* if we are not exporting the selection or we have no data source, abort */
     if (!tablePtr->exportSelection || (tablePtr->dataSource == DATA_NONE)) {
 	return -1;
     }
 
+    /* First Time through, get the selection, otherwise, just use the
+     * selection obtained before */
     if ((offset == 0) || !tablePtr->haveSelection) {
-	/* First Time through, get the selection, otherwise, just use the
-	 * selection obtained before */
-
 	/* If we have fetched a selection before, free it */
 	if (tablePtr->haveSelection) {
 	    Tcl_DStringFree(&tablePtr->selection);
@@ -1583,20 +1580,13 @@ static Tcl_Size TableFetchSelection(
 	}
 
 	/* First get a sorted list of the selected elements */
-	Tcl_DStringInit(&tablePtr->selection);
-	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
-	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	    Tcl_DStringAppendElement(&tablePtr->selection,
-		    Tcl_GetHashKey(tablePtr->selCells, entryPtr));
-	}
-	value = TableCellSort(tablePtr, Tcl_DStringValue(&tablePtr->selection));
-	Tcl_DStringFree(&tablePtr->selection);
+	listPtr = TableGetSortedIndices(tablePtr->selCells);
+	Tcl_ListObjLength(interp, listPtr, &length);
 
 	/* Abort if no data or conversion to list fails */
-	if (value == NULL || Tcl_SplitList(interp, value, &listArgc, &listArgv) != TCL_OK) {
+	if (listPtr == NULL || length == 0) {
 	    return -1;
 	}
-	Tcl_Free(value);
 
 	/* Add elements to selection */
 	Tcl_DStringInit(&tablePtr->selection);
@@ -1604,9 +1594,10 @@ static Tcl_Size TableFetchSelection(
 	rslen = (rowsep?((int) strlen(rowsep)):0);
 	cslen = (colsep?((int) strlen(colsep)):0);
 	numrows = numcols = 0;
-	for (count = 0; count < listArgc; count++) {
-	    TableParseArrayIndex(&r, &c, listArgv[count]);
-	    if (count) {
+	for (index = 0; index < length; index++) {
+	    Tcl_ListObjIndex(interp, listPtr, index, &objPtr);
+	    TableParseArrayIndex(&r, &c, Tcl_GetString(objPtr));
+	    if (index) {
 		if (lastrow != r) {
 		    lastrow = r;
 		    needcs = 0;
@@ -1638,17 +1629,17 @@ static Tcl_Size TableFetchSelection(
 		Tcl_DStringAppendElement(&tablePtr->selection, data);
 	    }
 	}
-	if (!rslen && count) {
+	if (!rslen && index > 0) {
 	    Tcl_DStringEndSublist(&tablePtr->selection);
 	}
-	Tcl_Free((char *) listArgv);
 
 	if (tablePtr->selCmd != NULL) {
+	    int code;
 	    Tcl_DString script;
 	    Tcl_DStringInit(&script);
 	    ExpandPercents(tablePtr, tablePtr->selCmd, numrows+1, numcols+1,
 		    Tcl_DStringValue(&tablePtr->selection), (char *)NULL,
-		    listArgc, &script, CMD_ACTIVATE);
+		    length, &script, CMD_ACTIVATE);
 	    if ((code = Tcl_EvalEx(interp, Tcl_DStringValue(&script), -1, TCL_EVAL_GLOBAL)) == TCL_ERROR) {
 		Tcl_AddErrorInfo(interp, "\n    (error in table selection command)");
 		Tcl_BackgroundException(interp, code);
