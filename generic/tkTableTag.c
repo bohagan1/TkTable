@@ -785,14 +785,14 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		 */
 
 		if ((tablePtr->flags & HAS_ACTIVE) && STREQ(tagname, "active")) {
-		    TableMakeArrayIndex(tablePtr->activeRow+tablePtr->rowOffset,
-			tablePtr->activeCol+tablePtr->colOffset, buf, INDEX_BUFSIZE);
-		    resultPtr = Tcl_NewStringObj(buf, -1);
+		    row = tablePtr->activeRow+tablePtr->rowOffset;
+		    col = tablePtr->activeCol+tablePtr->colOffset;
+		    resultPtr = TableMakeIndexObj(row, col);
 
 		} else if ((tablePtr->focusRow > -1) && STREQ(tagname, "focus")) {
-		    TableMakeArrayIndex(tablePtr->focusRow+tablePtr->rowOffset,
-			tablePtr->focusCol+tablePtr->colOffset, buf, INDEX_BUFSIZE);
-		    resultPtr = Tcl_NewStringObj(buf, -1);
+		    row = tablePtr->focusRow+tablePtr->rowOffset;
+		    col = tablePtr->focusCol+tablePtr->colOffset;
+		    resultPtr = TableMakeIndexObj(row, col);
 
 		} else if ((tablePtr->flashMode && STREQ(tagname, "flash"))
 			|| STREQ(tagname, "sel")) {
@@ -812,20 +812,17 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    for (row = tablePtr->rowOffset;
 			 row < tablePtr->rowOffset+tablePtr->rows; row++) {
 			for (col = tablePtr->colOffset;
-			     col < tablePtr->colOffset+tablePtr->titleCols;
-			     col++) {
-			    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
+			     col < tablePtr->colOffset+tablePtr->titleCols; col++) {
 			    Tcl_ListObjAppendElement(NULL, resultPtr,
-				    Tcl_NewStringObj(buf, -1));
+				TableMakeIndexObj(row, col));
 			}
 		    }
 		    for (row = tablePtr->rowOffset;
 			 row < tablePtr->rowOffset+tablePtr->titleRows; row++) {
 			for (col = tablePtr->colOffset+tablePtr->titleCols;
 			     col < tablePtr->colOffset+tablePtr->cols; col++) {
-			    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 			    Tcl_ListObjAppendElement(NULL, resultPtr,
-				    Tcl_NewStringObj(buf, -1));
+				TableMakeIndexObj(row, col));
 			}
 		    }
 

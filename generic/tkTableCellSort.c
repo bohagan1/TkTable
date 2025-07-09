@@ -384,7 +384,7 @@ int CellIndexComp(const void *index1, const void *index2) {
  */
 
 Tcl_Obj * TableGetSortedIndices(Tcl_HashTable *hashTablePtr) {
-    int numEntries, index = 0;
+    Tcl_Size numEntries, index = 0;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
     indexType *indexArray;
@@ -398,10 +398,8 @@ Tcl_Obj * TableGetSortedIndices(Tcl_HashTable *hashTablePtr) {
 
     /* Allocate storage */
     listPtr = Tcl_NewListObj(numEntries, NULL);
-    indexArray = (indexType *)ckalloc(numEntries * sizeof(indexType));
+    indexArray = (indexType *)ckalloc((size_t)numEntries * sizeof(indexType));
     if (listPtr == NULL || indexArray == NULL) {
-	Tcl_IncrRefCount(listPtr);
-	Tcl_DecrRefCount(listPtr);
 	return NULL;
     }
 
@@ -452,7 +450,7 @@ Tcl_Obj * TableGetSortedIndices(Tcl_HashTable *hashTablePtr) {
  */
 
 Tcl_Obj * TableGetSortedIndicesFiltered(Tcl_HashTable *hashTablePtr, int has_value, char *pattern) {
-    int numEntries, index = 0;
+    Tcl_Size numEntries, index = 0;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
     indexType *indexArray;
@@ -467,10 +465,8 @@ Tcl_Obj * TableGetSortedIndicesFiltered(Tcl_HashTable *hashTablePtr, int has_val
 
     /* Allocate storage */
     listPtr = Tcl_NewListObj(numEntries, NULL);
-    indexArray = (indexType *)ckalloc(numEntries * sizeof(indexType));
+    indexArray = (indexType *)ckalloc((size_t)numEntries * sizeof(indexType));
     if (listPtr == NULL || indexArray == NULL) {
-	Tcl_IncrRefCount(listPtr);
-	Tcl_DecrRefCount(listPtr);
 	return NULL;
     }
 

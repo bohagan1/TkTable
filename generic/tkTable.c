@@ -1111,10 +1111,8 @@ static int TableWidgetObjCmd(
 	    } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
 		result = TCL_ERROR;
 	    } else if (objc == 3) {
-		char buf[INDEX_BUFSIZE];
 		/* recreate the index, just in case it got bounded */
-		TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
-		Tcl_SetObjResult(interp, Tcl_NewStringObj(buf, -1));
+		Tcl_SetObjResult(interp, TableMakeIndexObj(row, col));
 	    } else {
 		/* INDEX row|col */
 		Tcl_SetObjResult(interp, Tcl_NewIntObj((*which == 'r') ? row : col));

@@ -904,8 +904,8 @@ int TableGetIndex(
  */
 int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *)clientData;
-    int row, col, i, j, max;
-    Tcl_Size len, numChars;
+    int row, col, i, j, max, numChars;
+    Tcl_Size len;
     char *str;
 
     /* sets any number of tags/indices to a given value */
@@ -921,7 +921,7 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
     }
 
     str = Tcl_GetStringFromObj(objv[2], &len);
-    numChars = Tcl_NumUtfChars(str, len);
+    numChars = (int)Tcl_NumUtfChars(str, len);
     if (strncmp(str, "row", (size_t) len) == 0 || strncmp(str, "col", (size_t) len) == 0) {
 	Tcl_Obj *resultPtr = Tcl_GetObjResult(interp);
 	/* set row index list ?index list ...? */

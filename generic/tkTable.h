@@ -523,6 +523,7 @@ extern void	TableSetActiveIndex(Table *tablePtr);
  */
 
 extern int	TableMakeArrayIndex(int row, int col, char *str, int len);
+extern Tcl_Obj *TableMakeIndexObj(int row, int col);
 extern int	TableParseArrayIndex(int *row, int *col, char *str);
 extern int	Table_ActivateCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);

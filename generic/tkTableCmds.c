@@ -62,6 +62,13 @@ int TableMakeArrayIndex(int row, int col, char *str, int len) {
     return (int) (Int2Str(col, endptr) - str);
 }
 
+Tcl_Obj *TableMakeIndexObj(int row, int col) {
+    char buf[INDEX_BUFSIZE];
+
+    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
+    return Tcl_NewStringObj(buf, -1);
+}
+
 
 /*
  *--------------------------------------------------------------
@@ -137,12 +144,9 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp, int objc,
     /* Get active cell index */
     if (objc == 2) {
 	if (tablePtr->flags & HAS_ACTIVE) {
-	    char buf[INDEX_BUFSIZE];
-
 	    row = tablePtr->activeRow + tablePtr->rowOffset;
 	    col = tablePtr->activeCol + tablePtr->colOffset;
-	    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
-	    Tcl_SetObjResult(interp, Tcl_NewStringObj(buf, -1));
+	    Tcl_SetObjResult(interp, TableMakeIndexObj(row, col));
 	}
 	return TCL_OK;
     }
@@ -903,12 +907,9 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp, int objc,
     /* Get focus cell index */
     if (objc == 2) {
 	if (tablePtr->focusRow > -1 || tablePtr->focusCol > -1) {
-	    char buf[INDEX_BUFSIZE];
-
 	    row = tablePtr->focusRow + tablePtr->rowOffset;
 	    col = tablePtr->focusCol + tablePtr->colOffset;
-	    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
-	    Tcl_SetObjResult(interp, Tcl_NewStringObj(buf, -1));
+	    Tcl_SetObjResult(interp, TableMakeIndexObj(row, col));
 	}
 	return TCL_OK;
     }
@@ -1327,7 +1328,7 @@ int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	char buf[INDEX_BUFSIZE];
 	TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 	Tcl_SetBooleanObj(Tcl_GetObjResult(interp),
-			  (Tcl_FindHashEntry(tablePtr->selCells, buf)!=NULL));
+		(Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL));
     }
     return TCL_OK;
 }
