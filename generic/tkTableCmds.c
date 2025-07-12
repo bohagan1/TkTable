@@ -799,7 +799,7 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	Tcl_HashEntry *entryPtr;
 	Tcl_HashSearch search;
 	int row, col;
-	
+
 	/* make sure there is a data source to accept a set value */
 	if ((tablePtr->state == STATE_DISABLED) || (tablePtr->dataSource == DATA_NONE)) {
 	    return TCL_OK;
@@ -1096,6 +1096,102 @@ int Table_ScanCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 		TableAdjustParams(tablePtr);
 	    }
 	    break;
+	}
+    }
+    return TCL_OK;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * Table_SeeCmd --
+ *	This function is invoked to scroll the view to see a cell.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Scrolls view.
+ *
+ *--------------------------------------------------------------
+ */
+int Table_SeeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
+    Table *tablePtr = (Table *) clientData;
+    int col, row, top, bottom, left, right, delta, temp, x, y, h, w;
+
+    if (objc != 3) {
+	Tcl_WrongNumArgs(interp, 2, objv, "index");
+	return TCL_ERROR;
+    }
+
+    if (TableGetIndexObj(tablePtr, objv[2], &row, &col) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+
+    /* Adjust from user to master coords */
+    row -= tablePtr->rowOffset;
+    col -= tablePtr->colOffset;
+
+    /* Get visible top/bottom row and left/right col */
+    top = tablePtr->topRow;
+    left = tablePtr->leftCol;
+    TableGetLastCell(tablePtr, &bottom, &right);
+
+    /* Shift up/down by count rows or by screen-fulls until cell in view */
+    delta = bottom-top;
+    if (row < top) {
+	if (top - row < delta) {
+	    top = row;
+	}
+	while (row < top) {
+	    top-=delta;
+	}
+    } else if (row > bottom) {
+	if (bottom - row < delta) {
+	    bottom = row;
+	}
+	while (row > bottom) {
+	    bottom+=delta;
+	}
+	top = bottom-delta;
+    }
+
+    /* Shift left/right by count cols or by screen-fulls until cell in view */
+    delta = right-left;
+    if (col < left) {
+	if (left - col < delta) {
+	    left = col;
+	}
+	while (col < left) {
+	    left-=delta;
+	}
+    } else if (col > right) {
+	if (right - col < delta) {
+	    right = col;
+	}
+	while (col > right) {
+	    right+=delta;
+	}
+	left = right-delta;
+    }
+
+    temp = tablePtr->selectTitles ? 0 : 1;
+    CONSTRAIN(row, tablePtr->titleRows * temp, tablePtr->rows-1);
+    CONSTRAIN(col, tablePtr->titleCols * temp, tablePtr->cols-1);
+
+    if (!TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 1)) {
+	tablePtr->topRow  = top;
+	tablePtr->leftCol = left;
+	TableAdjustParams(tablePtr);
+	if (!TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 1)) {
+	    int hl = tablePtr->highlightWidth;
+	    if ((x+w) > (Tk_Width(tablePtr->tkwin)-hl)) {
+		tablePtr->leftCol++;
+	    }
+	    if ((y+h) > (Tk_Height(tablePtr->tkwin)-hl)) {
+		tablePtr->topRow++;
+	    }
+	    TableAdjustParams(tablePtr);
 	}
     }
     return TCL_OK;
