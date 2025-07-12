@@ -1214,7 +1214,7 @@ int Table_SeeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
  */
 int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int start, end;
+    int start, end, selchanged = 0, len;
 
     if (objc < 3 || objc > 5) {
 	Tcl_WrongNumArgs(interp, 3, objv, "?start? ?end?");
@@ -1239,6 +1239,7 @@ int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
 	if (tablePtr->selectFirst != -1 || tablePtr->selectLast != -1) {
 	    tablePtr->selectFirst = -1;
 	    tablePtr->selectLast = -1;
+	    selchanged = 1;
 	} else {
 	    return TCL_OK;
 	}
@@ -1248,17 +1249,39 @@ int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
 	    TableGetIcursorObj(tablePtr, objv[4], &end) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	if (start < end && start > -1) {
+
+	/* Range check */
+	len = (int)strlen(tablePtr->activeBuf);
+	if (start < 0) {
+	    start = 0;
+	}
+	if (end > len) {
+	    end = len;
+	}
+	if (start >= end) {
+	    start = -1;
+	    end = -1;
+	}
+
+	/* Set selection */
+	if (tablePtr->selectFirst != start) {
 	    tablePtr->selectFirst = start;
+	    selchanged = 1;
+	}
+	if (tablePtr->selectLast != end) {
 	    tablePtr->selectLast = end;
-	} else {
-	    tablePtr->selectFirst = -1;
-	    tablePtr->selectLast = -1;
+	    selchanged = 1;
 	}
     }
 
-    TableSetActiveIndex(tablePtr);
-    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
+    /* If selection changed update cell, export selection, and generate event */
+    if (selchanged) {
+	TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
+	if (tablePtr->exportSelection) {
+	    Tk_OwnSelection(tablePtr->tkwin, XA_PRIMARY, TableLostSelection, (ClientData) tablePtr);
+	}
+	TableGenerateSelectEvent(tablePtr);
+    }
     return TCL_OK;
 }
 
