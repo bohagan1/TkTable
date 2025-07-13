@@ -1013,32 +1013,40 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp, int objc,
  */
 int Table_GetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int result = TCL_OK;
     int r1, c1, r2, c2, row, col;
 
     if (objc < 3 || objc > 4) {
 	Tcl_WrongNumArgs(interp, 2, objv, "first ?last?");
-	result = TCL_ERROR;
+	return TCL_ERROR;
     } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) == TCL_ERROR) {
-	result = TCL_ERROR;
+	return TCL_ERROR;
     } else if (objc == 3) {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1));
     } else if (TableGetIndexObj(tablePtr, objv[3], &r2, &c2) == TCL_ERROR) {
-	result = TCL_ERROR;
+	return TCL_ERROR;
     } else {
-	Tcl_Obj *objPtr = Tcl_NewObj();
+	Tcl_Obj *objPtr, *listPtr;
 
 	r1 = MIN(row,r2); r2 = MAX(row,r2);
 	c1 = MIN(col,c2); c2 = MAX(col,c2);
-	for ( row = r1; row <= r2; row++ ) {
-	    for ( col = c1; col <= c2; col++ ) {
-		Tcl_ListObjAppendElement(NULL, objPtr,
-		    Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1));
+	listPtr = Tcl_NewListObj((c2-c1+1)*(r2-r1+1), NULL);
+	if (listPtr == NULL) {
+	    return TCL_ERROR;
+	}
+
+	for (row = r1; row <= r2; row++) {
+	    for (col = c1; col <= c2; col++) {
+		if ((objPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1))
+		    == NULL || Tcl_ListObjAppendElement(interp, listPtr, objPtr) != TCL_OK) {
+		    Tcl_IncrRefCount(listPtr);
+		    Tcl_DecrRefCount(listPtr);
+		    return TCL_ERROR;
+		}
 	    }
 	}
-	Tcl_SetObjResult(interp, objPtr);
+	Tcl_SetObjResult(interp, listPtr);
     }
-    return result;
+    return TCL_OK;
 }
 
 /*
