@@ -5859,8 +5859,8 @@ fi
 #-----------------------------------------------------------------------
 
 
-    vars="tkTable.c tkTableWin.c tkTableTag.c tkTableEdit.c
-		 tkTableCell.c tkTableCellSort.c tkTableCmds.c tkTableUtil.c"
+    vars="tkTable.c tkTableCell.c tkTableCellSort.c tkTableCmds.c
+	tkTableClipboard.c tkTableEdit.c tkTableWin.c tkTableTag.c tkTableUtil.c"
     for i in $vars; do
 	case $i in
 	    \$*)

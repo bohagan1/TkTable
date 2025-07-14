@@ -25,7 +25,7 @@
 namespace eval ::tktable {
     variable Priv
     array set Priv [list x 0 y 0 afterId {} mouseMoved 0 borderInfo {} \
-	borderB1 1 bindingMode focus hidden {} icursor -1]
+	borderB1 1 bindingMode focus hidden {} icursor -1 copynpaste {}]
     namespace export tk_tableCopy tk_tableCut tk_tablePaste
 }
 
@@ -818,7 +818,7 @@ proc ::tktable::DoubleButton1 {w x y} {
 	    if {$len > 0} {
 		set start [tcl_wordBreakBefore $text $index]
 		set end [tcl_wordBreakAfter $text $index]
-		if {$start == -1} {set start 0} 
+		if {$start == -1} {set start 0}
 		if {$end == -1} {set end $len}
 		$w selection active $start $end
 	    }
@@ -941,7 +941,7 @@ proc ::tktable::BeginSelect {w el} {
 proc ::tktable::Motion {w el} {
     variable Priv
     set cell [$w index $el]
-    
+
     if {![info exists Priv(tablePrev)]} {
 	set Priv(tablePrev) $cell
 	return
@@ -1380,331 +1380,153 @@ proc ::tktable::ChangeWidth {w i a} {
     }
 }
 
-#
-# Selection_Get --
-#
-# Get selected items in table and return in clipboard compatible format.
-#
-# Arguments:
-# w -		Name of table widget.
-#
-proc ::tktable::Selection_Get {w} {
-    set result ""
-
-    # Commit any edits to active cell
-    if {[$w activate] ne ""} {
-	$w activate active
-    }
-
-    # Sort cells by row
-    foreach cell [$w curselection] {
-	lassign [split $cell ","] r c
-	lappend cells($r) $c
-    }
-
-    # Get cell data by row and column
-    foreach row [lsort -integer [array names cells]] {
-	set data ""
-	foreach col [lsort -integer $cells($row)] {
-	    set value [$w get [format "%d,%d" $row $col]]
-	    if {[string match *\[\t\n\"\]* $value]} {
-		append data \" [string map [list \" \"\"] $value] \" \t
-	    } else {
-		append data $value \t
-	    }
-	}
-	append result [string range $data 0 end-1] \n
-    }
-    return $result
-}
-
-#
-# Selection_Handler --
-#
-# Handle clipboard get requests from other apps.
-#
-# Arguments:
-# w -		Name of table widget.
-# clear -	Clear selection after transfer to clipboard.
-# start -	Starting character in selection data.
-# maxChars -	Maximum number of characters to return.
-#
-# Results:
-# Returns maxChars of data or less for last part
-#
-proc ::tktable::Selection_Handler {w clear offset maxChars} {
-    variable seldata
-
-    if {$offset == 0} {
-	set seldata [Selection_Get $w]
-    }
-
-    set result [string range $seldata $offset [expr {$offset + $maxChars - 1}]]
-    if {[string length $result] < $maxChars} {
-	set seldata ""
-	if {$clear} {
-	    $w curselection {}
-	    $w selection clear all
-	}
-    }
-}
-
-#
-# Selection_Lost_Ownership --
-#
-# Cleanup after clipboard ownership is lost.
-#
-# Arguments:
-# w -		Name of table widget.
-#
-proc ::tktable::Selection_Lost_Ownership {w} {
-    set ::tktable::seldata {}
-    set type [expr {$::tcl_platform(platform) eq "unix" ? "UTF8_STRING" : "STRING"}]
-    selection handle -selection CLIPBOARD -format STRING -type $type $w {}
-}
-
-#
-# Selecton_to_Clipboard --
-#
-# Either copy selected items in table to clipboard or set up a handler to do
-# so after a clipboard get request.
-#
-# Arguments:
-# w -		Name of table widget.
-# clear -	Clear selection after transfer to clipboard.
-#
-proc ::tktable::Selecton_to_Clipboard {w {clear 0}} {
-    set type [expr {$::tcl_platform(platform) eq "unix" ? "UTF8_STRING" : "STRING"}]
-
-    # If active cell has selected text, get that
-    if {[$w activate] ne ""} {
-	foreach {start end} [$w selection active] {
-	    clipboard clear -displayof $w
-	    clipboard append -displayof $w -format STRING -type $type -- \
-		[string range [$w curvalue] $start $end]
-	    return
-	}
-    }
-
-    # Append to clipboard for small tables
-    if {$clear || ([$w cget -rows] < 250 && [$w cget -cols] < 250)} {
-	clipboard clear -displayof $w
-	clipboard append -displayof $w -format STRING -type $type -- [Selection_Get $w]
-	if {$clear && [$w cget -state] eq "normal"} {
-	    $w curselection {}
-	    $w selection clear all
-	}
-	return
-    }
-
-    # Create handler for large selection requests
-    selection clear -displayof $w -selection CLIPBOARD
-    selection own -command [list ::tktable::Selection_Lost_Ownership $w] \
-	-selection CLIPBOARD $w
-    selection handle -selection CLIPBOARD -format STRING -type $type \
-	$w [list ::tktable::Selection_Handler $w $clear]
-}
 
 #
 # tk_tableCopy --
 #
-# This procedure copies the selection from a table widget to the clipboard.
-# It does not depend on the state of -exportselection.
+# This procedure copies the active cell selected text or selected cell contents
+# from a table widget to the clipboard independent of -exportselection.
 #
 # Arguments:
 # w -		Name of table widget.
 #
 proc ::tktable::tk_tableCopy {w} {
-    Selecton_to_Clipboard $w
+    variable Priv
+
+    # Abort if no selection
+    set list [$w selection active]
+    if {[llength $list] == 0 && [$w selection size] == 0} {
+	return
+    }
+
+    clipboard clear -displayof $w
+
+    # Get selected text in active cell or selected cells
+    if {[llength $list] > 0} {
+	set format [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
+	set type "STRING"
+	lassign $list first last
+	clipboard append -displayof $w -format $format -type $type -- \
+		[string range [$w curvalue] $first $last]
+
+    } else {
+	$w clipboard export
+	set Priv(copynpaste) {}
+    }
 }
 
 #
 # tk_tableCut --
 #
-# This procedure copies the selection from a table widget to the clipboard,
-# clears the selected cells, and removes the selection. It does not depend on
-# the state of -exportselection.
+# This procedure copies the selected text or selected cell contents from a
+# table widget to the clipboard then clear the selected text or cells.
 #
 # Arguments:
 # w -		Name of table widget.
 #
 proc ::tktable::tk_tableCut {w} {
-    set do_clear [expr {[$w cget -state] eq "normal"}]
-    Selecton_to_Clipboard $w $do_clear
-}
+    variable Priv
 
-#
-# Clipboard_Get --
-#
-# This procedure gets the contents of the clipboard, determines if it is cell
-# text or tabular data, and returns it in form that can be pasted into a table.
-#
-# Arguments:
-# w -		Name of table widget.
-#
-proc ::tktable::Clipboard_Get {w} {
-    set value ""
-    set temp [list]
-    set result [list]
-    set index 0
-    set is_quoted 0
-
-    set type [expr {$::tcl_platform(platform) eq "unix" ? "UTF8_STRING" : "STRING"}]
-    set data [clipboard get -displayof $w -type $type]
-
-    if {([string first \t $data] == -1 && [string first \n $data] == -1) ||
-	[string first \n $data] == [string last \n $data]} {
-	return [list cell [string trimright $data \n]]
+    # Abort if no selection
+    set list [$w selection active]
+    if {[llength $list] == 0 && [$w selection size] == 0} {
+	return
     }
 
-    while {$index < [string length $data]} {
-	set char [string index $data $index]
-	if {$char eq "\"" && ($value eq "" || $is_quoted)} {
-	    set next [string index $data [expr {$index + 1}]]
-	    if {$next ne "\""} {
-		set is_quoted [expr {!$is_quoted}]
-	    } else {
-		append value $char
-		incr index
-	    }
-	} elseif {$char eq "\t" && !$is_quoted} {
-	    lappend temp $value
-	    set value ""
-	} elseif {$char eq "\n" && !$is_quoted} {
-	    lappend temp $value
-	    lappend result $temp
-	    set temp [list]
-	    set value ""
-	} else {
-	    append value $char
+    clipboard clear -displayof $w
+
+    # Get selected text in active cell or selected cells
+    if {[llength $list] > 0} {
+	set format [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
+	set type "STRING"
+	lassign $list first last
+	set data [$w curvalue]
+	clipboard append -displayof $w -format $format -type $type -- \
+		[string range $data $first $last]
+	if {[$w cget -state] eq "normal"} {
+	    $w curvalue [string replace $data $first $last]
 	}
-	incr index
-    }
-    if {$value ne ""} {
-	lappend temp $value
-    }
-    if {[llength $temp] > 0} {
-	lappend result $temp
-    }
-    return [list table $result]
-}
+	set Priv(copynpaste) {}
 
-#
-# Update_Cell --
-#
-# This procedure pastes text into the active cell either replacing the selected
-# text or at the icursor position. For non-active cells, all text is replaced.
-#
-# Arguments:
-# w -		Name of a table widget.
-# cell -	Cell to paste text into.
-# text -	Text to paste into cell.
-#
-proc ::tktable::Update_Cell {w cell text} {
-    if {$cell eq [$w activate]} {
-	lassign [$w selection active] start end
-	if {$start ne ""} {
-	    $w delete active $start $end
-	    $w insert active $start $text
-	} else {
-	    $w insert active insert $text
-	}
     } else {
-	$w set $cell $text
+	$w clipboard export
+	if {[$w cget -state] eq "normal"} {
+	    $w curselection {}
+	    set Priv(copynpaste) $list
+	} else {
+	    set Priv(copynpaste) {}
+	}
     }
 }
 
 #
 # tk_tablePaste --
 #
-# This procedure pastes the contents of the clipboard into the table. For text
-# it will paste into the active cell, for tabular data it will paste into the
-# cells relative to cell, active, or focus cell. It does not depend on the
-# state of -exportselection.
+# This procedure pastes the contents of the clipboard into the table. For text,
+# it will paste into the active cell. For tabular data, it will paste into the
+# cells relative to cell (default is active).
 #
 # Arguments:
 # w -		Name of a table widget.
-# cell -	Cell to start pasting in.
+# cell -	Cell to start pasting in (default is active, focus, or origin cell)
 #
 proc ::tktable::tk_tablePaste {w {cell {}}} {
-    set vcmd [$w cget -validatecommand]
-    set is_active [expr {$cell eq "active"}]
-    set rmax [expr {[$w cget -roworigin] + [$w cget -rows]}]
+    variable Priv
 
     # Abort if widget is disabled
     if {[$w cget -state] ne "normal"} {
 	return
     }
 
-    # Get cell id
-    if {$cell ne ""} {
-	if {[catch {$w index $cell} cell]} {
-	    return
+    set data [$w clipboard import]
+    set list [$w selection active]
+    if {[llength $data] <= 1 || [$w activate] ne ""} {
+	lassign $list first last
+	set data [lindex $data 0]
+	if {$first ne "" && $last ne ""} {
+	    $w curvalue [string replace [$w curvalue] $first $last $data]
+	    $w icursor [expr {$first + [string length $data]}]
+	} else {
+	    $w curvalue $data
+	    $w icursor end
 	}
+
     } else {
-	set active [$w activate]
-	set focus [$w focus]
-	
-	if {[set cell [$w activate]] ne ""} {
-	    set is_active 1
-	} elseif {[set cell [$w focus]] eq ""} {
-	    return
+	# Clear from cells
+	if {[llength $Priv(copynpaste)] > 0} {
+	    $w curselection {}
 	}
-    }
 
-    # Don't allow pasting into the title cells
-    if {![$w cget -selecttitle] && [$w tag includes title $cell]} {
-        return
-    }
-
-    # Get clipboard data
-    lassign [Clipboard_Get $w] type data
-
-    # If cell text, paste into cell
-    if {$type eq "cell"} {
-	Update_Cell $w $cell $data
-	return
-    }
-
-    # Set cells to values
-    if {[scan $cell %d,%d row col] != 2} return
-    if {$vcmd eq ""} {
-	foreach values $data {
-	    $w set row [format "%d,%d" $row $col] $values
-	    incr row
-	    if {$row >= $rmax} break
-	}
-    } else {
-	foreach values $data {
-	    set c $col
-	    foreach value $values {
-		set cell [format "%d,%d" $row $c]
-		set old [$w get $cell]
-		if {$value ne $old} {
-		    set cmd [string map [list %W $w %r $row %c $c %s $old %S $value] $vcmd]
-		    if {[eval $cmd]} {
-			$w set $cell $value
-		    }
+	# Get cell to start paste at
+	if {$cell eq ""} {
+	    foreach index [list active focus origin] {
+		if {![catch {$w index $index} cell]} {
+		    break
 		}
-		incr c
+	    }
+	}
+
+	$w see $cell
+	scan $cell "%d,%d" row col
+	set init $col
+
+	# Do paste
+	foreach line $data {
+	    foreach val $line {
+		$w set [format "%d,%d" $row $col] $val
+		incr col
 	    }
 	    incr row
-	    if {$row >= $rmax} break
+	    set col $init
 	}
     }
-
-    # If active cell updated, reset selection and icursor
-    if {$is_active} {
-	$w selection active 0
-	$w icursor end
-    }
-    if {[$w cget -state] eq "normal"} {focus $w}
 }
 
 #
 # Backwards compatibility
 #
 namespace import tktable::tk_*
+
 
 #
 # tktable::Sort --
@@ -1741,3 +1563,4 @@ proc ::tktable::Sort {w start end col args} {
 	incr i
     }
 }
+

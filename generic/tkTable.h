@@ -322,6 +322,8 @@ typedef struct {
 				 * rows when getting selection */
     char *colSep;		/* separator string to place between
 				 * cols when getting selection */
+    char *quoteChar;		/* Quote character to use when quoting
+				 * a cell in the selection */
     TableTag defaultTag;	/* the default tag colors/fonts etc */
     char *yScrollCmd;		/* the y-scroll command */
     char *xScrollCmd;		/* the x-scroll command */
@@ -515,8 +517,17 @@ extern int	Table_WindowCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 extern int	TableValidateChange(Table *tablePtr, int r, int c, char *oldVal,
 			char *newVal, int idx);
 extern void	TableGenerateSelectEvent(Table *tablePtr);
-extern void	TableLostSelection(ClientData clientData);
 extern void	TableSetActiveIndex(Table *tablePtr);
+
+
+/*
+ * HEADERS IN tkTableClipboard.c
+ */
+extern void	TableLostSelection(ClientData clientData);
+extern Tcl_Size	TableFetchSelection(ClientData clientData, Tcl_Size offset,
+			char *buffer, Tcl_Size maxBytes);
+extern int	Table_ClipboardCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+			Tcl_Obj *const objv[]);
 
 /*
  * HEADERS IN tkTableCmds.c

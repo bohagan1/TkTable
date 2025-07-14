@@ -39,13 +39,14 @@ INST_RUNTIMEU = "$(PRJ_INSTALL_DIR:\=/)"
 # hence it is under that condition. TMP_DIR is the output directory
 # defined by rules for object files.
 PRJ_OBJS = $(TMP_DIR)\tkTable.obj \
-	$(TMP_DIR)\tkTableWin.obj \
-	$(TMP_DIR)\tkTableTag.obj \
-	$(TMP_DIR)\tkTableEdit.obj \
 	$(TMP_DIR)\tkTableCell.obj \
 	$(TMP_DIR)\tkTableCellSort.obj \
+	$(TMP_DIR)\tkTableClipboard.obj \
 	$(TMP_DIR)\tkTableCmds.obj \
-	$(TMP_DIR)\tkTableUtil.obj
+	$(TMP_DIR)\tkTableEdit.obj \
+	$(TMP_DIR)\tkTableTag.obj \
+	$(TMP_DIR)\tkTableUtil.obj \
+	$(TMP_DIR)\tkTableWin.obj
 # $(TMP_DIR)\tkTablePs.obj
 
 # Define any additional project include flags

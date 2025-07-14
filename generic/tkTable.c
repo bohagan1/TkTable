@@ -46,7 +46,7 @@ static void	TableDisplay(ClientData clientdata);
  * enumerated types used to dispatch the widget command.
  */
 static const char *commandNames[] = {
-    "activate", "bbox", "border", "cget", "clear", "configure", "curselection",
+    "activate", "bbox", "border", "cget", "clear", "clipboard", "configure", "curselection",
     "curvalue", "delete", "focus", "get", "height", "hidden", "icursor",
     "index", "insert",
 #ifdef POSTSCRIPT
@@ -56,7 +56,7 @@ static const char *commandNames[] = {
     "version", "window", "width", "xview", "yview", (char *)NULL
 };
 enum command {
-    CMD_ACTIVATE, CMD_BBOX, CMD_BORDER, CMD_CGET, CMD_CLEAR, CMD_CONFIGURE, CMD_CURSEL,
+    CMD_ACTIVATE, CMD_BBOX, CMD_BORDER, CMD_CGET, CMD_CLEAR, CMD_CLIPBOARD, CMD_CONFIGURE, CMD_CURSEL,
     CMD_CURVALUE, CMD_DELETE, CMD_FOCUS, CMD_GET, CMD_HEIGHT, CMD_HIDDEN, CMD_ICURSOR,
     CMD_INDEX, CMD_INSERT,
 #ifdef POSTSCRIPT
@@ -169,7 +169,7 @@ Tk_ConfigSpec tableSpecs[] = {
 	offsetof(Table, colOffset), 0},
     {TK_CONFIG_INT, "-cols", "cols", "Cols", "10",
 	offsetof(Table, cols), 0},
-    {TK_CONFIG_STRING, "-colseparator", "colSeparator", "Separator", NULL,
+    {TK_CONFIG_STRING, "-colseparator", "colSeparator", "Separator", "\t",
 	offsetof(Table, colSep), TK_CONFIG_NULL_OK},
     {TK_CONFIG_CUSTOM, "-colstretchmode", "colStretch", "StretchMode", "none",
 	offsetof (Table, colStretch), 0 , &stretchOpt},
@@ -236,6 +236,8 @@ Tk_ConfigSpec tableSpecs[] = {
 	offsetof(Table, defaultTag.multiline), 0},
     {TK_CONFIG_PIXELS, "-padx", "padX", "Pad", "0", offsetof(Table, padX), 0},
     {TK_CONFIG_PIXELS, "-pady", "padY", "Pad", "0", offsetof(Table, padY), 0},
+    {TK_CONFIG_STRING, "-quotechar", "quoteCharacter", "Separator", "\"",
+	offsetof(Table, quoteChar), TK_CONFIG_NULL_OK},
     {TK_CONFIG_RELIEF, "-relief", "relief", "Relief", "sunken",
 	offsetof(Table, defaultTag.relief), 0},
     {TK_CONFIG_CUSTOM, "-resizeborders", "resizeBorders", "ResizeBorders", "both",
@@ -245,7 +247,7 @@ Tk_ConfigSpec tableSpecs[] = {
     {TK_CONFIG_INT, "-roworigin", "rowOrigin", "Origin", "0",
 	offsetof(Table, rowOffset), 0},
     {TK_CONFIG_INT, "-rows", "rows", "Rows", "10", offsetof(Table, rows), 0},
-    {TK_CONFIG_STRING, "-rowseparator", "rowSeparator", "Separator", NULL,
+    {TK_CONFIG_STRING, "-rowseparator", "rowSeparator", "Separator", "\n",
 	offsetof(Table, rowSep), TK_CONFIG_NULL_OK},
     {TK_CONFIG_CUSTOM, "-rowstretchmode", "rowStretch", "StretchMode", "none",
 	offsetof(Table, rowStretch), 0 , &stretchOpt},
@@ -589,57 +591,6 @@ void TableGenerateSelectEvent(Table *tablePtr) {
 /*
  *----------------------------------------------------------------------
  *
- * TableLostSelection --
- *	This procedure is called back by Tk when the selection is
- *	grabbed away from a table widget.
- *
- * Results:
- *	None
- *
- * Side effects:
- *	The existing selection is unhighlighted, and the window is
- *	marked as not containing a selection.
- *
- *----------------------------------------------------------------------
- */
-void TableLostSelection(
-     ClientData clientData) {	/* Information about table widget. */
-
-    Table *tablePtr = (Table *) clientData;
-
-    if (tablePtr->exportSelection) {
-	Tcl_HashEntry *entryPtr;
-	Tcl_HashSearch search;
-	int row, col;
-
-	/* Same as SEL CLEAR ALL */
-	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
-	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	    TableParseArrayIndex(&row, &col, Tcl_GetHashKey(tablePtr->selCells,entryPtr));
-	    Tcl_DeleteHashEntry(entryPtr);
-	    TableRefresh(tablePtr, row-tablePtr->rowOffset, col-tablePtr->colOffset, CELL);
-	}
-
-	/* Remove cell text selection */
-	if (tablePtr->selectFirst != -1 && tablePtr->exportSelection
-	    && (!Tcl_IsSafe(tablePtr->interp))
-#if TCL_MAJOR_VERSION > 8
-	    && Tk_AlwaysShowSelection(tablePtr->tkwin)
-#endif
-	    ) {
-	    tablePtr->selectFirst = -1;
-	    tablePtr->selectLast = -1;
-	    if (tablePtr->activeRow > -1 || tablePtr->activeCol > -1) {
-		TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
-	    }
-	}
-	TableGenerateSelectEvent(tablePtr);
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * TableConfigure --
  *	This procedure is called to process an objc/objv list, plus
  *	the Tk option database, in order to configure (or reconfigure)
@@ -943,6 +894,10 @@ static int TableWidgetObjCmd(
 	    result = Table_ClearCmd(clientData, interp, objc, objv);
 	    break;
 
+	case CMD_CLIPBOARD:
+	    result = Table_ClipboardCmd(clientData, interp, objc, objv);
+	    break;
+
 	case CMD_CONFIGURE:
 	    if (objc < 4) {
 		result = Tk_ConfigureInfo(interp, tablePtr->tkwin, tableSpecs,
@@ -1155,6 +1110,7 @@ static void TableDestroy(ClientData clientdata) {
     if (tablePtr->tkwin != NULL) {
 	Tk_DeleteSelHandler(tablePtr->tkwin, XA_PRIMARY, XA_STRING);
     }
+    TableLostClipboardOwnership(clientData);
 
     /* These may be repetitive from DestroyNotify, but it doesn't hurt */
     /* cancel any pending update or timer */
@@ -1427,169 +1383,6 @@ static void TableCmdDeletedProc(ClientData clientData) {
 	tablePtr->tkwin = NULL;
 	Tk_DestroyWindow(tkwin);
     }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TableFetchSelection --
- *	This procedure is called back by Tk when the selection is
- *	requested by someone.  It returns part or all of the selection
- *	in a buffer provided by the caller.
- *
- * Results:
- *	The return value is the number of non-NULL bytes stored
- *	at buffer.  Buffer is filled (or partially filled) with a
- *	NULL-terminated string containing part or all of the selection,
- *	as given by offset and maxBytes.
- *
- * Side effects:
- *	None
- *
- *----------------------------------------------------------------------
- */
-
-static Tcl_Size TableFetchSelection(
-     ClientData clientData,	/* Information about table widget. */
-     Tcl_Size offset,		/* Offset within selection of first character to be returned. */
-     char *buffer,		/* Location in which to place selection. */
-     Tcl_Size maxBytes) {	/* Maximum number of bytes to place at buffer, not including
-				 * terminating NULL. */
-
-    Table *tablePtr = (Table *) clientData;
-    Tcl_Interp *interp = tablePtr->interp;
-    char *data, *rowsep = tablePtr->rowSep, *colsep = tablePtr->colSep;
-    int lastrow=0, needcs=0, r, c, rslen=0, cslen=0;
-    Tcl_Size count, length, index;
-    int numcols, numrows;
-    Tcl_Obj *listPtr, *objPtr;
-
-    /* if we are not exporting the selection or we have no data source, abort */
-    if (!tablePtr->exportSelection || (tablePtr->dataSource == DATA_NONE)) {
-	return -1;
-    }
-
-    /* First Time through, get the selection, otherwise, just use the
-     * selection obtained before */
-    if ((offset == 0) || !tablePtr->haveSelection) {
-	/* If we have fetched a selection before, free it */
-	if (tablePtr->haveSelection) {
-	    Tcl_DStringFree(&tablePtr->selection);
-	    tablePtr->haveSelection = 0;
-	}
-
-	/* First get a sorted list of the selected elements */
-	listPtr = TableGetSortedIndices(tablePtr->selCells);
-	Tcl_ListObjLength(interp, listPtr, &length);
-
-	/* Abort if no data or conversion to list fails */
-	if (listPtr == NULL || length == 0) {
-	    return -1;
-	}
-
-	/* Add elements to selection */
-	Tcl_DStringInit(&tablePtr->selection);
-	tablePtr->haveSelection = 1;
-	rslen = (rowsep?((int) strlen(rowsep)):0);
-	cslen = (colsep?((int) strlen(colsep)):0);
-	numrows = numcols = 0;
-	for (index = 0; index < length; index++) {
-	    Tcl_ListObjIndex(interp, listPtr, index, &objPtr);
-	    TableParseArrayIndex(&r, &c, Tcl_GetString(objPtr));
-	    if (index) {
-		if (lastrow != r) {
-		    lastrow = r;
-		    needcs = 0;
-		    if (rslen) {
-			Tcl_DStringAppend(&tablePtr->selection, rowsep, (Tcl_Size)rslen);
-		    } else {
-			Tcl_DStringEndSublist(&tablePtr->selection);
-			Tcl_DStringStartSublist(&tablePtr->selection);
-		    }
-		    ++numrows;
-		} else {
-		    if (++needcs > numcols)
-			numcols = needcs;
-		}
-	    } else {
-		lastrow = r;
-		needcs = 0;
-		if (!rslen) {
-		    Tcl_DStringStartSublist(&tablePtr->selection);
-		}
-	    }
-	    data = TableGetCellValue(tablePtr, r, c);
-	    if (cslen) {
-		if (needcs) {
-		    Tcl_DStringAppend(&tablePtr->selection, colsep, (Tcl_Size)cslen);
-		}
-		Tcl_DStringAppend(&tablePtr->selection, data, -1);
-	    } else {
-		Tcl_DStringAppendElement(&tablePtr->selection, data);
-	    }
-	}
-	if (!rslen && index > 0) {
-	    Tcl_DStringEndSublist(&tablePtr->selection);
-	}
-
-	if (tablePtr->selCmd != NULL) {
-	    int code;
-	    Tcl_DString script;
-	    Tcl_DStringInit(&script);
-	    ExpandPercents(tablePtr, tablePtr->selCmd, numrows+1, numcols+1,
-		    Tcl_DStringValue(&tablePtr->selection), (char *)NULL,
-		    length, &script, CMD_ACTIVATE);
-	    if ((code = Tcl_EvalEx(interp, Tcl_DStringValue(&script), -1, TCL_EVAL_GLOBAL)) == TCL_ERROR) {
-		Tcl_AddErrorInfo(interp, "\n    (error in table selection command)");
-		Tcl_BackgroundException(interp, code);
-		Tcl_DStringFree(&script);
-		Tcl_DStringFree(&tablePtr->selection);
-		tablePtr->haveSelection = 0;
-		return -1;
-	    } else {
-		Tcl_DStringGetResult(interp, &tablePtr->selection);
-	    }
-	    Tcl_DStringFree(&script);
-	}
-    }
-
-    /* Get selection length */
-    if (tablePtr->haveSelection) {
-	length = Tcl_DStringLength(&tablePtr->selection);
-    } else {
-	length = 0;
-    }
-
-    /* If no selection, abort */
-    if (length == 0) {
-	if (tablePtr->haveSelection) {
-	    Tcl_DStringFree(&tablePtr->selection);
-	    tablePtr->haveSelection = 0;
-	}
-	return -1;
-    }
-
-    /* Copy the requested portion of the selection to the buffer. */
-    count = length - offset;
-    if (count <= 0) {
-	count = 0;
-    } else {
-	if (count > maxBytes) {
-	    count = maxBytes;
-	}
-	memcpy((void *) buffer,
-	       (void *) (Tcl_DStringValue(&tablePtr->selection) + offset),
-	       (size_t) count);
-    }
-    buffer[count] = '\0';
-    if (count < maxBytes) {
-	/*
-	 * This should be the last call in this range, so free selection now.
-	 */
-	Tcl_DStringFree(&tablePtr->selection);
-	tablePtr->haveSelection = 0;
-    }
-    return count;
 }
 
 /*

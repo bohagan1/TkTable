@@ -74,8 +74,8 @@ AC_TYPE_UINTPTR_T
 # and PKG_TCL_SOURCES.
 #-----------------------------------------------------------------------
 
-TEA_ADD_SOURCES([tkTable.c tkTableWin.c tkTableTag.c tkTableEdit.c
-		 tkTableCell.c tkTableCellSort.c tkTableCmds.c tkTableUtil.c])
+TEA_ADD_SOURCES([tkTable.c tkTableCell.c tkTableCellSort.c tkTableCmds.c
+	tkTableClipboard.c tkTableEdit.c tkTableWin.c tkTableTag.c tkTableUtil.c])
 TEA_ADD_HEADERS([])
 TEA_ADD_INCLUDES([])
 TEA_ADD_LIBS([])
