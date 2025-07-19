@@ -17,19 +17,18 @@
 /*
  *--------------------------------------------------------------
  *
- * TableMakeArrayIndex --
- *	This procedure formats a row and column index into a
- *	cell index string.
+ * Int2Str --
+ *	Convert integer value to string representation
  *
  * Results:
- *	Returns string length.
+ *	Pointer to end of string.
  *
  * Side effects:
  *	None
  *
  *--------------------------------------------------------------
  */
-char *Int2Str(int value, char *str) {
+char *Int2Str(int value, char *str, int len) {
     char *endptr = str;
     int quotient = (value >= 0 ? value : -value);
     int i, j;
@@ -39,11 +38,13 @@ char *Int2Str(int value, char *str) {
 	const int tmp = quotient / 10;
 	*endptr++ = "0123456789"[quotient - (tmp*10)];
 	quotient = tmp;
-    } while (quotient);
+	len--;
+    } while (quotient && len);
 
     /* Add negative sign */
     if (value < 0) {
 	*endptr++ = '-';
+	len--;
     }
     *endptr = '\0';
 
@@ -56,10 +57,25 @@ char *Int2Str(int value, char *str) {
     return endptr;
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * TableMakeArrayIndex --
+ *	This procedure formats a row and column index into a
+ *	cell index string.
+ *
+ * Results:
+ *	Returns string length.
+ *
+ * Side effects:
+ *	None
+ *
+ *--------------------------------------------------------------
+ */
 int TableMakeArrayIndex(int row, int col, char *str, int len) {
-    char *endptr = Int2Str(row, str);
+    char *endptr = Int2Str(row, str, (len>>1)-1);
     *endptr++ = ',';
-    return (int) (Int2Str(col, endptr) - str);
+    return (int) (Int2Str(col, endptr, (len>>1)-1) - str);
 }
 
 Tcl_Obj *TableMakeIndexObj(int row, int col) {
@@ -78,7 +94,7 @@ Tcl_Obj *TableMakeIndexObj(int row, int col) {
  *	column values.
  *
  * Results:
- *	Returns 2.
+ *	Returns 2 if successful or <2 if not.
  *
  * Side effects:
  *	None
@@ -86,17 +102,20 @@ Tcl_Obj *TableMakeIndexObj(int row, int col) {
  *--------------------------------------------------------------
  */
 inline int TableParseArrayIndex(int *row, int *col, char *str) {
-    int pos = 1, val = 0;
+    int pos = 1, val = 0, res = 0;
+    char *start;
 
     /* Get row */
     if (*str == '-') {
         pos = 0;
         str++;
     }
+    start = str;
     while (*str >= '0' && *str <= '9') {
         val = (val*10) + (*str - '0');
         str++;
     }
+    if (str != start) res++;
     *row = pos ? val : -val;
     str++;
 
@@ -107,12 +126,14 @@ inline int TableParseArrayIndex(int *row, int *col, char *str) {
         pos = 0;
         str++;
     }
+    start = str;
     while (*str >= '0' && *str <= '9') {
         val = (val*10) + (*str - '0');
         str++;
     }
+    if (str != start) res++;
     *col = pos ? val : -val;
-    return 2;
+    return res;
 }
 
 /*
@@ -1273,7 +1294,7 @@ int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
 	}
 
 	if (((start == -1 && tablePtr->selectFirst != -1) || (end == -1 && tablePtr->selectLast != -1)) ||
-	    ((start != -1 && tablePtr->selectFirst == -1) || (end != -1 && tablePtr->selectLast == -1)){
+	    ((start != -1 && tablePtr->selectFirst == -1) || (end != -1 && tablePtr->selectLast == -1))) {
 	    selchanged = 1;
 	}
 
