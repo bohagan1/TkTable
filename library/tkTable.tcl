@@ -40,6 +40,7 @@ namespace eval ::tktable {
 bind Table <<Copy>>		{ ::tktable::tk_tableCopy %W }
 bind Table <<Cut>>		{ ::tktable::tk_tableCut %W }
 bind Table <<Paste>>		{ ::tktable::tk_tablePaste %W }
+bind Table <<PasteSelection>>	{ ::tktable::TablePasteSelection %W %x %y }
 
 ##
 ## Interactive cell resizing, affected by -resizeborders option
@@ -71,20 +72,9 @@ bind Table <B1-Leave>		{
 #
 # Button scan events
 #
-bind Table <2> {
-    %W scan mark %x %y
-    array set ::tktable::Priv {x %x y %y}
-    set ::tktable::Priv(mouseMoved) 0
-}
-bind Table <B2-Motion> {
-    if {(%x != $::tktable::Priv(x)) || (%y != $::tktable::Priv(y))} {
-	set ::tktable::Priv(mouseMoved) 1
-    }
-    if {$::tktable::Priv(mouseMoved)} { %W scan dragto %x %y }
-}
-bind Table <ButtonRelease-2> {
-    if {!$::tktable::Priv(mouseMoved)} { ::tktable::tk_tablePaste %W @%x,%y }
-}
+bind Table <Button-2>		{::tktable::TableScanMark %W %x %y}
+bind Table <B2-Motion>		{::tktable::TableScanDrag %W %x %y}
+
 # On Windows, paste is done using Shift-Insert.  Shift-Insert already
 # generates the <<Paste>> event, so we don't need to do anything here.
 if {[tk windowingsystem] ne "win32"} {
@@ -727,8 +717,8 @@ proc ::tktable::Button1 {w x y} {
 	if {$fn eq "focus"} {
 	    $w activate {}
 	}
-	$w $fn @$x,$y
-	::tktable::BeginSelect $w @$x,$y
+	$w $fn [format "@%d,%d" $x $y]
+	::tktable::BeginSelect $w [format "@%d,%d" $x $y]
 	focus $w
 	array set Priv [list x $x y $y mouseMoved 0 bindingMode $fn icursor [$w icursor]]
     }
@@ -808,7 +798,7 @@ proc ::tktable::DoubleButton1 {w x y} {
 
     if {$Priv(borderInfo) eq "" && [winfo exists $w]} {
 	if {$Priv(bindingMode) ne "activate"} {
-	    $w activate @$x,$y
+	    $w activate [format "@%d,%d" $x $y]
 	    set Priv(bindingMode) activate
 	    after idle [info level 0]
 	} else {
@@ -1096,7 +1086,7 @@ proc ::tktable::AutoScan {w} {
     } else {
 	return
     }
-    ::tktable::Motion $w @$x,$y
+    ::tktable::Motion $w [format "@%d,%d" $x $y]
     set Priv(afterId) [after 50 [list ::tktable::AutoScan $w]]
 }
 
@@ -1381,6 +1371,48 @@ proc ::tktable::ChangeWidth {w i a} {
 }
 
 
+# ::tktable::TableScanMark --
+#
+# Marks the start of a possible scan drag operation
+#
+# Arguments:
+# w -	The table window
+# x -	x location on screen
+# y -	y location on screen
+
+proc ::tktable::TableScanMark {w x y} {
+    variable ::tk::Priv
+    $w scan mark $x $y
+    array set Priv [list x $x y $y mouseMoved 0]
+}
+
+# ::tktable::TableScanDrag --
+#
+# Marks the start of a possible scan drag operation
+#
+# Arguments:
+# w -	The table window
+# x -	x location on screen
+# y -	y location on screen
+
+proc ::tktable::TableScanDrag {w x y} {
+    variable ::tk::Priv
+    # Make sure these exist
+    if {![info exists Priv(x)]} {
+	set Priv(x) $x
+    }
+    if {![info exists Priv(y)]} {
+	set Priv(y) $y
+    }
+    if {($x != $Priv(x)) || ($y != $Priv(y))} {
+	set Priv(mouseMoved) 1
+    }
+    if {$Priv(mouseMoved)} {
+	$w scan dragto $x $y
+    }
+}
+
+
 #
 # tk_tableCopy --
 #
@@ -1519,6 +1551,26 @@ proc ::tktable::tk_tablePaste {w {cell {}}} {
 	    incr row
 	    set col $init
 	}
+    }
+}
+
+# ::tktable::TablePasteSelection --
+#
+# This procedure inserts the PRIMARY selection at the current cell
+#
+# Arguments:
+# w -		The table window.
+# x, y -	Position of the mouse.
+proc ::tktable::TablePasteSelection {w x y} {
+    variable Priv
+
+    if {!$Priv(mouseMoved)} {
+	# Get PRIMARY selection
+	#if {![catch {::tk::GetSelection $w PRIMARY} sel]} {
+	#    $w insert insert $sel
+	#}
+	# Paste selection
+	::tktable::tk_tablePaste $w [format "@%d,%d" $x $y]
     }
 }
 
