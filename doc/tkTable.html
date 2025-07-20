@@ -300,9 +300,8 @@ Database Class:	<b class="optdbclass">Cols</b><br>
 Database Name:	<b class="optdbname">colSeparator</b><br>
 Database Class:	<b class="optdbclass">Separator</b><br>
 </dt>
-<dd><p>Specifies a separator character that will be interpreted as the column
-separator when cutting or pasting data in a table.  By default, columns
-are separated as elements of a tcl list.</p></dd>
+<dd><p>Specifies the separator character that will be used as the column separator
+when cutting or pasting data in a table.  The default is the tab character.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-colstretchmode</b><br>
 Database Name:	<b class="optdbname">colStretchMode</b><br>
 Database Class:	<b class="optdbclass">StretchMode</b><br>
@@ -476,6 +475,13 @@ for each side), unless a specific pixel size is chosen for the cell with
 the <b class="method">height</b> command.  This will force an empty area on the top and
 bottom of each cell edge.  This padding affects all types of data in the
 cell.  Defaults to 0.  See <b class="option">-ipadx</b> for an alternate padding style.</p></dd>
+<dt>Command-Line Switch:	<b class="option">-quotechar</b><br>
+Database Name:	<b class="optdbname">quoteCharacter</b><br>
+Database Class:	<b class="optdbclass">Separator</b><br>
+</dt>
+<dd><p>Specifies the delimiter character that will be used to quote cell text that
+contains special characters when cutting and pasting data in a table.
+The default is the quote character.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-resizeborders</b><br>
 Database Name:	<b class="optdbname">resizeBorders</b><br>
 Database Class:	<b class="optdbclass">ResizeBorders</b><br>
@@ -503,9 +509,8 @@ Database Class:	<b class="optdbclass">Rows</b><br>
 Database Name:	<b class="optdbname">rowSeparator</b><br>
 Database Class:	<b class="optdbclass">Separator</b><br>
 </dt>
-<dd><p>Specifies a separator character that will be interpreted as the row
-separator when cutting or pasting data in a table.  By default, rows
-are separated as tcl lists.</p></dd>
+<dd><p>Specifies the separator character that will be used as the row separator when
+cutting or pasting data in a table.  The default is the newline character.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-rowstretchmode</b><br>
 Database Name:	<b class="optdbname">rowStretchMode</b><br>
 Database Class:	<b class="optdbclass">StretchMode</b><br>
@@ -979,6 +984,16 @@ that is interpreted as row 2 and column 0.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">clear all</b> <span class="opt">?<i class="arg">first</i>?</span> <span class="opt">?<i class="arg">last</i>?</span></dt>
 <dd><p>Performs all of the above clear functions on the specified area.</p></dd>
 </dl></dd>
+<dt><i class="arg">pathName</i> <b class="method">clipboard</b> <span class="opt">?<b class="const">export|import</b>?</span></dt>
+<dd><p>When <b class="option">export</b> is used, the values of the currently selected cells will
+be returned as a string suitable for appending to the clipboard. This joins
+together the cell values by using the <b class="option">-colseparator</b> and
+<b class="option">-rowseparator</b> option values and quote characters defined by the
+<b class="option">-quotechar</b> option value. This is used by the <b class="cmd">tk_tableCopy</b>
+command. When <b class="option">import</b> is used, the contents of the clipboard will be
+retrieved and parsed using the same delimiters and returned as a list where
+each element is a sublist of the values for that row. This is used by the
+<b class="cmd">tk_tablePaste</b> command.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">configure</b> <span class="opt">?<i class="arg">option</i>?</span> <span class="opt">?<i class="arg">value option value ...</i>?</span></dt>
 <dd><p>Query or modify the configuration options of the widget.
 If no <i class="arg">option</i> is specified, returns a list describing all of

@@ -486,9 +486,8 @@ Database Class:	\fBSeparator\fR
 
 .fi
 .IP
-Specifies a separator character that will be interpreted as the column
-separator when cutting or pasting data in a table\&.  By default, columns
-are separated as elements of a tcl list\&.
+Specifies the separator character that will be used as the column separator
+when cutting or pasting data in a table\&.  The default is the tab character\&.
 .LP
 .nf
 .ta 6c
@@ -764,6 +763,18 @@ cell\&.  Defaults to 0\&.  See \fB-ipadx\fR for an alternate padding style\&.
 .LP
 .nf
 .ta 6c
+Command-Line Switch:	\fB-quotechar\fR
+Database Name:	\fBquoteCharacter\fR
+Database Class:	\fBSeparator\fR
+
+.fi
+.IP
+Specifies the delimiter character that will be used to quote cell text that
+contains special characters when cutting and pasting data in a table\&.
+The default is the quote character\&.
+.LP
+.nf
+.ta 6c
 Command-Line Switch:	\fB-resizeborders\fR
 Database Name:	\fBresizeBorders\fR
 Database Class:	\fBResizeBorders\fR
@@ -813,9 +824,8 @@ Database Class:	\fBSeparator\fR
 
 .fi
 .IP
-Specifies a separator character that will be interpreted as the row
-separator when cutting or pasting data in a table\&.  By default, rows
-are separated as tcl lists\&.
+Specifies the separator character that will be used as the row separator when
+cutting or pasting data in a table\&.  The default is the newline character\&.
 .LP
 .nf
 .ta 6c
@@ -1433,6 +1443,17 @@ Clears the specified area of tags (all row, column and cell tags)\&.
 \fIpathName\fR \fBclear all\fR ?\fIfirst\fR? ?\fIlast\fR?
 Performs all of the above clear functions on the specified area\&.
 .RE
+.TP
+\fIpathName\fR \fBclipboard\fR ?\fBexport|import\fR?
+When \fBexport\fR is used, the values of the currently selected cells will
+be returned as a string suitable for appending to the clipboard\&. This joins
+together the cell values by using the \fB-colseparator\fR and
+\fB-rowseparator\fR option values and quote characters defined by the
+\fB-quotechar\fR option value\&. This is used by the \fBtk_tableCopy\fR
+command\&. When \fBimport\fR is used, the contents of the clipboard will be
+retrieved and parsed using the same delimiters and returned as a list where
+each element is a sublist of the values for that row\&. This is used by the
+\fBtk_tablePaste\fR command\&.
 .TP
 \fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value \&.\&.\&.\fR?
 Query or modify the configuration options of the widget\&.

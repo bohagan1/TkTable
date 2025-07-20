@@ -17,22 +17,23 @@
 /*
  *----------------------------------------------------------------------
  *
- * Table_SelectionCacheSingle --
+ * TableSelectionGetSingle --
  *	This function gets the selected cells from the table, encodes
- *	their values using 1-byte delimiters, and stores the data for
- *	later retrieval.
+ *	their values using 1-byte delimiters, and returns the data in
+ *	the dynamic string.
  *
  * Results:
- *	Returns TCL result.
+ *	Returns TCL result with dynamic string set to selected data.
  *
  * Side effects:
- *	The selection data is cached.
+ *	None
  *
  *----------------------------------------------------------------------
  */
 
-static int Table_SelectionCacheSingle(
-    Table *tablePtr) {
+static int TableSelectionGetSingle(
+    Table *tablePtr,
+    Tcl_DString *dsPtr) {
 
     Tcl_Size dlen, i, llen;
     char special[5];
@@ -51,19 +52,14 @@ static int Table_SelectionCacheSingle(
     /* Get selected cells  */
     listPtr = TableGetSortedIndices(tablePtr->selCells);
     if (Tcl_ListObjLength(tablePtr->interp, listPtr, &llen) == TCL_ERROR || llen == 0) {
-	return -1;
+	return TCL_ERROR;
     }
-
-    Tcl_DStringInit(&tablePtr->selection);
 
     /* Get cell values and convert to string using delimiters */
     for (i = 0; i < llen; i++) {
 	/* Get cell index */
 	if (Tcl_ListObjIndex(tablePtr->interp, listPtr, i, &itemPtr) == TCL_OK) {
-	    data = Tcl_GetString(itemPtr);
-	    TableParseArrayIndex(&row, &col, data);
-	    Tcl_IncrRefCount(itemPtr);
-	    Tcl_DecrRefCount(itemPtr);
+	    TableParseArrayIndex(&row, &col, Tcl_GetString(itemPtr));
 	} else {
 	    break;
 	}
@@ -75,36 +71,27 @@ static int Table_SelectionCacheSingle(
 	/* Append column/row separator */
 	if (i > 0) {
 	    if (row == prev) {
-		Tcl_DStringAppend(&tablePtr->selection, colsep, 1);
+		Tcl_DStringAppend(dsPtr, colsep, 1);
 	    } else {
-		Tcl_DStringAppend(&tablePtr->selection, rowsep, 1);
+		Tcl_DStringAppend(dsPtr, rowsep, 1);
 	    }
 	}
 
 	/* Append cell value if no special chars or quote with escapes if there are */
 	if (strpbrk(data, special) == NULL) {
-	    Tcl_DStringAppend(&tablePtr->selection, data, dlen);
+	    Tcl_DStringAppend(dsPtr, data, dlen);
 	} else {
 	    const char *end = data + dlen, *ptr;
-	    Tcl_DStringAppend(&tablePtr->selection, quoteChar, 1);
+	    Tcl_DStringAppend(dsPtr, quoteChar, 1);
 	    while (*data && (ptr = strchr(data, (int)quoteChar[0])) != NULL) {
-		Tcl_DStringAppend(&tablePtr->selection, data, (Tcl_Size) (ptr - data + 1));
-		Tcl_DStringAppend(&tablePtr->selection, quoteChar, 1);
+		Tcl_DStringAppend(dsPtr, data, (Tcl_Size) (ptr - data + 1));
+		Tcl_DStringAppend(dsPtr, quoteChar, 1);
 		data = ptr + 1;
 	    }
-	    Tcl_DStringAppend(&tablePtr->selection, data, (Tcl_Size) (end - data));
-	    Tcl_DStringAppend(&tablePtr->selection, quoteChar, 1);
+	    Tcl_DStringAppend(dsPtr, data, (Tcl_Size) (end - data));
+	    Tcl_DStringAppend(dsPtr, quoteChar, 1);
 	}
 	prev = row;
-    }
-
-    /* Add end of data or delete storage if no data */
-    if (Tcl_DStringLength(&tablePtr->selection) > 0) {
-	Tcl_DStringAppend(&tablePtr->selection, rowsep, 1);
-	tablePtr->haveSelection = 1;
-    } else {
-	Tcl_DStringFree(&tablePtr->selection);
-	tablePtr->haveSelection = 0;
     }
 
     /* Clean-up */
@@ -116,212 +103,66 @@ static int Table_SelectionCacheSingle(
 /*
  *----------------------------------------------------------------------
  *
- * Table_CacheSelection --
- *	This function gets the selected cells from the table, encodes
- *	into clipboard format, and store for later retrieval.
+ * TableClipboardExport --
+ *	This function is called by the user to return the selection in
+ *	clipboard format so it can be appended to the clipboard.
  *
  * Results:
- *	Returns TCL result.
+ *	Returns TCL result with interp result set to selected data.
  *
  * Side effects:
- *	The selection data is cached.
- *
- *----------------------------------------------------------------------
- */
-
-static int Table_CacheSelection(
-    Table *tablePtr) {
-
-    char *colsep = tablePtr->colSep, *rowsep = tablePtr->rowSep, *quoteChar = tablePtr->quoteChar;
-    int clen = (colsep?((int) strlen(tablePtr->colSep)):0);
-    int rlen = (rowsep?((int) strlen(tablePtr->rowSep)):0);
-    int qlen = (quoteChar?((int) strlen(tablePtr->quoteChar)):0);
-
-    /* if we have no data source, abort */
-    if (tablePtr->dataSource == DATA_NONE) {
-	return -1;
-    }
-
-    /* If we previously fetched a selection, free it */
-    if (tablePtr->haveSelection) {
-	Tcl_DStringFree(&tablePtr->selection);
-	tablePtr->haveSelection = 0;
-    }
-
-    /* Get active cell selected text */
-    if ((tablePtr->flags & HAS_ACTIVE) && tablePtr->activeRow != -1 &&
-	    tablePtr->selectFirst != -1 && tablePtr->selectFirst < tablePtr->selectLast) {
-	Tcl_Size byteCount;
-	const char *data;
-
-	Tcl_DStringInit(&tablePtr->selection);
-	data = Tcl_UtfAtIndex(tablePtr->activeBuf, (Tcl_Size)tablePtr->selectFirst);
-	byteCount = (Tcl_Size) (Tcl_UtfAtIndex(tablePtr->activeBuf,
-	    (Tcl_Size)tablePtr->selectLast) - data);
-	Tcl_DStringAppend(&tablePtr->selection, data, byteCount);
-	tablePtr->haveSelection = 1;
-
-    /* Get cell values with single byte delimiter characters */
-    } else if (clen == 1 && rlen == 1 && qlen == 1) {
-	Table_SelectionCacheSingle(tablePtr);
-
-    /* Get cell values in list format */
-    } else if (clen == 0 && rlen == 0) {
-	Tcl_AppendResult(interp, "Unsupported delimiter char lengths", (char *)NULL);
-	return TCL_ERROR;
-
-    /* Get cell values with multi-byte delimiter characters */
-    } else {
-	Tcl_AppendResult(interp, "Unsupported delimiter char lengths", (char *)NULL);
-	return TCL_ERROR;
-    }
-    return TCL_OK;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Table_ExportHandler --
- *	This function is the handler used by Table_SelectionExport to
- *	get the selected cells from the table, encode the data into
- *	clipboard format, and pass to TK in chunks.
- *
- * Results:
- *	Returns the number of bytes written to buffer or -1 if no selection.
- *
- * Side effects:
- *	The selection data is cached and returned in chunks.
- *
- *----------------------------------------------------------------------
- */
-
-static Tcl_Size Table_ExportHandler(
-    void *clientData,
-    Tcl_Size offset,
-    char *buffer,
-    Tcl_Size maxBytes) {
-
-    Table *tablePtr = (Table *) clientData;
-    Tcl_Size byteCount, dlen;
-
-    /* if we have no data source, abort */
-    if (tablePtr->dataSource == DATA_NONE) {
-	return -1;
-    }
-
-    /* On first call, get selected data if none already cached */
-/* This is needed for get selection, get clipboard has already done it */
-/*    if (offset == 0 && !tablePtr->haveSelection) {
-	Table_CacheSelection(tablePtr);
-    }*/
-
-    /* Abort if no selection */
-    if (!tablePtr->haveSelection) {
-	return -1;
-    }
-
-    /* Determine how many bytes to copy */
-    dlen = Tcl_DStringLength(&tablePtr->selection);
-    if (offset < dlen) {
-	byteCount = dlen - offset;
-	if (byteCount > maxBytes) {
-	    byteCount = maxBytes;
-	}
-    } else {
-	byteCount = 0;
-    }
-
-    /* Copy data to buffer */
-    if (byteCount > 0) {
-	memcpy((void *) buffer, (void *) (Tcl_DStringValue(&tablePtr->selection) + offset),
-	    (size_t) byteCount);
-    }
-    buffer[byteCount] = '\0';
-    return byteCount;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TableLostClipboardOwnership --
- *	This handler is called when the clipboard ownership is lost.
- *
- * Results:
  *	None
  *
- * Side effects:
- *	Clears the cached data and removes the selection handler.
- *
  *----------------------------------------------------------------------
  */
 
-void TableLostClipboardOwnership(
-    ClientData clientData) {
-
-    Table *tablePtr = (Table *) clientData;
-
-    /* target is ICCCM type, format is used for transmit */
-    Atom selection = Tk_InternAtom(tablePtr->tkwin, "CLIPBOARD");
-#ifndef _WIN32
-    Atom target = Tk_InternAtom(tablePtr->tkwin, "UTF8_STRING");
-#else
-    Atom target = XA_STRING;
-#endif
-
-    /* Free cached selection data */
-    if (tablePtr->haveSelection) {
-	Tcl_DStringFree(&tablePtr->selection);
-	tablePtr->haveSelection = 0;
-    }
-
-    /* De-register handler */
-    Tk_DeleteSelHandler(tablePtr->tkwin, selection, target);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Table_SelectionExport --
- *	This function is called by the user when the selection is to be
- *	made available to any clipboard user. It creates a handler to
- *	provide the selection data when requested by another application.
- *
- * Results:
- *	Returns TCL result.
- *
- * Side effects:
- *	Grabs the clipboard ownership and creates a selection handler.
- *
- *----------------------------------------------------------------------
- */
-
-static int Table_SelectionExport(
+static int TableClipboardExport(
     ClientData clientData,	/* Information about the table widget. */
     Tcl_Interp *interp) {	/* TCL interpreter. */
 
     Table *tablePtr = (Table *) clientData;
+    char *colsep = tablePtr->colSep, *rowsep = tablePtr->rowSep, *quoteChar = tablePtr->quoteChar;
+    int clen = (colsep?((int) strlen(tablePtr->colSep)):0);
+    int rlen = (rowsep?((int) strlen(tablePtr->rowSep)):0);
+    int qlen = (quoteChar?((int) strlen(tablePtr->quoteChar)):0);
+    Tcl_DString ds;
 
-    /* target is ICCCM type, format is used for transmit */
-    Atom format = XA_STRING;
-    Atom selection = Tk_InternAtom(tablePtr->tkwin, "CLIPBOARD");
-#ifndef _WIN32
-    Atom target = Tk_InternAtom(tablePtr->tkwin, "UTF8_STRING");
-#else
-    Atom target = XA_STRING;
-#endif
+    /* if we have no data source, abort */
+    if (tablePtr->dataSource == DATA_NONE) {
+	return -1;
+    }
 
-    /* Get and cache selection */
-    Table_CacheSelection(tablePtr);
+    Tcl_DStringInit(&ds);
 
-    /* Claim clipboard ownership */
-    Tk_OwnSelection(tablePtr->tkwin, selection, TableLostClipboardOwnership, clientData);
+    /* Get selected data */
+    if ((tablePtr->flags & HAS_ACTIVE) && tablePtr->activeRow != -1 &&
+	    tablePtr->selectFirst != -1 && tablePtr->selectFirst < tablePtr->selectLast) {
+	/* Get active cell selected text */
+	Tcl_Size byteCount;
+	const char *data;
 
-    /* Register handler to pass data to Tk */
-    Tk_CreateSelHandler(tablePtr->tkwin, selection, target, Table_ExportHandler,
-	clientData, format);
+	data = Tcl_UtfAtIndex(tablePtr->activeBuf, (Tcl_Size)tablePtr->selectFirst);
+	byteCount = (Tcl_Size) (Tcl_UtfAtIndex(tablePtr->activeBuf,
+	    (Tcl_Size)tablePtr->selectLast) - data);
+	Tcl_DStringAppend(&ds, data, byteCount);
+
+    } else if (clen == 1 && rlen == 1 && qlen == 1) {
+	/* Get cell values using single byte delimiter characters */
+	TableSelectionGetSingle(tablePtr, &ds);
+
+    } else if (clen == 0 && rlen == 0) {
+	/* Get cell values in list format */
+	Tcl_AppendResult(interp, "Unsupported delimiter char lengths", (char *)NULL);
+	return TCL_ERROR;
+
+    } else {
+	/* Get cell values using multi-byte delimiter characters */
+	Tcl_AppendResult(interp, "Unsupported delimiter char lengths", (char *)NULL);
+	return TCL_ERROR;
+    }
+    Tcl_DStringResult(interp, &ds);
     return TCL_OK;
 }
-
 
 
 #define MAX_CELL_SIZE 65536
@@ -339,8 +180,8 @@ typedef struct {
  *----------------------------------------------------------------------
  *
  * Table_ImportHandler --
- *	This function is the handler used by Table_SelectionImport to
- *	convert the clipboard data into list of lists format.
+ *	This function is the handler used by TableClipboardImport to
+ *	convert the clipboard data into the list of lists format.
  *
  * Results:
  *	Returns TCL result.
@@ -432,10 +273,10 @@ int Table_ImportHandler(
 /*
  *----------------------------------------------------------------------
  *
- * Table_SelectionImport --
+ * TableClipboardImport --
  *	This function is called by the user when the selection is to be
  *	retrieved from the clipboard and converted into a list of lists
- *	(list of cells for each row).
+ *	(list of cell values for each row) for insertion into the table.
  *
  * Results:
  *	Returns TCL result with result set to a list of lists with cell
@@ -447,7 +288,7 @@ int Table_ImportHandler(
  *----------------------------------------------------------------------
  */
 
-static int Table_SelectionImport(
+static int TableClipboardImport(
     ClientData clientData,	/* Information about the table widget. */
     Tcl_Interp *interp) {	/* TCL interpreter. */
 
@@ -485,12 +326,8 @@ static int Table_SelectionImport(
 
     /* Create handler to process the clipboard data. Returns when the selection
        has been completely retrieved. */
-    result = Tk_GetSelection(interp,
-    tablePtr->tkwin,
-    selection,
-    target,
-    Table_ImportHandler,
-    (ClientData) dataPtr);
+    result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target, Table_ImportHandler,
+	(ClientData) dataPtr);
 
     /* Handle missing end of data row terminator */
     if (dataPtr->length > 0 && result == TCL_OK) {
@@ -521,7 +358,7 @@ static int Table_SelectionImport(
  *
  * Table_ClipboardCmd --
  *	This function is called by the user when the selection is to be
- *	exported to or imported from the clipboard. Also used by bindings.
+ *	exported or imported from the clipboard. Also used by bindings.
  *
  * Results:
  *	Returns TCL result.
@@ -563,11 +400,11 @@ int Table_ClipboardCmd(
     switch ((enum bdCmd) cmdIndex) {
 	case CLIPBOARD_EXPORT:
 	    /* Make currently selected cell values available to clipboard */
-	    result = Table_SelectionExport(clientData, interp);
+	    result = TableClipboardExport(clientData, interp);
 	    break;
 	case CLIPBOARD_IMPORT:
 	    /* Get data from clipboard, parse it, and return as a list of lists */
-	    result = Table_SelectionImport(clientData, interp);
+	    result = TableClipboardImport(clientData, interp);
 	    break;
     }
     return result;
@@ -579,18 +416,19 @@ int Table_ClipboardCmd(
  *----------------------------------------------------------------------
  *
  * TableLostSelection --
- *	This procedure is called back by Tk when the selection is
- *	grabbed away from a table widget.
+ *	This function is called by Tk when the selection is grabbed
+ *	away from the table widget.
  *
  * Results:
  *	None
  *
  * Side effects:
- *	The existing selection is unhighlighted, and the window is
- *	marked as not containing a selection.
+ *	The existing selection is cleared, and the window is marked as
+ *	not containing a selection.
  *
  *----------------------------------------------------------------------
  */
+
 void TableLostSelection(
      ClientData clientData) {	/* Information about table widget. */
 
@@ -645,9 +483,8 @@ void TableLostSelection(
  *----------------------------------------------------------------------
  *
  * TableFetchSelection --
- *	This procedure is called back by Tk when the selection is
- *	requested by someone.  It returns part or all of the selection
- *	in a buffer provided by the caller.
+ *	This function is called by Tk when the PRIMARY selection is
+ *	requested. It returns all or part of the selection in buffer.
  *
  * Results:
  *	The return value is the number of non-NULL bytes stored
@@ -802,5 +639,80 @@ Tcl_Size TableFetchSelection(
 	tablePtr->haveSelection = 0;
     }
     return count;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TableRegisterSelectionHandlers --
+ *	This function is called at init to register the handler.
+ *
+ * Results:
+ *	Returns TCL result.
+ *
+ * Side effects:
+ *	Registers handlers.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void TableRegisterSelectionHandlers(
+    ClientData clientData) {	/* Information about the table widget. */
+
+    Table *tablePtr = (Table *) clientData;
+
+    /* target is ICCCM type, format is used for transmit */
+    Atom format = XA_STRING;
+#ifndef _WIN32
+    Atom target = Tk_InternAtom(tablePtr->tkwin, "UTF8_STRING");
+#else
+    Atom target = XA_STRING;
+#endif
+
+    tablePtr->haveSelection = 0;
+    Tcl_DStringInit(&tablePtr->selection);
+
+    /* Register handlers */
+    Tk_CreateSelHandler(tablePtr->tkwin, XA_PRIMARY, target, TableFetchSelection,
+	clientData, format);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TableDeregisterSelectionHandlers --
+ *	This function is called at exit to deregister the handler.
+ *
+ * Results:
+ *	Returns TCL result.
+ *
+ * Side effects:
+ *	Deregisters handlers.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void TableDeregisterSelectionHandlers(
+    ClientData clientData) {	/* Information about the table widget. */
+
+    Table *tablePtr = (Table *) clientData;
+
+    /* target is ICCCM type, format is used for transmit */
+    if (tablePtr->tkwin != NULL) {
+#ifndef _WIN32
+	Atom target = Tk_InternAtom(tablePtr->tkwin, "UTF8_STRING");
+#else
+	Atom target = XA_STRING;
+#endif
+
+	/* Deregister handlers */
+	Tk_DeleteSelHandler(tablePtr->tkwin, XA_PRIMARY, target);
+    }
+
+    /* Free selection */
+    if (tablePtr->haveSelection) {
+	Tcl_DStringFree(&tablePtr->selection);
+	tablePtr->haveSelection = 0;
+    }
 }
 

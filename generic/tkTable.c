@@ -773,8 +773,7 @@ static int TableConfigure(
 	Tk_OwnSelection(tablePtr->tkwin, XA_PRIMARY, TableLostSelection, (ClientData) tablePtr);
     }
 
-    if ((tablePtr->titleRows < oldTitleRows) ||
-	(tablePtr->titleCols < oldTitleCols)) {
+    if ((tablePtr->titleRows < oldTitleRows) || (tablePtr->titleCols < oldTitleCols)) {
 	/*
 	 * Prevent odd movement due to new possible topleft index
 	 */
@@ -1107,10 +1106,7 @@ static void TableDestroy(ClientData clientdata) {
     Tcl_HashSearch search;
 
     /* Delete selection handlers */
-    if (tablePtr->tkwin != NULL) {
-	Tk_DeleteSelHandler(tablePtr->tkwin, XA_PRIMARY, XA_STRING);
-    }
-    TableLostClipboardOwnership(clientData);
+    TableDeregisterSelectionHandlers(clientdata);
 
     /* These may be repetitive from DestroyNotify, but it doesn't hurt */
     /* cancel any pending update or timer */
@@ -1195,11 +1191,6 @@ static void TableDestroy(ClientData clientdata) {
 
     /* Free the configuration options in the widget */
     Tk_FreeOptions(tableSpecs, (char *) tablePtr, tablePtr->display, 0);
-
-    /* Free selection */
-    if (tablePtr->haveSelection) {
-	Tcl_DStringFree(&tablePtr->selection);
-    }
 
     /* and free the widget memory at last! */
     ckfree((char *) (tablePtr));
@@ -1293,7 +1284,7 @@ static void TableEventProc(
 	case DestroyNotify:
 	    /* Delete selection handlers */
 	    if (tablePtr->tkwin != NULL) {
-		Tk_DeleteSelHandler(tablePtr->tkwin, XA_PRIMARY, XA_STRING);
+		TableDeregisterSelectionHandlers(clientData);
 	    }
 
 	    /* Remove the command from the interpreter */
@@ -1507,9 +1498,6 @@ static int Tk_TableObjCmd(
     Tcl_InitHashTable(tablePtr->inProc, TCL_STRING_KEYS);
 #endif
 
-    tablePtr->haveSelection = 0;
-    Tcl_DStringInit(&tablePtr->selection);
-
     /*
      * Handle class name and selection handlers
      */
@@ -1518,8 +1506,7 @@ static int Tk_TableObjCmd(
     Tk_CreateEventHandler(tablePtr->tkwin,
 	    PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask,
 	    TableEventProc, (ClientData) tablePtr);
-    Tk_CreateSelHandler(tablePtr->tkwin, XA_PRIMARY, XA_STRING, TableFetchSelection,
-	(ClientData) tablePtr, XA_STRING);
+    TableRegisterSelectionHandlers((ClientData) tablePtr);
 
     /* Use 1 to force update */
     if (TableConfigure(interp, tablePtr, objc - offset, objv + offset, 0, 1) != TCL_OK) {

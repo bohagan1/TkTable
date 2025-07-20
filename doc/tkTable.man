@@ -138,9 +138,8 @@ This value is used for user indices in the table.  Defaults to 0.
 Number of cols in the table.  Defaults to 10.
 
 [tkoption_def -colseparator colSeparator Separator]
-Specifies a separator character that will be interpreted as the column
-separator when cutting or pasting data in a table.  By default, columns
-are separated as elements of a tcl list.
+Specifies the separator character that will be used as the column separator
+when cutting or pasting data in a table.  The default is the tab character.
 
 [tkoption_def -colstretchmode colStretchMode StretchMode]
 Specifies one of the following stretch modes for columns to fill extra
@@ -282,6 +281,11 @@ the [method height] command.  This will force an empty area on the top and
 bottom of each cell edge.  This padding affects all types of data in the
 cell.  Defaults to 0.  See [option -ipadx] for an alternate padding style.
 
+[tkoption_def -quotechar quoteCharacter Separator]
+Specifies the delimiter character that will be used to quote cell text that
+contains special characters when cutting and pasting data in a table.
+The default is the quote character.
+
 [tkoption_def -resizeborders resizeBorders ResizeBorders]
 Specifies what kind of interactive border resizing to allow, must be one of
 row, col, both (default) or none.
@@ -298,9 +302,8 @@ This value is used for user indices in the table.  Defaults to 0.
 Number of rows in the table.  Defaults to 10.
 
 [tkoption_def -rowseparator rowSeparator Separator]
-Specifies a separator character that will be interpreted as the row
-separator when cutting or pasting data in a table.  By default, rows
-are separated as tcl lists.
+Specifies the separator character that will be used as the row separator when
+cutting or pasting data in a table.  The default is the newline character.
 
 [tkoption_def -rowstretchmode rowStretchMode StretchMode]
 Specifies the stretch modes for rows to fill extra
@@ -824,6 +827,17 @@ Clears the specified area of tags (all row, column and cell tags).
 [def "[arg pathName] [method "clear all"] [opt [arg first]] [opt [arg last]]"]
 Performs all of the above clear functions on the specified area.
 [list_end]
+
+[def "[arg pathName] [method clipboard] [opt [const "export|import"]]"]
+When [option export] is used, the values of the currently selected cells will
+be returned as a string suitable for appending to the clipboard. This joins
+together the cell values by using the [option -colseparator] and
+[option -rowseparator] option values and quote characters defined by the
+[option -quotechar] option value. This is used by the [cmd tk_tableCopy]
+command. When [option import] is used, the contents of the clipboard will be
+retrieved and parsed using the same delimiters and returned as a list where
+each element is a sublist of the values for that row. This is used by the
+[cmd tk_tablePaste] command.
 
 [def "[arg pathName] [method configure] [opt [arg option]] [opt [arg "value option value ..."]]"]
 Query or modify the configuration options of the widget.

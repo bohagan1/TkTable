@@ -1432,19 +1432,19 @@ proc ::tktable::tk_tableCopy {w} {
     }
 
     clipboard clear -displayof $w
+    set format [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
+    set type "STRING"
 
     # Get selected text in active cell or selected cells
     if {[llength $list] > 0} {
-	set format [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
-	set type "STRING"
 	lassign $list first last
-	clipboard append -displayof $w -format $format -type $type -- \
-		[string range [$w curvalue] $first $last]
+	set data [string range [$w curvalue] $first $last]
 
     } else {
-	$w clipboard export
+	set data [$w clipboard export]
 	set Priv(copynpaste) {}
     }
+    clipboard append -displayof $w -format $format -type $type -- $data
 }
 
 #
@@ -1466,22 +1466,20 @@ proc ::tktable::tk_tableCut {w} {
     }
 
     clipboard clear -displayof $w
+    set format [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
+    set type "STRING"
 
     # Get selected text in active cell or selected cells
     if {[llength $list] > 0} {
-	set format [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
-	set type "STRING"
 	lassign $list first last
-	set data [$w curvalue]
-	clipboard append -displayof $w -format $format -type $type -- \
-		[string range $data $first $last]
+	set data [string range [$w curvalue] $first $last]
 	if {[$w cget -state] eq "normal"} {
-	    $w curvalue [string replace $data $first $last]
+	    $w curvalue [string replace [$w curvalue] $first $last]
 	}
 	set Priv(copynpaste) {}
 
     } else {
-	$w clipboard export
+	set data [$w clipboard export]
 	if {[$w cget -state] eq "normal"} {
 	    $w curselection {}
 	    set Priv(copynpaste) $list
@@ -1489,6 +1487,7 @@ proc ::tktable::tk_tableCut {w} {
 	    set Priv(copynpaste) {}
 	}
     }
+    clipboard append -displayof $w -format $format -type $type -- $data
 }
 
 #
@@ -1512,19 +1511,28 @@ proc ::tktable::tk_tablePaste {w {cell {}}} {
 
     set data [$w clipboard import]
     set list [$w selection active]
+
+    # Paste clipboard data into cell(s)
     if {[llength $data] <= 1 || [$w activate] ne ""} {
+	# Active cell
 	lassign $list first last
-	set data [lindex $data 0]
+	set data [join $data "\n"]
 	if {$first ne "" && $last ne ""} {
-	    $w curvalue [string replace [$w curvalue] $first $last $data]
+	    # Replace selection
+	    $w curvalue [string replace [$w curvalue] $first [expr {$last - 1}] $data]
 	    $w icursor [expr {$first + [string length $data]}]
+	    $w selection active 0
 	} else {
-	    $w curvalue $data
-	    $w icursor end
+	    # Insert at icursor
+	    set index [expr {[$w icursor] - 1}]
+	    set cur [$w curvalue]
+	    $w curvalue [string cat [string range $cur 0 $index] $data [string range $cur [incr index] end]]
+	    $w icursor [expr {$index + [string length $data]}]
 	}
 
     } else {
-	# Clear from cells
+	# Table cells
+	# Clear selected cell values
 	if {[llength $Priv(copynpaste)] > 0} {
 	    $w curselection {}
 	}
@@ -1542,7 +1550,7 @@ proc ::tktable::tk_tablePaste {w {cell {}}} {
 	scan $cell "%d,%d" row col
 	set init $col
 
-	# Do paste
+	# Paste values into cells
 	foreach line $data {
 	    foreach val $line {
 		$w set [format "%d,%d" $row $col] $val

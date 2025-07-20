@@ -453,8 +453,8 @@ typedef struct {
     int invalidX, invalidY, invalidWidth, invalidHeight;
     int seen[4];		/* see TableUndisplay */
 
-    int haveSelection;		/* Does selection contain the table selection */
     int selectFirst, selectLast; /* Start and end index of the active cell selection */
+    int haveSelection;		/* Does selection contain the table selection */
     Tcl_DString selection;	/* DString with selection elements */
 
 #ifdef POSTSCRIPT
@@ -524,10 +524,10 @@ extern void	TableSetActiveIndex(Table *tablePtr);
  * HEADERS IN tkTableClipboard.c
  */
 extern void	TableLostSelection(ClientData clientData);
-extern Tcl_Size	TableFetchSelection(ClientData clientData, Tcl_Size offset,
-			char *buffer, Tcl_Size maxBytes);
 extern int	Table_ClipboardCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 			Tcl_Obj *const objv[]);
+extern void	TableRegisterSelectionHandlers(ClientData clientData);
+extern void 	TableDeregisterSelectionHandlers(ClientData clientData);
 
 /*
  * HEADERS IN tkTableCmds.c
