@@ -936,6 +936,15 @@ to [arg last] as a list. When both [arg first] and [arg last] are specified,
 is the bottom right corner.
 See [sectref INDICES] for valid forms of index.
 
+[def "[arg pathName] [method get2] [arg first|list] [opt [arg last]]"]
+Returns the cell values as a list where each list element is a sublist of the
+values for that row.
+With 1 arg, returns the values for the [arg list] of cell indicies.
+With 2 args, returns the values of the cells within the range where
+[arg first] is the top left corner of the rectangle of cells and [arg last]
+is the bottom right corner.
+See [sectref INDICES] for valid forms of index.
+
 [def "[arg pathName] [method height] [opt [arg row]] [opt [arg "value row value ..."]]"]
 If no [arg row] is specified, a list describing all rows for which a height has
 been set will be returned.  If [arg row] is specified without a value, the height

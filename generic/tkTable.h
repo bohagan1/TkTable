@@ -554,6 +554,8 @@ extern int	Table_FocusCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 extern int	Table_GetCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+extern int	Table_Get2Cmd(ClientData clientData,
+			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 extern int	Table_ScanCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 extern int	Table_SeeCmd(ClientData clientData,

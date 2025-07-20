@@ -1553,6 +1553,15 @@ to \fIlast\fR as a list\&. When both \fIfirst\fR and \fIlast\fR are specified,
 is the bottom right corner\&.
 See \fBINDICES\fR for valid forms of index\&.
 .TP
+\fIpathName\fR \fBget2\fR \fIfirst|list\fR ?\fIlast\fR?
+Returns the cell values as a list where each list element is a sublist of the
+values for that row\&.
+With 1 arg, returns the values for the \fIlist\fR of cell indicies\&.
+With 2 args, returns the values of the cells within the range where
+\fIfirst\fR is the top left corner of the rectangle of cells and \fIlast\fR
+is the bottom right corner\&.
+See \fBINDICES\fR for valid forms of index\&.
+.TP
 \fIpathName\fR \fBheight\fR ?\fIrow\fR? ?\fIvalue row value \&.\&.\&.\fR?
 If no \fIrow\fR is specified, a list describing all rows for which a height has
 been set will be returned\&.  If \fIrow\fR is specified without a value, the height

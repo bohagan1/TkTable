@@ -47,7 +47,7 @@ static void	TableDisplay(ClientData clientdata);
  */
 static const char *commandNames[] = {
     "activate", "bbox", "border", "cget", "clear", "clipboard", "configure", "curselection",
-    "curvalue", "delete", "focus", "get", "height", "hidden", "icursor",
+    "curvalue", "delete", "focus", "get", "get2", "height", "hidden", "icursor",
     "index", "insert",
 #ifdef POSTSCRIPT
     "postscript",
@@ -57,7 +57,7 @@ static const char *commandNames[] = {
 };
 enum command {
     CMD_ACTIVATE, CMD_BBOX, CMD_BORDER, CMD_CGET, CMD_CLEAR, CMD_CLIPBOARD, CMD_CONFIGURE, CMD_CURSEL,
-    CMD_CURVALUE, CMD_DELETE, CMD_FOCUS, CMD_GET, CMD_HEIGHT, CMD_HIDDEN, CMD_ICURSOR,
+    CMD_CURVALUE, CMD_DELETE, CMD_FOCUS, CMD_GET, CMD_GET2, CMD_HEIGHT, CMD_HIDDEN, CMD_ICURSOR,
     CMD_INDEX, CMD_INSERT,
 #ifdef POSTSCRIPT
     CMD_POSTSCRIPT,
@@ -927,6 +927,10 @@ static int TableWidgetObjCmd(
 
 	case CMD_GET:
 	    result = Table_GetCmd(clientData, interp, objc, objv);
+	    break;
+
+	case CMD_GET2:
+	    result = Table_Get2Cmd(clientData, interp, objc, objv);
 	    break;
 
 	case CMD_HEIGHT:

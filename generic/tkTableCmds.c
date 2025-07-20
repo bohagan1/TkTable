@@ -1073,6 +1073,117 @@ int Table_GetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 /*
  *--------------------------------------------------------------
  *
+ * Table_Get2Cmd --
+ *	This procedure is invoked to process the get2 method
+ *	that corresponds to a table widget managed by this module.
+ *	See the user documentation for details on what it does.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	See the user documentation.
+ *
+ *--------------------------------------------------------------
+ */
+int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
+    Table *tablePtr = (Table *) clientData;
+    int r1, c1, r2, c2, row, col;
+    Tcl_Obj *itemPtr = NULL, *objPtr = NULL, *listPtr = NULL, *resultPtr = NULL;
+
+    if (objc < 3 || objc > 4) {
+	Tcl_WrongNumArgs(interp, 2, objv, "first|list ?last?");
+	return TCL_ERROR;
+    }
+
+    if (objc == 3) {
+	/* List of cells */
+	Tcl_Size len;
+	int prev = 0;
+
+	if (Tcl_ListObjLength(interp, objv[2], &len) != TCL_OK ||
+		(resultPtr = Tcl_NewListObj(0, NULL)) == NULL ||
+		(listPtr = Tcl_NewListObj(0, NULL)) == NULL) {
+	    goto abort;
+	}
+
+	for (Tcl_Size i = 0; i < len; i++) {
+	    if (Tcl_ListObjIndex(interp, objv[2], i, &itemPtr) == TCL_OK &&
+		    TableParseArrayIndex(&row, &col, Tcl_GetString(itemPtr)) == 2) {
+		if (i > 0 && row != prev) {
+		    Tcl_ListObjAppendElement(interp, resultPtr, listPtr);
+		    if ((listPtr = Tcl_NewListObj(0, NULL)) == NULL) {
+			goto abort;
+		    }
+		}
+		objPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1);
+		if (objPtr != NULL) {
+		    Tcl_ListObjAppendElement(interp, listPtr, objPtr);
+		} else {
+		    goto abort;
+		}
+		prev = row;
+		Tcl_IncrRefCount(itemPtr);
+		Tcl_DecrRefCount(itemPtr);
+	    } else {
+		goto abort;
+	    }
+	}
+	Tcl_ListObjLength(interp, listPtr, &len);
+	if (len > 0) {
+	    Tcl_ListObjAppendElement(interp, resultPtr, listPtr);
+	}
+
+    } else {
+	/* Range of cells */
+	if (TableGetIndexObj(tablePtr, objv[2], &r1, &c1) == TCL_ERROR ||
+	    TableGetIndexObj(tablePtr, objv[3], &r2, &c2) == TCL_ERROR ||
+	    (resultPtr = Tcl_NewListObj(abs(r2-r1)+1, NULL)) == NULL) {
+	    return TCL_ERROR;
+	}
+	if (r2 < r1) {row = r1; r1 = r2; r2 = row;}
+	if (c2 < c1) {col = c1; c1 = c2; c2 = col;}
+
+	for (row = r1; row <= r2; row++) {
+	    listPtr = Tcl_NewListObj(c2-c1+1, NULL);
+	    if (listPtr == NULL) {
+		goto abort;
+	    }
+	    for (col = c1; col <= c2; col++) {
+		if ((objPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr,row,col),-1)) == NULL
+		    || Tcl_ListObjAppendElement(interp, listPtr, objPtr) != TCL_OK) {
+		    goto abort;
+		}
+	    }
+	    Tcl_ListObjAppendElement(interp, resultPtr, listPtr);
+	}
+    }
+    Tcl_SetObjResult(interp, resultPtr);
+    return TCL_OK;
+
+abort:
+    if (itemPtr != NULL) {
+	Tcl_IncrRefCount(itemPtr);
+	Tcl_DecrRefCount(itemPtr);
+    }
+    if (objPtr != NULL) {
+	Tcl_IncrRefCount(objPtr);
+	Tcl_DecrRefCount(objPtr);
+    }
+    if (listPtr != NULL) {
+	Tcl_IncrRefCount(listPtr);
+	Tcl_DecrRefCount(listPtr);
+    }
+    if (resultPtr != NULL) {
+	Tcl_IncrRefCount(resultPtr);
+	Tcl_DecrRefCount(resultPtr);
+    }
+    return TCL_ERROR;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
  * Table_ScanCmd --
  *	This procedure is invoked to process the scan method
  *	that corresponds to a table widget managed by this module.

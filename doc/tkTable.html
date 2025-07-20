@@ -1077,6 +1077,14 @@ to <i class="arg">last</i> as a list. When both <i class="arg">first</i> and <i 
 <i class="arg">first</i> is the top left corner of the rectangle of cells and <i class="arg">last</i>
 is the bottom right corner.
 See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
+<dt><i class="arg">pathName</i> <b class="method">get2</b> <i class="arg">first|list</i> <span class="opt">?<i class="arg">last</i>?</span></dt>
+<dd><p>Returns the cell values as a list where each list element is a sublist of the
+values for that row.
+With 1 arg, returns the values for the <i class="arg">list</i> of cell indicies.
+With 2 args, returns the values of the cells within the range where
+<i class="arg">first</i> is the top left corner of the rectangle of cells and <i class="arg">last</i>
+is the bottom right corner.
+See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">height</b> <span class="opt">?<i class="arg">row</i>?</span> <span class="opt">?<i class="arg">value row value ...</i>?</span></dt>
 <dd><p>If no <i class="arg">row</i> is specified, a list describing all rows for which a height has
 been set will be returned.  If <i class="arg">row</i> is specified without a value, the height
