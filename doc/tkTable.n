@@ -322,17 +322,21 @@ In order to obtain good performance, the table widget supports multiple
 drawing modes, two of which are fully Tk compatible\&.
 .TP
 \fBtk_tableCopy\fR \fIpathName\fR
-Copies contents of selected cells in \fIpathName\fR to clipboard\&.
+Copies the contents of selection in the active cell or if none, the selected
+cells in \fIpathName\fR to the clipboard\&.
+This is used by the \fB<<Copy>>\fR virtual event\&.
 .TP
 \fBtk_tableCut\fR \fIpathName\fR
-Copies contents of selected cells in \fIpathName\fR to clipboard, deletes
-the contents of the selected cells, and removes the selection\&.
+Copies contents of selection in the active cell or if none, the selected cells
+in \fIpathName\fR to the clipboard, deletes the selected text or cells, and
+clears the selection\&. This is used by the \fB<<Cut>>\fR virtual event\&.
 .TP
 \fBtk_tablePaste\fR \fIpathName\fR ?\fIcell\fR?
-Pastes contents of the clipboard into table \fIpathName\fR starting at cell
-\fIcell\fR or the active cell if not specified\&. If regular text data is in
-the clipboard and \fIcell\fR is the active cell, then the text will either
-replace the selected text or be inserted at the icursor position\&.
+Pastes the contents of the clipboard into table \fIpathName\fR\&. If there is an
+active cell, the clipboard contents will be pasted into the active cell at the
+insertion cursor location replacing any selected text\&. If not, the cell values
+will be replaced by the pasted values starting at cell \fIcell\fR or the active
+cell if not specified\&. This is used by the \fB<<Paste>>\fR virtual event\&.
 .PP
 .SH "STANDARD OPTIONS"
 .TP
@@ -2023,9 +2027,11 @@ Home moves the insertion cursor to the beginning of the active cell\&.
 .IP [4]
 End moves the insertion cursor to the end of the active cell\&.
 .IP [5]
-Backspace deletes the character before the insertion cursor in the active cell\&.
+Backspace deletes the selected text or if none the character before the
+insertion cursor in the active cell\&.
 .IP [6]
-Delete deletes the character after the insertion cursor in the active cell\&.
+Delete deletes the selected text or if none the character after the insertion
+cursor in the active cell\&.
 .IP [7]
 Return accepts any changes made to the cell and activates the below cell\&.
 .IP [8]

@@ -74,6 +74,7 @@ bind Table <B1-Leave>		{
 #
 bind Table <Button-2>		{::tktable::TableScanMark %W %x %y}
 bind Table <B2-Motion>		{::tktable::TableScanDrag %W %x %y}
+#bind Table <ButtonRelease-2>	{ ::tktable::TablePasteSelection %W %x %y }
 
 # On Windows, paste is done using Shift-Insert.  Shift-Insert already
 # generates the <<Paste>> event, so we don't need to do anything here.
@@ -650,7 +651,7 @@ proc ::tktable::Insert {w s} {
 #
 # ::tktable::BackSpace --
 #
-# BackSpace (delete char before insert) in the current cell
+# BackSpace (delete char before insertion cursor) in the current cell
 #
 # Arguments:
 # w -	the table widget
@@ -659,16 +660,27 @@ proc ::tktable::Insert {w s} {
 # Returns nothing
 #
 proc ::tktable::BackSpace {w} {
-    set index [$w icursor]
-    if {$index > 0} {
-	$w delete active [incr index -1]
+    set list [$w selection active]
+    if {[llength $list] > 0} {
+	lassign $list first last
+	set index [$w icursor]
+	if {$first <= $index && $last >= $index} {
+	    $w delete active $first $last
+	} elseif {$index > 0} {
+	    $w delete active [incr index -1]
+	}
+    } else {
+	set index [$w icursor]
+	if {$index > 0} {
+	    $w delete active [incr index -1]
+	}
     }
 }
 
 #
 # ::tktable::Delete --
 #
-# Delete char after insert in the current cell
+# Delete char after insertion cursor in the current cell
 #
 # Arguments:
 # w -	the table widget
@@ -677,7 +689,19 @@ proc ::tktable::BackSpace {w} {
 # Returns nothing
 #
 proc ::tktable::Delete {w} {
-    $w delete active insert
+    set list [$w selection active]
+    if {[llength $list] > 0} {
+	lassign $list first last
+	set index [$w icursor]
+	if {$first <= $index && $last >= $index} {
+	    $w delete active $first $last
+	} else {
+	    $w delete active $index
+	}
+    } else {
+	set index [$w icursor]
+	$w delete active $index
+    }
 }
 
 #
@@ -1510,24 +1534,22 @@ proc ::tktable::tk_tablePaste {w {cell {}}} {
     }
 
     set data [$w clipboard import]
-    set list [$w selection active]
 
     # Paste clipboard data into cell(s)
-    if {[llength $data] <= 1 || [$w activate] ne ""} {
+    if {[$w activate] ne ""} {
 	# Active cell
-	lassign $list first last
+	lassign [$w selection active] first last
 	set data [join $data "\n"]
+	set insert [$w icursor]
 	if {$first ne "" && $last ne ""} {
 	    # Replace selection
-	    $w curvalue [string replace [$w curvalue] $first [expr {$last - 1}] $data]
-	    $w icursor [expr {$first + [string length $data]}]
-	    $w selection active 0
+	    if {$first <= $insert && $last >= $insert} {
+		$w delete active $first $last
+	    }
+	    $w insert active $first $data
 	} else {
 	    # Insert at icursor
-	    set index [expr {[$w icursor] - 1}]
-	    set cur [$w curvalue]
-	    $w curvalue [string cat [string range $cur 0 $index] $data [string range $cur [incr index] end]]
-	    $w icursor [expr {$index + [string length $data]}]
+	    $w insert active [$w icursor] $data
 	}
 
     } else {
@@ -1544,20 +1566,17 @@ proc ::tktable::tk_tablePaste {w {cell {}}} {
 		    break
 		}
 	    }
+	} else {
+	    set cell [$w index $cell]
 	}
 
 	$w see $cell
 	scan $cell "%d,%d" row col
-	set init $col
 
 	# Paste values into cells
 	foreach line $data {
-	    foreach val $line {
-		$w set [format "%d,%d" $row $col] $val
-		incr col
-	    }
+	    $w set row [format "%d,%d" $row $col] $line
 	    incr row
-	    set col $init
 	}
     }
 }
@@ -1572,7 +1591,7 @@ proc ::tktable::tk_tablePaste {w {cell {}}} {
 proc ::tktable::TablePasteSelection {w x y} {
     variable Priv
 
-    if {!$Priv(mouseMoved)} {
+    if {!$Priv(mouseMoved) && [$w cget -state] eq "normal"} {
 	# Get PRIMARY selection
 	#if {![catch {::tk::GetSelection $w PRIMARY} sel]} {
 	#    $w insert insert $sel

@@ -50,17 +50,21 @@ In order to obtain good performance, the table widget supports multiple
 drawing modes, two of which are fully Tk compatible.
 
 [call [cmd tk_tableCopy] [arg pathName]]
-Copies contents of selected cells in [arg pathName] to clipboard.
+Copies the contents of selection in the active cell or if none, the selected
+cells in [arg pathName] to the clipboard.
+This is used by the [const <<Copy>>] virtual event.
 
 [call [cmd tk_tableCut] [arg pathName]]
-Copies contents of selected cells in [arg pathName] to clipboard, deletes
-the contents of the selected cells, and removes the selection.
+Copies contents of selection in the active cell or if none, the selected cells
+in [arg pathName] to the clipboard, deletes the selected text or cells, and
+clears the selection. This is used by the [const <<Cut>>] virtual event.
 
 [call [cmd tk_tablePaste] [arg pathName] [opt [arg cell]]]
-Pastes contents of the clipboard into table [arg pathName] starting at cell
-[arg cell] or the active cell if not specified. If regular text data is in
-the clipboard and [arg cell] is the active cell, then the text will either
-replace the selected text or be inserted at the icursor position.
+Pastes the contents of the clipboard into table [arg pathName]. If there is an
+active cell, the clipboard contents will be pasted into the active cell at the
+insertion cursor location replacing any selected text. If not, the cell values
+will be replaced by the pasted values starting at cell [arg cell] or the active
+cell if not specified. This is used by the [const <<Paste>>] virtual event.
 [list_end]
 
 [section {STANDARD OPTIONS}]
@@ -1055,7 +1059,7 @@ Option [arg last] defaults to [arg first]'s value.
 See [sectref INDICES] for valid forms of index.
 
 [def "[arg pathName] [method "selection size"]"]
-Returns number of selected cells.
+Returns the number of selected cells.
 [list_end]
 
 [def "[arg pathName] [method set] [method row|col] [arg index] [opt [arg value]] [opt [arg "index value ..."]]"]
@@ -1409,9 +1413,11 @@ Home moves the insertion cursor to the beginning of the active cell.
 [enum]
 End moves the insertion cursor to the end of the active cell.
 [enum]
-Backspace deletes the character before the insertion cursor in the active cell.
+Backspace deletes the selected text or if none the character before the
+insertion cursor in the active cell.
 [enum]
-Delete deletes the character after the insertion cursor in the active cell.
+Delete deletes the selected text or if none the character after the insertion
+cursor in the active cell.
 [enum]
 Return accepts any changes made to the cell and activates the below cell.
 [enum]

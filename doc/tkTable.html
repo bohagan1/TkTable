@@ -174,15 +174,19 @@ scanning, as described below.</p>
 <p>In order to obtain good performance, the table widget supports multiple
 drawing modes, two of which are fully Tk compatible.</p></dd>
 <dt><a name="2"><b class="cmd">tk_tableCopy</b> <i class="arg">pathName</i></a></dt>
-<dd><p>Copies contents of selected cells in <i class="arg">pathName</i> to clipboard.</p></dd>
+<dd><p>Copies the contents of selection in the active cell or if none, the selected
+cells in <i class="arg">pathName</i> to the clipboard.
+This is used by the <b class="const">&lt;&lt;Copy&gt;&gt;</b> virtual event.</p></dd>
 <dt><a name="3"><b class="cmd">tk_tableCut</b> <i class="arg">pathName</i></a></dt>
-<dd><p>Copies contents of selected cells in <i class="arg">pathName</i> to clipboard, deletes
-the contents of the selected cells, and removes the selection.</p></dd>
+<dd><p>Copies contents of selection in the active cell or if none, the selected cells
+in <i class="arg">pathName</i> to the clipboard, deletes the selected text or cells, and
+clears the selection. This is used by the <b class="const">&lt;&lt;Cut&gt;&gt;</b> virtual event.</p></dd>
 <dt><a name="4"><b class="cmd">tk_tablePaste</b> <i class="arg">pathName</i> <span class="opt">?<i class="arg">cell</i>?</span></a></dt>
-<dd><p>Pastes contents of the clipboard into table <i class="arg">pathName</i> starting at cell
-<i class="arg">cell</i> or the active cell if not specified. If regular text data is in
-the clipboard and <i class="arg">cell</i> is the active cell, then the text will either
-replace the selected text or be inserted at the icursor position.</p></dd>
+<dd><p>Pastes the contents of the clipboard into table <i class="arg">pathName</i>. If there is an
+active cell, the clipboard contents will be pasted into the active cell at the
+insertion cursor location replacing any selected text. If not, the cell values
+will be replaced by the pasted values starting at cell <i class="arg">cell</i> or the active
+cell if not specified. This is used by the <b class="const">&lt;&lt;Paste&gt;&gt;</b> virtual event.</p></dd>
 </dl>
 </div>
 <div id="section2" class="doctools_section"><h2><a name="section2">STANDARD OPTIONS</a></h2>
@@ -1455,8 +1459,10 @@ first character, respectively.</p></li>
 cell and put the insertion cursor at the same location in the new cell.</p></li>
 <li><p>Home moves the insertion cursor to the beginning of the active cell.</p></li>
 <li><p>End moves the insertion cursor to the end of the active cell.</p></li>
-<li><p>Backspace deletes the character before the insertion cursor in the active cell.</p></li>
-<li><p>Delete deletes the character after the insertion cursor in the active cell.</p></li>
+<li><p>Backspace deletes the selected text or if none the character before the
+insertion cursor in the active cell.</p></li>
+<li><p>Delete deletes the selected text or if none the character after the insertion
+cursor in the active cell.</p></li>
 <li><p>Return accepts any changes made to the cell and activates the below cell.</p></li>
 <li><p>Shift-Return accepts any changes made to the cell and activates the above cell.</p></li>
 <li><p>Tab accepts any changes made to the cell and activates the cell to the
