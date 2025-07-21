@@ -103,6 +103,105 @@ static int TableSelectionGetSingle(
 /*
  *----------------------------------------------------------------------
  *
+ * TableSelectionGetMulti --
+ *	This function gets the selected cells from the table, encodes
+ *	their values using multi-byte delimiters, and returns the data
+ *	in the dynamic string.
+ *
+ * Results:
+ *	Returns TCL result with dynamic string set to selected data.
+ *
+ * Side effects:
+ *	None
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int TableSelectionGetMulti(
+    Table *tablePtr,
+    Tcl_DString *dsPtr) {
+
+    Tcl_Size dlen, i, llen, rlen, clen, qlen, len = 0;
+    Tcl_Obj *listPtr, *itemPtr;
+    const char *data, *end, *element;
+    int col, row, prev = 0, quoted = 0, res = TCL_OK;
+    Tcl_UniChar rchar = 0, cchar = 0, qchar = 0, val;
+
+    rlen = (tablePtr->rowSep ? Tcl_UtfToUniChar(tablePtr->rowSep, &rchar) : 0);
+    clen = (tablePtr->colSep ? Tcl_UtfToUniChar(tablePtr->colSep, &cchar) : 0);
+    qlen = (tablePtr->quoteChar ? Tcl_UtfToUniChar(tablePtr->quoteChar, &qchar) : 0);
+
+    /* Get selected cells  */
+    listPtr = TableGetSortedIndices(tablePtr->selCells);
+    if (Tcl_ListObjLength(tablePtr->interp, listPtr, &llen) == TCL_ERROR || llen == 0) {
+	return TCL_ERROR;
+    }
+
+    /* Get cell values and convert to string using delimiters */
+    for (i = 0; i < llen; i++) {
+	/* Get cell index */
+	if (Tcl_ListObjIndex(tablePtr->interp, listPtr, i, &itemPtr) == TCL_OK) {
+	    TableParseArrayIndex(&row, &col, Tcl_GetString(itemPtr));
+	    Tcl_IncrRefCount(itemPtr);
+	    Tcl_DecrRefCount(itemPtr);
+	} else {
+	    res = TCL_ERROR;
+	    break;
+	}
+
+	/* Get cell value */
+	data = TableGetCellValue(tablePtr, row, col);
+	dlen = (Tcl_Size)strlen(data);
+	end = data + dlen;
+
+	/* Append column/row separator */
+	if (i > 0) {
+	    if (row == prev) {
+		Tcl_DStringAppend(dsPtr, tablePtr->colSep, clen);
+	    } else {
+		Tcl_DStringAppend(dsPtr, tablePtr->rowSep, rlen);
+	    }
+	}
+
+	/* Determine if text needs to be quoted */
+	for (element = data; element < end; element += len) {
+	    len = Tcl_UtfToUniChar(element, &val);
+	    if (val == rchar || val == cchar || val == qchar) {
+		quoted = 1;
+		break;
+	    }
+	}
+
+	/* Append cell value if no special chars or quote with escapes if there are */
+	if (!quoted) {
+	    Tcl_DStringAppend(dsPtr, data, dlen);
+	} else {
+	    len = 0;
+
+	    Tcl_DStringAppend(dsPtr, tablePtr->quoteChar, qlen);
+	    for (element = data; element < end; element += len) {
+		len = Tcl_UtfToUniChar(element, &val);
+		if (val != qchar) {
+		    Tcl_DStringAppend(dsPtr, element, len);
+		} else {
+		    Tcl_DStringAppend(dsPtr, tablePtr->quoteChar, qlen);
+		    Tcl_DStringAppend(dsPtr, element, len);
+		}
+	    }
+	    Tcl_DStringAppend(dsPtr, tablePtr->quoteChar, qlen);
+	}
+	prev = row;
+    }
+
+    /* Clean-up */
+    Tcl_IncrRefCount(listPtr);
+    Tcl_DecrRefCount(listPtr);
+    return res;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TableClipboardExport --
  *	This function is called by the user to return the selection in
  *	clipboard format so it can be appended to the clipboard.
@@ -157,8 +256,7 @@ static int TableClipboardExport(
 
     } else {
 	/* Get cell values using multi-byte delimiter characters */
-	Tcl_AppendResult(interp, "Unsupported delimiter char lengths", (char *)NULL);
-	return TCL_ERROR;
+	TableSelectionGetMulti(tablePtr, &ds);
     }
     Tcl_DStringResult(interp, &ds);
     return TCL_OK;
