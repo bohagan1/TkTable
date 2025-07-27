@@ -270,7 +270,8 @@ typedef struct {
     Tcl_Obj *resultPtr;		/* Selection in list of lists format */
     int escaped;		/* Is the next character escaped */
     int quoted;			/* Is cell text quoted */
-    int length;			/* Length of data in buffer in bytes */
+    size_t length;		/* Length of data in buffer in bytes */
+    int pending_quote;		/* Pending quote op */
     char *buffer;		/* Temp cell data buffer */
 } TableGetSelection;
 
@@ -279,7 +280,8 @@ typedef struct {
  *
  * Table_ImportHandler --
  *	This function is the handler used by TableClipboardImport to
- *	convert the clipboard data into the list of lists format.
+ *	convert the clipboard data into the list of lists format for
+ *	single byte delimiters.
  *
  * Results:
  *	Returns TCL result.
@@ -293,74 +295,174 @@ typedef struct {
  */
 
 int Table_ImportHandler(
-    ClientData clientData,	/* Information about selection. */
+    ClientData clientData,	/* Info on imported clipboard data and conversion */
     Tcl_Interp *interp,		/* TCL interpreter. */
     const char *portion) {	/* Portion of selection to process. */
 
-    TableGetSelection *dataPtr = (TableGetSelection *) clientData;
-    Table *tablePtr = dataPtr->tablePtr;
+    TableGetSelection *dPtr = (TableGetSelection *) clientData;
+    Table *tablePtr = dPtr->tablePtr;
     char *colsep = tablePtr->colSep, *rowsep = tablePtr->rowSep, *quoteChar = tablePtr->quoteChar;
-    int i, len, clen=0, rlen=0, qlen=0;
+    size_t i, plen;
     Tcl_Obj *tmpPtr;
 
-    if (portion == NULL) {
+    if (portion == NULL || (plen = strlen(portion)) == 0) {
 	Tcl_AppendResult(interp, "No data", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    len = (int) strlen(portion);
-    clen = (colsep?((int) strlen(colsep)):0);
-    rlen = (rowsep?((int) strlen(rowsep)):0);
-    qlen = (quoteChar?((int) strlen(quoteChar)):0);
-
-    /* Works if colsep, rowsep, and quoteChar are all 1 byte */
-    if (clen != 1 || rlen != 1 || qlen != 1) {
-	Tcl_AppendResult(interp, "Unsupported delimiter char lengths", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    for (i = 0; i < len; i++) {
-	if (dataPtr->length == 0 && portion[i] == quoteChar[0]) {
-	    /* Start of quoted cell text */
-	    dataPtr->quoted = 1;
-
-	} else if (!(dataPtr->escaped) && !(dataPtr->quoted) && portion[i] == '\\') {
-	    /* Escape character */
-	    dataPtr->escaped = 1;
-
-	} else if (!(dataPtr->escaped) && !(dataPtr->quoted) && portion[i] == colsep[0]) {
-	    /* End of cell text */
-	    if ((tmpPtr = Tcl_NewStringObj(dataPtr->buffer, dataPtr->length)) == NULL ||
-		Tcl_ListObjAppendElement(interp, dataPtr->listPtr, tmpPtr) != TCL_OK) {
-		return TCL_ERROR;
-	    }
-	    dataPtr->length = 0;
-
-	} else if (!(dataPtr->escaped) && !(dataPtr->quoted) && portion[i] == rowsep[0]) {
-	    /* End of row */
-	    if ((tmpPtr = Tcl_NewStringObj(dataPtr->buffer, dataPtr->length)) == NULL ||
-		Tcl_ListObjAppendElement(interp, dataPtr->listPtr, tmpPtr) != TCL_OK ||
-		Tcl_ListObjAppendElement(interp, dataPtr->resultPtr, dataPtr->listPtr) != TCL_OK) {
-		return TCL_ERROR;
-	    }
-	    dataPtr->length = 0;
-	    dataPtr->listPtr = Tcl_NewListObj(0, NULL);
-
-	} else if (!(dataPtr->escaped) &&(dataPtr->quoted) && portion[i] == quoteChar[0]) {
-	    /* Embedded quote or end of quoted cell text */
-	    if (portion[i+1] == quoteChar[0]) {
-		dataPtr->buffer[dataPtr->length++] = portion[i++];
+    for (i = 0; i < plen; i++) {
+	if (dPtr->pending_quote) {
+	    /* Handle if last char was embedded quote or end of quoted cell text */
+	    if (portion[i] == quoteChar[0]) {
+		dPtr->buffer[dPtr->length++] = portion[i];
+		dPtr->escaped = 0;
+		dPtr->pending_quote = 0;
 	    } else {
-		dataPtr->quoted = 0;
+		dPtr->quoted = 0;
+		dPtr->pending_quote = 0;
+		i--;
+		continue;
 	    }
+
+	} else if (dPtr->length == 0 && portion[i] == quoteChar[0]) {
+	    /* Start of quoted cell text */
+	    dPtr->quoted = 1;
+
+	} else if (!(dPtr->escaped) && !(dPtr->quoted) && portion[i] == '\\') {
+	    /* Escape character */
+	    dPtr->escaped = 1;
+
+	} else if (!(dPtr->escaped) && !(dPtr->quoted) && portion[i] == colsep[0]) {
+	    /* End of cell text */
+	    if ((tmpPtr = Tcl_NewStringObj(dPtr->buffer, (Tcl_Size)dPtr->length)) == NULL ||
+		Tcl_ListObjAppendElement(interp, dPtr->listPtr, tmpPtr) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    dPtr->length = 0;
+
+	} else if (!(dPtr->escaped) && !(dPtr->quoted) && portion[i] == rowsep[0]) {
+	    /* End of row */
+	    if ((tmpPtr = Tcl_NewStringObj(dPtr->buffer, (Tcl_Size)dPtr->length)) == NULL ||
+		Tcl_ListObjAppendElement(interp, dPtr->listPtr, tmpPtr) != TCL_OK ||
+		Tcl_ListObjAppendElement(interp, dPtr->resultPtr, dPtr->listPtr) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    dPtr->length = 0;
+	    dPtr->listPtr = Tcl_NewListObj(0, NULL);
+
+	} else if (!(dPtr->escaped) && (dPtr->quoted) && portion[i] == quoteChar[0]) {
+	    /* Embedded quote or end of quoted cell text */
+	    dPtr->pending_quote = 1;
 
 	} else {
 	    /* Cell text character */
-	    dataPtr->buffer[dataPtr->length++] = portion[i];
-	    dataPtr->escaped = 0;
+	    dPtr->buffer[dPtr->length++] = portion[i];
+	    dPtr->escaped = 0;
 	}
 
-	if (dataPtr->length >= MAX_CELL_SIZE) {
+	if (dPtr->length >= MAX_CELL_SIZE) {
+	    Tcl_AppendResult(interp, "Cell text too large", (char *)NULL);
+	    return TCL_ERROR;
+	}
+    }
+    return TCL_OK;
+ }
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Table_ImportHandlerMulti --
+ *	This function is the handler used by TableClipboardImport to
+ *	convert the clipboard data into the list of lists format for
+ (	multi-bye delimiters.
+ *
+ * Results:
+ *	Returns TCL result.
+ *
+ * Side effects:
+ *	Process a portion of the imported clipboard contents.
+ *
+ * Io do: Convert to use Unicode functions.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int Table_ImportHandlerMulti(
+    ClientData clientData,	/* Info on imported clipboard data and conversion */
+    Tcl_Interp *interp,		/* TCL interpreter. */
+    const char *portion) {	/* Portion of selection to process. */
+
+    TableGetSelection *dPtr = (TableGetSelection *) clientData;
+    Table *tablePtr = dPtr->tablePtr;
+    size_t plen, dlen = 0;
+    Tcl_Obj *tmpPtr;
+    const char *data = portion;
+    Tcl_UniChar rchar = 0, cchar = 0, qchar = 0, echar = 0x005c, val;
+
+    if (portion == NULL || (plen = strlen(portion)) == 0) {
+	Tcl_AppendResult(interp, "No data", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (tablePtr->rowSep) Tcl_UtfToUniChar(tablePtr->rowSep, &rchar);
+    if (tablePtr->colSep) Tcl_UtfToUniChar(tablePtr->colSep, &cchar);
+    if (tablePtr->quoteChar) Tcl_UtfToUniChar(tablePtr->quoteChar, &qchar);
+
+    for (data = portion; data < portion + plen; data += dlen) {
+	dlen = (size_t)Tcl_UtfToUniChar(data, &val);
+
+	if (dPtr->pending_quote) {
+	    /* Handle if last char was embedded quote or end of quoted cell text */
+	    if (val == qchar) {
+		memcpy(&dPtr->buffer[dPtr->length], data, dlen);
+		dPtr->length += dlen;
+		dPtr->escaped = 0;
+		dPtr->pending_quote = 0;
+	    } else {
+		dPtr->quoted = 0;
+		dPtr->pending_quote = 0;
+		dlen = 0;
+		continue;
+	    }
+
+	} else if (dPtr->length == 0 && val == qchar) {
+	    /* Start of quoted cell text */
+	    dPtr->quoted = 1;
+
+	} else if (!(dPtr->escaped) && !(dPtr->quoted) && val == echar) {
+	    /* Escape character */
+	    dPtr->escaped = 1;
+
+	} else if (!(dPtr->escaped) && !(dPtr->quoted) && val == cchar) {
+	    /* End of cell text */
+	    if ((tmpPtr = Tcl_NewStringObj(dPtr->buffer, (Tcl_Size)dPtr->length)) == NULL ||
+		Tcl_ListObjAppendElement(interp, dPtr->listPtr, tmpPtr) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    dPtr->length = 0;
+
+	} else if (!(dPtr->escaped) && !(dPtr->quoted) && val == rchar) {
+	    /* End of row */
+	    if ((tmpPtr = Tcl_NewStringObj(dPtr->buffer, (Tcl_Size)dPtr->length)) == NULL ||
+		Tcl_ListObjAppendElement(interp, dPtr->listPtr, tmpPtr) != TCL_OK ||
+		Tcl_ListObjAppendElement(interp, dPtr->resultPtr, dPtr->listPtr) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    dPtr->length = 0;
+	    dPtr->listPtr = Tcl_NewListObj(0, NULL);
+
+	} else if (!(dPtr->escaped) && (dPtr->quoted) && val == qchar) {
+	    /* Embedded quote or end of quoted cell text */
+	    dPtr->pending_quote = 1;
+
+	} else {
+	    /* Cell text character */
+	    memcpy(&dPtr->buffer[dPtr->length], data, dlen);
+	    dPtr->length += dlen;
+	    dPtr->escaped = 0;
+	}
+
+	if (dPtr->length >= MAX_CELL_SIZE) {
 	    Tcl_AppendResult(interp, "Cell text too large", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -392,7 +494,8 @@ static int TableClipboardImport(
 
     Table *tablePtr = (Table *) clientData;
     int result = TCL_OK;
-    TableGetSelection *dataPtr;
+    size_t clen, rlen, qlen;
+    TableGetSelection *dPtr;
 
     /* target is ICCCM type, format is used for transmit */
     Atom selection = Tk_InternAtom(tablePtr->tkwin, "CLIPBOARD");
@@ -402,51 +505,77 @@ static int TableClipboardImport(
     Atom target = XA_STRING;
 #endif
 
-    /* Allocate temp storage for selection data */
-    dataPtr = (TableGetSelection *) ckalloc(sizeof(TableGetSelection));
-    if (dataPtr == NULL) {
+    /* Allocate temp storage for selection conversion data */
+    dPtr = (TableGetSelection *) ckalloc(sizeof(TableGetSelection));
+    if (dPtr == NULL) {
 	return TCL_ERROR;
     }
 
     /* Initialize temp storage */
-    dataPtr->tablePtr = tablePtr;
-    dataPtr->listPtr = Tcl_NewListObj(0, NULL);
-    dataPtr->resultPtr = Tcl_NewListObj(0, NULL);
-    dataPtr->escaped = 0;
-    dataPtr->quoted = 0;
-    dataPtr->length = 0;
-    dataPtr->buffer = (char *) ckalloc(MAX_CELL_SIZE);
+    dPtr->tablePtr = tablePtr;
+    dPtr->listPtr = Tcl_NewListObj(0, NULL);
+    dPtr->resultPtr = Tcl_NewListObj(0, NULL);
+    dPtr->escaped = 0;
+    dPtr->quoted = 0;
+    dPtr->length = 0;
+    dPtr->pending_quote = 0;
+    dPtr->buffer = (char *) ckalloc(MAX_CELL_SIZE + 8);
 
-    if (dataPtr->listPtr == NULL || dataPtr->resultPtr == NULL || dataPtr->buffer == NULL) {
-	ckfree(dataPtr);
+    if (dPtr->listPtr == NULL || dPtr->resultPtr == NULL || dPtr->buffer == NULL) {
+	if (dPtr->listPtr != NULL) {
+	    Tcl_IncrRefCount(dPtr->listPtr);
+	    Tcl_DecrRefCount(dPtr->listPtr);
+	}
+	if (dPtr->resultPtr != NULL) {
+	    Tcl_IncrRefCount(dPtr->resultPtr);
+	    Tcl_DecrRefCount(dPtr->resultPtr);
+	}
+	if (dPtr->buffer != NULL) {
+	    ckfree(dPtr->buffer);
+	}
+	ckfree(dPtr);
 	return TCL_ERROR;
     }
 
-    /* Create handler to process the clipboard data. Returns when the selection
-       has been completely retrieved. */
-    result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target, Table_ImportHandler,
-	(ClientData) dataPtr);
+    clen = (tablePtr->colSep?(strlen(tablePtr->colSep)):0);
+    rlen = (tablePtr->rowSep?(strlen(tablePtr->rowSep)):0);
+    qlen = (tablePtr->quoteChar?(strlen(tablePtr->quoteChar)):0);
 
-    /* Handle missing end of data row terminator */
-    if (dataPtr->length > 0 && result == TCL_OK) {
-	Table_ImportHandler((ClientData) dataPtr, interp, tablePtr->rowSep);
+    /* Create handler to process the clipboard data. Returns when the selection has
+       been completely retrieved. Also handle missing end of data row terminator. */
+    if (clen == 1 && rlen == 1 && qlen == 1) {
+	result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target,
+	    Table_ImportHandler, (ClientData) dPtr);
+	if (dPtr->length > 0 && result == TCL_OK) {
+	    Table_ImportHandler((ClientData) dPtr, interp, tablePtr->rowSep);
+	}
+    } else if (clen == 0 && rlen == 0) {
+	Tcl_AppendResult(interp, "Unsupported delimiter char lengths", (char *)NULL);
+	return TCL_ERROR;
+
+    } else {
+	result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target,
+	    Table_ImportHandlerMulti, (ClientData) dPtr);
+	if (dPtr->length > 0 && result == TCL_OK) {
+	    Table_ImportHandlerMulti((ClientData) dPtr, interp, tablePtr->rowSep);
+	}
     }
 
     /* Clean-up */
-    if (dataPtr->listPtr != NULL) {
-	Tcl_IncrRefCount(dataPtr->listPtr);
-	Tcl_DecrRefCount(dataPtr->listPtr);
+    if (dPtr->listPtr != NULL) {
+	Tcl_IncrRefCount(dPtr->listPtr);
+	Tcl_DecrRefCount(dPtr->listPtr);
     }
-    if (dataPtr->resultPtr != NULL) {
+    if (dPtr->resultPtr != NULL) {
 	if (result == TCL_OK) {
-	    Tcl_SetObjResult(interp, dataPtr->resultPtr);
+	    Tcl_SetObjResult(interp, dPtr->resultPtr);
 	} else {
-	    Tcl_IncrRefCount(dataPtr->resultPtr);
-	    Tcl_DecrRefCount(dataPtr->resultPtr);
+	    Tcl_IncrRefCount(dPtr->resultPtr);
+	    Tcl_DecrRefCount(dPtr->resultPtr);
 	}
     }
-    ckfree(dataPtr->buffer);
-    ckfree(dataPtr);
+    ckfree(dPtr->buffer);
+    ckfree(dPtr);
     return result;
 }
 
