@@ -264,6 +264,10 @@ static int TableClipboardExport(
 }
 
 
+/*
+ * Structure to hold clipboard import data across calls to handler.
+ */
+
 #define MAX_CELL_SIZE 65536
 typedef struct {
     Table *tablePtr;		/* Information about the table widget. */
@@ -474,6 +478,43 @@ int Table_ImportHandlerMulti(
 /*
  *----------------------------------------------------------------------
  *
+ * Table_ImportHandlerList --
+ *	This function is the handler used by TableClipboardImport to
+ *	convert the clipboard data into the list of lists format for
+ (	multi-bye delimiters.
+ *
+ * Results:
+ *	Returns TCL result.
+ *
+ * Side effects:
+ *	Process a portion of the imported clipboard contents.
+ *
+ * Io do: Convert to use Unicode functions.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int Table_ImportHandlerList(
+    ClientData clientData,	/* Info on imported clipboard data and conversion */
+    Tcl_Interp *interp,		/* TCL interpreter. */
+    const char *portion) {	/* Portion of selection to process. */
+
+    TableGetSelection *dPtr = (TableGetSelection *) clientData;
+    size_t plen;
+
+    if (portion == NULL) {
+	Tcl_AppendResult(interp, "No data", (char *)NULL);
+	return TCL_ERROR;
+    }
+    plen = strlen(portion);
+
+    Tcl_AppendToObj(dPtr->resultPtr, portion, (Tcl_Size)plen);
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TableClipboardImport --
  *	This function is called by the user when the selection is to be
  *	retrieved from the clipboard and converted into a list of lists
@@ -512,7 +553,7 @@ static int TableClipboardImport(
 	return TCL_ERROR;
     }
 
-    /* Initialize temp storage */
+    /* Initialize import storage */
     dPtr->tablePtr = tablePtr;
     dPtr->listPtr = Tcl_NewListObj(0, NULL);
     dPtr->resultPtr = Tcl_NewListObj(0, NULL);
@@ -523,19 +564,9 @@ static int TableClipboardImport(
     dPtr->buffer = (char *) ckalloc(MAX_CELL_SIZE + 8);
 
     if (dPtr->listPtr == NULL || dPtr->resultPtr == NULL || dPtr->buffer == NULL) {
-	if (dPtr->listPtr != NULL) {
-	    Tcl_IncrRefCount(dPtr->listPtr);
-	    Tcl_DecrRefCount(dPtr->listPtr);
-	}
-	if (dPtr->resultPtr != NULL) {
-	    Tcl_IncrRefCount(dPtr->resultPtr);
-	    Tcl_DecrRefCount(dPtr->resultPtr);
-	}
-	if (dPtr->buffer != NULL) {
-	    ckfree(dPtr->buffer);
-	}
-	ckfree(dPtr);
-	return TCL_ERROR;
+	Tcl_AppendResult(interp, "Memory allocation error", (char *)NULL);
+	result = TCL_ERROR;
+	goto cleanup;
     }
 
     clen = (tablePtr->colSep?(strlen(tablePtr->colSep)):0);
@@ -545,16 +576,20 @@ static int TableClipboardImport(
     /* Create handler to process the clipboard data. Returns when the selection has
        been completely retrieved. Also handle missing end of data row terminator. */
     if (clen == 1 && rlen == 1 && qlen == 1) {
+	/* Use 1-byte delimiters */
 	result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target,
 	    Table_ImportHandler, (ClientData) dPtr);
 	if (dPtr->length > 0 && result == TCL_OK) {
 	    Table_ImportHandler((ClientData) dPtr, interp, tablePtr->rowSep);
 	}
+
     } else if (clen == 0 && rlen == 0) {
-	Tcl_AppendResult(interp, "Unsupported delimiter char lengths", (char *)NULL);
-	return TCL_ERROR;
+	/* List */
+	result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target,
+	    Table_ImportHandlerList, (ClientData) dPtr);
 
     } else {
+	/* Use multi-byte delimiters */
 	result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target,
 	    Table_ImportHandlerMulti, (ClientData) dPtr);
 	if (dPtr->length > 0 && result == TCL_OK) {
@@ -563,6 +598,7 @@ static int TableClipboardImport(
     }
 
     /* Clean-up */
+cleanup:
     if (dPtr->listPtr != NULL) {
 	Tcl_IncrRefCount(dPtr->listPtr);
 	Tcl_DecrRefCount(dPtr->listPtr);
@@ -575,7 +611,9 @@ static int TableClipboardImport(
 	    Tcl_DecrRefCount(dPtr->resultPtr);
 	}
     }
-    ckfree(dPtr->buffer);
+    if (dPtr->buffer != NULL) {
+	ckfree(dPtr->buffer);
+    }
     ckfree(dPtr);
     return result;
 }
