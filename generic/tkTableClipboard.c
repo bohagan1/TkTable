@@ -234,29 +234,30 @@ static int TableClipboardExport(
     Tcl_DStringInit(&ds);
 
     /* Get selected data */
-    if ((tablePtr->flags & HAS_ACTIVE) && tablePtr->activeRow != -1 &&
-	    tablePtr->selectFirst != -1 && tablePtr->selectFirst < tablePtr->selectLast) {
-	/* Get active cell selected text */
-	Tcl_Size byteCount;
-	const char *data;
-
-	data = Tcl_UtfAtIndex(tablePtr->activeBuf, (Tcl_Size)tablePtr->selectFirst);
-	byteCount = (Tcl_Size) (Tcl_UtfAtIndex(tablePtr->activeBuf,
-	    (Tcl_Size)tablePtr->selectLast) - data);
-	Tcl_DStringAppend(&ds, data, byteCount);
-
-    } else if (clen == 1 && rlen == 1 && qlen == 1) {
+    if (clen == 1 && rlen == 1 && qlen == 1) {
 	/* Get cell values using single byte delimiter characters */
-	TableSelectionGetSingle(tablePtr, &ds);
+	if (TableSelectionGetSingle(tablePtr, &ds) != TCL_OK) {
+	    Tcl_DStringFree(&ds);
+	    return TCL_ERROR;
+	}
 
     } else if (clen == 0 && rlen == 0) {
 	/* Get cell values in list format */
-	Tcl_AppendResult(interp, "Unsupported delimiter char lengths", (char *)NULL);
-	return TCL_ERROR;
+	Tcl_Obj *objv[3];
+	Tcl_DStringFree(&ds);
+	
+	if ((objv[2] = TableGetSortedIndices(tablePtr->selCells)) == NULL ||
+		Table_Get2Cmd(clientData, interp, 3, objv) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	return TCL_OK;
 
     } else {
 	/* Get cell values using multi-byte delimiter characters */
-	TableSelectionGetMulti(tablePtr, &ds);
+	if (TableSelectionGetMulti(tablePtr, &ds) != TCL_OK) {
+	    Tcl_DStringFree(&ds);
+	    return TCL_ERROR;
+	}
     }
     Tcl_DStringResult(interp, &ds);
     return TCL_OK;
