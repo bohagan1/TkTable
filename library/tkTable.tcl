@@ -25,7 +25,7 @@
 namespace eval ::tktable {
     variable Priv
     array set Priv [list x 0 y 0 afterId {} mouseMoved 0 borderInfo {} \
-	borderB1 1 bindingMode focus hidden {} icursor -1 copynpaste {}]
+	borderB1 1 bindingMode focus hidden {} icursor -1]
     namespace export tk_tableCopy tk_tableCut tk_tablePaste
 }
 
@@ -33,14 +33,6 @@ namespace eval ::tktable {
 #--------------------------------------------------------------------------
 # TkTable bindings
 #--------------------------------------------------------------------------
-
-#
-# Bindings for the "copy", "cut", and "paste" clipboard functions
-#
-bind Table <<Copy>>		{ ::tktable::tk_tableCopy %W }
-bind Table <<Cut>>		{ ::tktable::tk_tableCut %W }
-bind Table <<Paste>>		{ ::tktable::tk_tablePaste %W }
-bind Table <<PasteSelection>>	{ ::tktable::TablePasteSelection %W %x %y }
 
 ##
 ## Interactive cell resizing, affected by -resizeborders option
@@ -75,14 +67,6 @@ bind Table <B1-Leave>		{
 bind Table <Button-2>		{::tktable::TableScanMark %W %x %y}
 bind Table <B2-Motion>		{::tktable::TableScanDrag %W %x %y}
 #bind Table <ButtonRelease-2>	{ ::tktable::TablePasteSelection %W %x %y }
-
-# On Windows, paste is done using Shift-Insert.  Shift-Insert already
-# generates the <<Paste>> event, so we don't need to do anything here.
-if {[tk windowingsystem] ne "win32"} {
-    bind Table <Insert> {
-	catch {::tktable::tk_tablePaste %W active}
-    }
-}
 
 
 #
@@ -119,11 +103,11 @@ if {[package vcompare [package present Tk] 8.7] >= 0} {
 if {[package vcompare [package present Tk] 8.7] >= 0} {
 bind Table <TouchpadScroll> {
     if {%# %% 5 != 0} {
-        return
+	return
     }
     lassign [tk::PreciseScrollDeltas %D] ::tktable::Priv(deltaX) ::tktable::Priv(deltaY)
     if {$::tktable::Priv(deltaX) != 0} {
- 	%W xview scroll [expr {-$::tktable::Priv(deltaX)}] units
+	%W xview scroll [expr {-$::tktable::Priv(deltaX)}] units
     }
     if {$::tktable::Priv(deltaY) != 0} {
 	%W yview scroll [expr {-$::tktable::Priv(deltaY)}] units
@@ -211,7 +195,6 @@ bind Table <Control-Tab>	[bind all <<NextWindow>>]
 bind Table <Control-Shift-Tab>	[bind all <<PrevWindow>>]
 
 # Other selection functions
-bind Table <<Clear>>		{ ::tktable::SelectClear %W }
 bind Table <<SelectAll>>	{ ::tktable::SelectAll %W }
 bind Table <<SelectNone>>	{ ::tktable::SelectNone %W }
 bind Table <Shift-space>	{ ::tktable::SelectRow %W }
@@ -244,6 +227,23 @@ bind Table <Meta-KeyPress>	{# nothing}
 bind Table <Control-KeyPress>	{# nothing}
 if {$::tcl_platform(platform) eq "macintosh"} {
     bind Table <Command-KeyPress> {# nothing}
+}
+
+#
+# Bindings for the "copy", "cut", and "paste" clipboard functions
+#
+bind Table <<Copy>>		{ ::tktable::tk_tableCopy %W }
+bind Table <<Cut>>		{ ::tktable::tk_tableCut %W }
+bind Table <<Paste>>		{ ::tktable::tk_tablePaste %W }
+bind Table <<PasteSelection>>	{ ::tktable::TablePasteSelection %W %x %y }
+bind Table <<Clear>>		{ ::tktable::SelectionClear %W }
+
+# On Windows, paste is done using Shift-Insert.  Shift-Insert already
+# generates the <<Paste>> event, so we don't need to do anything here.
+if {[tk windowingsystem] ne "win32"} {
+    bind Table <Insert> {
+	catch {::tktable::InsertSelection %W}
+    }
 }
 
 #
@@ -1079,7 +1079,7 @@ proc ::tktable::BeginToggle {w el} {
 	    $w selection clear $el $end
 	} else {
 	    $w selection set $el $end
-        }
+	}
     }
 }
 
@@ -1316,15 +1316,22 @@ proc ::tktable::SelectNone {w} {
 }
 
 #
-# ::tktable::SelectClear
+# ::tktable::SelectionClear
 #
 # Clear (delete without shift) the selected cells.
 #
 # Arguments:
 # w -	The table widget.
 #
-proc ::tktable::SelectClear {w} {
-    $w curselection {}
+proc ::tktable::SelectionClear {w} {
+    if {[$w cget -state] ne "normal"} return
+    set list [$w selection active]
+    if {[llength $list] > 0} {
+	$w delete active {*}$list
+    } else {
+	$w curselection {}
+	$w selection clear all
+    }
 }
 
 #
@@ -1440,124 +1447,119 @@ proc ::tktable::TableScanDrag {w x y} {
 #
 # tk_tableCopy --
 #
-# This procedure copies the active cell selected text or selected cell contents
-# from a table widget to the clipboard independent of -exportselection.
+# This procedure copies the selected text in the active cell or if none, the
+# contents of the selected cells to the clipboard.
 #
 # Arguments:
 # w -		Name of table widget.
 #
 proc ::tktable::tk_tableCopy {w} {
     variable Priv
+    set type [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
 
-    # Abort if no selection
+    # Abort if no selection or in disabled state
     set list [$w selection active]
-    if {[llength $list] == 0 && [$w selection size] == 0} {
+    if {([llength $list] == 0 && [$w selection size] == 0) || [$w cget -state] eq "disabled"} {
 	return
     }
-
-    clipboard clear -displayof $w
-    set format [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
-    set type "STRING"
 
     # Get selected text in active cell or selected cells
     if {[llength $list] > 0} {
 	lassign $list first last
+	incr last -1
 	set data [string range [$w curvalue] $first $last]
 
     } else {
-	set data [$w clipboard export]
-	set Priv(copynpaste) {}
+	set data [$w export]
     }
-    clipboard append -displayof $w -format $format -type $type -- $data
+
+    # Paste to clipboard
+    if {[string length $data] > 0} {
+	clipboard clear -displayof $w
+	clipboard append -displayof $w -format "STRING" -type $type -- $data
+    }
 }
 
 #
 # tk_tableCut --
 #
-# This procedure copies the selected text or selected cell contents from a
-# table widget to the clipboard then clear the selected text or cells.
+# This procedure copies the selected text in the active cell or if none, the
+# contents of the selected cells to the clipboard, then deletes the selected
+# text or clears the cells.
 #
 # Arguments:
 # w -		Name of table widget.
 #
 proc ::tktable::tk_tableCut {w} {
     variable Priv
+    set type [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
 
-    # Abort if no selection
+    # Abort if no selection or in disabled state
     set list [$w selection active]
-    if {[llength $list] == 0 && [$w selection size] == 0} {
+    if {([llength $list] == 0 && [$w selection size] == 0) || [$w cget -state] eq "disabled"} {
 	return
     }
 
-    clipboard clear -displayof $w
-    set format [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
-    set type "STRING"
-
-    # Get selected text in active cell or selected cells
+    # Get selected text in active cell or selected cells then clear selected
     if {[llength $list] > 0} {
 	lassign $list first last
+	incr last -1
 	set data [string range [$w curvalue] $first $last]
 	if {[$w cget -state] eq "normal"} {
-	    $w curvalue [string replace [$w curvalue] $first $last]
+	    $w delete active {*}$list
 	}
-	set Priv(copynpaste) {}
 
     } else {
-	set data [$w clipboard export]
+	set data [$w export]
 	if {[$w cget -state] eq "normal"} {
 	    $w curselection {}
-	    set Priv(copynpaste) $list
-	} else {
-	    set Priv(copynpaste) {}
 	}
     }
-    clipboard append -displayof $w -format $format -type $type -- $data
+
+    # Paste to clipboard
+    if {[string length $data] > 0} {
+	clipboard clear -displayof $w
+	clipboard append -displayof $w -format "STRING" -type $type -- $data
+    }
 }
 
 #
 # tk_tablePaste --
 #
-# This procedure pastes the contents of the clipboard into the table. For text,
-# it will paste into the active cell. For tabular data, it will paste into the
-# cells relative to cell (default is active).
-#
+# This procedure retrieves the contents of the clipboard and either pastes it
+# into the active cell at insertion point, if any, or into the table cells
+# relative to cell (default is active).
+# 
 # Arguments:
 # w -		Name of a table widget.
 # cell -	Cell to start pasting in (default is active, focus, or origin cell)
 #
 proc ::tktable::tk_tablePaste {w {cell {}}} {
     variable Priv
+    set type [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
 
     # Abort if widget is disabled
     if {[$w cget -state] ne "normal"} {
 	return
     }
 
-    set data [$w clipboard import]
-
-    # Paste clipboard data into cell(s)
+    # Paste clipboard data into active cell or cells
     if {[$w activate] ne ""} {
-	# Active cell
-	lassign [$w selection active] first last
-	set data [join $data "\n"]
-	set insert [$w icursor]
-	if {$first ne "" && $last ne ""} {
-	    # Replace selection
-	    if {$first <= $insert && $last >= $insert} {
+	if {[catch {clipboard get -displayof $w -type $type} data]} return
+	if {[string length $data] == 0} return
+	set list [$w selection active]
+	if {[llength $list] > 0} {
+	    lassign $list first last
+	    set insert [$w icursor]
+	    if {[tk windowingsystem] ne "x11" && $first ne "" && $first <= $insert && $last >= $insert} {
 		$w delete active $first $last
 	    }
-	    $w insert active $first $data
-	} else {
-	    # Insert at icursor
-	    $w insert active [$w icursor] $data
 	}
+	$w insert active insert $data
 
     } else {
-	# Table cells
-	# Clear selected cell values
-	if {[llength $Priv(copynpaste)] > 0} {
-	    $w curselection {}
-	}
+	if {[catch {$w import} data]} return
+	if {[llength $data] == 0} return
 
 	# Get cell to start paste at
 	if {$cell eq ""} {
@@ -1570,7 +1572,7 @@ proc ::tktable::tk_tablePaste {w {cell {}}} {
 	    set cell [$w index $cell]
 	}
 
-	$w see $cell
+	#$w see $cell
 	scan $cell "%d,%d" row col
 
 	# Paste values into cells
@@ -1581,30 +1583,67 @@ proc ::tktable::tk_tablePaste {w {cell {}}} {
     }
 }
 
+# Backwards compatibility
+namespace import ::tktable::tk_tableCopy ::tktable::tk_tableCut ::tktable::tk_tablePaste
+
+#
 # ::tktable::TablePasteSelection --
 #
-# This procedure inserts the PRIMARY selection at the current cell
+# This procedure pastes the contents of the PRIMARY selection into the table.
+# For text, paste into the active cell at x,y. For tabular data, it will paste
+# into the cells relative to cell at x,y .
 #
 # Arguments:
 # w -		The table window.
 # x, y -	Position of the mouse.
+#
 proc ::tktable::TablePasteSelection {w x y} {
     variable Priv
+    set type [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
 
-    if {!$Priv(mouseMoved) && [$w cget -state] eq "normal"} {
-	# Get PRIMARY selection
-	#if {![catch {::tk::GetSelection $w PRIMARY} sel]} {
-	#    $w insert insert $sel
-	#}
-	# Paste selection
-	::tktable::tk_tablePaste $w [format "@%d,%d" $x $y]
+    # Abort if widget is disabled
+    if {$Priv(mouseMoved) || [$w cget -state] ne "normal"} {
+	return
+    }
+
+    set index [format "@%d,%d" $x $y]
+    set cell [$w index $index]
+    if {$cell eq [$w activate]} {
+	if {[catch {selection get -displayof $w -selection "PRIMARY" -type $type} data]} return
+	if {[string length $data] == 0} return
+	$w activate $index
+	$w insert active insert $data
+    } else {
+	if {[catch {$w import PRIMARY} data]} return
+	lassign [split $cell ","] row col
+	foreach line $data {
+	    $w set row [format "%d,%d" $row $col] $line
+	    incr row
+	}
     }
 }
 
 #
-# Backwards compatibility
+# ::tktable::InsertSelection --
 #
-namespace import tktable::tk_*
+# This procedure inserts the PRIMARY selection into the active cell at insert position.
+#
+# Arguments:
+# w -		The table window.
+#
+proc ::tktable::InsertSelection {w} {
+    set type [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
+
+    # Abort if widget is disabled
+    if {[$w cget -state] ne "normal"} {
+	return
+    }
+
+    if {[$w activate] ne ""} {
+	if {[catch {selection get -displayof $w -selection "PRIMARY" -type $type} data]} return
+	$w insert active insert $data
+    }
+}
 
 
 #

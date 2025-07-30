@@ -832,17 +832,6 @@ Clears the specified area of tags (all row, column and cell tags).
 Performs all of the above clear functions on the specified area.
 [list_end]
 
-[def "[arg pathName] [method clipboard] [opt [const "export|import"]]"]
-When [option export] is used, the values of the currently selected cells will
-be returned as a string suitable for appending to the clipboard. This joins
-together the cell values by using the [option -colseparator] and
-[option -rowseparator] option values and quote characters defined by the
-[option -quotechar] option value. This is used by the [cmd tk_tableCopy]
-command. When [option import] is used, the contents of the clipboard will be
-retrieved and parsed using the same delimiters and returned as a list where
-each element is a sublist of the values for that row. This is used by the
-[cmd tk_tablePaste] command.
-
 [def "[arg pathName] [method configure] [opt [arg option]] [opt [arg "value option value ..."]]"]
 Query or modify the configuration options of the widget.
 If no [arg option] is specified, returns a list describing all of
@@ -921,6 +910,12 @@ rows before [arg index] will be deleted, otherwise rows after will be deleted.
  Will clear the selection.  Uses the same switches as [method "delete columns"].
 [list_end]
 
+[def "[arg pathName] [method export]"]
+Get the values from the currently selected cells, join them using the
+delimiters [option -colseparator], [option -rowseparator], and quote character
+[option -quotechar] and return as a string. This is used by the
+[cmd tk_tableCopy] command.
+
 [def "[arg pathName] [method focus] [opt [arg index]]"]
 Sets the keyboard navigation focus to cell [arg index]. Activating a cell also
 sets the focus to that cell. Setting the focus does not change the active cell.
@@ -966,6 +961,13 @@ Sets the insertion cursor position in the active cell to index [arg index].
 Without any arguments, the current insertion index is returned. If there is
 no active cell, or the cell or table is disabled, -1 is returned.
 See [sectref "ACTIVE CELL INDEX"] for valid forms of index.
+
+[def "[arg pathName] [method import] [opt selection]"]
+Retrieves the value of selection [arg selection] (default is [const CLIPBOARD]),
+parse it using the delimiters [option -colseparator], [option -rowseparator],
+and quote character [option -quotechar] and return as a list where each element
+is a sublist of the values for that row. This is used by the
+[cmd tk_tablePaste] command.
 
 [def "[arg pathName] [method index] [arg index] [opt [const "row|col"]]"]
 Returns the cell that corresponds to index [arg index] in the form of row,col.

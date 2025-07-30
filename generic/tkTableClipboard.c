@@ -17,7 +17,7 @@
 /*
  *----------------------------------------------------------------------
  *
- * TableSelectionGetSingle --
+ * TableSelectionGet --
  *	This function gets the selected cells from the table, encodes
  *	their values using 1-byte delimiters, and returns the data in
  *	the dynamic string.
@@ -31,7 +31,7 @@
  *----------------------------------------------------------------------
  */
 
-static int TableSelectionGetSingle(
+static int TableSelectionGet(
     Table *tablePtr,
     Tcl_DString *dsPtr) {
 
@@ -202,7 +202,7 @@ static int TableSelectionGetMulti(
 /*
  *----------------------------------------------------------------------
  *
- * TableClipboardExport --
+ * Table_ExportCmd --
  *	This function is called by the user to return the selection in
  *	clipboard format so it can be appended to the clipboard.
  *
@@ -215,9 +215,11 @@ static int TableSelectionGetMulti(
  *----------------------------------------------------------------------
  */
 
-static int TableClipboardExport(
+int Table_ExportCmd(
     ClientData clientData,	/* Information about the table widget. */
-    Tcl_Interp *interp) {	/* TCL interpreter. */
+    Tcl_Interp *interp,		/* TCL interpreter. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *const objv[]) {	/* Argument objects. */
 
     Table *tablePtr = (Table *) clientData;
     char *colsep = tablePtr->colSep, *rowsep = tablePtr->rowSep, *quoteChar = tablePtr->quoteChar;
@@ -225,6 +227,13 @@ static int TableClipboardExport(
     int rlen = (rowsep?((int) strlen(tablePtr->rowSep)):0);
     int qlen = (quoteChar?((int) strlen(tablePtr->quoteChar)):0);
     Tcl_DString ds;
+
+    Tcl_ResetResult(interp);
+
+    if (objc != 2) {
+	Tcl_WrongNumArgs(interp, 2, objv, NULL);
+	return TCL_ERROR;
+    }
 
     /* if we have no data source, abort */
     if (tablePtr->dataSource == DATA_NONE) {
@@ -236,7 +245,7 @@ static int TableClipboardExport(
     /* Get selected data */
     if (clen == 1 && rlen == 1 && qlen == 1) {
 	/* Get cell values using single byte delimiter characters */
-	if (TableSelectionGetSingle(tablePtr, &ds) != TCL_OK) {
+	if (TableSelectionGet(tablePtr, &ds) != TCL_OK) {
 	    Tcl_DStringFree(&ds);
 	    return TCL_ERROR;
 	}
@@ -283,7 +292,7 @@ typedef struct {
 /*
  *----------------------------------------------------------------------
  *
- * Table_ImportHandler --
+ * TableImportHandler --
  *	This function is the handler used by TableClipboardImport to
  *	convert the clipboard data into the list of lists format for
  *	single byte delimiters.
@@ -299,7 +308,7 @@ typedef struct {
  *----------------------------------------------------------------------
  */
 
-int Table_ImportHandler(
+int TableImportHandler(
     ClientData clientData,	/* Info on imported clipboard data and conversion */
     Tcl_Interp *interp,		/* TCL interpreter. */
     const char *portion) {	/* Portion of selection to process. */
@@ -329,7 +338,7 @@ int Table_ImportHandler(
 		continue;
 	    }
 
-	} else if (dPtr->length == 0 && portion[i] == quoteChar[0]) {
+	} else if (!(dPtr->quoted) && dPtr->length == 0 && portion[i] == quoteChar[0]) {
 	    /* Start of quoted cell text */
 	    dPtr->quoted = 1;
 
@@ -376,7 +385,7 @@ int Table_ImportHandler(
 /*
  *----------------------------------------------------------------------
  *
- * Table_ImportHandlerMulti --
+ * TableImportHandlerMulti --
  *	This function is the handler used by TableClipboardImport to
  *	convert the clipboard data into the list of lists format for
  (	multi-bye delimiters.
@@ -392,7 +401,7 @@ int Table_ImportHandler(
  *----------------------------------------------------------------------
  */
 
-int Table_ImportHandlerMulti(
+int TableImportHandlerMulti(
     ClientData clientData,	/* Info on imported clipboard data and conversion */
     Tcl_Interp *interp,		/* TCL interpreter. */
     const char *portion) {	/* Portion of selection to process. */
@@ -478,7 +487,7 @@ int Table_ImportHandlerMulti(
 /*
  *----------------------------------------------------------------------
  *
- * Table_ImportHandlerList --
+ * TableImportHandlerList --
  *	This function is the handler used by TableClipboardImport to
  *	convert the clipboard data into the list of lists format for
  (	multi-bye delimiters.
@@ -494,7 +503,7 @@ int Table_ImportHandlerMulti(
  *----------------------------------------------------------------------
  */
 
-int Table_ImportHandlerList(
+int TableImportHandlerList(
     ClientData clientData,	/* Info on imported clipboard data and conversion */
     Tcl_Interp *interp,		/* TCL interpreter. */
     const char *portion) {	/* Portion of selection to process. */
@@ -512,10 +521,17 @@ int Table_ImportHandlerList(
     return TCL_OK;
 }
 
+static const char *selectTypes[] = {
+    "PRIMARY", "SECONDARY", "CLIPBOARD", (char *)NULL
+};
+enum sel_types {
+    SELECTION_PRIMARY, SELECTION_SECONDARY, SELECTION_CLIPBOARD
+};
+
 /*
  *----------------------------------------------------------------------
  *
- * TableClipboardImport --
+ * Table_ImportCmd --
  *	This function is called by the user when the selection is to be
  *	retrieved from the clipboard and converted into a list of lists
  *	(list of cell values for each row) for insertion into the table.
@@ -530,21 +546,42 @@ int Table_ImportHandlerList(
  *----------------------------------------------------------------------
  */
 
-static int TableClipboardImport(
+int Table_ImportCmd(
     ClientData clientData,	/* Information about the table widget. */
-    Tcl_Interp *interp) {	/* TCL interpreter. */
+    Tcl_Interp *interp,		/* TCL interpreter. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *const objv[]) {	/* Argument objects. */
 
     Table *tablePtr = (Table *) clientData;
-    int result = TCL_OK;
+    int result = TCL_OK, selType = SELECTION_CLIPBOARD;
     size_t clen, rlen, qlen;
     TableGetSelection *dPtr;
+    Atom selection, target;
+
+    Tcl_ResetResult(interp);
+
+    if (objc < 2 || objc > 3) {
+	Tcl_WrongNumArgs(interp, 2, objv, "?selection?");
+	return TCL_ERROR;
+    }
+
+    /* Get selection */
+    if (objc == 4 && Tcl_GetIndexFromObj(interp, objv[3], selectTypes, "type", 0, &selType) != TCL_OK) {
+	return TCL_ERROR;
+    }
 
     /* target is ICCCM type, format is used for transmit */
-    Atom selection = Tk_InternAtom(tablePtr->tkwin, "CLIPBOARD");
+    if (selType == SELECTION_PRIMARY) {
+	selection = XA_PRIMARY;
+    } else if (selType == SELECTION_SECONDARY) {
+	selection = XA_SECONDARY;
+    } else {
+	selection = Tk_InternAtom(tablePtr->tkwin, "CLIPBOARD");
+    }
 #ifndef _WIN32
-    Atom target = Tk_InternAtom(tablePtr->tkwin, "UTF8_STRING");
+    target = Tk_InternAtom(tablePtr->tkwin, "UTF8_STRING");
 #else
-    Atom target = XA_STRING;
+    target = XA_STRING;
 #endif
 
     /* Allocate temp storage for selection conversion data */
@@ -578,22 +615,22 @@ static int TableClipboardImport(
     if (clen == 1 && rlen == 1 && qlen == 1) {
 	/* Use 1-byte delimiters */
 	result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target,
-	    Table_ImportHandler, (ClientData) dPtr);
+	    TableImportHandler, (ClientData) dPtr);
 	if (dPtr->length > 0 && result == TCL_OK) {
-	    Table_ImportHandler((ClientData) dPtr, interp, tablePtr->rowSep);
+	    TableImportHandler((ClientData) dPtr, interp, tablePtr->rowSep);
 	}
 
     } else if (clen == 0 && rlen == 0) {
 	/* List */
 	result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target,
-	    Table_ImportHandlerList, (ClientData) dPtr);
+	    TableImportHandlerList, (ClientData) dPtr);
 
     } else {
 	/* Use multi-byte delimiters */
 	result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target,
-	    Table_ImportHandlerMulti, (ClientData) dPtr);
+	    TableImportHandlerMulti, (ClientData) dPtr);
 	if (dPtr->length > 0 && result == TCL_OK) {
-	    Table_ImportHandlerMulti((ClientData) dPtr, interp, tablePtr->rowSep);
+	    TableImportHandlerMulti((ClientData) dPtr, interp, tablePtr->rowSep);
 	}
     }
 
@@ -615,64 +652,6 @@ cleanup:
 	ckfree(dPtr->buffer);
     }
     ckfree(dPtr);
-    return result;
-}
-
-
-/*
- *----------------------------------------------------------------------
- *
- * Table_ClipboardCmd --
- *	This function is called by the user when the selection is to be
- *	exported or imported from the clipboard. Also used by bindings.
- *
- * Results:
- *	Returns TCL result.
- *
- * Side effects:
- *	Function dependent.
- *
- *----------------------------------------------------------------------
- */
-
-static const char *clpbdCmdNames[] = {
-    "export", "import", (char *)NULL
-};
-enum clipboard {
-    CLIPBOARD_EXPORT, CLIPBOARD_IMPORT
-};
-
-int Table_ClipboardCmd(
-    ClientData clientData,	/* Information about the table widget. */
-    Tcl_Interp *interp,		/* TCL interpreter. */
-    int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[]) {	/* Argument objects. */
-
-    Table *tablePtr = (Table *) clientData;
-    int result = TCL_OK, cmdIndex;
-
-    Tcl_ResetResult(interp);
-
-    if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "option");
-	return TCL_ERROR;
-    }
-
-    /* parse the first parameter */
-    if (Tcl_GetIndexFromObj(interp, objv[2], clpbdCmdNames, "option", 0, &cmdIndex) != TCL_OK) {
-	return TCL_ERROR;
-    }
-
-    switch ((enum bdCmd) cmdIndex) {
-	case CLIPBOARD_EXPORT:
-	    /* Make currently selected cell values available to clipboard */
-	    result = TableClipboardExport(clientData, interp);
-	    break;
-	case CLIPBOARD_IMPORT:
-	    /* Get data from clipboard, parse it, and return as a list of lists */
-	    result = TableClipboardImport(clientData, interp);
-	    break;
-    }
     return result;
 }
 

@@ -524,7 +524,9 @@ extern void	TableSetActiveIndex(Table *tablePtr);
  * HEADERS IN tkTableClipboard.c
  */
 extern void	TableLostSelection(ClientData clientData);
-extern int	Table_ClipboardCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+extern int	Table_ExportCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+			Tcl_Obj *const objv[]);
+extern int	Table_ImportCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 			Tcl_Obj *const objv[]);
 extern void	TableRegisterSelectionHandlers(ClientData clientData);
 extern void 	TableDeregisterSelectionHandlers(ClientData clientData);

@@ -988,16 +988,6 @@ that is interpreted as row 2 and column 0.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">clear all</b> <span class="opt">?<i class="arg">first</i>?</span> <span class="opt">?<i class="arg">last</i>?</span></dt>
 <dd><p>Performs all of the above clear functions on the specified area.</p></dd>
 </dl></dd>
-<dt><i class="arg">pathName</i> <b class="method">clipboard</b> <span class="opt">?<b class="const">export|import</b>?</span></dt>
-<dd><p>When <b class="option">export</b> is used, the values of the currently selected cells will
-be returned as a string suitable for appending to the clipboard. This joins
-together the cell values by using the <b class="option">-colseparator</b> and
-<b class="option">-rowseparator</b> option values and quote characters defined by the
-<b class="option">-quotechar</b> option value. This is used by the <b class="cmd">tk_tableCopy</b>
-command. When <b class="option">import</b> is used, the contents of the clipboard will be
-retrieved and parsed using the same delimiters and returned as a list where
-each element is a sublist of the values for that row. This is used by the
-<b class="cmd">tk_tablePaste</b> command.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">configure</b> <span class="opt">?<i class="arg">option</i>?</span> <span class="opt">?<i class="arg">value option value ...</i>?</span></dt>
 <dd><p>Query or modify the configuration options of the widget.
 If no <i class="arg">option</i> is specified, returns a list describing all of
@@ -1064,6 +1054,11 @@ to 1 (only delete row <i class="arg">index</i>).  If <i class="arg">count</i> is
 rows before <i class="arg">index</i> will be deleted, otherwise rows after will be deleted.
  Will clear the selection.  Uses the same switches as <b class="method">delete columns</b>.</p></dd>
 </dl></dd>
+<dt><i class="arg">pathName</i> <b class="method">export</b></dt>
+<dd><p>Get the values from the currently selected cells, join them using the
+delimiters <b class="option">-colseparator</b>, <b class="option">-rowseparator</b>, and quote character
+<b class="option">-quotechar</b> and return as a string. This is used by the
+<b class="cmd">tk_tableCopy</b> command.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">focus</b> <span class="opt">?<i class="arg">index</i>?</span></dt>
 <dd><p>Sets the keyboard navigation focus to cell <i class="arg">index</i>. Activating a cell also
 sets the focus to that cell. Setting the focus does not change the active cell.
@@ -1104,6 +1099,12 @@ See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms
 Without any arguments, the current insertion index is returned. If there is
 no active cell, or the cell or table is disabled, -1 is returned.
 See <span class="sectref"><a href="#section6">ACTIVE CELL INDEX</a></span> for valid forms of index.</p></dd>
+<dt><i class="arg">pathName</i> <b class="method">import</b> <span class="opt">?selection?</span></dt>
+<dd><p>Retrieves the value of selection <i class="arg">selection</i> (default is <b class="const">CLIPBOARD</b>),
+parse it using the delimiters <b class="option">-colseparator</b>, <b class="option">-rowseparator</b>,
+and quote character <b class="option">-quotechar</b> and return as a list where each element
+is a sublist of the values for that row. This is used by the
+<b class="cmd">tk_tablePaste</b> command.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">index</b> <i class="arg">index</i> <span class="opt">?<b class="const">row|col</b>?</span></dt>
 <dd><p>Returns the cell that corresponds to index <i class="arg">index</i> in the form of row,col.
 If <b class="const">row</b> or <b class="const">col</b> is specified, then only the row or column index
@@ -1190,7 +1191,7 @@ corner of the rectangle of cells and <i class="arg">last</i> is the bottom right
 Option <i class="arg">last</i> defaults to <i class="arg">first</i>'s value.
 See <span class="sectref"><a href="#section5">INDICES</a></span> for valid forms of index.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">selection size</b></dt>
-<dd><p>Returns number of selected cells.</p></dd>
+<dd><p>Returns the number of selected cells.</p></dd>
 </dl></dd>
 <dt><i class="arg">pathName</i> <b class="method">set</b> <b class="method">row|col</b> <i class="arg">index</i> <span class="opt">?<i class="arg">value</i>?</span> <span class="opt">?<i class="arg">index value ...</i>?</span></dt>
 <dd><p>Sets each cell <i class="arg">index</i> to the following <i class="arg">value</i>.  Table validation will

@@ -1448,17 +1448,6 @@ Clears the specified area of tags (all row, column and cell tags)\&.
 Performs all of the above clear functions on the specified area\&.
 .RE
 .TP
-\fIpathName\fR \fBclipboard\fR ?\fBexport|import\fR?
-When \fBexport\fR is used, the values of the currently selected cells will
-be returned as a string suitable for appending to the clipboard\&. This joins
-together the cell values by using the \fB-colseparator\fR and
-\fB-rowseparator\fR option values and quote characters defined by the
-\fB-quotechar\fR option value\&. This is used by the \fBtk_tableCopy\fR
-command\&. When \fBimport\fR is used, the contents of the clipboard will be
-retrieved and parsed using the same delimiters and returned as a list where
-each element is a sublist of the values for that row\&. This is used by the
-\fBtk_tablePaste\fR command\&.
-.TP
 \fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value \&.\&.\&.\fR?
 Query or modify the configuration options of the widget\&.
 If no \fIoption\fR is specified, returns a list describing all of
@@ -1538,6 +1527,12 @@ rows before \fIindex\fR will be deleted, otherwise rows after will be deleted\&.
 Will clear the selection\&.  Uses the same switches as \fBdelete columns\fR\&.
 .RE
 .TP
+\fIpathName\fR \fBexport\fR
+Get the values from the currently selected cells, join them using the
+delimiters \fB-colseparator\fR, \fB-rowseparator\fR, and quote character
+\fB-quotechar\fR and return as a string\&. This is used by the
+\fBtk_tableCopy\fR command\&.
+.TP
 \fIpathName\fR \fBfocus\fR ?\fIindex\fR?
 Sets the keyboard navigation focus to cell \fIindex\fR\&. Activating a cell also
 sets the focus to that cell\&. Setting the focus does not change the active cell\&.
@@ -1583,6 +1578,13 @@ Sets the insertion cursor position in the active cell to index \fIindex\fR\&.
 Without any arguments, the current insertion index is returned\&. If there is
 no active cell, or the cell or table is disabled, -1 is returned\&.
 See \fBACTIVE CELL INDEX\fR for valid forms of index\&.
+.TP
+\fIpathName\fR \fBimport\fR ?selection?
+Retrieves the value of selection \fIselection\fR (default is \fBCLIPBOARD\fR),
+parse it using the delimiters \fB-colseparator\fR, \fB-rowseparator\fR,
+and quote character \fB-quotechar\fR and return as a list where each element
+is a sublist of the values for that row\&. This is used by the
+\fBtk_tablePaste\fR command\&.
 .TP
 \fIpathName\fR \fBindex\fR \fIindex\fR ?\fBrow|col\fR?
 Returns the cell that corresponds to index \fIindex\fR in the form of row,col\&.
@@ -1686,7 +1688,7 @@ Option \fIlast\fR defaults to \fIfirst\fR's value\&.
 See \fBINDICES\fR for valid forms of index\&.
 .TP
 \fIpathName\fR \fBselection size\fR
-Returns number of selected cells\&.
+Returns the number of selected cells\&.
 .RE
 .TP
 \fIpathName\fR \fBset\fR \fBrow|col\fR \fIindex\fR ?\fIvalue\fR? ?\fIindex value \&.\&.\&.\fR?

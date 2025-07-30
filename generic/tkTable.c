@@ -46,9 +46,9 @@ static void	TableDisplay(ClientData clientdata);
  * enumerated types used to dispatch the widget command.
  */
 static const char *commandNames[] = {
-    "activate", "bbox", "border", "cget", "clear", "clipboard", "configure", "curselection",
-    "curvalue", "delete", "focus", "get", "get2", "height", "hidden", "icursor",
-    "index", "insert",
+    "activate", "bbox", "border", "cget", "clear", "configure", "curselection",
+    "curvalue", "delete", "export", "focus", "get", "get2", "height", "hidden",
+    "icursor", "import", "index", "insert",
 #ifdef POSTSCRIPT
     "postscript",
 #endif
@@ -56,9 +56,9 @@ static const char *commandNames[] = {
     "version", "window", "width", "xview", "yview", (char *)NULL
 };
 enum command {
-    CMD_ACTIVATE, CMD_BBOX, CMD_BORDER, CMD_CGET, CMD_CLEAR, CMD_CLIPBOARD, CMD_CONFIGURE, CMD_CURSEL,
-    CMD_CURVALUE, CMD_DELETE, CMD_FOCUS, CMD_GET, CMD_GET2, CMD_HEIGHT, CMD_HIDDEN, CMD_ICURSOR,
-    CMD_INDEX, CMD_INSERT,
+    CMD_ACTIVATE, CMD_BBOX, CMD_BORDER, CMD_CGET, CMD_CLEAR, CMD_CONFIGURE, CMD_CURSEL,
+    CMD_CURVALUE, CMD_DELETE, CMD_EXPORT, CMD_FOCUS, CMD_GET, CMD_GET2, CMD_HEIGHT,
+    CMD_HIDDEN, CMD_ICURSOR, CMD_IMPORT, CMD_INDEX, CMD_INSERT,
 #ifdef POSTSCRIPT
     CMD_POSTSCRIPT,
 #endif
@@ -893,10 +893,6 @@ static int TableWidgetObjCmd(
 	    result = Table_ClearCmd(clientData, interp, objc, objv);
 	    break;
 
-	case CMD_CLIPBOARD:
-	    result = Table_ClipboardCmd(clientData, interp, objc, objv);
-	    break;
-
 	case CMD_CONFIGURE:
 	    if (objc < 4) {
 		result = Tk_ConfigureInfo(interp, tablePtr->tkwin, tableSpecs,
@@ -919,6 +915,10 @@ static int TableWidgetObjCmd(
 	case CMD_DELETE:
 	case CMD_INSERT:
 	    result = Table_EditCmd(clientData, interp, objc, objv);
+	    break;
+
+	case CMD_EXPORT:
+	    result = Table_ExportCmd(clientData, interp, objc, objv);
 	    break;
 
 	case CMD_FOCUS:
@@ -960,6 +960,10 @@ static int TableWidgetObjCmd(
 		TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
 	    }
 	    Tcl_SetObjResult(interp, Tcl_NewIntObj(tablePtr->icursor));
+	    break;
+
+	case CMD_IMPORT:
+	    result = Table_ImportCmd(clientData, interp, objc, objv);
 	    break;
 
 	case CMD_INDEX: {
