@@ -32,15 +32,21 @@
  */
 
 static int TableSelectionGet(
-    Table *tablePtr,
-    Tcl_DString *dsPtr) {
+    Table *tablePtr,		/* Information about the table widget. */
+    Tcl_Interp *interp,		/* TCL interpreter. */
+    Tcl_DString *dsPtr,		/* Dynamic string to store selection in. */
+    int *numrows,		/* Return number of rows */
+    int *numcols) {		/* Return number of columns */
 
     Tcl_Size dlen, i, llen;
     char special[5];
-    Tcl_Obj *listPtr, *itemPtr;
+    Tcl_Obj *itemsPtr, *itemPtr;
     const char *data;
     char *colsep = tablePtr->colSep, *rowsep = tablePtr->rowSep, *quoteChar = tablePtr->quoteChar;
-    int col, row, prev = 0;
+    int col, row, prev = 0, cols = 1, rows = 1;
+    *numrows = 0;
+    *numcols = 0;
+
 
     /* Set special characters */
     special[0] = colsep[0];
@@ -50,17 +56,16 @@ static int TableSelectionGet(
     special[4] = '\0';
 
     /* Get selected cells  */
-    listPtr = TableGetSortedIndices(tablePtr->selCells);
-    if (Tcl_ListObjLength(tablePtr->interp, listPtr, &llen) == TCL_ERROR || llen == 0) {
+    itemsPtr = TableGetSortedIndices(tablePtr->selCells);
+    if (Tcl_ListObjLength(interp, itemsPtr, &llen) == TCL_ERROR) {
 	return TCL_ERROR;
     }
 
     /* Get cell values and convert to string using delimiters */
     for (i = 0; i < llen; i++) {
 	/* Get cell index */
-	if (Tcl_ListObjIndex(tablePtr->interp, listPtr, i, &itemPtr) == TCL_OK) {
-	    TableParseArrayIndex(&row, &col, Tcl_GetString(itemPtr));
-	} else {
+	if (Tcl_ListObjIndex(interp, itemsPtr, i, &itemPtr) != TCL_OK ||
+	    TableParseArrayIndex(&row, &col, Tcl_GetString(itemPtr)) != 2) {
 	    break;
 	}
 
@@ -72,8 +77,11 @@ static int TableSelectionGet(
 	if (i > 0) {
 	    if (row == prev) {
 		Tcl_DStringAppend(dsPtr, colsep, 1);
+		cols++;
 	    } else {
 		Tcl_DStringAppend(dsPtr, rowsep, 1);
+		cols = 1;
+		rows++;
 	    }
 	}
 
@@ -92,11 +100,17 @@ static int TableSelectionGet(
 	    Tcl_DStringAppend(dsPtr, quoteChar, 1);
 	}
 	prev = row;
+	if (cols > *numcols) {
+	    *numcols = cols;
+	}
+	if (rows > *numrows) {
+	    *numrows = rows;
+	}
     }
 
     /* Clean-up */
-    Tcl_IncrRefCount(listPtr);
-    Tcl_DecrRefCount(listPtr);
+    Tcl_IncrRefCount(itemsPtr);
+    Tcl_DecrRefCount(itemsPtr);
     return TCL_OK;
 }
 
@@ -118,33 +132,35 @@ static int TableSelectionGet(
  */
 
 static int TableSelectionGetMulti(
-    Table *tablePtr,
-    Tcl_DString *dsPtr) {
+    Table *tablePtr,		/* Information about the table widget. */
+    Tcl_Interp *interp,		/* TCL interpreter. */
+    Tcl_DString *dsPtr,		/* Dynamic string to store selection in. */
+    int *numrows,		/* Return number of rows */
+    int *numcols) {		/* Return number of columns */
 
     Tcl_Size dlen, i, llen, rlen, clen, qlen, len = 0;
-    Tcl_Obj *listPtr, *itemPtr;
+    Tcl_Obj *itemsPtr, *itemPtr;
     const char *data, *end, *element;
-    int col, row, prev = 0, quoted = 0, res = TCL_OK;
+    int col, row, prev = 0, quoted = 0, res = TCL_OK, cols = 1, rows = 1;
     Tcl_UniChar rchar = 0, cchar = 0, qchar = 0, val;
+    *numrows = 0;
+    *numcols = 0;
 
     rlen = (tablePtr->rowSep ? Tcl_UtfToUniChar(tablePtr->rowSep, &rchar) : 0);
     clen = (tablePtr->colSep ? Tcl_UtfToUniChar(tablePtr->colSep, &cchar) : 0);
     qlen = (tablePtr->quoteChar ? Tcl_UtfToUniChar(tablePtr->quoteChar, &qchar) : 0);
 
     /* Get selected cells  */
-    listPtr = TableGetSortedIndices(tablePtr->selCells);
-    if (Tcl_ListObjLength(tablePtr->interp, listPtr, &llen) == TCL_ERROR || llen == 0) {
+    itemsPtr = TableGetSortedIndices(tablePtr->selCells);
+    if (Tcl_ListObjLength(interp, itemsPtr, &llen) == TCL_ERROR) {
 	return TCL_ERROR;
     }
 
     /* Get cell values and convert to string using delimiters */
     for (i = 0; i < llen; i++) {
 	/* Get cell index */
-	if (Tcl_ListObjIndex(tablePtr->interp, listPtr, i, &itemPtr) == TCL_OK) {
-	    TableParseArrayIndex(&row, &col, Tcl_GetString(itemPtr));
-	    Tcl_IncrRefCount(itemPtr);
-	    Tcl_DecrRefCount(itemPtr);
-	} else {
+	if (Tcl_ListObjIndex(interp, itemsPtr, i, &itemPtr) != TCL_OK ||
+	    TableParseArrayIndex(&row, &col, Tcl_GetString(itemPtr)) != 2) {
 	    res = TCL_ERROR;
 	    break;
 	}
@@ -158,8 +174,11 @@ static int TableSelectionGetMulti(
 	if (i > 0) {
 	    if (row == prev) {
 		Tcl_DStringAppend(dsPtr, tablePtr->colSep, clen);
+		cols++;
 	    } else {
 		Tcl_DStringAppend(dsPtr, tablePtr->rowSep, rlen);
+		cols = 1;
+		rows++;
 	    }
 	}
 
@@ -191,12 +210,165 @@ static int TableSelectionGetMulti(
 	    Tcl_DStringAppend(dsPtr, tablePtr->quoteChar, qlen);
 	}
 	prev = row;
+	if (cols > *numcols) {
+	    *numcols = cols;
+	}
+	if (rows > *numrows) {
+	    *numrows = rows;
+	}
     }
 
     /* Clean-up */
-    Tcl_IncrRefCount(listPtr);
-    Tcl_DecrRefCount(listPtr);
+    Tcl_IncrRefCount(itemsPtr);
+    Tcl_DecrRefCount(itemsPtr);
     return res;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * TableSelectionGetList --
+ *	This function gets the selected cells from the table, encodes
+ *	their values as a list of lists, and returns the data
+ *	in the dynamic string.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	See the user documentation.
+ *
+ *--------------------------------------------------------------
+ */
+int TableSelectionGetList(
+    Table *tablePtr,		/* Information about the table widget. */
+    Tcl_Interp *interp,		/* TCL interpreter. */
+    Tcl_DString *dsPtr,		/* Dynamic string to store selection in. */
+    int *numrows,		/* Return number of rows */
+    int *numcols) {		/* Return number of columns */
+
+    int row, col, prev = 0, cols = 1, res = TCL_OK;
+    Tcl_Obj *itemsPtr = NULL, *itemPtr = NULL, *listPtr = NULL, *resultPtr = NULL;
+    Tcl_Size len;
+    char *data;
+    *numrows = 0;
+    *numcols = 0;
+
+    /* Get selected cells  */
+    itemsPtr = TableGetSortedIndices(tablePtr->selCells);
+    if (Tcl_ListObjLength(interp, itemsPtr, &len) != TCL_OK ||
+	    (listPtr = Tcl_NewListObj(0, NULL)) == NULL ||
+	    (resultPtr = Tcl_NewListObj(0, NULL)) == NULL) {
+	res = TCL_ERROR;
+	goto done;
+    }
+
+    /* Get values from cells and append to result by row */
+    for (Tcl_Size i = 0; i < len; i++) {
+	if (Tcl_ListObjIndex(interp, itemsPtr, i, &itemPtr) == TCL_OK &&
+		TableParseArrayIndex(&row, &col, Tcl_GetString(itemPtr)) == 2) {
+	    if (i > 0 && row != prev) {
+		Tcl_ListObjAppendElement(interp, resultPtr, listPtr);
+		if ((listPtr = Tcl_NewListObj(0, NULL)) == NULL) {
+		    res = TCL_ERROR;
+		    goto done;
+		}
+		numrows++;
+		cols = 1;
+	    }
+	    itemPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1);
+	    if (itemPtr != NULL) {
+		Tcl_ListObjAppendElement(interp, listPtr, itemPtr);
+		cols++;
+	    } else {
+		res = TCL_ERROR;
+		goto done;
+	    }
+	    prev = row;
+	    if (cols > *numcols) {
+		*numcols = cols;
+	    }
+	} else {
+	    res = TCL_ERROR;
+	    goto done;
+	}
+    }
+    Tcl_ListObjLength(interp, listPtr, &len);
+    if (len > 0) {
+	Tcl_ListObjAppendElement(interp, resultPtr, listPtr);
+	numrows++;
+    }
+
+    /* Convert result to DString */
+    data = Tcl_GetStringFromObj(resultPtr, &len);
+    if (data != NULL) {
+	Tcl_DStringAppend(dsPtr, data, len);
+    }
+
+done:
+    if (itemsPtr != NULL) {
+	Tcl_IncrRefCount(itemsPtr);
+	Tcl_DecrRefCount(itemsPtr);
+    }
+    if (listPtr != NULL) {
+	Tcl_IncrRefCount(listPtr);
+	Tcl_DecrRefCount(listPtr);
+    }
+    if (resultPtr != NULL) {
+	Tcl_IncrRefCount(resultPtr);
+	Tcl_DecrRefCount(resultPtr);
+    }
+    return res;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TableSelectionGetDstring --
+ *	This function is used to get the selected active cell text or
+ *	table cell values as a DString. The latter are joined using the
+ *	column, row, and quote options.
+ *
+ * Results:
+ *	Returns TCL result with interp result set to selected data.
+ *
+ * Side effects:
+ *	None
+ *
+ *----------------------------------------------------------------------
+ */
+
+int TableSelectionGetDstring(
+    Table *tablePtr,		/* Information about the table widget. */
+    Tcl_Interp *interp,		/* TCL interpreter. */
+    Tcl_DString *ds,		/* Dynamic string to store selection in. */
+    int *numrows,		/* Return number of rows */
+    int *numcols) {		/* Return number of columns */
+
+    int clen = (tablePtr->colSep ? ((int) strlen(tablePtr->colSep)) : 0);
+    int rlen = (tablePtr->rowSep ? ((int) strlen(tablePtr->rowSep)) : 0);
+    int qlen = (tablePtr->quoteChar ? ((int) strlen(tablePtr->quoteChar)) : 0);
+
+    /* Get selected data */
+    if (clen == 1 && rlen == 1 && qlen == 1) {
+	/* Get cell values using single byte delimiter characters */
+	if (TableSelectionGet(tablePtr, interp, ds, numrows, numcols) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+
+    } else if (clen == 0 && rlen == 0) {
+	/* Get cell values in list format */
+	if (TableSelectionGetList(tablePtr, interp, ds, numrows, numcols) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+
+    } else {
+	/* Get cell values using multi-byte delimiter characters */
+	if (TableSelectionGetMulti(tablePtr, interp, ds, numrows, numcols) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+    }
+    return TCL_OK;
 }
 
 /*
@@ -222,10 +394,7 @@ int Table_ExportCmd(
     Tcl_Obj *const objv[]) {	/* Argument objects. */
 
     Table *tablePtr = (Table *) clientData;
-    char *colsep = tablePtr->colSep, *rowsep = tablePtr->rowSep, *quoteChar = tablePtr->quoteChar;
-    int clen = (colsep?((int) strlen(tablePtr->colSep)):0);
-    int rlen = (rowsep?((int) strlen(tablePtr->rowSep)):0);
-    int qlen = (quoteChar?((int) strlen(tablePtr->quoteChar)):0);
+    int numrows, numcols;
     Tcl_DString ds;
 
     Tcl_ResetResult(interp);
@@ -240,35 +409,13 @@ int Table_ExportCmd(
 	return -1;
     }
 
-    Tcl_DStringInit(&ds);
-
     /* Get selected data */
-    if (clen == 1 && rlen == 1 && qlen == 1) {
-	/* Get cell values using single byte delimiter characters */
-	if (TableSelectionGet(tablePtr, &ds) != TCL_OK) {
-	    Tcl_DStringFree(&ds);
-	    return TCL_ERROR;
-	}
-
-    } else if (clen == 0 && rlen == 0) {
-	/* Get cell values in list format */
-	Tcl_Obj *objv[3];
-	Tcl_DStringFree(&ds);
-	
-	if ((objv[2] = TableGetSortedIndices(tablePtr->selCells)) == NULL ||
-		Table_Get2Cmd(clientData, interp, 3, objv) != TCL_OK) {
-	    return TCL_ERROR;
-	}
-	return TCL_OK;
-
+    Tcl_DStringInit(&ds);
+    if (TableSelectionGetDstring(tablePtr, interp, &ds, &numrows, &numcols) == TCL_OK) {
+	Tcl_DStringResult(interp, &ds);
     } else {
-	/* Get cell values using multi-byte delimiter characters */
-	if (TableSelectionGetMulti(tablePtr, &ds) != TCL_OK) {
-	    Tcl_DStringFree(&ds);
-	    return TCL_ERROR;
-	}
+	Tcl_DStringFree(&ds);
     }
-    Tcl_DStringResult(interp, &ds);
     return TCL_OK;
 }
 
@@ -557,6 +704,7 @@ int Table_ImportCmd(
     size_t clen, rlen, qlen;
     TableGetSelection *dPtr;
     Atom selection, target;
+    Tcl_Size len;
 
     Tcl_ResetResult(interp);
 
@@ -566,7 +714,7 @@ int Table_ImportCmd(
     }
 
     /* Get selection */
-    if (objc == 4 && Tcl_GetIndexFromObj(interp, objv[3], selectTypes, "type", 0, &selType) != TCL_OK) {
+    if (objc == 3 && Tcl_GetIndexFromObj(interp, objv[2], selectTypes, "type", 0, &selType) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -616,7 +764,8 @@ int Table_ImportCmd(
 	/* Use 1-byte delimiters */
 	result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target,
 	    TableImportHandler, (ClientData) dPtr);
-	if (dPtr->length > 0 && result == TCL_OK) {
+	Tcl_ListObjLength(interp, dPtr->listPtr, &len);
+	if ((dPtr->length > 0 && result == TCL_OK) || len > 0) {
 	    TableImportHandler((ClientData) dPtr, interp, tablePtr->rowSep);
 	}
 
@@ -629,7 +778,8 @@ int Table_ImportCmd(
 	/* Use multi-byte delimiters */
 	result = Tk_GetSelection(interp, tablePtr->tkwin, selection, target,
 	    TableImportHandlerMulti, (ClientData) dPtr);
-	if (dPtr->length > 0 && result == TCL_OK) {
+	Tcl_ListObjLength(interp, dPtr->listPtr, &len);
+	if ((dPtr->length > 0 && result == TCL_OK) || len > 0) {
 	    TableImportHandlerMulti((ClientData) dPtr, interp, tablePtr->rowSep);
 	}
     }
@@ -752,11 +902,8 @@ Tcl_Size TableFetchSelection(
 
     Table *tablePtr = (Table *) clientData;
     Tcl_Interp *interp = tablePtr->interp;
-    char *data, *rowsep = tablePtr->rowSep, *colsep = tablePtr->colSep;
-    int lastrow=0, needcs=0, r, c, rslen=0, cslen=0;
-    Tcl_Size count, length, index;
+    Tcl_Size count, length;
     int numcols, numrows;
-    Tcl_Obj *listPtr, *objPtr;
 
     /* if we are not exporting the selection or we have no data source, abort */
     if (!tablePtr->exportSelection || (tablePtr->dataSource == DATA_NONE)) {
@@ -772,76 +919,40 @@ Tcl_Size TableFetchSelection(
 	    tablePtr->haveSelection = 0;
 	}
 
-	/* First get a sorted list of the selected elements */
-	listPtr = TableGetSortedIndices(tablePtr->selCells);
-	Tcl_ListObjLength(interp, listPtr, &length);
-
-	/* Abort if no data or conversion to list fails */
-	if (listPtr == NULL || length == 0) {
-	    return -1;
-	}
-
-	/* Add elements to selection */
 	Tcl_DStringInit(&tablePtr->selection);
 	tablePtr->haveSelection = 1;
-	rslen = (rowsep?((int) strlen(rowsep)):0);
-	cslen = (colsep?((int) strlen(colsep)):0);
-	numrows = numcols = 0;
-	for (index = 0; index < length; index++) {
-	    Tcl_ListObjIndex(interp, listPtr, index, &objPtr);
-	    TableParseArrayIndex(&r, &c, Tcl_GetString(objPtr));
-	    if (index) {
-		if (lastrow != r) {
-		    lastrow = r;
-		    needcs = 0;
-		    if (rslen) {
-			Tcl_DStringAppend(&tablePtr->selection, rowsep, (Tcl_Size)rslen);
-		    } else {
-			Tcl_DStringEndSublist(&tablePtr->selection);
-			Tcl_DStringStartSublist(&tablePtr->selection);
-		    }
-		    ++numrows;
-		} else {
-		    if (++needcs > numcols)
-			numcols = needcs;
-		}
-	    } else {
-		lastrow = r;
-		needcs = 0;
-		if (!rslen) {
-		    Tcl_DStringStartSublist(&tablePtr->selection);
-		}
-	    }
-	    data = TableGetCellValue(tablePtr, r, c);
-	    if (cslen) {
-		if (needcs) {
-		    Tcl_DStringAppend(&tablePtr->selection, colsep, (Tcl_Size)cslen);
-		}
-		Tcl_DStringAppend(&tablePtr->selection, data, -1);
-	    } else {
-		Tcl_DStringAppendElement(&tablePtr->selection, data);
+
+	/* Get active cell selection or selected cells */
+	if (tablePtr->selectFirst != -1 && tablePtr->selectLast != -1) {
+	    const char *start = Tcl_UtfAtIndex(tablePtr->activeBuf, tablePtr->selectFirst);
+	    const char *end = Tcl_UtfAtIndex(tablePtr->activeBuf, tablePtr->selectLast);
+	    Tcl_DStringAppend(&tablePtr->selection, start, (Tcl_Size) (end - start));
+
+	} else {
+	    if (TableSelectionGetDstring(tablePtr, interp, &tablePtr->selection, &numrows,
+		    &numcols) != TCL_OK) {
+		Tcl_DStringFree(&tablePtr->selection);
+		tablePtr->haveSelection = 0;
+		return -1;
 	    }
 	}
-	if (!rslen && index > 0) {
-	    Tcl_DStringEndSublist(&tablePtr->selection);
-	}
+	length = Tcl_DStringLength(&tablePtr->selection);
 
 	if (tablePtr->selCmd != NULL) {
 	    int code;
 	    Tcl_DString script;
 	    Tcl_DStringInit(&script);
 	    ExpandPercents(tablePtr, tablePtr->selCmd, numrows+1, numcols+1,
-		    Tcl_DStringValue(&tablePtr->selection), (char *)NULL,
-		    length, &script, 0);
-	    if ((code = Tcl_EvalEx(interp, Tcl_DStringValue(&script), -1, TCL_EVAL_GLOBAL)) == TCL_ERROR) {
+		Tcl_DStringValue(&tablePtr->selection), (char *)NULL, length, &script, 0);
+	    if ((code = Tcl_EvalEx(interp, Tcl_DStringValue(&script), -1, TCL_EVAL_GLOBAL)) == TCL_OK) {
+		Tcl_DStringGetResult(interp, &tablePtr->selection);
+	    } else {
 		Tcl_AddErrorInfo(interp, "\n    (error in table selection command)");
 		Tcl_BackgroundException(interp, code);
 		Tcl_DStringFree(&script);
 		Tcl_DStringFree(&tablePtr->selection);
 		tablePtr->haveSelection = 0;
 		return -1;
-	    } else {
-		Tcl_DStringGetResult(interp, &tablePtr->selection);
 	    }
 	    Tcl_DStringFree(&script);
 	}

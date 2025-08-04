@@ -1088,8 +1088,8 @@ int Table_GetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
  */
 int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int r1, c1, r2, c2, row, col;
-    Tcl_Obj *itemPtr = NULL, *objPtr = NULL, *listPtr = NULL, *resultPtr = NULL;
+    int row, col;
+    Tcl_Obj *itemPtr = NULL, *listPtr = NULL, *resultPtr = NULL;
 
     if (objc < 3 || objc > 4) {
 	Tcl_WrongNumArgs(interp, 2, objv, "first|list ?last?");
@@ -1102,29 +1102,30 @@ int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	int prev = 0;
 
 	if (Tcl_ListObjLength(interp, objv[2], &len) != TCL_OK ||
-		(resultPtr = Tcl_NewListObj(0, NULL)) == NULL ||
-		(listPtr = Tcl_NewListObj(0, NULL)) == NULL) {
+		(listPtr = Tcl_NewListObj(0, NULL)) == NULL ||
+		(resultPtr = Tcl_NewListObj(0, NULL)) == NULL) {
 	    goto abort;
 	}
 
 	for (Tcl_Size i = 0; i < len; i++) {
 	    if (Tcl_ListObjIndex(interp, objv[2], i, &itemPtr) == TCL_OK &&
 		    TableParseArrayIndex(&row, &col, Tcl_GetString(itemPtr)) == 2) {
+		Tcl_IncrRefCount(itemPtr);
+		Tcl_DecrRefCount(itemPtr);
+		itemPtr = NULL;
 		if (i > 0 && row != prev) {
 		    Tcl_ListObjAppendElement(interp, resultPtr, listPtr);
 		    if ((listPtr = Tcl_NewListObj(0, NULL)) == NULL) {
 			goto abort;
 		    }
 		}
-		objPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1);
-		if (objPtr != NULL) {
-		    Tcl_ListObjAppendElement(interp, listPtr, objPtr);
+		itemPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1);
+		if (itemPtr != NULL) {
+		    Tcl_ListObjAppendElement(interp, listPtr, itemPtr);
 		} else {
 		    goto abort;
 		}
 		prev = row;
-		Tcl_IncrRefCount(itemPtr);
-		Tcl_DecrRefCount(itemPtr);
 	    } else {
 		goto abort;
 	    }
@@ -1136,6 +1137,8 @@ int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 
     } else {
 	/* Range of cells */
+	int r1, c1, r2, c2;
+
 	if (TableGetIndexObj(tablePtr, objv[2], &r1, &c1) == TCL_ERROR ||
 	    TableGetIndexObj(tablePtr, objv[3], &r2, &c2) == TCL_ERROR ||
 	    (resultPtr = Tcl_NewListObj(abs(r2-r1)+1, NULL)) == NULL) {
@@ -1150,8 +1153,8 @@ int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 		goto abort;
 	    }
 	    for (col = c1; col <= c2; col++) {
-		if ((objPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr,row,col),-1)) == NULL
-		    || Tcl_ListObjAppendElement(interp, listPtr, objPtr) != TCL_OK) {
+		if ((itemPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr,row,col),-1)) == NULL
+		    || Tcl_ListObjAppendElement(interp, listPtr, itemPtr) != TCL_OK) {
 		    goto abort;
 		}
 	    }
@@ -1165,10 +1168,6 @@ abort:
     if (itemPtr != NULL) {
 	Tcl_IncrRefCount(itemPtr);
 	Tcl_DecrRefCount(itemPtr);
-    }
-    if (objPtr != NULL) {
-	Tcl_IncrRefCount(objPtr);
-	Tcl_DecrRefCount(objPtr);
     }
     if (listPtr != NULL) {
 	Tcl_IncrRefCount(listPtr);

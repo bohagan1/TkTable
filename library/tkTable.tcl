@@ -802,6 +802,7 @@ proc ::tktable::B1Release {w x y} {
     if {$Priv(borderInfo) eq "" && [winfo exists $w]} {
 	::tktable::CancelRepeat
     }
+    set Priv(mouseMoved) 0
 }
 
 #
@@ -1601,7 +1602,7 @@ proc ::tktable::TablePasteSelection {w x y} {
     variable Priv
     set type [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
 
-    # Abort if widget is disabled
+    # Abort if doing scan/drag or widget is disabled
     if {$Priv(mouseMoved) || [$w cget -state] ne "normal"} {
 	return
     }
