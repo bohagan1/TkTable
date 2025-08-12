@@ -356,6 +356,7 @@ int Table_AdjustCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    Tcl_AppendElement(interp, buf1);
 	    entryPtr = Tcl_NextHashEntry(&search);
 	}
+
     } else if (objc == 3) {
 	/* get the width/height of a particular row/col */
 	if (Tcl_GetIntFromObj(interp, objv[2], &posn) != TCL_OK) {
@@ -365,11 +366,12 @@ int Table_AdjustCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	posn -= offset;
 	entryPtr = Tcl_FindHashEntry(hashTablePtr, INT2PTR(posn));
 	if (entryPtr != NULL) {
-	    Tcl_SetIntObj(Tcl_GetObjResult(interp), PTR2INT(Tcl_GetHashValue(entryPtr)));
+	    Tcl_SetObjResult(interp, Tcl_NewIntObj(PTR2INT(Tcl_GetHashValue(entryPtr))));
 	} else {
-	    Tcl_SetIntObj(Tcl_GetObjResult(interp), widthType ?
-			  tablePtr->defColWidth : tablePtr->defRowHeight);
+	    Tcl_SetObjResult(interp, Tcl_NewIntObj(widthType ?
+		tablePtr->defColWidth : tablePtr->defRowHeight));
 	}
+
     } else {
 	for (i=2; i<objc; i++) {
 	    /* set new width|height here */
@@ -435,7 +437,7 @@ int Table_BboxCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	return TCL_ERROR;
     }
 
-    resultPtr = Tcl_GetObjResult(interp);
+    resultPtr = Tcl_NewListObj(0, NULL);
     if (objc == 3) {
 	row -= tablePtr->rowOffset; col -= tablePtr->colOffset;
 	if (TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 0)) {
@@ -444,7 +446,6 @@ int Table_BboxCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	    Tcl_ListObjAppendElement(NULL, resultPtr, Tcl_NewIntObj(w));
 	    Tcl_ListObjAppendElement(NULL, resultPtr, Tcl_NewIntObj(h));
 	}
-	return TCL_OK;
     } else {
 	int r1, c1, r2, c2, minX = 99999, minY = 99999, maxX = 0, maxY = 0;
 
@@ -472,6 +473,7 @@ int Table_BboxCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	    Tcl_ListObjAppendElement(NULL, resultPtr, Tcl_NewIntObj(maxY-minY));
 	}
     }
+    Tcl_SetObjResult(interp, resultPtr);
     return TCL_OK;
 }
 
@@ -526,7 +528,6 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	}
     }
 
-    resultPtr = Tcl_GetObjResult(interp);
     switch ((enum bdCmd) cmdIndex) {
     case BD_MARK:
 	/* Use x && y to determine if we are over a border */
@@ -537,6 +538,7 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	if (!value) {
 	    return TCL_OK;
 	}
+	resultPtr = Tcl_NewListObj(0, NULL);
 	TableCellCoords(tablePtr, row, col, &x, &y, &dummy, &dummy);
 	tablePtr->scanMarkX = x;
 	tablePtr->scanMarkY = y;
@@ -556,6 +558,7 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    }
 	    Tcl_ListObjAppendElement(NULL, resultPtr, objPtr);
 	}
+	Tcl_SetObjResult(interp, resultPtr);
 	return TCL_OK;	/* BORDER MARK */
 
     case BD_DRAGTO:
@@ -1593,8 +1596,8 @@ int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp, int objc,
     } else {
 	char buf[INDEX_BUFSIZE];
 	TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
-	Tcl_SetBooleanObj(Tcl_GetObjResult(interp),
-		(Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL));
+	Tcl_SetObjResult(interp,
+	    Tcl_NewBooleanObj(Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL));
     }
     return TCL_OK;
 }
@@ -1810,7 +1813,7 @@ int Table_ViewCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	int diff, x, y, w, h;
 	double first, last;
 
-	resultPtr = Tcl_GetObjResult(interp);
+	resultPtr = Tcl_NewListObj(0, NULL);
 	TableGetLastCell(tablePtr, &row, &col);
 	TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 0);
 	if (*xy == 'y') {
@@ -1834,8 +1837,10 @@ int Table_ViewCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 		last  = (w+tablePtr->colStarts[col]-diff) / last;
 	    }
 	}
-	Tcl_ListObjAppendElement(NULL, resultPtr, Tcl_NewDoubleObj(first));
-	Tcl_ListObjAppendElement(NULL, resultPtr, Tcl_NewDoubleObj(last));
+	Tcl_ListObjAppendElement(interp, resultPtr, Tcl_NewDoubleObj(first));
+	Tcl_ListObjAppendElement(interp, resultPtr, Tcl_NewDoubleObj(last));
+	Tcl_SetObjResult(interp, resultPtr);
+
     } else {
 	/* cache old topleft to see if it changes */
 	int oldTop = tablePtr->topRow, oldLeft = tablePtr->leftCol;

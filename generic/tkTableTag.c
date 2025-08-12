@@ -750,11 +750,6 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
     if (result != TCL_OK) {
 	return result;
     }
-    /*
-     * Before using this object, make sure there aren't any calls that
-     * could have changed the interp result, thus freeing the object.
-     */
-    Tcl_ResetResult(interp);
 
     switch ((enum tagCmd) cmdIndex) {
 	case TAG_CELL:
@@ -983,9 +978,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 			}
 		    }
 		}
-		if (resultPtr != NULL) {
-		    Tcl_SetObjResult(interp, resultPtr);
-		}
+		Tcl_SetObjResult(interp, resultPtr);
 		return TCL_OK;
 	    }
 
@@ -1315,9 +1308,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    Tcl_ListObjAppendElement(NULL, resultPtr, objPtr);
 		}
 	    }
-	    if (resultPtr != NULL) {
-		Tcl_SetObjResult(interp, resultPtr);
-	    }
+	    Tcl_SetObjResult(interp, resultPtr);
 	    return TCL_OK;
 
 	case TAG_LOWER:
@@ -1415,11 +1406,11 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
     }
     return TCL_OK;
 
-    invalidtag:
+invalidtag:
     /*
      * When jumping here, ensure the invalid 'tagname' is set already.
      */
-    Tcl_AppendStringsToObj(resultPtr, "invalid tag name \"", tagname, "\"", (char *) NULL);
+    Tcl_AppendResult(interp, "invalid tag name \"", tagname, "\"", (char *)NULL);
     return TCL_ERROR;
 }
 

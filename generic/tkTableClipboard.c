@@ -397,8 +397,6 @@ int Table_ExportCmd(
     int numrows, numcols;
     Tcl_DString ds;
 
-    Tcl_ResetResult(interp);
-
     if (objc != 2) {
 	Tcl_WrongNumArgs(interp, 2, objv, NULL);
 	return TCL_ERROR;
@@ -705,8 +703,6 @@ int Table_ImportCmd(
     TableGetSelection *dPtr;
     Atom selection, target;
     Tcl_Size len;
-
-    Tcl_ResetResult(interp);
 
     if (objc < 2 || objc > 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "?selection?");
