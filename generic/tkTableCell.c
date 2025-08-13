@@ -1298,21 +1298,19 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	return TCL_ERROR;
     }
 
-    if (tablePtr->spanTbl == NULL) {
-	/* Avoid the whole thing if we have no spans */
-	if (objc > 3) {
-	    Tcl_SetBooleanObj(Tcl_GetObjResult(interp), 0);
-	}
-	return TCL_OK;
-    }
-
     if (objc == 2) {
 	/* return all "hidden" cells */
-	Tcl_SetObjResult(interp, TableGetSortedIndicesFiltered(tablePtr->spanAffTbl, 1, NULL));
+	if (tablePtr->spanTbl != NULL) {
+	    Tcl_SetObjResult(interp, TableGetSortedIndicesFiltered(tablePtr->spanAffTbl, 1, NULL));
+	}
 	return TCL_OK;
+
     } else if (objc == 3) {
 	if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
 	    return TCL_ERROR;
+	}
+	if (tablePtr->spanTbl == NULL) {
+	    return TCL_OK;
 	}
 	/* Just return the spanning values of the one cell */
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, Tcl_GetString(objv[2]));
@@ -1321,6 +1319,12 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    /* this is a hidden cell */
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(span, -1));
 	}
+	return TCL_OK;
+    }
+
+    /* Avoid the whole thing if we have no spans */
+    if (tablePtr->spanTbl == NULL) {
+	Tcl_SetObjResult(interp, Tcl_NewBooleanObj(0));
 	return TCL_OK;
     }
 
