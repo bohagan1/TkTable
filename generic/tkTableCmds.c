@@ -1100,7 +1100,7 @@ int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
     }
 
     if (objc == 3) {
-	/* List of cells */
+	/* List of cells or single cell */
 	Tcl_Size len;
 	int prev = 0;
 
@@ -1112,7 +1112,7 @@ int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 
 	for (Tcl_Size i = 0; i < len; i++) {
 	    if (Tcl_ListObjIndex(interp, objv[2], i, &itemPtr) == TCL_OK &&
-		    TableParseArrayIndex(&row, &col, Tcl_GetString(itemPtr)) == 2) {
+		    TableGetIndexObj(tablePtr, itemPtr, &row, &col) == TCL_OK) {
 		Tcl_IncrRefCount(itemPtr);
 		Tcl_DecrRefCount(itemPtr);
 		itemPtr = NULL;
@@ -1124,7 +1124,13 @@ int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 		}
 		itemPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1);
 		if (itemPtr != NULL) {
-		    Tcl_ListObjAppendElement(interp, listPtr, itemPtr);
+		    if (len > 1) {
+			Tcl_ListObjAppendElement(interp, listPtr, itemPtr);
+		    } else {
+			Tcl_IncrRefCount(resultPtr);
+			Tcl_DecrRefCount(resultPtr);
+			resultPtr = itemPtr;
+		    }
 		} else {
 		    goto abort;
 		}
@@ -1133,9 +1139,13 @@ int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 		goto abort;
 	    }
 	}
+	
 	Tcl_ListObjLength(interp, listPtr, &len);
 	if (len > 0) {
 	    Tcl_ListObjAppendElement(interp, resultPtr, listPtr);
+	} else {
+	    Tcl_IncrRefCount(listPtr);
+	    Tcl_DecrRefCount(listPtr);
 	}
 
     } else {
