@@ -1139,7 +1139,7 @@ int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 		goto abort;
 	    }
 	}
-	
+
 	Tcl_ListObjLength(interp, listPtr, &len);
 	if (len > 0) {
 	    Tcl_ListObjAppendElement(interp, resultPtr, listPtr);
@@ -1269,7 +1269,7 @@ int Table_ScanCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
  */
 int Table_SeeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int col, row, top, bottom, left, right, delta, temp, x, y, h, w;
+    int col, row, top, bottom, left, right, delta, x, y, h, w;
 
     if (objc != 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "index");
@@ -1280,9 +1280,13 @@ int Table_SeeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	return TCL_ERROR;
     }
 
-    /* Adjust from user to master coords */
+    /* Convert to valid index in real coords */
     row -= tablePtr->rowOffset;
     col -= tablePtr->colOffset;
+
+    /* Make sure the cell has a reasonable real index */
+    CONSTRAIN(row, 0, tablePtr->rows-1);
+    CONSTRAIN(col, 0, tablePtr->cols-1);
 
     /* Get visible top/bottom row and left/right col */
     top = tablePtr->topRow;
@@ -1327,10 +1331,7 @@ int Table_SeeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	left = right-delta;
     }
 
-    temp = tablePtr->selectTitles ? 0 : 1;
-    CONSTRAIN(row, tablePtr->titleRows * temp, tablePtr->rows-1);
-    CONSTRAIN(col, tablePtr->titleCols * temp, tablePtr->cols-1);
-
+    /* Adjust view */
     if (!TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 1)) {
 	tablePtr->topRow  = top;
 	tablePtr->leftCol = left;
@@ -1432,10 +1433,12 @@ int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
 	}
     }
 
-    /* If selection changed update cell, export selection, and generate event */
+    /* If selected range of text changed, refresh cell */
     if (refresh) {
 	TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
     }
+
+    /* If selection was toggled do export selection and generate event */
     if (selchanged) {
 	if (tablePtr->exportSelection) {
 	    Tk_OwnSelection(tablePtr->tkwin, XA_PRIMARY, TableLostSelection, (ClientData) tablePtr);
