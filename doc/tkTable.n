@@ -1754,8 +1754,8 @@ specified, then the command modifies the given option(s) to have the given
 value(s) in \fItagName\fR and returns an empty string\&. See \fBTAGS\fR
 for details on the options available for tags\&.
 .TP
-\fIpathName\fR \fBtag delete\fR \fItagName\fR
-Deletes tag \fItagName\fR\&.  No error if the tag does not exist\&.
+\fIpathName\fR \fBtag delete\fR \fItagName\fR \fI?tagName \&.\&.\&.?\fR
+Deletes each tag \fItagName\fR\&.  No error if the tag does not exist\&.
 .TP
 \fIpathName\fR \fBtag exists\fR \fItagName\fR
 Returns 1 if the tag \fItagName\fR exists, 0 if not\&.

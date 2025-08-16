@@ -1135,8 +1135,8 @@ specified, then the command modifies the given option(s) to have the given
 value(s) in [arg tagName] and returns an empty string. See [sectref TAGS]
 for details on the options available for tags.
 
-[def "[arg pathName] [method "tag delete"] [arg tagName]"]
-Deletes tag [arg tagName].  No error if the tag does not exist.
+[def "[arg pathName] [method "tag delete"] [arg tagName] [arg [opt "tagName ..."]]"]
+Deletes each tag [arg tagName].  No error if the tag does not exist.
 
 [def "[arg pathName] [method "tag exists"] [arg tagName]"]
 Returns 1 if the tag [arg tagName] exists, 0 if not.

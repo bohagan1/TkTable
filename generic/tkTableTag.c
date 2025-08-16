@@ -730,7 +730,7 @@ char *TableGetTagName(Table *tablePtr, TableTag *tagPtr) {
  */
 int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *)clientData;
-    int result = TCL_OK, i, newEntry, value, cmdIndex;
+    int result = TCL_OK, i, j, newEntry, value, cmdIndex;
     Tcl_Size len;
     int row, col, tagPrio, refresh = 0;
     TableTag *tagPtr, *tag2Ptr;
@@ -1149,12 +1149,12 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		     * the rest of the tags.  We could check for shrinking
 		     * the prio list as well.
 		     */
-		    for (i = 0; i < tablePtr->tagPrioSize; i++) {
-			if (tablePtr->tagPrios[i] == tagPtr) break;
+		    for (j = 0; j < tablePtr->tagPrioSize; j++) {
+			if (tablePtr->tagPrios[j] == tagPtr) break;
 		    }
-		    for ( ; i < tablePtr->tagPrioSize; i++) {
-			tablePtr->tagPrioNames[i] = tablePtr->tagPrioNames[i+1];
-			tablePtr->tagPrios[i] = tablePtr->tagPrios[i+1];
+		    for ( ; j < tablePtr->tagPrioSize; j++) {
+			tablePtr->tagPrioNames[j] = tablePtr->tagPrioNames[j+1];
+			tablePtr->tagPrios[j] = tablePtr->tagPrios[j+1];
 		    }
 		    tablePtr->tagPrioSize--;
 
@@ -1170,7 +1170,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    if (refresh) {
 		TableInvalidateAll(tablePtr, 0);
 	    }
-	    return result;
+	    return TCL_OK;
 
 	case TAG_EXISTS:
 	    /* Return if a tag name exists */

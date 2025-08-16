@@ -1249,8 +1249,8 @@ be identical to the corresponding sublist of the value returned if no
 specified, then the command modifies the given option(s) to have the given
 value(s) in <i class="arg">tagName</i> and returns an empty string. See <span class="sectref"><a href="#section7">TAGS</a></span>
 for details on the options available for tags.</p></dd>
-<dt><i class="arg">pathName</i> <b class="method">tag delete</b> <i class="arg">tagName</i></dt>
-<dd><p>Deletes tag <i class="arg">tagName</i>.  No error if the tag does not exist.</p></dd>
+<dt><i class="arg">pathName</i> <b class="method">tag delete</b> <i class="arg">tagName</i> <i class="arg"><span class="opt">?tagName ...?</span></i></dt>
+<dd><p>Deletes each tag <i class="arg">tagName</i>.  No error if the tag does not exist.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag exists</b> <i class="arg">tagName</i></dt>
 <dd><p>Returns 1 if the tag <i class="arg">tagName</i> exists, 0 if not.</p></dd>
 <dt><i class="arg">pathName</i> <b class="method">tag get</b> <i class="arg">index</i></dt>
