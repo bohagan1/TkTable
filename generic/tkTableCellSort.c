@@ -19,6 +19,7 @@
 
  *
  * Copyright (c) 1998-2002 Jeffrey Hobbs
+ * Copyright (c) 2025      Brian O'Hagan
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.

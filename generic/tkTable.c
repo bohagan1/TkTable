@@ -15,6 +15,7 @@
  * Sebastian Wangnick	wangnick@orthogon.de
  *
  * Copyright (c) 1997-2002 Jeffrey Hobbs
+ * Copyright (c) 2025      Brian O'Hagan
  *
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.

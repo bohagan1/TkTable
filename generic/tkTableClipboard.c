@@ -5,7 +5,7 @@
  *	widgets.
  *
  * Copyright (c) 1998-2002 Jeffrey Hobbs
- * Copyright (c) 2025 Brian O'Hagan
+ * Copyright (c) 2025      Brian O'Hagan
  *
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -375,8 +375,9 @@ int TableSelectionGetDstring(
  *----------------------------------------------------------------------
  *
  * Table_ExportCmd --
- *	This function is called by the user to return the selection in
- *	clipboard format so it can be appended to the clipboard.
+ *	This function implements the export method. It is used when the
+ *	selection is to be retrieved from the table widget in clipboard
+ *	format so it can be appended to the clipboard.
  *
  * Results:
  *	Returns TCL result with interp result set to selected data.
@@ -677,9 +678,10 @@ enum sel_types {
  *----------------------------------------------------------------------
  *
  * Table_ImportCmd --
- *	This function is called by the user when the selection is to be
- *	retrieved from the clipboard and converted into a list of lists
- *	(list of cell values for each row) for insertion into the table.
+ *	This function implements the import method. It is used when the
+ *	selection is to be retrieved from the clipboard and converted
+ *	into a list of lists (list of cell values for each row) for
+ *	insertion into the table.
  *
  * Results:
  *	Returns TCL result with result set to a list of lists with cell

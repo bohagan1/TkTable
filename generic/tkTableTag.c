@@ -18,14 +18,13 @@ static CONST86 char *	TableOptionReliefGet(ClientData clientData, Tk_Window tkwi
 			char *widgRec, Tcl_Size offset, Tcl_FreeProc **freeProcPtr);
 
 static const char *tagCmdNames[] = {
-    "celltag", "cget", "coltag", "column", "configure", "delete", "exists", "get",
+    "celltag", "cget", "coltag", "configure", "delete", "exists", "get",
     "includes", "lower", "names", "priority", "raise", "rowtag", (char *) NULL
 };
 
 enum tagCmd {
-    TAG_CELL, TAG_CGET, TAG_COL, TAG_COLUMN, TAG_CONFIGURE, TAG_DELETE,
-    TAG_EXISTS, TAG_GET, TAG_INCLUDES, TAG_LOWER, TAG_NAMES, TAG_PRIORITY,
-    TAG_RAISE, TAG_ROW
+    TAG_CELL, TAG_CGET, TAG_COL, TAG_CONFIGURE, TAG_DELETE, TAG_EXISTS, TAG_GET,
+    TAG_INCLUDES, TAG_LOWER, TAG_NAMES, TAG_PRIORITY, TAG_RAISE, TAG_ROW
 };
 
 static Cmd_Struct tagState_vals[]= {
@@ -716,9 +715,8 @@ char *TableGetTagName(Table *tablePtr, TableTag *tagPtr) {
  *--------------------------------------------------------------
  *
  * Table_TagCmd --
- *	This procedure is invoked to process the tag method
- *	that corresponds to a widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the tag method. It is used to
+ *	manage tags within the table widget.
  *
  * Results:
  *	A standard Tcl result.
@@ -739,14 +737,14 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
     Tcl_HashSearch search;
     Tk_Image image;
     Tcl_Obj *objPtr, *resultPtr = NULL;
-    char buf[INDEX_BUFSIZE], *keybuf, *tagname;
+    char buf[INDEX_BUFSIZE], *keybuf, *tagname = NULL;
 
     if (objc < 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg arg ...?");
 	return TCL_ERROR;
     }
 
-    result = Tcl_GetIndexFromObj(interp, objv[2], tagCmdNames, "tagName option", 0, &cmdIndex);
+    result = Tcl_GetIndexFromObj(interp, objv[2], tagCmdNames, "tag option", 0, &cmdIndex);
     if (result != TCL_OK) {
 	return result;
     }
@@ -883,7 +881,6 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    return TCL_OK;
 
 	case TAG_COL:
-	case TAG_COLUMN:
 	case TAG_ROW: {
 	    /* tag a row or a column */
 	    int forRows = (cmdIndex == TAG_ROW);
@@ -1102,6 +1099,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    /* run through the remaining arguments */
 	    for (i = 3; i < objc; i++) {
 		tagname  = Tcl_GetString(objv[i]);
+
 		/* cannot delete special tags */
 		if (STREQ(tagname, "title") ||
 			STREQ(tagname, "sel") ||
@@ -1112,6 +1110,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 			(char *) NULL);
 		    return TCL_ERROR;
 		}
+
 		entryPtr = Tcl_FindHashEntry(tablePtr->tagTable, tagname);
 		if (entryPtr != NULL) {
 		    /* get the tag pointer */
@@ -1259,12 +1258,12 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    /* create hash key */
 	    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 
-	    if (STREQ(tagname, "active")) {
-		result = (tablePtr->activeRow+tablePtr->rowOffset==row &&
-			tablePtr->activeCol+tablePtr->colOffset==col);
-	    } else if (STREQ(tagname, "flash")) {
+	    if (STREQ(tagname, "flash")) {
 		result = (tablePtr->flashMode &&
 			(Tcl_FindHashEntry(tablePtr->flashCells, buf) != NULL));
+	    } else if (STREQ(tagname, "active")) {
+		result = (tablePtr->activeRow+tablePtr->rowOffset==row &&
+			tablePtr->activeCol+tablePtr->colOffset==col);
 	    } else if (STREQ(tagname, "focus")) {
 		result = (tablePtr->focusRow+tablePtr->rowOffset==row &&
 			tablePtr->focusCol+tablePtr->colOffset==col);

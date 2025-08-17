@@ -899,15 +899,15 @@ IndexError:
  *--------------------------------------------------------------
  *
  * Table_SetCmd --
- *	This procedure is invoked to process the set method
- *	that corresponds to a widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the set method. It is used to
+ *	query or set cells to new values. It can also be used to
+ *	set a row or column to a list of values.
  *
  * Results:
  *	A standard Tcl result.
  *
  * Side effects:
- *	See the user documentation.
+ *	Set cell indices to new values.
  *
  *--------------------------------------------------------------
  */
@@ -1212,15 +1212,15 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
  *--------------------------------------------------------------
  *
  * Table_SpanCmd --
- *	This procedure is invoked to process the span method
- *	that corresponds to a widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the spans method. It is used to
+ *	query, clear, or set cell spans.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result and may set the interp result to
+ *	the current list of cell spans.
  *
  * Side effects:
- *	See the user documentation.
+ *	May set or remove cell spans.
  *
  *--------------------------------------------------------------
  */
@@ -1275,15 +1275,15 @@ int Table_SpanCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
  *--------------------------------------------------------------
  *
  * Table_HiddenCmd --
- *	This procedure is invoked to process the hidden method
- *	that corresponds to a widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the hidden method. It is used to
+ *	query cells hidden by spans.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result with the interp results set to the
+ *	list of hidden cells or span cell for a hidden cell.
  *
  * Side effects:
- *	See the user documentation.
+ *	None.
  *
  *--------------------------------------------------------------
  */

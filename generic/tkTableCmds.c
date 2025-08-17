@@ -5,6 +5,7 @@
  *	based on the major/minor command structure.
  *
  * Copyright (c) 1998-2002 Jeffrey Hobbs
+ * Copyright (c) 2025      Brian O'Hagan
  *
  * See the file "license.txt" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -18,7 +19,7 @@
  *--------------------------------------------------------------
  *
  * Int2Str --
- *	Convert integer value to string representation
+ *	Convert an integer value to its string representation
  *
  * Results:
  *	Pointer to end of string.
@@ -61,8 +62,7 @@ char *Int2Str(int value, char *str, int len) {
  *--------------------------------------------------------------
  *
  * TableMakeArrayIndex --
- *	This procedure formats a row and column index into a
- *	cell index string.
+ *	Format a row and column index into a cell index string.
  *
  * Results:
  *	Returns string length.
@@ -90,8 +90,7 @@ Tcl_Obj *TableMakeIndexObj(int row, int col) {
  *--------------------------------------------------------------
  *
  * TableParseArrayIndex --
- *	This procedure parses a cell index string into row and
- *	column values.
+ *	Parse a cell index string into its row and column values.
  *
  * Results:
  *	Returns 2 if successful or <2 if not.
@@ -140,14 +139,15 @@ inline int TableParseArrayIndex(int *row, int *col, char *str) {
  *--------------------------------------------------------------
  *
  * Table_ActivateCmd --
- *	This procedure is invoked to process the activate method.
- *	This sets which cell has the keyboard focus for input.
+ *	This function implements the activate method. It is used to
+ *	query or set which cell is the active cell for keyboard input.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result and sets the interp result to the
+ *	current active cell, if any.
  *
  * Side effects:
- *	See the user documentation.
+ *	Sets the active cell and calls the -browsecommand callback.
  *
  *--------------------------------------------------------------
  */
@@ -273,6 +273,8 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 		tablePtr->flags &= ~BROWSE_CMD;
 	    }
 	}
+
+	/* Set icursor position */
 	{
 	    char *p = Tcl_GetString(objv[2]);
 
@@ -310,15 +312,17 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp, int objc,
  *--------------------------------------------------------------
  *
  * Table_AdjustCmd --
- *	This procedure is invoked to process the width/height method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the height and width methods.
+ *	It is used to query or set the height of a row or the
+ *	width of a column.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result and sets the interp result to the
+ *	row height or column width for a query or a list of
+ *	heights or widths.
  *
  * Side effects:
- *	See the user documentation.
+ *	Adjusts column width or row height.
  *
  *--------------------------------------------------------------
  */
@@ -373,6 +377,7 @@ int Table_AdjustCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	}
 
     } else {
+	/* set the width/height of one or more row/col */
 	for (i=2; i<objc; i++) {
 	    /* set new width|height here */
 	    value = -999999;
@@ -411,15 +416,16 @@ int Table_AdjustCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
  *--------------------------------------------------------------
  *
  * Table_BboxCmd --
- *	This procedure is invoked to process the bbox method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the bbox method. It is used to
+ *	return the x coord, y coord, width, and height of a cell
+ *	index or range of cell indices.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result with interp result set to the info
+ *	on the cell or range of cells.
  *
  * Side effects:
- *	See the user documentation.
+ *	None.
  *
  *--------------------------------------------------------------
  */
@@ -439,6 +445,7 @@ int Table_BboxCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 
     resultPtr = Tcl_NewListObj(0, NULL);
     if (objc == 3) {
+	/* Get cell bbox info */
 	row -= tablePtr->rowOffset; col -= tablePtr->colOffset;
 	if (TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 0)) {
 	    Tcl_ListObjAppendElement(NULL, resultPtr, Tcl_NewIntObj(x));
@@ -447,6 +454,7 @@ int Table_BboxCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	    Tcl_ListObjAppendElement(NULL, resultPtr, Tcl_NewIntObj(h));
 	}
     } else {
+	/* Get range of cells bbox info */
 	int r1, c1, r2, c2, minX = 99999, minY = 99999, maxX = 0, maxY = 0;
 
 	row -= tablePtr->rowOffset; col -= tablePtr->colOffset;
@@ -489,15 +497,14 @@ enum bdCmd {
  *--------------------------------------------------------------
  *
  * Table_BorderCmd --
- *	This procedure is invoked to process the border method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the border method. It is used
+ *	to adjust the column and row dividers between the cells.
  *
  * Results:
  *	A standard Tcl result.
  *
  * Side effects:
- *	See the user documentation.
+ *	Adjusts cell borders.
  *
  *--------------------------------------------------------------
  */
@@ -617,16 +624,14 @@ enum clearCommand {
  *--------------------------------------------------------------
  *
  * Table_ClearCmd --
- *	This procedure is invoked to process the clear method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the clear method. It is used to
+ *	clear the tags, sizes, or cache for a cell or range of cells.
  *
  * Results:
- *	Cached info can be lost.  Returns valid Tcl result.
+ *	Returns valid Tcl result.
  *
  * Side effects:
- *	Can cause redraw.
- *	See the user documentation.
+ *	Clear cache, sizes, or tags for cells.
  *
  *--------------------------------------------------------------
  */
@@ -645,6 +650,7 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
     }
 
     if (objc == 3) {
+	/* Clear entire table */
 	if (cmdIndex == CLEAR_TAGS || cmdIndex == CLEAR_ALL) {
 	    Tcl_HashSearch search;
 	    selchanged = (Tcl_FirstHashEntry(tablePtr->selCells, &search) != NULL);
@@ -685,6 +691,7 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
 	}
 	redraw = 1;
     } else {
+	/* Clear cell or range of cells */
 	int row, col, r1, r2, c1, c2;
 	Tcl_HashEntry *entryPtr;
 	char buf[INDEX_BUFSIZE], *value;
@@ -786,15 +793,16 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
  *--------------------------------------------------------------
  *
  * Table_CurselectionCmd --
- *	This procedure is invoked to process the curselection method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the curselection method. It is
+ *	used to retrieve the sorted list of selected cell indices
+ *	or set them to a value.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result and sets the interp result to the
+ *	list of selected cell indices.
  *
  * Side effects:
- *	See the user documentation.
+ *	Returns list of selected cell indices or sets them to value.
  *
  *--------------------------------------------------------------
  */
@@ -848,15 +856,15 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
  *--------------------------------------------------------------
  *
  * Table_CurvalueCmd --
- *	This procedure is invoked to process the curvalue method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the curvalue method. It is used
+ *	to query or set the current active cell text.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result and sets the interp result to the
+ *	current active cell text.
  *
  * Side effects:
- *	See the user documentation.
+ *	Returns current value or sets active cell to new value.
  *
  *--------------------------------------------------------------
  */
@@ -871,6 +879,7 @@ int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	return TCL_OK;
     }
 
+    /* Set to new value */
     if (objc == 3) {
 	char *value;
 	Tcl_Size len;
@@ -880,6 +889,7 @@ int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	    Tcl_SetObjResult(interp, objv[2]);
 	    return TCL_OK;
 	}
+
 	/* validate potential new active buffer contents
 	 * only accept if validation returns acceptance. */
 	if (tablePtr->validate &&
@@ -890,9 +900,11 @@ int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	}
 	tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf, len+1);
 	strcpy(tablePtr->activeBuf, value);
+
 	/* mark the text as changed */
 	tablePtr->flags |= TEXT_CHANGED;
 	TableSetActiveIndex(tablePtr);
+
 	/* check for possible adjustment of icursor */
 	TableGetIcursor(tablePtr, "insert", (int *)0);
 	TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
@@ -906,14 +918,15 @@ int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp, int objc,
  *--------------------------------------------------------------
  *
  * Table_FocusCmd --
- *	This procedure is invoked to process the focus method.
- *	This sets which cell has the focus for keyboard navigation.
+ *	This function implements the focus method. It is used to
+ *	query or set which cell has the focus for keyboard navigation.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result and sets the interp result to the
+ *	current focus cell, if any.
  *
  * Side effects:
- *	See the user documentation.
+ *	Sets the focus cell and calls the -browsecommand callback.
  *
  *--------------------------------------------------------------
  */
@@ -1023,15 +1036,15 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp, int objc,
  *--------------------------------------------------------------
  *
  * Table_GetCmd --
- *	This procedure is invoked to process the get method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the get method. It is used to
+ *	return data table cell values as a list of values.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result with the interp result set to the
+ *	list of values.
  *
  * Side effects:
- *	See the user documentation.
+ *	None.
  *
  *--------------------------------------------------------------
  */
@@ -1042,12 +1055,16 @@ int Table_GetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
     if (objc < 3 || objc > 4) {
 	Tcl_WrongNumArgs(interp, 2, objv, "first ?last?");
 	return TCL_ERROR;
+
     } else if (TableGetIndexObj(tablePtr, objv[2], &row, &col) == TCL_ERROR) {
 	return TCL_ERROR;
+
     } else if (objc == 3) {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1));
+
     } else if (TableGetIndexObj(tablePtr, objv[3], &r2, &c2) == TCL_ERROR) {
 	return TCL_ERROR;
+
     } else {
 	Tcl_Obj *objPtr, *listPtr;
 
@@ -1077,15 +1094,16 @@ int Table_GetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
  *--------------------------------------------------------------
  *
  * Table_Get2Cmd --
- *	This procedure is invoked to process the get2 method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the get2 method. It is used to
+ *	return data table cell values in a list of lists format
+ *	where each sublist is a list values for that row.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result with the interp result set to the
+ *	list of list values.
  *
  * Side effects:
- *	See the user documentation.
+ *	None.
  *
  *--------------------------------------------------------------
  */
@@ -1197,15 +1215,14 @@ abort:
  *--------------------------------------------------------------
  *
  * Table_ScanCmd --
- *	This procedure is invoked to process the scan method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the scan method. It is used to
+ *	rapidly adjust the view in the table widget.
  *
  * Results:
  *	A standard Tcl result.
  *
  * Side effects:
- *	See the user documentation.
+ *	Scrolls view.
  *
  *--------------------------------------------------------------
  */
@@ -1221,6 +1238,7 @@ int Table_ScanCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	    Tcl_GetIntFromObj(interp, objv[4], &y) == TCL_ERROR) {
 	return TCL_ERROR;
     }
+
     switch ((enum bdCmd) cmdIndex) {
 	case BD_MARK:
 	    TableWhatCell(tablePtr, x, y, &row, &col);
@@ -1257,7 +1275,9 @@ int Table_ScanCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
  *--------------------------------------------------------------
  *
  * Table_SeeCmd --
- *	This function is invoked to scroll the view to see a cell.
+ *	This function implements the see method. It is used to
+ *	scroll the view in the table widget to make a cell index
+ *	visible.
  *
  * Results:
  *	A standard Tcl result.
@@ -1354,14 +1374,15 @@ int Table_SeeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
  *--------------------------------------------------------------
  *
  * Table_SelActiveCmd --
- *	This procedure is invoked to process the selection active method
- *	that gets, clears, or sets the text selection in the active cell.
+ *	This function is used to query, clear, or set the active
+ *	cell selection.
  *
  * Results:
  *	A standard Tcl result.
  *
  * Side effects:
- *	See the user documentation.
+ *	Updates active cell selection, PRIMARY selection, and may
+ *	generate the TableSelect event.
  *
  *--------------------------------------------------------------
  */
@@ -1452,15 +1473,13 @@ int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
  *--------------------------------------------------------------
  *
  * Table_SelAnchorCmd --
- *	This procedure is invoked to process the selection anchor method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function sets the cell selection anchor.
  *
  * Results:
  *	A standard Tcl result.
  *
  * Side effects:
- *	See the user documentation.
+ *	Sets selection anchor.
  *
  *--------------------------------------------------------------
  */
@@ -1475,15 +1494,16 @@ int Table_SelAnchorCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
 	return TCL_ERROR;
     }
     tablePtr->flags |= HAS_ANCHOR;
+
     /* maintain appropriate real index */
     if (tablePtr->selectTitles) {
 	tablePtr->anchorRow = BETWEEN(row-tablePtr->rowOffset, 0, tablePtr->rows-1);
 	tablePtr->anchorCol = BETWEEN(col-tablePtr->colOffset, 0, tablePtr->cols-1);
     } else {
-	tablePtr->anchorRow = BETWEEN(row-tablePtr->rowOffset,
-		tablePtr->titleRows, tablePtr->rows-1);
-	tablePtr->anchorCol = BETWEEN(col-tablePtr->colOffset,
-		tablePtr->titleCols, tablePtr->cols-1);
+	tablePtr->anchorRow = BETWEEN(row-tablePtr->rowOffset, tablePtr->titleRows,
+		tablePtr->rows-1);
+	tablePtr->anchorCol = BETWEEN(col-tablePtr->colOffset, tablePtr->titleCols,
+		tablePtr->cols-1);
     }
     return TCL_OK;
 }
@@ -1492,15 +1512,14 @@ int Table_SelAnchorCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
  *--------------------------------------------------------------
  *
  * Table_SelClearCmd --
- *	This procedure is invoked to process the selection clear method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function removes a cell index or range of cell indices
+ *	from the selection.
  *
  * Results:
  *	A standard Tcl result.
  *
  * Side effects:
- *	See the user documentation.
+ *	Updates selection and may generate TableSelect event.
  *
  *--------------------------------------------------------------
  */
@@ -1509,13 +1528,15 @@ int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp, int objc,
     Table *tablePtr = (Table *) clientData;
     int result = TCL_OK;
     char buf1[INDEX_BUFSIZE];
-    int row, col, key, clo=0,chi=0,r1,c1,r2,c2, selchanged = 0;
+    int row, col, key = 0, clo=0,chi=0,r1,c1,r2,c2, selchanged = 0;
     Tcl_HashEntry *entryPtr;
 
     if (objc < 4 || objc > 5) {
 	Tcl_WrongNumArgs(interp, 3, objv, "all|<first> ?<last>?");
 	return TCL_ERROR;
     }
+
+    /* Check for all case */
     if (STREQ(Tcl_GetString(objv[3]), "all")) {
 	Tcl_HashSearch search;
 	for(entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
@@ -1527,11 +1548,14 @@ int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	}
 	goto done;
     }
+
+    /* Get cell indices */
     if (TableGetIndexObj(tablePtr, objv[3], &row, &col) == TCL_ERROR ||
 	(objc==5 && TableGetIndexObj(tablePtr, objv[4], &r2, &c2) == TCL_ERROR)) {
 	return TCL_ERROR;
     }
-    key = 0;
+
+    /* Get row and col range in user index coords */
     if (objc == 4) {
 	r1 = r2 = row;
 	c1 = c2 = col;
@@ -1539,6 +1563,8 @@ int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	r1 = MIN(row,r2); r2 = MAX(row,r2);
 	c1 = MIN(col,c2); c2 = MAX(col,c2);
     }
+    
+    /* Override row and col range for select row and/or col */
     switch (tablePtr->selectType) {
     case SEL_BOTH:
 	clo = c1; chi = c2;
@@ -1558,7 +1584,8 @@ int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	c2 = tablePtr->cols-1+c1;
 	break;
     }
-    /* row/col are in user index coords */
+
+    /* Remove range of cells from selection */
 CLEAR_CELLS:
     for ( row = r1; row <= r2; row++ ) {
 	for ( col = c1; col <= c2; col++ ) {
@@ -1572,6 +1599,7 @@ CLEAR_CELLS:
 	}
     }
     if (key) goto CLEAR_BOTH;
+
 done:
     /* If selection changed generate event */
     if (selchanged) {
@@ -1584,15 +1612,14 @@ done:
  *--------------------------------------------------------------
  *
  * Table_SelIncludesCmd --
- *	This procedure is invoked to process the selection includes method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function checks if a cell index is included in the
+ *	selection or not.
  *
  * Results:
- *	A standard Tcl result.
+ *	A standard Tcl result with result set to boolean status.
  *
  * Side effects:
- *	See the user documentation.
+ *	None.
  *
  *--------------------------------------------------------------
  */
@@ -1619,22 +1646,22 @@ int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp, int objc,
  *--------------------------------------------------------------
  *
  * Table_SelSetCmd --
- *	This procedure is invoked to process the selection set method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function adds a cell index or range of cell indices
+ *	to the selection.
  *
  * Results:
  *	A standard Tcl result.
  *
  * Side effects:
- *	See the user documentation.
+ *	Updates cell selection, PRIMARY selection, and may
+ *	generate the TableSelect event.
  *
  *--------------------------------------------------------------
  */
 int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
-    int row, col, dummy, key, selchanged = 0;
+    int row, col, dummy, key = 0, selchanged = 0;
     char buf1[INDEX_BUFSIZE];
     Tcl_HashSearch search;
     Tcl_HashEntry *entryPtr;
@@ -1649,7 +1676,8 @@ int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	 TableGetIndexObj(tablePtr, objv[4], &r2, &c2) == TCL_ERROR)) {
 	return TCL_ERROR;
     }
-    key = 0;
+
+    /* Get first and last row and column */
     lastRow = tablePtr->rows-1+tablePtr->rowOffset;
     lastCol = tablePtr->cols-1+tablePtr->colOffset;
     if (tablePtr->selectTitles) {
@@ -1659,9 +1687,12 @@ int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	firstRow = tablePtr->titleRows+tablePtr->rowOffset;
 	firstCol = tablePtr->titleCols+tablePtr->colOffset;
     }
-    /* maintain appropriate user index */
+
+    /* Maintain appropriate user index */
     CONSTRAIN(row, firstRow, lastRow);
     CONSTRAIN(col, firstCol, lastCol);
+
+    /* Get start and end row and column */
     if (objc == 4) {
 	r1 = r2 = row;
 	c1 = c2 = col;
@@ -1671,6 +1702,8 @@ int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	r1 = MIN(row,r2); r2 = MAX(row,r2);
 	c1 = MIN(col,c2); c2 = MAX(col,c2);
     }
+
+    /* Adjust start and end for no cols/rows or to select col or row */
     if (firstCol > lastCol) c2--; /* No selectable columns in table */
     if (firstRow > lastRow) r2--; /* No selectable rows in table */
     switch (tablePtr->selectType) {
@@ -1692,6 +1725,8 @@ int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	c2 = lastCol;
 	break;
     }
+
+    /* Do selection */
 SET_CELLS:
     entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
     for ( row = r1; row <= r2; row++ ) {
@@ -1706,7 +1741,7 @@ SET_CELLS:
     }
     if (key) goto SET_BOTH;
 
-    /* Adjust the table for top left, selection on screen etc */
+    /* Adjust the table for top left, selection on screen, etc. */
     TableAdjustParams(tablePtr);
 
     /* If the table was previously empty and we want to export the
@@ -1714,6 +1749,7 @@ SET_CELLS:
     if (entryPtr == NULL && tablePtr->exportSelection) {
 	Tk_OwnSelection(tablePtr->tkwin, XA_PRIMARY, TableLostSelection, (ClientData) tablePtr);
     }
+
     /* If selection changed generate event */
     if (selchanged) {
 	TableGenerateSelectEvent(tablePtr);
@@ -1734,15 +1770,14 @@ enum selCommand {
  *--------------------------------------------------------------
  *
  * Table_SelectionCmd --
- *	This procedure is invoked to process the selection includes method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the selection method. It is used
+ *	to manage the cell selection within the table widget.
  *
  * Results:
- *	A standard Tcl result.
+ *	See called functions.
  *
  * Side effects:
- *	See the user documentation.
+ *	See called functions.
  *
  *--------------------------------------------------------------
  */
@@ -1803,9 +1838,8 @@ int Table_SelectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
  *--------------------------------------------------------------
  *
  * Table_ViewCmd --
- *	This procedure is invoked to process the x|yview method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the xview and yview methods.
+ *	It is used to adjust the view in the table widget.
  *
  * Results:
  *	A standard Tcl result.
@@ -1905,9 +1939,11 @@ int Table_ViewCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 		break;
 	    }
 	}
-	/* maintain appropriate real index */
+
+	/* Maintain appropriate real index */
 	CONSTRAIN(tablePtr->topRow, tablePtr->titleRows, tablePtr->rows-1);
 	CONSTRAIN(tablePtr->leftCol, tablePtr->titleCols, tablePtr->cols-1);
+
 	/* Do the table adjustment if topRow || leftCol changed */
 	if (oldTop != tablePtr->topRow || oldLeft != tablePtr->leftCol) {
 	    TableAdjustParams(tablePtr);
@@ -1916,28 +1952,3 @@ int Table_ViewCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 
     return TCL_OK;
 }
-
-#if 0
-/*
- *--------------------------------------------------------------
- *
- * Table_Cmd --
- *	This procedure is invoked to process the CMD method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
- *
- * Results:
- *	A standard Tcl result.
- *
- * Side effects:
- *	See the user documentation.
- *
- *--------------------------------------------------------------
- */
-int Table_Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
-    Table *tablePtr = (Table *) clientData;
-    int result = TCL_OK;
-
-    return result;
-}
-#endif

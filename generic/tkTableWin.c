@@ -740,9 +740,8 @@ int Table_WinDelete(Table *tablePtr, char *const idxPtr) {
  *--------------------------------------------------------------
  *
  * Table_WindowCmd --
- *	This procedure is invoked to process the window method
- *	that corresponds to a widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the window method. It is used
+ *	to manage windows embedded in table cells.
  *
  * Results:
  *	A standard Tcl result.

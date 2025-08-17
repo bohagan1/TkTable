@@ -195,12 +195,197 @@ static void TableModifyRC(
 }
 
 /*
+ *----------------------------------------------------------------------
+ *
+ * TableDeleteChars --
+ *	Remove one or more characters from the active cell of a table widget.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Characters are removed from active cell, the table gets modified,
+ *	and (eventually) redisplayed.
+ *
+ *----------------------------------------------------------------------
+ */
+void TableDeleteChars(
+    Table *tablePtr,		/* Table widget to modify. */
+    int index,			/* Index of first character to delete. */
+    int count) {		/* How many characters to delete. */
+
+    int byteIndex, byteCount, newByteCount, numBytes, numChars;
+    char *new, *string;
+
+    string = tablePtr->activeBuf;
+    numBytes = (int) strlen(string);
+    numChars = (int) Tcl_NumUtfChars(string, (Tcl_Size)numBytes);
+    if ((index + count) > numChars) {
+	count = numChars - index;
+    }
+    if (count <= 0) {
+	return;
+    }
+
+    byteIndex = (int) (Tcl_UtfAtIndex(string, (Tcl_Size)index) - string);
+    byteCount = (int) (Tcl_UtfAtIndex(string + byteIndex, (Tcl_Size)count) -
+	(string + byteIndex));
+
+    newByteCount = numBytes + 1 - byteCount;
+    new = (char *) ckalloc((unsigned) newByteCount);
+    memcpy(new, string, (size_t) byteIndex);
+    strcpy(new + byteIndex, string + byteIndex + byteCount);
+
+    /* This prevents deletes on BREAK or validation error. */
+    if (tablePtr->validate &&
+	TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
+	tablePtr->activeCol+tablePtr->colOffset, tablePtr->activeBuf, new, index) != TCL_OK) {
+	ckfree(new);
+	return;
+    }
+
+    ckfree(tablePtr->activeBuf);
+    tablePtr->activeBuf = new;
+
+    /* mark the text as changed */
+    tablePtr->flags |= TEXT_CHANGED;
+
+    /* Adjust insertion cursor */
+    if (tablePtr->icursor >= index) {
+	if (tablePtr->icursor >= (index+count)) {
+	    tablePtr->icursor -= count;
+	} else {
+	    tablePtr->icursor = index;
+	}
+    }
+
+    /* Adjust selection */
+    if (tablePtr->selectFirst >= index) {
+	if (tablePtr->selectFirst >= (index+count)) {
+	    tablePtr->selectFirst -= count;
+	} else {
+	    tablePtr->selectFirst = index;
+	}
+    }
+    if (tablePtr->selectLast >= index) {
+	if (tablePtr->selectLast >= (index+count)) {
+	    tablePtr->selectLast -= count;
+	} else {
+	    tablePtr->selectLast = index;
+	}
+    }
+    if (tablePtr->selectLast <= tablePtr->selectFirst) {
+	tablePtr->selectFirst = -1;
+	tablePtr->selectLast = -1;
+    }
+
+    TableSetActiveIndex(tablePtr);
+
+    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TableInsertChars --
+ *	Insert new characters to the active cell of a table widget.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	New characters get added to cell text; it will be redisplayed
+ *	soon, but not necessarily immediately.
+ *
+ *----------------------------------------------------------------------
+ */
+void TableInsertChars(
+    Table *tablePtr,		/* Table that is to get the new elements. */
+    int index,			/* Add the new elements before this element. */
+    char *value) {		/* New characters to add (NULL-terminated
+				 * string). */
+
+    int oldlen, byteIndex, byteCount, charsAdded;
+    char *new, *string;
+
+    byteCount = (int) strlen(value);
+    if (byteCount == 0) {
+	return;
+    }
+
+    /* Is this an autoclear and this is the first update */
+    /* Note that this clears without validating */
+    if (tablePtr->autoClear && !(tablePtr->flags & TEXT_CHANGED)) {
+	/* set the buffer to be empty */
+	tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf, 1);
+	tablePtr->activeBuf[0] = '\0';
+	/* the insert position now has to be 0 */
+	index = 0;
+	tablePtr->icursor = 0;
+	tablePtr->selectFirst = -1;
+	tablePtr->selectLast = -1;
+    }
+
+    string = tablePtr->activeBuf;
+    byteIndex = (int) (Tcl_UtfAtIndex(string, (Tcl_Size)index) - string);
+
+    oldlen = (int) strlen(string);
+    new = (char *) ckalloc((unsigned)(oldlen + byteCount + 1));
+    memcpy(new, string, (size_t) byteIndex);
+    strcpy(new + byteIndex, value);
+    strcpy(new + byteIndex + byteCount, string + byteIndex);
+
+    /* validate potential new active buffer */
+    /* This prevents inserts on either BREAK or validation error. */
+    if (tablePtr->validate &&
+	    TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
+	    tablePtr->activeCol+tablePtr->colOffset, tablePtr->activeBuf, new,
+	    byteIndex) != TCL_OK) {
+	ckfree(new);
+	return;
+    }
+
+    /*
+     * The following construction is used because inserting improperly
+     * formed UTF-8 sequences between other improperly formed UTF-8
+     * sequences could result in actually forming valid UTF-8 sequences;
+     * the number of characters added may not be Tcl_NumUtfChars(string, -1),
+     * because of context.  The actual number of characters added is how
+     * many characters were are in the string now minus the number that
+     * used to be there.
+     */
+    charsAdded = (int) (Tcl_NumUtfChars(new, (Tcl_Size)(oldlen+byteCount))
+	    - Tcl_NumUtfChars(tablePtr->activeBuf, (Tcl_Size)oldlen));
+
+    if (tablePtr->icursor >= index) {
+	tablePtr->icursor += charsAdded;
+    }
+    if (tablePtr->selectFirst >= index) {
+	tablePtr->selectFirst += charsAdded;
+    }
+    if (tablePtr->selectLast >= index) {
+	tablePtr->selectLast += charsAdded;
+    }
+
+    ckfree(string);
+    tablePtr->activeBuf = new;
+
+    /* mark the text as changed */
+    tablePtr->flags |= TEXT_CHANGED;
+
+    TableSetActiveIndex(tablePtr);
+
+    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
+}
+
+/*
  *--------------------------------------------------------------
  *
  * Table_EditCmd --
- *	This procedure is invoked to process the insert/delete method
- *	that corresponds to a table widget managed by this module.
- *	See the user documentation for details on what it does.
+ *	This function implements the insert and delete methods.
+ *	It is used to insert or delete characters in the active
+ *	cell. It can also be used to insert or delete columns
+ *	and rows in the table widget.
  *
  * Results:
  *	A standard Tcl result.
@@ -484,188 +669,4 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	TableGenerateSelectEvent(tablePtr);
     }
     return TCL_OK;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TableDeleteChars --
- *	Remove one or more characters from the active cell of a table widget.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Characters are removed from active cell, the table gets modified, and
- *	(eventually) redisplayed.
- *
- *----------------------------------------------------------------------
- */
-void TableDeleteChars(
-    Table *tablePtr,		/* Table widget to modify. */
-    int index,			/* Index of first character to delete. */
-    int count) {		/* How many characters to delete. */
-
-    int byteIndex, byteCount, newByteCount, numBytes, numChars;
-    char *new, *string;
-
-    string = tablePtr->activeBuf;
-    numBytes = (int) strlen(string);
-    numChars = (int) Tcl_NumUtfChars(string, (Tcl_Size)numBytes);
-    if ((index + count) > numChars) {
-	count = numChars - index;
-    }
-    if (count <= 0) {
-	return;
-    }
-
-    byteIndex = (int) (Tcl_UtfAtIndex(string, (Tcl_Size)index) - string);
-    byteCount = (int) (Tcl_UtfAtIndex(string + byteIndex, (Tcl_Size)count) -
-	(string + byteIndex));
-
-    newByteCount = numBytes + 1 - byteCount;
-    new = (char *) ckalloc((unsigned) newByteCount);
-    memcpy(new, string, (size_t) byteIndex);
-    strcpy(new + byteIndex, string + byteIndex + byteCount);
-
-    /* This prevents deletes on BREAK or validation error. */
-    if (tablePtr->validate &&
-	TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
-	tablePtr->activeCol+tablePtr->colOffset, tablePtr->activeBuf, new, index) != TCL_OK) {
-	ckfree(new);
-	return;
-    }
-
-    ckfree(tablePtr->activeBuf);
-    tablePtr->activeBuf = new;
-
-    /* mark the text as changed */
-    tablePtr->flags |= TEXT_CHANGED;
-
-    /* Adjust insertion cursor */
-    if (tablePtr->icursor >= index) {
-	if (tablePtr->icursor >= (index+count)) {
-	    tablePtr->icursor -= count;
-	} else {
-	    tablePtr->icursor = index;
-	}
-    }
-
-    /* Adjust selction */
-    if (tablePtr->selectFirst >= index) {
-	if (tablePtr->selectFirst >= (index+count)) {
-	    tablePtr->selectFirst -= count;
-	} else {
-	    tablePtr->selectFirst = index;
-	}
-    }
-    if (tablePtr->selectLast >= index) {
-	if (tablePtr->selectLast >= (index+count)) {
-	    tablePtr->selectLast -= count;
-	} else {
-	    tablePtr->selectLast = index;
-	}
-    }
-    if (tablePtr->selectLast <= tablePtr->selectFirst) {
-	tablePtr->selectFirst = -1;
-	tablePtr->selectLast = -1;
-    }
-
-    TableSetActiveIndex(tablePtr);
-
-    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TableInsertChars --
- *	Add new characters to the active cell of a table widget.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	New characters get added to cell text; it will be redisplayed
- *	soon, but not necessarily immediately.
- *
- *----------------------------------------------------------------------
- */
-void TableInsertChars(
-    Table *tablePtr,		/* Table that is to get the new elements. */
-    int index,			/* Add the new elements before this element. */
-    char *value) {		/* New characters to add (NULL-terminated
-				 * string). */
-
-    int oldlen, byteIndex, byteCount, charsAdded;
-    char *new, *string;
-
-    byteCount = (int) strlen(value);
-    if (byteCount == 0) {
-	return;
-    }
-
-    /* Is this an autoclear and this is the first update */
-    /* Note that this clears without validating */
-    if (tablePtr->autoClear && !(tablePtr->flags & TEXT_CHANGED)) {
-	/* set the buffer to be empty */
-	tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf, 1);
-	tablePtr->activeBuf[0] = '\0';
-	/* the insert position now has to be 0 */
-	index = 0;
-	tablePtr->icursor = 0;
-	tablePtr->selectFirst = -1;
-	tablePtr->selectLast = -1;
-    }
-
-    string = tablePtr->activeBuf;
-    byteIndex = (int) (Tcl_UtfAtIndex(string, (Tcl_Size)index) - string);
-
-    oldlen = (int) strlen(string);
-    new = (char *) ckalloc((unsigned)(oldlen + byteCount + 1));
-    memcpy(new, string, (size_t) byteIndex);
-    strcpy(new + byteIndex, value);
-    strcpy(new + byteIndex + byteCount, string + byteIndex);
-
-    /* validate potential new active buffer */
-    /* This prevents inserts on either BREAK or validation error. */
-    if (tablePtr->validate &&
-	    TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
-	    tablePtr->activeCol+tablePtr->colOffset, tablePtr->activeBuf, new,
-	    byteIndex) != TCL_OK) {
-	ckfree(new);
-	return;
-    }
-
-    /*
-     * The following construction is used because inserting improperly
-     * formed UTF-8 sequences between other improperly formed UTF-8
-     * sequences could result in actually forming valid UTF-8 sequences;
-     * the number of characters added may not be Tcl_NumUtfChars(string, -1),
-     * because of context.  The actual number of characters added is how
-     * many characters were are in the string now minus the number that
-     * used to be there.
-     */
-    charsAdded = (int) (Tcl_NumUtfChars(new, (Tcl_Size)(oldlen+byteCount))
-	    - Tcl_NumUtfChars(tablePtr->activeBuf, (Tcl_Size)oldlen));
-
-    if (tablePtr->icursor >= index) {
-	tablePtr->icursor += charsAdded;
-    }
-    if (tablePtr->selectFirst >= index) {
-	tablePtr->selectFirst += charsAdded;
-    }
-    if (tablePtr->selectLast >= index) {
-	tablePtr->selectLast += charsAdded;
-    }
-
-    ckfree(string);
-    tablePtr->activeBuf = new;
-
-    /* mark the text as changed */
-    tablePtr->flags |= TEXT_CHANGED;
-
-    TableSetActiveIndex(tablePtr);
-
-    TableRefresh(tablePtr, tablePtr->activeRow, tablePtr->activeCol, CELL);
 }

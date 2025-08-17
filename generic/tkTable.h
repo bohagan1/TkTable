@@ -472,10 +472,6 @@ typedef struct {
 } Table;
 
 /*
- * HEADERS FOR EMBEDDED WINDOWS
- */
-
-/*
  * A structure of the following type holds information for each window
  * embedded in a table widget.
  */
@@ -504,20 +500,6 @@ typedef struct TableEmbWindow {
 } TableEmbWindow;
 
 extern Tk_ConfigSpec tableSpecs[];
-
-extern void	EmbWinDisplay(Table *tablePtr, Drawable window, TableEmbWindow *ewPtr,
-			TableTag *tagPtr, int x, int y, int width, int height);
-extern void	EmbWinUnmap(Table *tablePtr, int rlo, int rhi, int clo, int chi);
-extern void	EmbWinDelete(Table *tablePtr, TableEmbWindow *ewPtr);
-extern int	Table_WinMove(Table *tablePtr, char *const srcPtr, char *const destPtr,
-			int flags);
-extern int	Table_WinDelete(Table *tablePtr, char *const idxPtr);
-extern int	Table_WindowCmd(ClientData clientData, Tcl_Interp *interp, int objc,
-			Tcl_Obj *const objv[]);
-extern int	TableValidateChange(Table *tablePtr, int r, int c, char *oldVal,
-			char *newVal, int idx);
-extern void	TableGenerateSelectEvent(Table *tablePtr);
-extern void	TableSetActiveIndex(Table *tablePtr);
 
 
 /*
@@ -573,8 +555,6 @@ extern int	Table_ViewCmd(ClientData clientData,
 
 extern int	Table_EditCmd(ClientData clientData,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
-extern void	TableDeleteChars(Table *tablePtr, int idx, int count);
-extern void	TableInsertChars(Table *tablePtr, int idx, char *string);
 
 /*
  * HEADERS IN tkTableTag.c
@@ -637,7 +617,7 @@ extern int	Table_SpanCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 extern void	TableSpanSanCheck(Table *tablePtr);
 
 /*
- * HEADERS IN TKTABLECELLSORT
+ * HEADERS IN tkTableCellSort.c
  */
 
 extern Tcl_Obj *TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr);
@@ -645,7 +625,7 @@ extern Tcl_Obj *TableGetSortedIndices(Tcl_HashTable *hashTablePtr);
 extern Tcl_Obj *TableGetSortedIndicesFiltered(Tcl_HashTable *hashTablePtr, int has_value, char *pattern);
 
 /*
- * HEADERS IN TKTABLEPS
+ * HEADERS IN tlTablePs.c
  */
 
 #ifdef POSTSCRIPT
@@ -655,22 +635,39 @@ extern void	Tcl_DStringAppendAll(Tcl_DString *, ...);
 #endif
 
 /*
- * HEADERS IN TKTABLE
+ * HEADERS IN tkTableWin.c
+ */
+
+extern void	EmbWinDisplay(Table *tablePtr, Drawable window, TableEmbWindow *ewPtr,
+			TableTag *tagPtr, int x, int y, int width, int height);
+extern void	EmbWinUnmap(Table *tablePtr, int rlo, int rhi, int clo, int chi);
+extern void	EmbWinDelete(Table *tablePtr, TableEmbWindow *ewPtr);
+extern int	Table_WinMove(Table *tablePtr, char *const srcPtr, char *const destPtr,
+			int flags);
+extern int	Table_WinDelete(Table *tablePtr, char *const idxPtr);extern int	Table_WindowCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+			Tcl_Obj *const objv[]);
+
+/*
+ * HEADERS IN tkTable.c
  */
 
 EXTERN int Tktable_Init(Tcl_Interp *interp);
 EXTERN int Tktable_SafeInit(Tcl_Interp *interp);
 
-extern void	TableGetActiveBuf(Table *tablePtr);
-extern void	ExpandPercents(Table *tablePtr, char *before, int r, int c, char *oldVal,
-			char *newVal, Tcl_Size idx, Tcl_DString *dsPtr, int cmdType);
-extern void	TableInvalidate(Table *tablePtr, int x, int y, int width, int height, int force);
+extern void	TableGenerateSelectEvent(Table *tablePtr);
 extern void	TableRefresh(Table *tablePtr, int arg1, int arg2, int mode);
+extern void	TableInvalidate(Table *tablePtr, int x, int y, int width, int height, int force);
+extern void	TableAddFlash(Table *tablePtr, int row, int col);
+extern void	TableSetActiveIndex(Table *tablePtr);
+extern void	TableGetActiveBuf(Table *tablePtr);
 extern void	TableGeometryRequest(Table *tablePtr);
 extern void	TableAdjustActive(Table *tablePtr);
 extern void	TableAdjustParams(Table *tablePtr);
 extern void	TableConfigCursor(Table *tablePtr);
-extern void	TableAddFlash(Table *tablePtr, int row, int col);
+extern int	TableValidateChange(Table *tablePtr, int r, int c, char *oldVal,
+			char *newVal, int idx);
+extern void	ExpandPercents(Table *tablePtr, char *before, int r, int c, char *oldVal,
+			char *newVal, Tcl_Size idx, Tcl_DString *dsPtr, int cmdType);
 
 
 #define TableInvalidateAll(tablePtr, flags) \
