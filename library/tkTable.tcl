@@ -43,6 +43,7 @@ bind Table <ButtonRelease-1>	{ ::tktable::B1Release %W %x %y }
 bind Table <Double-Button-1>	{ ::tktable::DoubleButton1 %W %x %y }
 bind Table <Triple-Button-1>	{ ::tktable::TripleButton1 %W %x %y }
 bind Table <Shift-1>		{ ::tktable::BeginExtend %W @%x,%y }
+#bind Table <Control-1>		{ ::tktable::Button1 %W %x %y add }
 bind Table <<ToggleSelection>>	{ ::tktable::BeginToggle %W @%x,%y }
 bind Table <B1-Enter>		{ ::tktable::CancelRepeat}
 bind Table <B1-Leave>		{
@@ -724,7 +725,7 @@ proc ::tktable::Delete {w} {
 # Results:
 # Returns nothing
 #
-proc ::tktable::Button1 {w x y} {
+proc ::tktable::Button1 {w x y {op set}} {
     variable Priv
 
     # $Priv(borderInfo) is null if the user did not click on a border
@@ -748,7 +749,7 @@ proc ::tktable::Button1 {w x y} {
 	    $w activate {}
 	}
 	$w $fn [format "@%d,%d" $x $y]
-	::tktable::BeginSelect $w [format "@%d,%d" $x $y]
+	::tktable::BeginSelect $w [format "@%d,%d" $x $y] $op
 	focus $w
 	array set Priv [list x $x y $y mouseMoved 0 bindingMode $fn icursor [$w icursor]]
     }
@@ -873,77 +874,62 @@ proc ::tktable::TripleButton1 {w x y} {
 #
 # This procedure is typically invoked on button-1 presses. It begins
 # the process of making a selection in the table. Its exact behavior
-# depends on the selection mode currently in effect for the table;
-# see the Motif documentation for details.
+# depends on the selection mode currently in effect for the table and
+# the cell selected.
 #
 # Arguments:
 # w	- The table widget.
 # el	- The index of the cell for the selection operation (typically
 #	the one under the pointer).
 #
-proc ::tktable::BeginSelect {w el} {
+proc ::tktable::BeginSelect {w el {op set}} {
     variable Priv
     set cell [$w index $el]
 
     if {[scan $cell %d,%d r c] != 2} return
-    $w selection active 0
-    switch [$w cget -selectmode] {
-	multiple {
-	    if {[$w tag includes title $cell]} {
-		## in the title area
-		if {$r < [$w cget -titlerows]+[$w cget -roworigin]} {
-		    ## We're in a column header
-		    if {$c < [$w cget -titlecols]+[$w cget -colorigin]} {
-			## We're in the topleft title area
-			set inc topleft
-			set el2 end
-		    } else {
-			set inc [$w index topleft row],$c
-			set el2 [$w index end row],$c
-		    }
+    set tr [expr {[$w cget -titlerows]+[$w cget -roworigin]}]
+    set tc [expr {[$w cget -titlecols]+[$w cget -colorigin]}]
+
+    set mode [$w cget -selectmode]
+    switch $mode {
+	extended - multiple {
+	    if {$mode eq "extended" && $op eq "set"} {
+		$w selection clear all
+	    }
+	    if {$r < $tr && $c < $tc} {
+		$w activate {}
+		if {$mode eq "multiple" && [$w selection includes $cell]} {
+		    SelectNone $w
 		} else {
-		    ## We're in a row header
-		    set inc $r,[$w index topleft col]
-		    set el2 $r,[$w index end col]
+		    SelectAll $w
 		}
+
+	    } elseif {$c < $tc} {
+		SelectRow $w $cell [expr {$mode eq "multiple"}]
+
+	    } elseif {$r < $tr} {
+		SelectColumn $w $cell [expr {$mode eq "multiple"}]
+
 	    } else {
-		set inc $cell
-		set el2 $cell
-	    }
-	    if {[$w selection includes $inc]} {
-		$w selection clear $cell $el2
-	    } else {
-		$w selection set $cell $el2
-	    }
-	}
-	extended {
-	    $w selection clear all
-	    if {[$w tag includes title $cell]} {
-		if {$r < [$w cget -titlerows]+[$w cget -roworigin]} {
-		    ## We're in a column header
-		    if {$c < [$w cget -titlecols]+[$w cget -colorigin]} {
-			## We're in the topleft title area
-			$w selection set $cell end
-		    } else {
-			$w selection set $cell [$w index end row],$c
-		    }
+		# Select cell or toggle selection state
+		if {$mode eq "multiple" && [$w selection includes $cell]} {
+		    $w selection clear $cell
 		} else {
-		    ## We're in a row header
-		    $w selection set $cell $r,[$w index end col]
+		    $w selection set $cell
 		}
-	    } else {
-		$w selection set $cell
 	    }
-	    $w selection anchor $cell
 	    set Priv(tablePrev) $cell
+	    $w selection anchor $cell
 	}
 	default {
-	    if {[$w cget -selecttitle] || ![$w tag includes title $cell]} {
+	    if {($r < $tr || $c < $tc) && ![$w cget -selecttitle]} {
+		return
+	    } else {
 		$w selection clear all
 		$w selection set $cell
 		set Priv(tablePrev) $cell
+		$w selection anchor $cell
 	    }
-	    $w selection anchor $cell
 	}
     }
 }
@@ -1356,19 +1342,30 @@ proc ::tktable::SelectionClear {w} {
 # Arguments:
 # w -	The table widget.
 #
-proc ::tktable::SelectRow {w} {
-    if {[set cell [$w activate]] eq "" && [set cell [$w focus]] eq ""} {
+proc ::tktable::SelectRow {w {cell {}} {toggle 0}} {
+    if {$cell eq "" && [set cell [$w activate]] eq "" && [set cell [$w focus]] eq ""} {
 	return
     }
 
-    if {[$w cget -selectmode] in [list single browse]} {
+    if {[$w cget -selectmode] in [list browse single]} {
 	$w selection clear all
 	$w selection set $cell
     } else {
 	if {[scan $cell %d,%d row col] != 2} return
-	set col1 [$w index origin col]
-	set col2 [$w index end col]
-	$w selection set [format "%d,%d" $row $col1] [format "%d,%d" $row $col2]
+	if {[$w cget -selecttitles]} {
+	    set col1 [$w cget -colorigin]
+	    set col2 [expr {$col1 + [$w cget -cols]}]
+	} else {
+	    set col1 [$w index origin col]
+	    set col2 [$w index end col]
+	}
+	set from [format "%d,%d" $row $col1]
+	set to [format "%d,%d" $row $col2]
+	if {$toggle && [$w selection includes $from]} {
+	    $w selection clear $from $to
+	} else {
+	    $w selection set $from $to
+	}
     }
 }
 
@@ -1380,19 +1377,30 @@ proc ::tktable::SelectRow {w} {
 # Arguments:
 # w -	The table widget.
 #
-proc ::tktable::SelectColumn {w} {
-    if {[set cell [$w activate]] eq "" && [set cell [$w focus]] eq ""} {
+proc ::tktable::SelectColumn {w {cell {}} {toggle 0}} {
+    if {$cell eq "" && [set cell [$w activate]] eq "" && [set cell [$w focus]] eq ""} {
 	return
     }
 
-    if {[$w cget -selectmode] in [list single browse]} {
+    if {[$w cget -selectmode] in [list browse single]} {
 	$w selection clear all
 	$w selection set $cell
     } else {
 	if {[scan $cell %d,%d row col] != 2} return
-	set row1 [$w index origin row]
-	set row2 [$w index end row]
-	$w selection set [format "%d,%d" $row1 $col] [format "%d,%d" $row2 $col]
+	if {[$w cget -selecttitles]} {
+	    set row1 [$w cget -roworigin]
+	    set row2 [expr {$row1 + [$w cget -rows]}]
+	} else {
+	    set row1 [$w index origin row]
+	    set row2 [$w index end row]
+	}
+	set from [format "%d,%d" $row1 $col]
+	set to [format "%d,%d" $row2 $col]
+	if {$toggle && [$w selection includes $from]} {
+	    $w selection clear $from $to
+	} else {
+	    $w selection set $from $to
+	}
     }
 }
 
