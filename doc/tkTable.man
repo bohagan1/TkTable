@@ -20,7 +20,7 @@
 Creates and configures a table widget with name [arg pathName].
 Additional options may be specified on the command line or
 in the option database to configure aspects of the table such as its background
-color and relief. The [cmd tree] command returns the path name of the new
+color and relief. The [cmd table] command returns the path name of the new
 window. At the time the command is invoked, [arg pathName] must not exist,
 but it's parent must.
 
@@ -28,7 +28,8 @@ The [cmd table] command creates a 2-dimensional grid of cells.  The table
 can use a TCL array variable or TCL command for data storage and retrieval,
 as well as an optional data cache in memory for speed.  The default variable is
 [var ::tableData]. The widget has an active cell, the contents of which can be
-edited (when the state is normal).  The widget supports a default style for
+edited (when the state is normal) and a focus cell which is used for keyboard
+navigation between cells.  The widget supports a default style for
 the cells and also multiple tags which can be used to change the style of a
 row, column, or cell (see [sectref TAGS] for details).  A cell flash can
 also be set so that edited cells will change colors for a specified amount of
@@ -70,7 +71,6 @@ cell if not specified. This is used by the [const <<Paste>>] virtual event.
 [section {STANDARD OPTIONS}]
 [list_begin options]
 [opt_def [option -background]]
-[opt_def [option -borderwidth]]
 [opt_def [option -cursor]]
 [opt_def [option -exportselection]]
 [opt_def [option -font]]
@@ -83,13 +83,10 @@ cell if not specified. This is used by the [const <<Paste>>] virtual event.
 [opt_def [option -insertofftime]]
 [opt_def [option -insertontime]]
 [opt_def [option -insertwidth]]
-[opt_def [option -padx]]
-[opt_def [option -pady]]
 [opt_def [option -relief]]
 [opt_def [option -selectbackground]]
 [opt_def [option -selectborderwidth]]
 [opt_def [option -selectforeground]]
-[opt_def [option -setgrid]]
 [opt_def [option -takefocus]]
 [opt_def [option -xscrollcommand]]
 [opt_def [option -yscrollcommand]]
@@ -98,6 +95,11 @@ See the [syscmd options] manual entry for details on the standard options.
 
 [section {WIDGET SPECIFIC OPTIONS}]
 [list_begin tkoptions]
+
+[tkoption_def -anchor anchor Anchor]
+Defines how to position text, image, or window within a cell. Must be one of
+the values [const n], [const ne], [const e], [const se], [const s], [const sw],
+[const w], [const nw], or [const center]. Defaults to [const center].
 
 [tkoption_def -autoclear autoClear AutoClear]
 A boolean value which specifies whether the first keypress in a cell will
@@ -139,7 +141,7 @@ Specifies what column index to interpret as the leftmost column in the table.
 This value is used for user indices in the table.  Defaults to 0.
 
 [tkoption_def -cols cols Cols]
-Number of cols in the table.  Defaults to 10.
+Number of cols in the table.  Defaults to 10. The minimum value is 1.
 
 [tkoption_def -colseparator colSeparator Separator]
 Specifies the separator character that will be used as the column separator
@@ -257,14 +259,24 @@ on anchor).  Defaults to 0.  See [option -pady] for an alternate padding
 style.
 
 [tkoption_def -justify justify Justify]
-How to justify multi-line text in a cell. It must be one of [const left],
-[const right], or [const center]. Defaults to [const left].
+When there are multiple lines of text displayed in a cell, this option
+determines how the lines line up with each other. Must be one of [option left],
+[option center], or [option right]. The default is [option left]. Left means
+that the lines' left edges all line up, center means that the lines' centers
+are aligned, and right means that the lines' right edges line up.
 
 [tkoption_def -maxheight maxHeight MaxHeight]
 The max height in pixels that the window will request.  Defaults to 600.
 
 [tkoption_def -maxwidth maxWidth MaxWidth]
 The max width in pixels that the window will request.  Defaults to 800.
+
+[tkoption_def -mode mode Mode]
+Controls how bindings work for cell activation. The options are
+[const table] or [const spreadsheet]. The default value is [const table].
+For [const table], a Button 1 press in a cell will activate it.
+For [const spreadsheet], the first Button 1 press will only give a cell the
+focus. The second Button 1 press will activate it.
 
 [tkoption_def -multiline multiline Multiline]
 Specifies the default setting for the multiline tag option.  Defaults to 1.
@@ -303,7 +315,7 @@ Specifies what row index to interpret as the topmost row in the table.
 This value is used for user indices in the table.  Defaults to 0.
 
 [tkoption_def -rows rows Rows]
-Number of rows in the table.  Defaults to 10.
+Number of rows in the table.  Defaults to 10. The minimum value is 1.
 
 [tkoption_def -rowseparator rowSeparator Separator]
 Specifies the separator character that will be used as the row separator when
@@ -329,15 +341,46 @@ selection mechanism.  It uses the % substitution model described in
 error is generated and nothing is returned.
 
 [tkoption_def -selectmode selectMode SelectMode]
-Specifies one of several styles for manipulating the selection.  The value
+Controls how the built-in class bindings manage the selection.  The value
 of the option may be arbitrary, but the default bindings expect it to be
-either [const single], [const browse], [const multiple], or [const extended]; the
-default value is [const browse].  These styles are like those for the Tk
+either [const single], [const browse], [const multiple], or [const extended].
+The default value is [const browse].  These options work the same as the Tk
 listbox, except expanded for 2 dimensions.
+[list_begin options]
 
-[tkoption_def -selecttitle selectTitles SelectTitles]
+[opt_def browse]
+Only one cell will be selected at a time. The selection follows the mouse
+pointer when Button-1 is pressed and the cell focus during keyboard traversal.
+In this mode, the selection cannot be removed via the keyboard bindings.
+
+[opt_def single]
+Only a single cell can be selected at a time. Cells are selected via Button-1.
+Selecting a cell unselects all other cells. In this mode, the selection does
+not follow the mouse pointer when Button-1 is pressed nor the cell focus during
+keyboard traversal. The selection can be cleared via the keyboard bindings.
+
+[opt_def multiple]
+Multiple cells can be selected at a time. Selecting a cell does not change the
+selection state of other cells. Selecting a cell that is already selected will
+unselect it. In this mode, the focus and selection are independent which allows
+for keyboard traversal without changing the selection.
+The selection can be cleared via the keyboard bindings.
+
+[opt_def extended]
+Multiple cells can be selected, but the default is for only one cell to be
+selected at a time. More cells can be selected by dragging the mouse pointer
+with Button-1 is pressed or by extending the selection using the Shift key
+bindings. In this mode, the selection follows the focus during keyboard
+traversal. The selection can be cleared via the keyboard bindings.
+[list_end]
+
+Note that the [method selection] method can set the selection to include any
+cell regardless of the value of [option -selectmode]. This mode also doesn't
+impact the [method "selection active"] controlled active cell selection.
+
+[tkoption_def -selecttitles selectTitles SelectTitles]
 Specifies whether title cells should be allowed in the selection.
-Defaults to 0 (disallowed).
+Defaults to 0, not allowed.
 
 [tkoption_def -selecttype selectType SelectType]
 Specifies one of several types of selection for the table.  The value of the
@@ -525,7 +568,9 @@ default display style.  The following options are currently supported for tags:
 [list_begin options]
 
 [opt_def -anchor [arg anchor]]
-Anchor for item in the cell space.
+Defines how to position text or image within a cell. Must be one of
+the values [const n], [const ne], [const e], [const se], [const s], [const sw],
+[const w], [const nw], or [const center]. Defaults to [const center].
 
 [opt_def "-background or -bg" [arg color]]
 Background color of the cell. May also be the empty string to inherit the
@@ -551,8 +596,11 @@ Foreground color of the cell. May also be the
 empty string to inherit the default table foreground value (the default).
 
 [opt_def -justify [arg justify]]
-How to justify multi-line text in a cell.
-It must be one of [const left], [const right], or [const center].
+When there are multiple lines of text displayed in a cell, this option
+determines how the lines line up with each other. Must be one of [option left],
+[option center], or [option right]. The default is [option left]. Left means
+that the lines' left edges all line up, center means that the lines' centers
+are aligned, and right means that the lines' right edges line up.
 
 [opt_def -image [arg imageName]]
 An image to display in the cell instead of text or empty string for none

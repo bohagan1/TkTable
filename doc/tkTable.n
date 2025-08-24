@@ -293,14 +293,15 @@ package require \fBTktable ?2\&.12?\fR
 Creates and configures a table widget with name \fIpathName\fR\&.
 Additional options may be specified on the command line or
 in the option database to configure aspects of the table such as its background
-color and relief\&. The \fBtree\fR command returns the path name of the new
+color and relief\&. The \fBtable\fR command returns the path name of the new
 window\&. At the time the command is invoked, \fIpathName\fR must not exist,
 but it's parent must\&.
 The \fBtable\fR command creates a 2-dimensional grid of cells\&.  The table
 can use a TCL array variable or TCL command for data storage and retrieval,
 as well as an optional data cache in memory for speed\&.  The default variable is
 \fB::tableData\fR\&. The widget has an active cell, the contents of which can be
-edited (when the state is normal)\&.  The widget supports a default style for
+edited (when the state is normal) and a focus cell which is used for keyboard
+navigation between cells\&.  The widget supports a default style for
 the cells and also multiple tags which can be used to change the style of a
 row, column, or cell (see \fBTAGS\fR for details)\&.  A cell flash can
 also be set so that edited cells will change colors for a specified amount of
@@ -342,8 +343,6 @@ cell if not specified\&. This is used by the \fB<<Paste>>\fR virtual event\&.
 .TP
 \fB\fB-background\fR\fR
 .TP
-\fB\fB-borderwidth\fR\fR
-.TP
 \fB\fB-cursor\fR\fR
 .TP
 \fB\fB-exportselection\fR\fR
@@ -368,10 +367,6 @@ cell if not specified\&. This is used by the \fB<<Paste>>\fR virtual event\&.
 .TP
 \fB\fB-insertwidth\fR\fR
 .TP
-\fB\fB-padx\fR\fR
-.TP
-\fB\fB-pady\fR\fR
-.TP
 \fB\fB-relief\fR\fR
 .TP
 \fB\fB-selectbackground\fR\fR
@@ -379,8 +374,6 @@ cell if not specified\&. This is used by the \fB<<Paste>>\fR virtual event\&.
 \fB\fB-selectborderwidth\fR\fR
 .TP
 \fB\fB-selectforeground\fR\fR
-.TP
-\fB\fB-setgrid\fR\fR
 .TP
 \fB\fB-takefocus\fR\fR
 .TP
@@ -390,6 +383,18 @@ cell if not specified\&. This is used by the \fB<<Paste>>\fR virtual event\&.
 .PP
 See the \fBoptions\fR manual entry for details on the standard options\&.
 .SH "WIDGET SPECIFIC OPTIONS"
+.LP
+.nf
+.ta 6c
+Command-Line Switch:	\fB-anchor\fR
+Database Name:	\fBanchor\fR
+Database Class:	\fBAnchor\fR
+
+.fi
+.IP
+Defines how to position text, image, or window within a cell\&. Must be one of
+the values \fBn\fR, \fBne\fR, \fBe\fR, \fBse\fR, \fBs\fR, \fBsw\fR,
+\fBw\fR, \fBnw\fR, or \fBcenter\fR\&. Defaults to \fBcenter\fR\&.
 .LP
 .nf
 .ta 6c
@@ -480,7 +485,7 @@ Database Class:	\fBCols\fR
 
 .fi
 .IP
-Number of cols in the table\&.  Defaults to 10\&.
+Number of cols in the table\&.  Defaults to 10\&. The minimum value is 1\&.
 .LP
 .nf
 .ta 6c
@@ -702,8 +707,11 @@ Database Class:	\fBJustify\fR
 
 .fi
 .IP
-How to justify multi-line text in a cell\&. It must be one of \fBleft\fR,
-\fBright\fR, or \fBcenter\fR\&. Defaults to \fBleft\fR\&.
+When there are multiple lines of text displayed in a cell, this option
+determines how the lines line up with each other\&. Must be one of \fBleft\fR,
+\fBcenter\fR, or \fBright\fR\&. The default is \fBleft\fR\&. Left means
+that the lines' left edges all line up, center means that the lines' centers
+are aligned, and right means that the lines' right edges line up\&.
 .LP
 .nf
 .ta 6c
@@ -724,6 +732,20 @@ Database Class:	\fBMaxWidth\fR
 .fi
 .IP
 The max width in pixels that the window will request\&.  Defaults to 800\&.
+.LP
+.nf
+.ta 6c
+Command-Line Switch:	\fB-mode\fR
+Database Name:	\fBmode\fR
+Database Class:	\fBMode\fR
+
+.fi
+.IP
+Controls how bindings work for cell activation\&. The options are
+\fBtable\fR or \fBspreadsheet\fR\&. The default value is \fBtable\fR\&.
+For \fBtable\fR, a Button 1 press in a cell will activate it\&.
+For \fBspreadsheet\fR, the first Button 1 press will only give a cell the
+focus\&. The second Button 1 press will activate it\&.
 .LP
 .nf
 .ta 6c
@@ -818,7 +840,7 @@ Database Class:	\fBRows\fR
 
 .fi
 .IP
-Number of rows in the table\&.  Defaults to 10\&.
+Number of rows in the table\&.  Defaults to 10\&. The minimum value is 1\&.
 .LP
 .nf
 .ta 6c
@@ -879,22 +901,53 @@ Database Class:	\fBSelectMode\fR
 
 .fi
 .IP
-Specifies one of several styles for manipulating the selection\&.  The value
+Controls how the built-in class bindings manage the selection\&.  The value
 of the option may be arbitrary, but the default bindings expect it to be
-either \fBsingle\fR, \fBbrowse\fR, \fBmultiple\fR, or \fBextended\fR; the
-default value is \fBbrowse\fR\&.  These styles are like those for the Tk
+either \fBsingle\fR, \fBbrowse\fR, \fBmultiple\fR, or \fBextended\fR\&.
+The default value is \fBbrowse\fR\&.  These options work the same as the Tk
 listbox, except expanded for 2 dimensions\&.
+.RS
+.TP
+\fBbrowse\fR
+Only one cell will be selected at a time\&. The selection follows the mouse
+pointer when Button-1 is pressed and the cell focus during keyboard traversal\&.
+In this mode, the selection cannot be removed via the keyboard bindings\&.
+.TP
+\fBsingle\fR
+Only a single cell can be selected at a time\&. Cells are selected via Button-1\&.
+Selecting a cell unselects all other cells\&. In this mode, the selection does
+not follow the mouse pointer when Button-1 is pressed nor the cell focus during
+keyboard traversal\&. The selection can be cleared via the keyboard bindings\&.
+.TP
+\fBmultiple\fR
+Multiple cells can be selected at a time\&. Selecting a cell does not change the
+selection state of other cells\&. Selecting a cell that is already selected will
+unselect it\&. In this mode, the focus and selection are independent which allows
+for keyboard traversal without changing the selection\&.
+The selection can be cleared via the keyboard bindings\&.
+.TP
+\fBextended\fR
+Multiple cells can be selected, but the default is for only one cell to be
+selected at a time\&. More cells can be selected by dragging the mouse pointer
+with Button-1 is pressed or by extending the selection using the Shift key
+bindings\&. In this mode, the selection follows the focus during keyboard
+traversal\&. The selection can be cleared via the keyboard bindings\&.
+.RE
+.IP
+Note that the \fBselection\fR method can set the selection to include any
+cell regardless of the value of \fB-selectmode\fR\&. This mode also doesn't
+impact the \fBselection active\fR controlled active cell selection\&.
 .LP
 .nf
 .ta 6c
-Command-Line Switch:	\fB-selecttitle\fR
+Command-Line Switch:	\fB-selecttitles\fR
 Database Name:	\fBselectTitles\fR
 Database Class:	\fBSelectTitles\fR
 
 .fi
 .IP
 Specifies whether title cells should be allowed in the selection\&.
-Defaults to 0 (disallowed)\&.
+Defaults to 0, not allowed\&.
 .LP
 .nf
 .ta 6c
@@ -1149,7 +1202,9 @@ been tagged, then the display options associated with the tag override the
 default display style\&.  The following options are currently supported for tags:
 .TP
 \fB-anchor\fR \fIanchor\fR
-Anchor for item in the cell space\&.
+Defines how to position text or image within a cell\&. Must be one of
+the values \fBn\fR, \fBne\fR, \fBe\fR, \fBse\fR, \fBs\fR, \fBsw\fR,
+\fBw\fR, \fBnw\fR, or \fBcenter\fR\&. Defaults to \fBcenter\fR\&.
 .TP
 \fB-background or -bg\fR \fIcolor\fR
 Background color of the cell\&. May also be the empty string to inherit the
@@ -1175,8 +1230,11 @@ Foreground color of the cell\&. May also be the
 empty string to inherit the default table foreground value (the default)\&.
 .TP
 \fB-justify\fR \fIjustify\fR
-How to justify multi-line text in a cell\&.
-It must be one of \fBleft\fR, \fBright\fR, or \fBcenter\fR\&.
+When there are multiple lines of text displayed in a cell, this option
+determines how the lines line up with each other\&. Must be one of \fBleft\fR,
+\fBcenter\fR, or \fBright\fR\&. The default is \fBleft\fR\&. Left means
+that the lines' left edges all line up, center means that the lines' centers
+are aligned, and right means that the lines' right edges line up\&.
 .TP
 \fB-image\fR \fIimageName\fR
 An image to display in the cell instead of text or empty string for none

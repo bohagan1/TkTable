@@ -149,14 +149,15 @@
 <dd><p>Creates and configures a table widget with name <i class="arg">pathName</i>.
 Additional options may be specified on the command line or
 in the option database to configure aspects of the table such as its background
-color and relief. The <b class="cmd">tree</b> command returns the path name of the new
+color and relief. The <b class="cmd">table</b> command returns the path name of the new
 window. At the time the command is invoked, <i class="arg">pathName</i> must not exist,
 but it's parent must.
 The <b class="cmd">table</b> command creates a 2-dimensional grid of cells.  The table
 can use a TCL array variable or TCL command for data storage and retrieval,
 as well as an optional data cache in memory for speed.  The default variable is
 <b class="variable">::tableData</b>. The widget has an active cell, the contents of which can be
-edited (when the state is normal).  The widget supports a default style for
+edited (when the state is normal) and a focus cell which is used for keyboard
+navigation between cells.  The widget supports a default style for
 the cells and also multiple tags which can be used to change the style of a
 row, column, or cell (see <span class="sectref"><a href="#section7">TAGS</a></span> for details).  A cell flash can
 also be set so that edited cells will change colors for a specified amount of
@@ -193,8 +194,6 @@ cell if not specified. This is used by the <b class="const">&lt;&lt;Paste&gt;&gt
 <dl class="doctools_options">
 <dt><b class="option"><b class="option">-background</b></b></dt>
 <dd></dd>
-<dt><b class="option"><b class="option">-borderwidth</b></b></dt>
-<dd></dd>
 <dt><b class="option"><b class="option">-cursor</b></b></dt>
 <dd></dd>
 <dt><b class="option"><b class="option">-exportselection</b></b></dt>
@@ -219,10 +218,6 @@ cell if not specified. This is used by the <b class="const">&lt;&lt;Paste&gt;&gt
 <dd></dd>
 <dt><b class="option"><b class="option">-insertwidth</b></b></dt>
 <dd></dd>
-<dt><b class="option"><b class="option">-padx</b></b></dt>
-<dd></dd>
-<dt><b class="option"><b class="option">-pady</b></b></dt>
-<dd></dd>
 <dt><b class="option"><b class="option">-relief</b></b></dt>
 <dd></dd>
 <dt><b class="option"><b class="option">-selectbackground</b></b></dt>
@@ -230,8 +225,6 @@ cell if not specified. This is used by the <b class="const">&lt;&lt;Paste&gt;&gt
 <dt><b class="option"><b class="option">-selectborderwidth</b></b></dt>
 <dd></dd>
 <dt><b class="option"><b class="option">-selectforeground</b></b></dt>
-<dd></dd>
-<dt><b class="option"><b class="option">-setgrid</b></b></dt>
 <dd></dd>
 <dt><b class="option"><b class="option">-takefocus</b></b></dt>
 <dd></dd>
@@ -244,6 +237,13 @@ cell if not specified. This is used by the <b class="const">&lt;&lt;Paste&gt;&gt
 </div>
 <div id="section3" class="doctools_section"><h2><a name="section3">WIDGET SPECIFIC OPTIONS</a></h2>
 <dl class="doctools_tkoptions">
+<dt>Command-Line Switch:	<b class="option">-anchor</b><br>
+Database Name:	<b class="optdbname">anchor</b><br>
+Database Class:	<b class="optdbclass">Anchor</b><br>
+</dt>
+<dd><p>Defines how to position text, image, or window within a cell. Must be one of
+the values <b class="const">n</b>, <b class="const">ne</b>, <b class="const">e</b>, <b class="const">se</b>, <b class="const">s</b>, <b class="const">sw</b>,
+<b class="const">w</b>, <b class="const">nw</b>, or <b class="const">center</b>. Defaults to <b class="const">center</b>.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-autoclear</b><br>
 Database Name:	<b class="optdbname">autoClear</b><br>
 Database Class:	<b class="optdbclass">AutoClear</b><br>
@@ -299,7 +299,7 @@ This value is used for user indices in the table.  Defaults to 0.</p></dd>
 Database Name:	<b class="optdbname">cols</b><br>
 Database Class:	<b class="optdbclass">Cols</b><br>
 </dt>
-<dd><p>Number of cols in the table.  Defaults to 10.</p></dd>
+<dd><p>Number of cols in the table.  Defaults to 10. The minimum value is 1.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-colseparator</b><br>
 Database Name:	<b class="optdbname">colSeparator</b><br>
 Database Class:	<b class="optdbclass">Separator</b><br>
@@ -442,8 +442,11 @@ style.</p></dd>
 Database Name:	<b class="optdbname">justify</b><br>
 Database Class:	<b class="optdbclass">Justify</b><br>
 </dt>
-<dd><p>How to justify multi-line text in a cell. It must be one of <b class="const">left</b>,
-<b class="const">right</b>, or <b class="const">center</b>. Defaults to <b class="const">left</b>.</p></dd>
+<dd><p>When there are multiple lines of text displayed in a cell, this option
+determines how the lines line up with each other. Must be one of <b class="option">left</b>,
+<b class="option">center</b>, or <b class="option">right</b>. The default is <b class="option">left</b>. Left means
+that the lines' left edges all line up, center means that the lines' centers
+are aligned, and right means that the lines' right edges line up.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-maxheight</b><br>
 Database Name:	<b class="optdbname">maxHeight</b><br>
 Database Class:	<b class="optdbclass">MaxHeight</b><br>
@@ -454,6 +457,15 @@ Database Name:	<b class="optdbname">maxWidth</b><br>
 Database Class:	<b class="optdbclass">MaxWidth</b><br>
 </dt>
 <dd><p>The max width in pixels that the window will request.  Defaults to 800.</p></dd>
+<dt>Command-Line Switch:	<b class="option">-mode</b><br>
+Database Name:	<b class="optdbname">mode</b><br>
+Database Class:	<b class="optdbclass">Mode</b><br>
+</dt>
+<dd><p>Controls how bindings work for cell activation. The options are
+<b class="const">table</b> or <b class="const">spreadsheet</b>. The default value is <b class="const">table</b>.
+For <b class="const">table</b>, a Button 1 press in a cell will activate it.
+For <b class="const">spreadsheet</b>, the first Button 1 press will only give a cell the
+focus. The second Button 1 press will activate it.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-multiline</b><br>
 Database Name:	<b class="optdbname">multiline</b><br>
 Database Class:	<b class="optdbclass">Multiline</b><br>
@@ -508,7 +520,7 @@ This value is used for user indices in the table.  Defaults to 0.</p></dd>
 Database Name:	<b class="optdbname">rows</b><br>
 Database Class:	<b class="optdbclass">Rows</b><br>
 </dt>
-<dd><p>Number of rows in the table.  Defaults to 10.</p></dd>
+<dd><p>Number of rows in the table.  Defaults to 10. The minimum value is 1.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-rowseparator</b><br>
 Database Name:	<b class="optdbname">rowSeparator</b><br>
 Database Class:	<b class="optdbclass">Separator</b><br>
@@ -544,17 +556,43 @@ error is generated and nothing is returned.</p></dd>
 Database Name:	<b class="optdbname">selectMode</b><br>
 Database Class:	<b class="optdbclass">SelectMode</b><br>
 </dt>
-<dd><p>Specifies one of several styles for manipulating the selection.  The value
+<dd><p>Controls how the built-in class bindings manage the selection.  The value
 of the option may be arbitrary, but the default bindings expect it to be
-either <b class="const">single</b>, <b class="const">browse</b>, <b class="const">multiple</b>, or <b class="const">extended</b>; the
-default value is <b class="const">browse</b>.  These styles are like those for the Tk
-listbox, except expanded for 2 dimensions.</p></dd>
-<dt>Command-Line Switch:	<b class="option">-selecttitle</b><br>
+either <b class="const">single</b>, <b class="const">browse</b>, <b class="const">multiple</b>, or <b class="const">extended</b>.
+The default value is <b class="const">browse</b>.  These options work the same as the Tk
+listbox, except expanded for 2 dimensions.</p>
+<dl class="doctools_options">
+<dt><b class="option">browse</b></dt>
+<dd><p>Only one cell will be selected at a time. The selection follows the mouse
+pointer when Button-1 is pressed and the cell focus during keyboard traversal.
+In this mode, the selection cannot be removed via the keyboard bindings.</p></dd>
+<dt><b class="option">single</b></dt>
+<dd><p>Only a single cell can be selected at a time. Cells are selected via Button-1.
+Selecting a cell unselects all other cells. In this mode, the selection does
+not follow the mouse pointer when Button-1 is pressed nor the cell focus during
+keyboard traversal. The selection can be cleared via the keyboard bindings.</p></dd>
+<dt><b class="option">multiple</b></dt>
+<dd><p>Multiple cells can be selected at a time. Selecting a cell does not change the
+selection state of other cells. Selecting a cell that is already selected will
+unselect it. In this mode, the focus and selection are independent which allows
+for keyboard traversal without changing the selection.
+The selection can be cleared via the keyboard bindings.</p></dd>
+<dt><b class="option">extended</b></dt>
+<dd><p>Multiple cells can be selected, but the default is for only one cell to be
+selected at a time. More cells can be selected by dragging the mouse pointer
+with Button-1 is pressed or by extending the selection using the Shift key
+bindings. In this mode, the selection follows the focus during keyboard
+traversal. The selection can be cleared via the keyboard bindings.</p></dd>
+</dl>
+<p>Note that the <b class="method">selection</b> method can set the selection to include any
+cell regardless of the value of <b class="option">-selectmode</b>. This mode also doesn't
+impact the <b class="method">selection active</b> controlled active cell selection.</p></dd>
+<dt>Command-Line Switch:	<b class="option">-selecttitles</b><br>
 Database Name:	<b class="optdbname">selectTitles</b><br>
 Database Class:	<b class="optdbclass">SelectTitles</b><br>
 </dt>
 <dd><p>Specifies whether title cells should be allowed in the selection.
-Defaults to 0 (disallowed).</p></dd>
+Defaults to 0, not allowed.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-selecttype</b><br>
 Database Name:	<b class="optdbname">selectType</b><br>
 Database Class:	<b class="optdbclass">SelectType</b><br>
@@ -737,7 +775,9 @@ been tagged, then the display options associated with the tag override the
 default display style.  The following options are currently supported for tags:</p>
 <dl class="doctools_options">
 <dt><b class="option">-anchor</b> <i class="arg">anchor</i></dt>
-<dd><p>Anchor for item in the cell space.</p></dd>
+<dd><p>Defines how to position text or image within a cell. Must be one of
+the values <b class="const">n</b>, <b class="const">ne</b>, <b class="const">e</b>, <b class="const">se</b>, <b class="const">s</b>, <b class="const">sw</b>,
+<b class="const">w</b>, <b class="const">nw</b>, or <b class="const">center</b>. Defaults to <b class="const">center</b>.</p></dd>
 <dt><b class="option">-background or -bg</b> <i class="arg">color</i></dt>
 <dd><p>Background color of the cell. May also be the empty string to inherit the
 default table background value (the default).</p></dd>
@@ -757,8 +797,11 @@ empty string to inherit the default table font value (the default).</p></dd>
 <dd><p>Foreground color of the cell. May also be the
 empty string to inherit the default table foreground value (the default).</p></dd>
 <dt><b class="option">-justify</b> <i class="arg">justify</i></dt>
-<dd><p>How to justify multi-line text in a cell.
-It must be one of <b class="const">left</b>, <b class="const">right</b>, or <b class="const">center</b>.</p></dd>
+<dd><p>When there are multiple lines of text displayed in a cell, this option
+determines how the lines line up with each other. Must be one of <b class="option">left</b>,
+<b class="option">center</b>, or <b class="option">right</b>. The default is <b class="option">left</b>. Left means
+that the lines' left edges all line up, center means that the lines' centers
+are aligned, and right means that the lines' right edges line up.</p></dd>
 <dt><b class="option">-image</b> <i class="arg">imageName</i></dt>
 <dd><p>An image to display in the cell instead of text or empty string for none
 (default).</p></dd>
