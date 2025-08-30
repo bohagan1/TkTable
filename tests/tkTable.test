@@ -1,923 +1,5841 @@
-# This file is a Tcl script to test out the "table" command.
-# It is organized in the standard fashion for Tcl tests.
-#
-# Copyright (c) 2000-2001 Jeffrey Hobbs
-#
-# See the file "license.txt" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
+# Auto generated test cases for tkTable.csv
 
-# deletes:
-# test 2 -5
-# test 4 -2
-# test 0 -1 (== 0 1)
-
-package require tcltest
-namespace import -force ::tcltest::*
-
-set VERSION [package require Tktable]
-
-eval destroy [winfo children .]
-wm geometry . {}
-raise .
-set fixed {Courier -12}
-
-proc getsize w {
-    regexp {(^[^+-]*)} [wm geometry $w] foo x
-    return $x
+# Load Tcl Test package
+if {[lsearch [namespace children] ::tcltest] == -1} {
+	package require tcltest
+	namespace import ::tcltest::*
 }
 
-# Procedure that creates a second table for checking things related
-# to partially visible lines.
+set auto_path [concat [list [file dirname [file dirname [info script]]]] $auto_path]
 
-proc mkPartial {{w .partial}} {
-    catch {destroy $w}
-    toplevel $w
-    wm geometry $w +0+0
-    table $w.l -width 30 -height 5
-    pack $w.l -expand 1 -fill both
-    $w.l insert end one two three four five six seven eight nine ten \
-	    eleven twelve thirteen fourteen fifteen
-    update
-    scan [wm geometry $w] "%dx%d" width height
-    wm geometry $w ${width}x[expr $height-3]
-    update
+package require Tktable
+
+# Constraints
+
+# Helper functions
+proc setup {w args} {
+    set tb [table $w {*}$args]
+    grid $w
+    tkwait visibility $w
+    return $w
 }
 
-proc Some args { # do nothing command }
-proc Another args { # do nothing command }
-
-
-# Create entries in the option database to be sure that geometry options
-# like border width have predictable values.
-
-option add *Table.borderWidth 1
-option add *Table.highlightThickness 2
-option add *Table.font {Helvetica -12}
-
-pack [table .t]
-update
-set i 1
-
-foreach test {
-    {-anchor n n left {bad anchor* "left": must be n, ne, e, se, s, sw, w, nw, or center}}
-    {-autoclear yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-background #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
-    {-bd "4 2" "4 2" badValue {*screen distance* "badValue"}}
-    {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
-    {-bordercursor arrow arrow badValue {bad cursor spec "badValue"}}
-    {-borderwidth 1 1 badValue {*screen distance* "badValue"}}
-    {-browsecommand {Some command} {Some command} {} {}}
-    {-browsecmd {Some command} {Some command} {} {}}
-    {-cache yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-colorigin 1 1 xyzzy {expected integer but got "xyzzy"}}
-    {-cols 12 12 xyzzy {expected integer but got "xyzzy"}}
-    {-colseparator , , {} {}}
-    {-colstretchmode unset unset bogus {bad option "bogus" must be none, unset, all, last, fill}}
-    {-coltagcommand {Some command} {Some command} {} {}}
-    {-colwidth 5 5 xyzzy {expected integer but got "xyzzy"}}
-    {-command {Some command} {Some command} {} {}}
-    {-cursor arrow arrow badValue {bad cursor spec "badValue"}}
-    {-drawmode slow slow badValue {bad option "badValue" must be fast, compatible, slow, single}}
-    {-ellipsis {...} {...} {} {}}
-    {-exportselection yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-fg #110022 #110022 bogus {unknown color name "bogus"}}
-    {-flashmode yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-flashtime 3 3 xyzzy {expected integer but got "xyzzy"}}
-    {-font {Helvetica 12} {Helvetica 12} {} {font "" doesn't exist}}
-    {-foreground #110022 #110022 bogus {unknown color name "bogus"}}
-    {-height 30 30 20p {expected integer but got "20p"}}
-    {-highlightbackground #112233 #112233 ugly {unknown color name "ugly"}}
-    {-highlightcolor #123456 #123456 bogus {unknown color name "bogus"}}
-    {-highlightthickness 6 6 bogus {*screen distance* "bogus"}}
-    {-highlightthickness -2 0 {} {}}
-    {-insertbackground #110022 #110022 bogus {unknown color name "bogus"}}
-    {-insertborderwidth 1.3 1 2.6x {*screen distance* "2.6x"}}
-    {-insertofftime 100 100 3.2 {expected integer but got "3.2"}}
-    {-insertontime 100 100 3.2 {expected integer but got "3.2"}}
-    {-insertwidth 1.3 1 2.6x {*screen distance* "2.6x"}}
-    {-invertselected yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-ipadx 1.3 1 2.6x {*screen distance* "2.6x"}}
-    {-ipady 1.3 1 2.6x {*screen distance* "2.6x"}}
-    {-justify left left wrong {bad justification "wrong": must be left, right, or center}}
-    {-maxheight 300 300 2.6x {*screen distance* "2.6x"}}
-    {-maxwidth 300 300 2.6x {*screen distance* "2.6x"}}
-    {-mode spreadsheet spreadsheet xyzzy {bad option "xyzzy" must be table, spreadsheet}}
-    {-multiline yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-padx 1.3 1 2.6x {*screen distance* "2.6x"}}
-    {-pady 1.3 1 2.6x {*screen distance* "2.6x"}}
-    {-relief groove groove 1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
-    {-resizeborders none none xyzzy {bad option "xyzzy" must be row, col, both, none}}
-    {-rowheight -20 -20 xyzzy {expected integer but got "xyzzy"}}
-    {-roworigin -20 -20 xyzzy {expected integer but got "xyzzy"}}
-    {-rows 20 20 xyzzy {expected integer but got "xyzzy"}}
-    {-rowseparator , , {} {}}
-    {-rowstretchmode unset unset bogus {bad option "bogus" must be none, unset, all, last, fill}}
-    {-rowtagcommand {Some command} {Some command} {} {}}
-    {-selcmd {Some command} {Some command} {} {}}
-    {-selectbackground #110022 #110022 bogus {unknown color name "bogus"}}
-    {-selectborderwidth 1 1 badValue {*screen distance* "badValue"}}
-    {-selectforeground #112233 #112233 bogus {unknown color name "bogus"}}
-    {-selectioncommand {Some command} {Some command} {} {}}
-    {-selectmode extended extended {} {}}
-    {-selecttitles yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-selecttype row row bogus {bad option "bogus" must be row, col, both, cell}}
-    {-sparsearray yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-state disabled disabled foo {bad option "foo" must be normal, disabled}}
-    {-takefocus "any string" "any string" {} {}}
-    {-titlecols 4 4 3p {expected integer but got "3p"}}
-    {-titlerows 4 4 3p {expected integer but got "3p"}}
-    {-usecommand yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-variable var var {} {}}
-    {-validate yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-validatecommand {Some command} {Some command} {} {}}
-    {-vcmd {Some command} {Some command} {} {}}
-    {-width 45 45 3p {expected integer but got "3p"}}
-    {-wrap yes 1 xyzzy {expected boolean value but got "xyzzy"}}
-    {-xscrollcommand {Some command} {Some command} {} {}}
-    {-yscrollcommand {Another command} {Another command} {} {}}
-} {
-    lassign $test name value valid invalid errmsg
-    test table-1.$i "configuration options, $name" -body {
-	.t configure $name $value
-	list [lindex [.t configure $name] 4] [.t cget $name]
-    } -result [list $valid $valid]
-    incr i
-    if {$invalid ne ""} {
-	test table-1.$i "configuration options, $name" -body {
-	    list [catch {.t configure $name $invalid} msg] $msg
-	} -match glob -result [list 1 $errmsg]
+set table_data [list [list "abc" "a b c" " a b c "] [list "d\te" "d\te\tf" "\td\te\tf\t"] [list "g\n" "g\n\nh" "\ng\nh\n"] [list "\"hij\"" "h\"i\"j" "\nhij\n"] [list \u2020\u2021\u2022 "\u2023 \u2024" "\u2025\n\u2026"] [list 1,2 3,4 5,6]]
+proc setup_data {w args} {
+    table $w {*}$args
+    grid $w
+    tkwait visibility $w
+    set row -1
+    foreach line $::table_data {
+	$w set row [incr row],0 $line
     }
-    .t configure $name [lindex [.t configure $name] 3]
-    incr i
+    return $w
 }
 
-foreach test {
-    {-anchor n n left {bad anchor* "left": must be n, ne, e, se, s, sw, w, nw, or center}}
-    {-background #ff0000 #ff0000 non-existent
-	    {unknown color name "non-existent"}}
-    {-bd "4 2" "4 2" badValue {*screen distance* "badValue"}}
-    {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
-    {-borderwidth 1 1 badValue {*screen distance* "badValue"}}
-    {-fg #110022 #110022 bogus {unknown color name "bogus"}}
-    {-font {Helvetica 12} {Helvetica 12} {} {font "" doesn't exist}}
-    {-foreground #110022 #110022 bogus {unknown color name "bogus"}}
-    {-image {} {} {} {}}
-    {-justify left left bogus {bad justification "bogus": must be left, right, or center}}
-    {-multiline 1 1 xyzzy {expected integer but got "xyzzy"}}
-    {-relief groove groove 1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
-    {-showtext 1 1 xyzzy {expected integer but got "xyzzy"}}
-    {-state disabled disabled foo {bad option "foo" must be unknown, normal, disabled}}
-    {-wrap 1 1 xyzzy {expected integer but got "xyzzy"}}
-} {
-    set name [lindex $test 0]
-    test table-1.$i "tag configuration options, $name" {
-	.t tag configure title $name [lindex $test 1]
-	list [lindex [.t tag configure title $name] 4] [.t tag cget title $name]
-    } [list [lindex $test 2] [lindex $test 2]]
-    incr i
-    if {[lindex $test 3] ne ""} {
-	test table-1.$i "tag configuration options, $name" -body {
-	    list [catch {.t tag configure title $name [lindex $test 3]} msg] $msg
-	} -match glob -result [list 1 [lindex $test 4]]
+proc store_val {args} {set ::temp $args;return 1}
+
+# Widget
+
+
+test Table-1.1 {Defaults} -body {
+	table .table
+	list [winfo exists .table] [winfo class .table] [info commands .table]
+    } -cleanup {
+	destroy .table
+    } -result {1 Table .table}
+
+test Table-1.2 {Too few args} -body {
+	table
+    } -result {wrong # args: should be "table pathName ?options?"} -returnCodes {1}
+
+test Table-1.3 {Invalid Path} -body {
+	table bogus
+    } -result {bad window path name "bogus"} -returnCodes {1}
+
+test Table-1.4 {Invalid Arg} -body {
+	table .table -bogus value
+    } -result {unknown option "-bogus"} -returnCodes {1}
+
+test Table-1.5 {No option} -setup {
+	table .table
+    } -body {
+	.table
+    } -cleanup {
+	destroy .table
+    } -result {wrong # args: should be ".table option ?arg arg ...?"} -returnCodes {1}
+
+test Table-1.6 {Invalid Option} -setup {
+	table .table
+    } -body {
+	.table bogus
+    } -cleanup {
+	destroy .table
+    } -result {bad option "bogus": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, export, focus, get, get2, height, hidden, icursor, import, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview} -returnCodes {1}
+
+test Table-1.7 {Ambiguous Option} -setup {
+	table .table
+    } -body {
+	.table c
+    } -cleanup {
+	destroy .table
+    } -result {ambiguous option "c": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, export, focus, get, get2, height, hidden, icursor, import, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview} -returnCodes {1}
+
+# Activate
+
+
+test Activate-2.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Activate-2.2 {Default} -body {
+	.table activate
     }
-    .t tag configure title $name [lindex [.t tag configure title $name] 3]
-    incr i
-}
 
-test table-2.1 {Tk_TableCmd procedure} {
-    list [catch {table} msg] $msg
-} {1 {wrong # args: should be "table pathName ?options?"}}
-test table-2.2 {Tk_TableCmd procedure} {
-    list [catch {table gorp} msg] $msg
-} {1 {bad window path name "gorp"}}
-test table-2.3 {Tk_TableCmd procedure} {
-    catch {destroy .t}
-    table .t
-    list [winfo exists .t] [winfo class .t] [info commands .t]
-} {1 Table .t}
-test table-2.4 {Tk_TableCmd procedure} {
-    catch {destroy .t}
-    list [catch {table .t -gorp foo} msg] $msg [winfo exists .t] \
-	    [info commands .t]
-} {1 {unknown option "-gorp"} 0 {}}
-test table-2.5 {Tk_TableCmd procedure} {
-    catch {destroy .t}
-    table .t
-} {.t}
+test Activate-2.3 {Too many args} -body {
+	.table activate 1 2
+    } -result {wrong # args: should be ".table activate ?index?"} -returnCodes {1}
 
-option clear
-destroy .t
-table .t -cache 1
-update
-update
-update
-update
-update
-update
+test Activate-2.4 {Init} -body {
+	.table set 5,5 "This is some text"
+    }
 
-test table-3.1 {TableWidgetCmd procedure} {
-    list [catch .t msg] $msg
-} {1 {wrong # args: should be ".t option ?arg arg ...?"}}
-test table-3.2 {TableWidgetCmd procedure, commands} {
-    list [catch {.t whoknows} msg] $msg
-} {1 {bad option "whoknows": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, focus, get, height, hidden, icursor, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview}}
-test table-3.3 {TableWidgetCmd procedure, commands} {
-    list [catch {.t c} msg] $msg
-} {1 {ambiguous option "c": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, focus, get, height, hidden, icursor, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview}}
+test Activate-2.5 {Invalid index} -body {
+	.table activate bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
 
-test table-4.1 {TableWidgetCmd procedure, "activate" option} {
-    list [catch {.t activate a b} msg] $msg
-} {1 {wrong # args: should be ".t activate ?index?"}}
-test table-4.2 {TableWidgetCmd procedure, "activate" option} {
-    list [catch {.t activate fooey} msg] $msg
-} {1 {bad table index "fooey": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>}}
-test table-4.3 {TableWidgetCmd procedure, "activate" option} {
-    .t activate 3,0
-    .t index active
-} 3,0
-test table-4.4 {TableWidgetCmd procedure, "activate" option} {
-    .t activate 3,1
-    .t activate
-} 3,1
-test table-4.5 {TableWidgetCmd procedure, "activate" option} {
-    .t activate -1,0
-    .t index active
-} {0,0}
-test table-4.6 {TableWidgetCmd procedure, "activate" option} {
-    .t activate 30,30
-    .t index active
-} {9,9}
-test table-4.7 {TableWidgetCmd procedure, "activate" option} {
-    .t activate origin
-    .t index active
-} {0,0}
-test table-4.8 {TableWidgetCmd procedure, "activate" option} {
-    .t activate end
-    .t index active
-} {9,9}
-test table-4.9 {TableWidgetCmd procedure, "activate" option} {
-    .t activate {}
-    list [catch {.t index active} msg] $msg
-} {1 {no "active" cell in table}}
+test Activate-2.6 {Set} -body {
+	.table activate 5,5
+    }
 
-test table-5.1 {TableWidgetCmd procedure, "bbox" option} {
-    list [catch {.t bbox} msg] $msg
-} {1 {wrong # args: should be ".t bbox first ?last?"}}
-test table-5.2 {TableWidgetCmd procedure, "bbox" option} {
-    list [catch {.t bbox a b c} msg] $msg
-} {1 {wrong # args: should be ".t bbox first ?last?"}}
-test table-5.3 {TableWidgetCmd procedure, "bbox" option} {
-    list [catch {.t bbox fooey} msg] $msg
-} {1 {bad table index "fooey": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>}}
+test Activate-2.7 {Get} -body {
+	.table activate
+    } -result {5,5}
 
-test table-6.1 {TableWidgetCmd procedure, "cget" option} {
-    list [catch {.t cget} msg] $msg
-} {1 {wrong # args: should be ".t cget option"}}
-test table-6.2 {TableWidgetCmd procedure, "cget" option} {
-    list [catch {.t cget a b} msg] $msg
-} {1 {wrong # args: should be ".t cget option"}}
-test table-6.3 {TableWidgetCmd procedure, "cget" option} {
-    list [catch {.t cget -gorp} msg] $msg
-} {1 {unknown option "-gorp"}}
-test table-6.4 {TableWidgetCmd procedure, "cget" option} {
-    .t cget -rows
-} {10}
+test Activate-2.8 {Check focus changed} -body {
+	.table focus
+    } -result {5,5}
 
-test table-7.1 {TableWidgetCmd procedure, "configure" option} {
-    llength [.t configure]
-} {75}
-test table-7.2 {TableWidgetCmd procedure, "configure" option} {
-    list [catch {.t configure -gorp} msg] $msg
-} {1 {unknown option "-gorp"}}
-test table-7.3 {TableWidgetCmd procedure, "configure" option} {
-    .t configure -browsecommand
-} {-browsecommand browseCommand BrowseCommand {} {}}
-test table-7.4 {TableWidgetCmd procedure, "configure" option} {
-    list [catch {.t configure -gorp is_messy} msg] $msg
-} {1 {unknown option "-gorp"}}
-test table-7.5 {TableWidgetCmd procedure, "configure" option} {
-    set oldbd [.t cget -bd]
-    set oldht [.t cget -highlightthickness]
-    .t configure -bd 3 -highlightthickness 0
-    set x "[.t cget -bd] [.t cget -highlightthickness]"
-    .t configure -bd $oldbd -highlightthickness $oldht
-    set x
-} {3 0}
+test Activate-2.9 {Index} -body {
+	.table index active
+    } -result {5,5}
 
-test table-8.1 {TableWidgetCmd procedure, "curselection" option} {
-    list [catch {.t curselection a b} msg] $msg
-} {1 {wrong # args: should be ".t curselection ?value?"}}
-test table-8.2 {TableWidgetCmd procedure, "curselection" option} {
-    .t selection clear all
-    .t curselection
-} {}
-test table-8.2 {TableWidgetCmd procedure, "curselection" option} {
-    .t selection clear all
-    .t selection set 1,0 2,2
-    .t selection set 3,3
-    .t curselection
-} {1,0 1,1 1,2 2,0 2,1 2,2 3,3}
+test Activate-2.10 {Set icursor position} -body {
+	lassign [.table bbox active] x y w h
+	incr y 2
+	incr x 30
+	.table activate @$x,$y
+	.table icursor
+    } -result {11}
 
-test table-9.1 {TableWidgetCmd procedure, "border" option} {
-    list [catch {.t border} msg] $msg
-} {1 {wrong # args: should be ".t border mark|dragto x y ?row|col?"}}
+test Activate-2.11 {Deactive cell} -body {
+	.table activate {}
+	.table activate
+    }
 
-test table-10.1 {TableWidgetCmd procedure, "clear" option} {
-    list [catch {.t clear} msg] $msg
-} {1 {wrong # args: should be ".t clear option ?first? ?last?"}}
+test Activate-2.12 {Deactivate cell index} -body {
+	.table activate {}
+	.table index active
+    } -result {no "active" cell in table} -returnCodes {1}
 
-test table-11.1 {TableWidgetCmd procedure, "curvalue" option} {
-    list [catch {.t curvalue this that} msg] $msg
-} {1 {wrong # args: should be ".t curvalue ?<value>?"}}
+test Activate-2.13 {Check focus not changed} -body {
+	.table focus
+    } -result {5,5}
 
-test table-12.1 {TableWidgetCmd procedure, "delete" option} {
-    list [catch {.t delete} msg] $msg
-} {1 {wrong # args: should be ".t delete option ?switches? arg ?arg?"}}
+test Activate-2.14 {Out of range low} -body {
+	.table activate -5,-5
+	.table activate
+    } -result {0,0}
 
-test table-31.1 {TableWidgetCmd procedure, "focus" option} {
-    list [catch {.t focus a b} msg] $msg
-} {1 {wrong # args: should be ".t focus ?index?"}}
-test table-31.2 {TableWidgetCmd procedure, "focus" option} {
-    list [catch {.t focus fooey} msg] $msg
-} {1 {bad table index "fooey": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>}}
-test table-31.3 {TableWidgetCmd procedure, "focus" option} {
-    .t focus 3,0
-    .t index focus
-} 3,0
-test table-31.4 {TableWidgetCmd procedure, "focus" option} {
-    .t focus 3,1
-    .t focus
-} 3,1
-test table-31.5 {TableWidgetCmd procedure, "focus" option} {
-    .t focus -1,0
-    .t index focus
-} {0,0}
-test table-31.6 {TableWidgetCmd procedure, "focus" option} {
-    .t focus 30,30
-    .t index focus
-} {9,9}
-test table-31.7 {TableWidgetCmd procedure, "focus" option} {
-    .t focus origin
-    .t index focus
-} {0,0}
-test table-31.8 {TableWidgetCmd procedure, "focus" option} {
-    .t focus end
-    .t index focus
-} {9,9}
-test table-31.9 {TableWidgetCmd procedure, "focus" option} {
-    .t focus {}
-    list [catch {.t index focus} msg] $msg
-} {1 {no "focus" cell in table}}
+test Activate-2.15 {Out of range high} -body {
+	.table activate 50,50
+	.table activate
+    } -result {9,9}
 
-test table-13.1 {TableWidgetCmd procedure, "get" option} {
-    list [catch {.t get} msg] $msg
-} {1 {wrong # args: should be ".t get first ?last?"}}
+test Activate-2.16 {Origin} -body {
+	.table activate origin
+	.table activate
+    } -result {0,0}
 
-test table-14.1 {TableWidgetCmd procedure, "height" option} {
-    list [catch {.t height a} msg] $msg
-} {1 {expected integer but got "a"}}
+test Activate-2.17 {End} -body {
+	.table activate end
+	.table activate
+    } -result {9,9}
 
-#test table-15.1 {TableWidgetCmd procedure, "hidden" option} {
-#    list [catch {.t hidden fooey} msg] $msg
-#} {1 {bad table index "fooey": must be active, anchor, end, origin, topleft, bottomright, @x,y, or <row>,<col>}}
+test Activate-2.18 {Set callback} -body {
+	.table configure -browsecommand "store_val %c %C %i %r %s %S %W"
+    }
 
-destroy .t
-table .t
-.t configure -cache 1
-.t set 1,1 abcde
+test Activate-2.19 {Eval callback activate} -body {
+	.table activate 7,2
+	set ::temp
+    } -result {2 7,2 0 7 9,9 7,2 .table}
 
-test table-16.1 {TableWidgetCmd procedure, "icursor" option} {
-    list [catch {.t icursor a b} msg] $msg
-} {1 {wrong # args: should be ".t icursor ?cursorPos?"}}
-test table-16.2 {TableWidgetCmd procedure, "icursor" option} {
-    # no active cell
-    .t icursor
-} -1
+test Activate-2.20 {Eval callback deactivate} -body {
+	.table activate ""
+	set ::temp
+    } -result {-1 -1,-1 0 -1 7,2 {} .table}
 
-.t activate 1,1
+test Activate-2.21 {Callback alias} -body {
+	.table configure -browsecmd command
+	.table cget -browsecommand
+    } -cleanup {
+	.table configure -browsecommand {}
+    } -result {command}
 
-test table-16.3 {TableWidgetCmd procedure, "icursor" option} {
-    # activate sets cursor to end
-    .t icursor
-} 5
-test table-16.4 {TableWidgetCmd procedure, "icursor" option} {
-    # change cursor
-    .t icursor 2
-} 2
-test table-16.5 {TableWidgetCmd procedure, "icursor" option} {
-    # retain changed cursor position
-    .t icursor
-} 2
+test Activate-2.22 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table activate origin
+	.table activate
+    } -result {0,0}
 
-test table-17.1 {TableWidgetCmd procedure, "index" option} {
-    list [catch {.t index} msg] $msg
-} {1 {wrong # args: should be ".t index <index> ?row|col?"}}
+test Activate-2.23 {Cleanup} -body {
+	destroy .table
+    }
 
-test table-18.1 {TableWidgetCmd procedure, "insert" option} {
-    list [catch {.t insert} msg] $msg
-} {1 {wrong # args: should be ".t insert option ?switches? arg ?arg?"}}
-
-test table-19.1 {TableWidgetCmd procedure, "reread" option} {
-    list [catch {.t reread foo} msg] $msg
-} {1 {wrong # args: should be ".t reread"}}
-
-test table-20.1 {TableWidgetCmd procedure, "scan" option} {
-    list [catch {.t scan} msg] $msg
-} {1 {wrong # args: should be ".t scan mark|dragto x y"}}
-
-test table-21.1 {TableWidgetCmd procedure, "see" option} {
-    list [catch {.t see} msg] $msg
-} {1 {wrong # args: should be ".t see index"}}
-
-test table-22.1 {TableWidgetCmd procedure, "selection" option} {
-    list [catch {.t selection} msg] $msg
-} {1 {wrong # args: should be ".t selection option ?arg arg ...?"}}
-
-test table-23.1 {TableWidgetCmd procedure, "set" option} {
-    list [catch {.t set} msg] $msg
-} {1 {wrong # args: should be ".t set ?row|col? index ?value? ?index value ...?"}}
-
-test table-24.1 {TableWidgetCmd procedure, "spans" option} {
-    list [catch {.t spans this} msg] $msg
-} {1 {bad table index "this": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>}}
-
-test table-25.1 {TableWidgetCmd procedure, "tag" option} {
-    list [catch {.t tag} msg] $msg
-} {1 {wrong # args: should be ".t tag option ?arg arg ...?"}}
-
-test table-25.2.1 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag names
-} {flash active focus sel title}
-test table-25.2.2 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag names *
-} {flash active focus sel title}
-test table-25.2.3 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag names f*
-} {flash focus}
-if {[info tclversion] < 9.0} {
-test table-25.2.4 {TableWidgetCmd procedure, "tag names" option} -body {
-    .t tag configure foo
-} -match glob -result {{-anchor anchor Anchor center {unknown anchor position}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-ellipsis ellipsis Ellipsis {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {unknown justification style}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
-} else {
-test table-25.2.4 {TableWidgetCmd procedure, "tag names" option} -body {
-    .t tag configure foo
-} -match glob -result {{-anchor anchor Anchor center {}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-ellipsis ellipsis Ellipsis {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
-}
-test table-25.2.5 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag names
-} {flash active focus sel title foo}
-test table-25.2.6 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag names f*
-} {flash focus foo}
-test table-25.2.7 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag raise foo
-    .t tag names f*
-} {foo flash focus}
-test table-25.2.8 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag lower foo
-    .t tag names
-} {flash active focus sel title foo}
-test table-25.2.9 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag raise foo active
-    .t tag names
-} {flash foo active focus sel title}
-test table-25.2.10 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag raise foo sel
-    .t tag names
-} {flash active focus foo sel title}
-test table-25.2.11 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag lower foo active
-    .t tag names
-} {flash active foo focus sel title}
-test table-25.2.12 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag lower foo foo
-    .t tag names
-} {flash active foo focus sel title}
-test table-25.2.13 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag lower foo sel
-    .t tag names
-} {flash active focus sel foo title}
-test table-25.2.14 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag lower foo
-    .t tag names
-} {flash active focus sel title foo}
-test table-25.2.15 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag raise foo foo
-    .t tag names
-} {flash active focus sel title foo}
-test table-25.2.16 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag raise foo flash
-    .t tag names
-} {foo flash active focus sel title}
-test table-25.2.17 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag lower foo title
-    .t tag names
-} {flash active focus sel title foo}
-test table-25.2.17 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag configure title -bg black
-    .t tag cget title -bg
-} {black}
-test table-25.2.18 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag cell new 0,0
-    .t tag get 0,0
-} {new}
-test table-25.2.19 {TableWidgetCmd procedure, "tag names" option} {
-    .t tag cell new
-} {0,0}
-
-test table-26.1 {TableWidgetCmd procedure, "validate" option} {
-    list [catch {.t validate} msg] $msg
-} {1 {wrong # args: should be ".t validate index"}}
-
-test table-27.1 {TableWidgetCmd procedure, "version" option} {
-    list [catch {.t version foo} msg] $msg
-} {1 {wrong # args: should be ".t version"}}
-test table-.1 {TableWidgetCmd procedure, "version" option} {
-    .t version
-} $::VERSION
-
-test table-28.1 {TableWidgetCmd procedure, "window" option} {
-    list [catch {.t window} msg] $msg
-} {1 {wrong # args: should be ".t window option ?arg arg ...?"}}
-
-test table-29.1 {TableWidgetCmd procedure, "width" option} {
-    list [catch {.t width a} msg] $msg
-} {1 {expected integer but got "a"}}
+# Bbox
 
 
-test table-30.1 {Table_EditCmd insert with var trace Bug #487747} {
-    destroy .t
-    table .t -cols 7 -rows 0 -variable ::TableData
-    .t insert rows end 1
-    .t set row 1,1 {1 2 3 4 5}
-    .t insert rows -- 0 9000
-    .t insert rows -- 0 9000
-    destroy .t
-} {}
+test Bbox-3.1 {Create} -body {
+	setup .table -cols 100 -rows 100
+    } -result {.table}
+
+test Bbox-3.2 {Too few args} -body {
+	.table bbox
+    } -result {wrong # args: should be ".table bbox first ?last?"} -returnCodes {1}
+
+test Bbox-3.3 {Too many args} -body {
+	.table bbox 1 2 3
+    } -result {wrong # args: should be ".table bbox first ?last?"} -returnCodes {1}
+
+test Bbox-3.4 {Invalid first index} -body {
+	.table bbox bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Bbox-3.5 {Invalid last index} -body {
+	.table bbox 0,0 bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Bbox-3.6 {One cell} -body {
+	.table bbox 2,2
+    } -result {125 39 62 19}
+
+test Bbox-3.7 {Multiple cells} -body {
+	.table bbox 2,3 4,5
+    } -result {187 39 186 57}
+
+test Bbox-3.8 {Reverse order} -body {
+	.table bbox 6,3 4,2
+    } -result {125 77 124 57}
+
+test Bbox-3.9 {Out of range min} -body {
+	.table bbox -1,-1
+    } -result [.table bbox 0,0]
+
+test Bbox-3.10 {Out of range max} -body {
+	.table bbox 110,110
+    }
+
+test Bbox-3.11 {Out of view} -body {
+	.table bbox 50,50
+    }
+
+test Bbox-3.12 {Cleanup} -body {
+	destroy .table
+    }
+
+# Border
 
 
-return
-##
-## STOP TESTS HERE
-##
-## The rest of the tests need to be adapted from the listbox tests.
-##
+test Border-4.1 {Create} -body {
+	setup .table
+    } -result {.table}
 
-test table-3.30 {TableWidgetCmd procedure, "delete" option} {
-    list [catch {.t delete} msg] $msg
-} {1 {wrong # args: should be ".t delete firstIndex ?lastIndex?"}}
-test table-3.31 {TableWidgetCmd procedure, "delete" option} {
-    list [catch {.t delete a b c} msg] $msg
-} {1 {wrong # args: should be ".t delete firstIndex ?lastIndex?"}}
-test table-3.32 {TableWidgetCmd procedure, "delete" option} {
-    list [catch {.t delete badIndex} msg] $msg
-} {1 {bad table index "badIndex": must be active, anchor, end, @x,y, or a number}}
-test table-3.33 {TableWidgetCmd procedure, "delete" option} {
-    list [catch {.t delete 2 123ab} msg] $msg
-} {1 {bad table index "123ab": must be active, anchor, end, @x,y, or a number}}
-test table-3.34 {TableWidgetCmd procedure, "delete" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 el0 el1 el2 el3 el4 el5 el6 el7
-    .t2 delete 3
-    list [.t2 get 2] [.t2 get 3] [.t2 index end]
-} {el2 el4 7}
-test table-3.35 {TableWidgetCmd procedure, "delete" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 el0 el1 el2 el3 el4 el5 el6 el7
-    .t2 delete 2 4
-    list [.t2 get 1] [.t2 get 2] [.t2 index end]
-} {el1 el5 5}
+test Border-4.2 {Too few args} -body {
+	.table border
+    } -result {wrong # args: should be ".table border mark|dragto x y ?row|col?"} -returnCodes {1}
 
-test table-3.42 {TableWidgetCmd procedure, "get" option} {
-    list [catch {.t get} msg] $msg
-} {1 {wrong # args: should be ".t get firstIndex ?lastIndex?"}}
-test table-3.43 {TableWidgetCmd procedure, "get" option} {
-    list [catch {.t get a b c} msg] $msg
-} {1 {wrong # args: should be ".t get firstIndex ?lastIndex?"}}
-test table-3.44 {TableWidgetCmd procedure, "get" option} {
-    list [catch {.t get 2.4} msg] $msg
-} {1 {bad table index "2.4": must be active, anchor, end, @x,y, or a number}}
-test table-3.45 {TableWidgetCmd procedure, "get" option} {
-    list [catch {.t get end bogus} msg] $msg
-} {1 {bad table index "bogus": must be active, anchor, end, @x,y, or a number}}
-test table-3.46 {TableWidgetCmd procedure, "get" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert 0 el0 el1 el2 el3 el4 el5 el6 el7
-    list [.t2 get 0] [.t2 get 3] [.t2 get end]
-} {el0 el3 el7}
-test table-3.47 {TableWidgetCmd procedure, "get" option} {
-    catch {destroy .t2}
-    table .t2
-    list [.t2 get 0] [.t2 get end]
-} {{} {}}
+test Border-4.3 {Too many args} -body {
+	.table border op arg arg arg arg
+    } -result {wrong # args: should be ".table border mark|dragto x y ?row|col?"} -returnCodes {1}
 
-test table-3.57 {TableWidgetCmd procedure, "index" option} {
-    list [catch {.t index} msg] $msg
-} {1 {wrong # args: should be ".t index index"}}
-test table-3.58 {TableWidgetCmd procedure, "index" option} {
-    list [catch {.t index a b} msg] $msg
-} {1 {wrong # args: should be ".t index index"}}
-test table-3.59 {TableWidgetCmd procedure, "index" option} {
-    list [catch {.t index @} msg] $msg
-} {1 {bad table index "@": must be active, anchor, end, @x,y, or a number}}
-test table-3.60 {TableWidgetCmd procedure, "index" option} {
-    .t index 2
-} 2
-test table-3.61 {TableWidgetCmd procedure, "index" option} {
-    .t index -1
-} -1
-test table-3.62 {TableWidgetCmd procedure, "index" option} {
-    .t index end
-} 18
-test table-3.63 {TableWidgetCmd procedure, "index" option} {
-    .t index 34
-} 34
+test Border-4.4 {Invalid operation} -body {
+	.table border bogus arg arg
+    } -result {bad option "bogus": must be mark or dragto} -returnCodes {1}
 
-test table-3.64 {TableWidgetCmd procedure, "insert" option} {
-    list [catch {.t insert} msg] $msg
-} {1 {wrong # args: should be ".t insert index ?element element ...?"}}
-test table-3.65 {TableWidgetCmd procedure, "insert" option} {
-    list [catch {.t insert badIndex} msg] $msg
-} {1 {bad table index "badIndex": must be active, anchor, end, @x,y, or a number}}
-test table-3.66 {TableWidgetCmd procedure, "insert" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert end a b c d e
-    .t2 insert 3 x y z
-    .t2 get 0 end
-} {a b c x y z d e}
-test table-3.67 {TableWidgetCmd procedure, "insert" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 insert end a b c
-    .t2 insert -1 x
-    .t2 get 0 end
-} {x a b c}
+test Border-4.5 {Bad x value} -body {
+	.table border mark bogus 0
+    } -result {expected integer but got "bogus"} -returnCodes {1}
 
-test table-3.74 {TableWidgetCmd procedure, "scan" option} {
-    list [catch {.t scan a b} msg] $msg
-} {1 {wrong # args: should be ".t scan mark|dragto x y"}}
-test table-3.75 {TableWidgetCmd procedure, "scan" option} {
-    list [catch {.t scan a b c d} msg] $msg
-} {1 {wrong # args: should be ".t scan mark|dragto x y"}}
-test table-3.76 {TableWidgetCmd procedure, "scan" option} {
-    list [catch {.t scan foo bogus 2} msg] $msg
-} {1 {expected integer but got "bogus"}}
-test table-3.77 {TableWidgetCmd procedure, "scan" option} {
-    list [catch {.t scan foo 2 2.3} msg] $msg
-} {1 {expected integer but got "2.3"}}
-test table-3.78 {TableWidgetCmd procedure, "scan" option} {fonts} {
-    catch {destroy .t}
-    toplevel .t
-    wm geom .t +0+0
-    table .t.t -width 10 -height 5
-    .t.t insert 0 "Short" "Somewhat longer" "Really, quite a whole lot longer than can possibly fit on the screen" "Short" a b c d e f g h i j
-    pack .t.t
-    update
-    .t.t scan mark 100 140
-    .t.t scan dragto 90 137
-    update
-    list [.t.t xview] [.t.t yview]
-} {{0.249364 0.427481} {0.0714286 0.428571}}
-test table-3.79 {TableWidgetCmd procedure, "scan" option} {
-    list [catch {.t scan foo 2 4} msg] $msg
-} {1 {bad option "foo": must be mark or dragto}}
+test Border-4.6 {Bad y value} -body {
+	.table border mark 0 bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
 
-test table-3.80 {TableWidgetCmd procedure, "see" option} {
-    list [catch {.t see} msg] $msg
-} {1 {wrong # args: should be ".t see index"}}
-test table-3.81 {TableWidgetCmd procedure, "see" option} {
-    list [catch {.t see a b} msg] $msg
-} {1 {wrong # args: should be ".t see index"}}
-test table-3.82 {TableWidgetCmd procedure, "see" option} {
-    list [catch {.t see gorp} msg] $msg
-} {1 {bad table index "gorp": must be active, anchor, end, @x,y, or a number}}
-test table-3.83 {TableWidgetCmd procedure, "see" option} {
-    .t yview 7
-    .t see 7
-    .t index @0,0
-} {7}
-test table-3.84 {TableWidgetCmd procedure, "see" option} {
-    .t yview 7
-    .t see 11
-    .t index @0,0
-} {7}
+test Border-4.7 {Invalid qualifier} -body {
+	.table border mark 0 0 bogus
+    } -result {wrong # args: should be ".table border mark|dragto x y ?row|col?"} -returnCodes {1}
 
-test table-3.93 {TableWidgetCmd procedure, "selection" option} {
-    list [catch {.t select a} msg] $msg
-} {1 {wrong # args: should be ".t selection option index ?index?"}}
-test table-3.94 {TableWidgetCmd procedure, "selection" option} {
-    list [catch {.t select a b c d} msg] $msg
-} {1 {wrong # args: should be ".t selection option index ?index?"}}
-test table-3.95 {TableWidgetCmd procedure, "selection" option} {
-    list [catch {.t selection a bogus} msg] $msg
-} {1 {bad table index "bogus": must be active, anchor, end, @x,y, or a number}}
-test table-3.96 {TableWidgetCmd procedure, "selection" option} {
-    list [catch {.t selection a 0 lousy} msg] $msg
-} {1 {bad table index "lousy": must be active, anchor, end, @x,y, or a number}}
-test table-3.97 {TableWidgetCmd procedure, "selection" option} {
-    list [catch {.t selection anchor 0 0} msg] $msg
-} {1 {wrong # args: should be ".t selection anchor index"}}
-test table-3.98 {TableWidgetCmd procedure, "selection" option} {
-    list [.t selection anchor 5; .t index anchor] \
-	    [.t selection anchor 0; .t index anchor]
-} {5 0}
-test table-3.99 {TableWidgetCmd procedure, "selection" option} {
-    .t selection anchor -1
-    .t index anchor
-} {0}
-test table-3.100 {TableWidgetCmd procedure, "selection" option} {
-    .t selection anchor end
-    .t index anchor
-} {17}
-test table-3.101 {TableWidgetCmd procedure, "selection" option} {
-    .t selection anchor 44
-    .t index anchor
-} {17}
-test table-3.102 {TableWidgetCmd procedure, "selection" option} {
-    .t selection clear 0 end
-    .t selection set 2 8
-    .t selection clear 3 4
-    .t curselection
-} {2 5 6 7 8}
-test table-3.103 {TableWidgetCmd procedure, "selection" option} {
-    list [catch {.t selection includes 0 0} msg] $msg
-} {1 {wrong # args: should be ".t selection includes index"}}
-test table-3.104 {TableWidgetCmd procedure, "selection" option} {
-    .t selection clear 0 end
-    .t selection set 2 8
-    .t selection clear 4
-    list [.t selection includes 3] [.t selection includes 4] \
-	    [.t selection includes 5]
-} {1 0 1}
-test table-3.105 {TableWidgetCmd procedure, "selection" option} {
-    .t selection set 0 end
-    .t selection includes -1
-} {0}
-test table-3.106 {TableWidgetCmd procedure, "selection" option} {
-    .t selection clear 0 end
-    .t selection set end
-    .t selection includes end
-} {1}
-test table-3.107 {TableWidgetCmd procedure, "selection" option} {
-    .t selection set 0 end
-    .t selection includes 44
-} {0}
-test table-3.108 {TableWidgetCmd procedure, "selection" option} {
-    catch {destroy .t2}
-    table .t2
-    .t2 selection includes 0
-} {0}
-test table-3.109 {TableWidgetCmd procedure, "selection" option} {
-    .t selection clear 0 end
-    .t selection set 2
-    .t selection set 5 7
-    .t curselection
-} {2 5 6 7}
-test table-3.110 {TableWidgetCmd procedure, "selection" option} {
-    .t selection set 5 7
-    .t curselection
-} {2 5 6 7}
-test table-3.111 {TableWidgetCmd procedure, "selection" option} {
-    list [catch {.t selection badOption 0 0} msg] $msg
-} {1 {bad option "badOption": must be anchor, clear, includes, or set}}
+test Border-4.8 {Mark not at border} -setup {
+	lassign [.table bbox 0,3] cx cy cw ch
+	incr cx 10
+	incr ch 5
+    } -body {
+	.table border mark $cx $ch row
+    }
 
-test table-3.114 {TableWidgetCmd procedure, "xview" option} {
-    catch {destroy .t2}
-    table .t2
-    update
-    .t2 xview
-} {0 1}
-test table-3.115 {TableWidgetCmd procedure, "xview" option} {
-    catch {destroy .t}
-    table .t -width 10 -height 5 -font $fixed
-    .t insert 0 a b c d e f g h i j k l m n o p q r s t
-    pack .t
-    update
-    .t xview
-} {0 1}
-catch {destroy .t}
-table .t -width 10 -height 5 -font $fixed
-.t insert 0 a b c d e f g h i j k l m n o p q r s t
-.t insert 1 "0123456789a123456789b123456789c123456789d123456789"
-pack .t
-update
-test table-3.116 {TableWidgetCmd procedure, "xview" option} {fonts} {
-    .t xview 4
-    .t xview
-} {0.08 0.28}
-test table-3.117 {TableWidgetCmd procedure, "xview" option} {
-    list [catch {.t xview foo} msg] $msg
-} {1 {expected integer but got "foo"}}
-test table-3.118 {TableWidgetCmd procedure, "xview" option} {
-    list [catch {.t xview zoom a b} msg] $msg
-} {1 {unknown option "zoom": must be moveto or scroll}}
-test table-3.119 {TableWidgetCmd procedure, "xview" option} {fonts} {
-    .t xview 0
-    .t xview moveto .4
-    update
-    .t xview
-} {0.4 0.6}
-test table-3.120 {TableWidgetCmd procedure, "xview" option} {fonts} {
-    .t xview 0
-    .t xview scroll 2 units
-    update
-    .t xview
-} {0.04 0.24}
-test table-3.121 {TableWidgetCmd procedure, "xview" option} {fonts} {
-    .t xview 30
-    .t xview scroll -1 pages
-    update
-    .t xview
-} {0.44 0.64}
-test table-3.122 {TableWidgetCmd procedure, "xview" option} {fonts} {
-    .t configure -width 1
-    update
-    .t xview 30
-    .t xview scroll -4 pages
-    update
-    .t xview
-} {0.52 0.54}
+test Border-4.9 {Mark row} -setup {
+	lassign [.table bbox 0,3] cx cy cw ch
+    } -body {
+	.table border mark $cx $ch row
+    } -result {0}
 
-test table-3.123 {TableWidgetCmd procedure, "yview" option} {
-    catch {destroy .t}
-    table .t
-    pack  .t
-    update
-    .t yview
-} {0 1}
-test table-3.124 {TableWidgetCmd procedure, "yview" option} {
-    catch {destroy .t}
-    table .t
-    .t insert 0 el1
-    pack  .t
-    update
-    .t yview
-} {0 1}
-catch {destroy .t}
-table .t -width 10 -height 5 -font $fixed
-.t insert 0 a b c d e f g h i j k l m n o p q r s t
-pack .t
-update
-test table-3.125 {TableWidgetCmd procedure, "yview" option} {
-    .t yview 4
-    update
-    .t yview
-} {0.2 0.45}
-test table-3.126 {TableWidgetCmd procedure, "yview" option, partial last line} {
-    mkPartial
-    .partial.t yview
-} {0 0.266667}
-test table-3.127 {TableWidgetCmd procedure, "xview" option} {
-    list [catch {.t yview foo} msg] $msg
-} {1 {bad table index "foo": must be active, anchor, end, @x,y, or a number}}
-test table-3.128 {TableWidgetCmd procedure, "xview" option} {
-    list [catch {.t yview foo a b} msg] $msg
-} {1 {unknown option "foo": must be moveto or scroll}}
-test table-3.129 {TableWidgetCmd procedure, "xview" option} {
-    .t yview 0
-    .t yview moveto .31
-    .t yview
-} {0.3 0.55}
-test table-3.130 {TableWidgetCmd procedure, "xview" option} {
-    .t yview 2
-    .t yview scroll 2 pages
-    .t yview
-} {0.4 0.65}
-test table-3.131 {TableWidgetCmd procedure, "xview" option} {
-    .t yview 10
-    .t yview scroll -3 units
-    .t yview
-} {0.35 0.6}
-test table-3.132 {TableWidgetCmd procedure, "xview" option} {
-    .t configure -height 2
-    update
-    .t yview 15
-    .t yview scroll -4 pages
-    .t yview
-} {0.55 0.65}
+test Border-4.10 {Mark col} -setup {
+	lassign [.table bbox 0,3] cx cy cw ch
+    } -body {
+	.table border mark $cx $ch col
+    } -result {2}
 
-test table-4.1 {TableGetCellValue, command with large result} {
-    # test bug 651685
-    proc getcell {rc i} {
-	if {$i == 0} {
-	    return [string repeat $rc 200]
+test Border-4.11 {Mark} -setup {
+	lassign [.table bbox 0,3] cx cy cw ch
+    } -body {
+	.table border mark $cx $ch
+    } -result {0 2}
+
+test Border-4.12 {Dragto col resize} -body {
+	.table border dragto [incr cx 50] $ch
+	lindex [.table bbox 0,3] 0
+    } -result {237}
+
+test Border-4.13 {Dragto row resize} -body {
+	.table border dragto $cx [incr ch 25]
+	lindex [.table bbox 1,2] 1
+    } -result {44}
+
+test Border-4.14 {Dragto no resize} -setup {
+	.table configure -resizeborders none
+    } -body {
+	.table border dragto $cx [incr ch 25]
+	lindex [.table bbox 1,2] 1
+    } -result {44}
+
+test Border-4.15 {Dragto col only} -setup {
+	.table configure -resizeborders col
+    } -body {
+	.table border dragto $cx [incr ch 25]
+	lindex [.table bbox 1,2] 1
+    } -result {44}
+
+test Border-4.16 {Dragto row only} -setup {
+	.table configure -resizeborders row
+    } -body {
+	.table border dragto [incr cx 50] $ch
+	lindex [.table bbox 0,3] 0
+    } -result {237}
+
+test Border-4.17 {Invalid resize border option} -body {
+	.table configure -resizeborders bogus
+    } -result {bad option "bogus" must be row, col, both, none} -returnCodes {1}
+
+test Border-4.18 {Cleanup} -body {
+	destroy .table
+    }
+
+# Cget
+
+
+test Cget-5.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Cget-5.2 {Too Few Args} -body {
+	.table cget
+    } -result {wrong # args: should be ".table cget option"} -returnCodes {1}
+
+test Cget-5.3 {Too Many Args} -body {
+	.table cget 1 2
+    } -result {wrong # args: should be ".table cget option"} -returnCodes {1}
+
+test Cget-5.4 {Invalid arg} -body {
+	.table cget -bogus
+    } -result {unknown option "-bogus"} -returnCodes {1}
+
+test Cget-5.5 {Get} -body {
+	.table cget -rows
+    } -result {10}
+
+test Cget-5.6 {Cleanup} -body {
+	destroy .table
+    }
+
+# Clear
+
+
+test Clear-6.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Clear-6.2 {Too few args} -body {
+	.table clear
+    } -result {wrong # args: should be ".table clear option ?first? ?last?"} -returnCodes {1}
+
+test Clear-6.3 {Too many args} -body {
+	.table clear option 1 2 3
+    } -result {wrong # args: should be ".table clear option ?first? ?last?"} -returnCodes {1}
+
+test Clear-6.4 {Bad option} -body {
+	.table clear bogus
+    } -result {bad clear option "bogus": must be all, cache, sizes, or tags} -returnCodes {1}
+
+test Clear-6.5 {Cache Single} -setup {
+	.table configure -cache 1
+	.table set row 1,0 {a b c d e f}
+    } -body {
+	.table clear cache 1,2
+	.table get 1,0 1,5
+    } -result {a b c d e f}
+
+test Clear-6.6 {Cache Multiple} -setup {
+	.table configure -cache 1
+	.table set row 1,0 {a b c d e f}
+    } -body {
+	.table clear cache 1,1 1,4
+	.table get 1,0 1,5
+    } -result {a b c d e f}
+
+test Clear-6.7 {Cache all} -setup {
+	.table configure -cache 1
+	.table set row 1,0 {a b c d e f}
+    } -body {
+	.table clear cache 1,1 1,4
+	.table get 1,0 1,5
+    } -result {a b c d e f}
+
+test Clear-6.8 {Sizes height} -body {
+	set list [.table height 2]
+	.table height 2 5
+	lappend list [.table height 2]
+	.table clear sizes 2,0
+	lappend list [.table height 2]
+	set list
+    } -result {1 5 1}
+
+test Clear-6.9 {Sizes width} -body {
+	set list [.table width 5]
+	.table width 5 25
+	lappend list [.table width 5]
+	.table clear sizes 0,5
+	lappend list [.table width 5]
+	set list
+    } -result {10 25 10}
+
+test Clear-6.10 {Sizes height multiple} -body {
+	set list [.table height 3]
+	.table height 2 5 3 7
+	lappend list [.table height 3]
+	.table clear sizes 2,0 3,0
+	lappend list [.table height 3]
+	set list
+    } -result {1 7 1}
+
+test Clear-6.11 {Sizes width multiple} -body {
+	set list [.table width 6]
+	.table width 5 25 6 30
+	lappend list [.table width 6]
+	.table clear sizes 0,6
+	lappend list [.table width 6]
+	set list
+    } -result {10 30 10}
+
+test Clear-6.12 {Sizes all} -setup {
+	.table height 1 2 2 4 3 6 4 8
+	.table width 5 20 6 30 7 40 8 50
+    } -body {
+	set list [.table width 5]
+	.table clear sizes
+	lappend list [.table width 5]
+	set list
+    } -result {20 10}
+
+test Clear-6.13 {Tags cell} -setup {
+	.table tag cell test1 2,2
+    } -body {
+	.table clear tags 2,2
+	.table tag cell test1
+    }
+
+test Clear-6.14 {Tags col} -setup {
+	.table tag col test2 3
+    } -body {
+	.table clear tags 3,3
+	.table tag col test2
+    }
+
+test Clear-6.15 {Tags row} -setup {
+	.table tag row test3 4
+    } -body {
+	.table clear tags 4,4
+	.table tag row test3
+    }
+
+test Clear-6.16 {Tags cell range} -setup {
+	.table tag cell test1 2,2 3,3 4,4 5,5
+    } -body {
+	.table clear tags 0,0 3,3
+	.table tag cell test1
+    } -cleanup {
+	.table tag delete test1
+    } -result {4,4 5,5}
+
+test Clear-6.17 {Tags col range} -setup {
+	.table tag col test2 3 4 5
+    } -body {
+	.table clear tags 0,0 4,4
+	.table tag col test2
+    } -result {5}
+
+test Clear-6.18 {Tags row range} -setup {
+	.table tag row test3 3 4 5
+    } -body {
+	.table clear tags 0,0 4,4
+	.table tag row test3
+    } -result {5}
+
+test Clear-6.19 {Tags all} -setup {
+	.table tag cell test1 2,2
+	.table tag col test2 3
+	.table tag row test3 4
+    } -body {
+	.table clear tags
+	.table tag row test3
+    }
+
+test Clear-6.20 {All} -setup {
+	.table configure -cache 1
+	.table set row 1,0 {a b c d e f}
+	.table height 1 5
+	.table tag cell test1 1,3
+    } -body {
+	.table clear all 0,0 3,3
+	list [.table height 1] [.table tag cell test1]
+    } -result {1 {}}
+
+test Clear-6.21 {Cleanup} -body {
+	destroy .table
+    }
+
+proc get_data {w cdelim rdelim quote} {
+    set result ""
+    foreach line [$w get2 [$w curselection]] {
+	set data ""
+	foreach value $line {
+	    if {[string first $cdelim $value] > -1 || [string first $rdelim $value] > -1 || [string first $quote $value] > -1} {
+		append data $quote [string map [list $quote $quote$quote] $value] $quote $cdelim
+	    } else {
+		append data $value $cdelim
+	    }
 	}
+	append result [string range $data 0 end-1] $rdelim
     }
-    destroy .t
-    table .t -rows 5 -cols 5 -command {getcell %C %i}
-    pack .t -fill both -expand 1
-    update
-    list
-} {}
+    return $result
+}
 
-eval destroy [winfo children .]
-option clear
 
-# cleanup
+# Configure
+
+
+test Configure-7.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Configure-7.2 {Get All} -body {
+	llength [.table configure]
+    } -result {76}
+
+test Configure-7.3 {Invalid argc} -body {
+	.table configure -bg red -fg
+    } -result {value for "-fg" missing} -returnCodes {1}
+
+test Configure-7.4 {Invalid arg} -body {
+	.table configure -bogus
+    } -result {unknown option "-bogus"} -returnCodes {1}
+
+test Configure-7.5 {Get} -body {
+	.table configure -browsecommand
+    } -result {-browsecommand browseCommand BrowseCommand {} {}}
+
+test Configure-7.6 {Set Single} -body {
+	.table configure -fg red
+	.table configure -fg
+    } -match {glob} -result "-foreground foreground Foreground * red"
+
+test Configure-7.7 {Set Multiple} -body {
+	.table configure -bd 10 -bg blue
+	.table configure -bg
+    } -match {glob} -result "-background background Background * blue"
+
+test Configure-7.8 {Cleanup} -body {
+	destroy .table
+    }
+
+proc cfg_test {w opt def set_val get_val} {
+    set res 0
+
+    # Default value
+    set g [$w cget $opt]
+    set orig $g
+    set s [lindex [$w configure $opt] 3]
+    incr res [expr {[string match $def $s] && $s == $g}]
+
+    # Set and get value
+    $w configure $opt $set_val
+    set s [lindex [$w configure $opt] 4]
+    set g [$w cget $opt]
+    incr res [expr {$s == $get_val && $s == $g}]
+    $w configure $opt $orig
+    return $res
+}
+
+proc null {args} {}
+
+# Cget and configure options
+
+
+test Options-8.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Options-8.2 {Anchor} -body {
+	cfg_test .table -anchor center n n
+    } -result {2}
+
+test Options-8.3 {Auto Clear} -body {
+	cfg_test .table -autoclear 0 yes 1
+    } -result {2}
+
+test Options-8.4 {Background} -body {
+	cfg_test .table -background * #ff0000 #ff0000
+    } -result {2}
+
+test Options-8.5 {Borderwidth Alias} -body {
+	cfg_test .table -bd * "4 2" "4 2"
+    } -result {2}
+
+test Options-8.6 {Background Alias} -body {
+	cfg_test .table -bg * #ff0000 #ff0000
+    } -result {2}
+
+test Options-8.7 {Border Cursor} -body {
+	cfg_test .table -bordercursor crosshair arrow arrow
+    } -result {2}
+
+test Options-8.8 {Borderwidth} -body {
+	cfg_test .table -borderwidth * 1 1
+    } -result {2}
+
+test Options-8.9 {Browse Command} -body {
+	cfg_test .table -browsecommand {} {Some command} {Some command}
+    } -result {2}
+
+test Options-8.10 {Browse Command Alias} -body {
+	cfg_test .table -browsecmd {} {Some command} {Some command}
+    } -result {2}
+
+test Options-8.11 {Cache} -body {
+	cfg_test .table -cache 0 yes 1
+    } -result {2}
+
+test Options-8.12 {Column Origin} -body {
+	cfg_test .table -colorigin 0 -10 -10
+    } -result {2}
+
+test Options-8.13 {Columns} -body {
+	cfg_test .table -cols 10 12 12
+    } -result {2}
+
+test Options-8.14 {Column Separator} -body {
+	cfg_test .table -colseparator \t , ,
+    } -result {2}
+
+test Options-8.15 {Column Stretch Mode} -body {
+	cfg_test .table -colstretchmode none unset unset
+    } -result {2}
+
+test Options-8.16 {Column Tag Command} -body {
+	cfg_test .table -coltagcommand {} {Some command} {Some command}
+    } -result {2}
+
+test Options-8.17 {Column Width} -body {
+	cfg_test .table -colwidth 10 5 5
+    } -result {2}
+
+test Options-8.18 {Command} -body {
+	cfg_test .table -command {} {Some command} {Some command}
+    } -result {2}
+
+test Options-8.19 {Cursor} -body {
+	cfg_test .table -cursor xterm arrow arrow
+    } -result {2}
+
+test Options-8.20 {Draw Mode} -body {
+	cfg_test .table -drawmode compatible slow slow
+    } -result {2}
+
+test Options-8.21 {Ellipsis} -body {
+	cfg_test .table -ellipsis {} {...} {...}
+    } -result {2}
+
+test Options-8.22 {Export Selection} -body {
+	cfg_test .table -exportselection 1 no 0
+    } -result {2}
+
+test Options-8.23 {Foreground Alias} -body {
+	cfg_test .table -fg * #110022 #110022
+    } -result {2}
+
+test Options-8.24 {Flash Mode} -body {
+	cfg_test .table -flashmode 0 yes 1
+    } -result {2}
+
+test Options-8.25 {Flash Time} -body {
+	cfg_test .table -flashtime 2 5 5
+    } -result {2}
+
+test Options-8.26 {Font} -body {
+	cfg_test .table -font TkTextFont {Helvetica 12} {Helvetica 12}
+    } -result {2}
+
+test Options-8.27 {Foreground} -body {
+	cfg_test .table -foreground * #110022 #110022
+    } -result {2}
+
+test Options-8.28 {Height} -body {
+	cfg_test .table -height 0 3 3
+    } -result {2}
+
+test Options-8.29 {Highlight Background} -body {
+	cfg_test .table -highlightbackground * #112233 #112233
+    } -result {2}
+
+test Options-8.30 {Highlight Color} -body {
+	cfg_test .table -highlightcolor * #123456 #123456
+    } -result {2}
+
+test Options-8.31 {Hughlight Thickness} -body {
+	cfg_test .table -highlightthickness * 6 6
+    } -result {2}
+
+test Options-8.32 {Insert Background} -body {
+	cfg_test .table -insertbackground * #110022 #110022
+    } -result {2}
+
+test Options-8.33 {Insert Borderwidth} -body {
+	cfg_test .table -insertborderwidth * 1.3 1
+    } -result {2}
+
+test Options-8.34 {Insert Off Time} -body {
+	cfg_test .table -insertofftime 300 100 100
+    } -result {2}
+
+test Options-8.35 {Insert On Time} -body {
+	cfg_test .table -insertontime 600 100 100
+    } -result {2}
+
+test Options-8.36 {Insert Width} -body {
+	cfg_test .table -insertwidth * 1.3 1
+    } -result {2}
+
+test Options-8.37 {Invert Selected} -body {
+	cfg_test .table -invertselected 0 yes 1
+    } -result {2}
+
+test Options-8.38 {Internal Padx} -body {
+	cfg_test .table -ipadx 0 1.3 1
+    } -result {2}
+
+test Options-8.39 {Internal Pady} -body {
+	cfg_test .table -ipady 0 1.3 1
+    } -result {2}
+
+test Options-8.40 {Justify} -body {
+	cfg_test .table -justify left right right
+    } -result {2}
+
+test Options-8.41 {Max Height} -body {
+	cfg_test .table -maxheight 600 300 300
+    } -result {2}
+
+test Options-8.42 {Max Width} -body {
+	cfg_test .table -maxwidth 800 300 300
+    } -result {2}
+
+test Options-8.43 {Mode} -body {
+	cfg_test .table -mode table spreadsheet spreadsheet
+    } -result {2}
+
+test Options-8.44 {Multiline} -body {
+	cfg_test .table -multiline 1 no 0
+    } -result {2}
+
+test Options-8.45 {Padx} -body {
+	cfg_test .table -padx 0 1.3 1
+    } -result {2}
+
+test Options-8.46 {Pady} -body {
+	cfg_test .table -pady 0 1.3 1
+    } -result {2}
+
+test Options-8.47 {Quote Character} -body {
+	cfg_test .table -quotechar \" | |
+    } -result {2}
+
+test Options-8.48 {Refief} -body {
+	cfg_test .table -relief sunken groove groove
+    } -result {2}
+
+test Options-8.49 {Row Height} -body {
+	cfg_test .table -rowheight 1 -20 -20
+    } -result {2}
+
+test Options-8.50 {Row Origin} -body {
+	cfg_test .table -roworigin 0 -20 -20
+    } -result {2}
+
+test Options-8.51 {Rows} -body {
+	cfg_test .table -rows 10 20 20
+    } -result {2}
+
+test Options-8.52 {Row Separator} -body {
+	cfg_test .table -rowseparator \n % %
+    } -result {2}
+
+test Options-8.53 {Row Stretch Mode} -body {
+	cfg_test .table -rowstretchmode none unset unset
+    } -result {2}
+
+test Options-8.54 {Row Tag Command} -body {
+	cfg_test .table -rowtagcommand {} {Some command} {Some command}
+    } -result {2}
+
+test Options-8.55 {Selection Command Alias} -body {
+	cfg_test .table -selcmd {} {Some command} {Some command}
+    } -result {2}
+
+test Options-8.56 {Selection Command} -body {
+	cfg_test .table -selectioncommand {} {Some command} {Some command}
+    } -result {2}
+
+test Options-8.57 {Selection Background} -body {
+	cfg_test .table -selectbackground * red red
+    } -result {2}
+
+test Options-8.58 {Selection Borderwidth} -body {
+	cfg_test .table -selectborderwidth * 2 2
+    } -result {2}
+
+test Options-8.59 {Selection Foreground} -body {
+	cfg_test .table -selectforeground * blue blue
+    } -result {2}
+
+test Options-8.60 {Selection Mode} -body {
+	cfg_test .table -selectmode browse extended extended
+    } -result {2}
+
+test Options-8.61 {Select Titles} -body {
+	cfg_test .table -selecttitles 0 yes 1
+    } -result {2}
+
+test Options-8.62 {Select Type} -body {
+	cfg_test .table -selecttype cell row row
+    } -result {2}
+
+test Options-8.63 {Sparse Array} -body {
+	cfg_test .table -sparsearray 1 no 0
+    } -result {2}
+
+test Options-8.64 {State} -body {
+	cfg_test .table -state normal disabled disabled
+    } -result {2}
+
+test Options-8.65 {Take Focus} -body {
+	cfg_test .table -takefocus {} 0 0
+    } -result {2}
+
+test Options-8.66 {Title Columns} -body {
+	cfg_test .table -titlecols 0 4 4
+    } -result {2}
+
+test Options-8.67 {Title Rows} -body {
+	cfg_test .table -titlerows 0 4 4
+    } -result {2}
+
+test Options-8.68 {Use Command} -body {
+	cfg_test .table -usecommand 1 no 0
+    } -result {2}
+
+test Options-8.69 {Variable} -body {
+	cfg_test .table -variable ::tableData var var
+    } -result {2}
+
+test Options-8.70 {Validate} -body {
+	cfg_test .table -validate 0 yes 1
+    } -result {2}
+
+test Options-8.71 {Validate Command} -body {
+	cfg_test .table -validatecommand {} {Some command} {Some command}
+    } -result {2}
+
+test Options-8.72 {Validate Command Alias} -body {
+	cfg_test .table -vcmd {} {Another command} {Another command}
+    } -result {2}
+
+test Options-8.73 {Width} -body {
+	cfg_test .table -width 0 45 45
+    } -result {2}
+
+test Options-8.74 {Word Wrap} -body {
+	cfg_test .table -wrap 0 yes 1
+    } -result {2}
+
+test Options-8.75 {X Scroll Command} -body {
+	cfg_test .table -xscrollcommand {} {null} {null}
+    } -result {2}
+
+test Options-8.76 {Y Scroll Command} -body {
+	cfg_test .table -yscrollcommand {} {null} {null}
+    } -result {2}
+
+test Options-8.77 {Cleanup} -body {
+	destroy .table
+    }
+
+# Invalid cget and configure
+
+
+test Options_Invalid-9.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Options_Invalid-9.2 {Anchor} -body {
+	.table configure -anchor left
+    } -match {glob} -result {bad anchor* "left": must be n, ne, e, se, s, sw, w, nw, or center} -returnCodes {1}
+
+test Options_Invalid-9.3 {Auto Clear} -body {
+	.table configure -autoclear xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.4 {Background} -body {
+	.table configure -background bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.5 {Borderwidth Alias} -body {
+	.table configure -bd badValue
+    } -match {glob} -result {*screen distance* "badValue"} -returnCodes {1}
+
+test Options_Invalid-9.6 {Background Alias} -body {
+	.table configure -bg bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.7 {Border Cursor} -body {
+	.table configure -bordercursor badValue
+    } -result {bad cursor spec "badValue"} -returnCodes {1}
+
+test Options_Invalid-9.8 {Borderwidth} -body {
+	.table configure -borderwidth badValue
+    } -match {glob} -result {*screen distance* "badValue"} -returnCodes {1}
+
+test Options_Invalid-9.9 {Cache} -body {
+	.table configure -cache xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.10 {Column Origin} -body {
+	.table configure -colorigin xyzzy
+    } -result {expected integer but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.11 {Columns} -body {
+	.table configure -cols xyzzy
+    } -result {expected integer but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.12 {Column Stretch Mode} -body {
+	.table configure -colstretchmode bogus
+    } -result {bad option "bogus" must be none, unset, all, last, fill} -returnCodes {1}
+
+test Options_Invalid-9.13 {Column Width} -body {
+	.table configure -colwidth xyzzy
+    } -result {expected integer but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.14 {Cursor} -body {
+	.table configure -cursor badValue
+    } -result {bad cursor spec "badValue"} -returnCodes {1}
+
+test Options_Invalid-9.15 {Draw Mode} -body {
+	.table configure -drawmode badValue
+    } -result {bad option "badValue" must be fast, compatible, slow, single} -returnCodes {1}
+
+test Options_Invalid-9.16 {Export Selection} -body {
+	.table configure -exportselection xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.17 {Foreground Alias} -body {
+	.table configure -fg bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.18 {Flash Mode} -body {
+	.table configure -flashmode xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.19 {Flash Time} -body {
+	.table configure -flashtime xyzzy
+    } -result {expected integer but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.20 {Font} -body {
+	.table configure -font {}
+    } -result {font "" doesn't exist} -returnCodes {1}
+
+test Options_Invalid-9.21 {Foreground} -body {
+	.table configure -foreground bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.22 {Height} -body {
+	.table configure -height 20p
+    } -result {expected integer but got "20p"} -returnCodes {1}
+
+test Options_Invalid-9.23 {Highlight Background} -body {
+	.table configure -highlightbackground ugly
+    } -result {unknown color name "ugly"} -returnCodes {1}
+
+test Options_Invalid-9.24 {Highlight Color} -body {
+	.table configure -highlightcolor bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.25 {Hughlight Thickness} -body {
+	.table configure -highlightthickness bogus
+    } -match {glob} -result {*screen distance* "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.26 {Insert Background} -body {
+	.table configure -insertbackground bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.27 {Insert Borderwidth} -body {
+	.table configure -insertborderwidth 2.6x
+    } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
+
+test Options_Invalid-9.28 {Insert Off Time} -body {
+	.table configure -insertofftime 3.2
+    } -result {expected integer but got "3.2"} -returnCodes {1}
+
+test Options_Invalid-9.29 {Insert On Time} -body {
+	.table configure -insertontime 3.2
+    } -result {expected integer but got "3.2"} -returnCodes {1}
+
+test Options_Invalid-9.30 {Insert Width} -body {
+	.table configure -insertwidth 2.6x
+    } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
+
+test Options_Invalid-9.31 {Invert Selected} -body {
+	.table configure -invertselected xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.32 {Internal Padx} -body {
+	.table configure -ipadx 2.6x
+    } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
+
+test Options_Invalid-9.33 {Internal Pady} -body {
+	.table configure -ipady 2.6x
+    } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
+
+test Options_Invalid-9.34 {Justify} -body {
+	.table configure -justify wrong
+    } -result {bad justification "wrong": must be left, right, or center} -returnCodes {1}
+
+test Options_Invalid-9.35 {Max Height} -body {
+	.table configure -maxheight 2.6x
+    } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
+
+test Options_Invalid-9.36 {Max Width} -body {
+	.table configure -maxwidth 2.6x
+    } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
+
+test Options_Invalid-9.37 {Mode} -body {
+	.table configure -mode bogus
+    } -match {glob} -result {bad option "bogus" must be table, spreadsheet} -returnCodes {1}
+
+test Options_Invalid-9.38 {Multiline} -body {
+	.table configure -multiline xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.39 {Padx} -body {
+	.table configure -padx 2.6x
+    } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
+
+test Options_Invalid-9.40 {Pady} -body {
+	.table configure -pady 2.6x
+    } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
+
+test Options_Invalid-9.41 {Refief} -body {
+	.table configure -relief bogus
+    } -result {bad relief "bogus": must be flat, groove, raised, ridge, solid, or sunken} -returnCodes {1}
+
+test Options_Invalid-9.42 {Row Height} -body {
+	.table configure -rowheight xyzzy
+    } -result {expected integer but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.43 {Row Origin} -body {
+	.table configure -roworigin xyzzy
+    } -result {expected integer but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.44 {Rows} -body {
+	.table configure -rows xyzzy
+    } -result {expected integer but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.45 {Row Stretch Mode} -body {
+	.table configure -rowstretchmode bogus
+    } -result {bad option "bogus" must be none, unset, all, last, fill} -returnCodes {1}
+
+test Options_Invalid-9.46 {Selection Background} -body {
+	.table configure -selectbackground bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.47 {Selection Foreground} -body {
+	.table configure -selectforeground bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.48 {Select Titles} -body {
+	.table configure -selecttitles xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.49 {Select Type} -body {
+	.table configure -selecttype bogus
+    } -result {bad option "bogus" must be row, col, both, cell} -returnCodes {1}
+
+test Options_Invalid-9.50 {Sparse Array} -body {
+	.table configure -sparsearray xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.51 {State} -body {
+	.table configure -state foo
+    } -result {bad option "foo" must be normal, disabled} -returnCodes {1}
+
+test Options_Invalid-9.52 {Title Columns} -body {
+	.table configure -titlecols 3p
+    } -result {expected integer but got "3p"} -returnCodes {1}
+
+test Options_Invalid-9.53 {Title Rows} -body {
+	.table configure -titlerows 3p
+    } -result {expected integer but got "3p"} -returnCodes {1}
+
+test Options_Invalid-9.54 {Use Command} -body {
+	.table configure -usecommand xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.55 {Validate} -body {
+	.table configure -validate xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.56 {Width} -body {
+	.table configure -width 3p
+    } -result {expected integer but got "3p"} -returnCodes {1}
+
+test Options_Invalid-9.57 {Word Wrap} -body {
+	.table configure -wrap xyzzy
+    } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
+
+test Options_Invalid-9.58 {Cleanup} -body {
+	destroy .table
+    }
+
+# Curselection
+
+
+test Curselection-10.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Curselection-10.2 {Too many args} -body {
+	.table curselection 1 2
+    } -result {wrong # args: should be ".table curselection ?value?"} -returnCodes {1}
+
+test Curselection-10.3 {Default} -body {
+	.table curselection
+    }
+
+test Curselection-10.4 {Get} -setup {
+	.table selection set 2,2 3,3
+    } -body {
+	.table curselection
+    } -result {2,2 2,3 3,2 3,3}
+
+test Curselection-10.5 {Over write} -body {
+	.table curselection "Test value"
+	.table get 2,3
+    } -result {Test value}
+
+test Curselection-10.6 {Use negative indices} -body {
+	.table configure -colorigin -5 -roworigin -5
+    }
+
+test Curselection-10.7 {Get with negative indices} -setup {
+	.table selection set -2,-2 3,3
+    } -body {
+	.table curselection
+    } -result "-2,-2 -2,-1 -2,0 -2,1 -2,2 -2,3 -1,-2 -1,-1 -1,0 -1,1 -1,2 -1,3 0,-2 0,-1 0,0 0,1 0,2 0,3 1,-2 1,-1 1,0 1,1 1,2 1,3 2,-2 2,-1 2,0 2,1 2,2 2,3 3,-2 3,-1 3,0 3,1 3,2 3,3"
+
+test Curselection-10.8 {Reset} -body {
+	.table selection clear all
+    }
+
+test Curselection-10.9 {Cleanup} -body {
+	destroy .table
+    }
+
+# Curvalue
+
+
+test Curvalue-11.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Curvalue-11.2 {Too many args} -body {
+	.table curvalue 1 2
+    } -result {wrong # args: should be ".table curvalue ?<value>?"} -returnCodes {1}
+
+test Curvalue-11.3 {Default} -body {
+	.table curvalue
+    }
+
+test Curvalue-11.4 {Set before activate} -body {
+	.table curvalue "more text"
+	.table curvalue
+    }
+
+test Curvalue-11.5 {Init} -body {
+	.table set 1,6 "Some text"
+	.table activate 1,6
+    }
+
+test Curvalue-11.6 {Set} -body {
+	.table curvalue 123.456
+    } -result {123.456}
+
+test Curvalue-11.7 {Get} -body {
+	.table curvalue
+    } -result {123.456}
+
+test Curvalue-11.8 {Clear} -body {
+	.table curvalue {}
+	.table curvalue
+    }
+
+test Curvalue-11.9 {Validate callback} -setup {
+	.table configure -validate 1 -validatecommand "store_val %c %C %i %r %s %S %W"
+    } -body {
+	.table curvalue "New value"
+	set ::temp
+    } -result {6 1,6 0 1 {} {New value} .table}
+
+test Curvalue-11.10 {Cleanup} -body {
+	destroy .table
+    }
+
+# Delete
+
+
+test Delete-12.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Delete-12.2 {Too few args} -body {
+	.table delete
+    } -result {wrong # args: should be ".table delete option ?switches? arg ?arg?"} -returnCodes {1}
+
+test Delete-12.3 {Bad option} -body {
+	.table delete bogus arg
+    } -result {bad option "bogus": must be active, cols, columns, or rows} -returnCodes {1}
+
+test Delete-12.4 {Cleanup} -body {
+	destroy .table
+    }
+
+# Delete Active
+set string "This is some text"
+
+
+test Delete_Active-13.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Delete_Active-13.2 {Too few args} -body {
+	.table delete active
+    } -result {wrong # args: should be ".table delete option ?switches? arg ?arg?"} -returnCodes {1}
+
+test Delete_Active-13.3 {Too many args} -body {
+	.table delete active 1 2 3
+    } -result {wrong # args: should be ".table delete active first ?last?"} -returnCodes {1}
+
+test Delete_Active-13.4 {Invalid index} -body {
+	.table delete active bogus value
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Delete_Active-13.5 {Init} -body {
+	.table activate 3,7
+    }
+
+test Delete_Active-13.6 {Delete at  0} -setup {
+	.table set 3,7 $string
+    } -body {
+	.table delete active 0
+	.table curvalue
+    } -result {his is some text}
+
+test Delete_Active-13.7 {Delete range at  0} -setup {
+	.table set 3,7 $string
+    } -body {
+	.table delete active 0 5
+	.table curvalue
+    } -result {is some text}
+
+test Delete_Active-13.8 {Delete in middle} -setup {
+	.table set 3,7 $string
+    } -body {
+	.table delete active 5
+	.table curvalue
+    } -result {This s some text}
+
+test Delete_Active-13.9 {Delete range in middle} -setup {
+	.table set 3,7 $string
+    } -body {
+	.table delete active 4 6
+	.table curvalue
+    } -result {Thiss some text}
+
+test Delete_Active-13.10 {Delete at  8} -setup {
+	.table set 3,7 $string
+    } -body {
+	.table delete active 8
+	.table curvalue
+    } -result {This is ome text}
+
+test Delete_Active-13.11 {Delete range at  8} -setup {
+	.table set 3,7 $string
+    } -body {
+	.table delete active 8 12
+	.table curvalue
+    } -result {This is  text}
+
+test Delete_Active-13.12 {Delete at end} -setup {
+	.table set 3,7 $string
+    } -body {
+	.table delete active end
+	.table curvalue
+    } -result {This is some text}
+
+test Delete_Active-13.13 {Delete range at  end} -setup {
+	.table set 3,7 $string
+    } -body {
+	.table delete active 15 17
+	.table curvalue
+    } -result {This is some te}
+
+test Delete_Active-13.14 {Delete before} -setup {
+	.table set 3,7 $string
+    } -body {
+	.table delete active -5 5
+	.table curvalue
+    } -result {is some text}
+
+test Delete_Active-13.15 {Delete after} -setup {
+	.table set 3,7 $string
+    } -body {
+	.table delete active 15 25
+	.table curvalue
+    } -result {This is some te}
+
+test Delete_Active-13.16 {Empty cell} -setup {
+	.table set 3,7 {}
+    } -body {
+	.table delete active 5 10
+	.table curvalue
+    }
+
+test Delete_Active-13.17 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+	.table set origin $string
+	.table activate origin
+    } -body {
+	.table delete active 5 10
+	.table curvalue
+    } -result {This me text}
+
+
+test Delete_Active-13.18 {Cleanup} -body {
+	destroy .table
+    }
+
+# Delete Column
+
+
+test Delete_Column-14.1 {Create} -body {
+	setup .table -cols 100 -rows 100
+    } -result {.table}
+
+test Delete_Column-14.2 {Too many args} -body {
+	.table delete cols 1 2 3 4 5 6 7 8 9 10
+    } -result {wrong # args: should be ".table delete cols ?switches? index ?count?"} -returnCodes {1}
+
+test Delete_Column-14.3 {Bad index} -body {
+	.table delete cols bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Delete_Column-14.4 {Bad count} -body {
+	.table delete cols 40 bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Delete_Column-14.5 {Bad switch} -body {
+	.table delete cols -bogus 40 50
+    } -result {bad switch "-bogus": must be -keeptitles, -holddimensions, -holdselection, -holdtags, -holdwindows, or --} -returnCodes {1}
+
+test Delete_Column-14.6 {Single} -body {
+	.table delete cols 15
+	.table cget -cols
+    } -result {99}
+
+test Delete_Column-14.7 {Single column} -body {
+	.table delete columns 14
+	.table cget -cols
+    } -result {98}
+
+test Delete_Column-14.8 {Multiple} -body {
+	.table delete cols 10 4
+	.table cget -cols
+    } -result {94}
+
+test Delete_Column-14.9 {Clipped range} -body {
+	.table delete cols 90 10
+	.table cget -cols
+    } -result {90}
+
+test Delete_Column-14.10 {Negative count} -body {
+	.table delete cols 20 -10
+	.table cget -cols
+    } -result {80}
+
+test Delete_Column-14.11 {Hold Dimensions} -body {
+	.table delete cols -holddimensions 16 5
+	.table cget -cols
+    } -result {80}
+
+test Delete_Column-14.12 {Hold Selection} -setup {
+	.table selection set 0,20 0,25
+    } -body {
+	.table delete cols -holdselection 20 5
+	.table selection includes 0,22
+    } -result {1}
+
+test Delete_Column-14.13 {Hold Tags} -setup {
+	.table tag col test_tag 30 31
+    } -body {
+	.table delete cols -holdtags 31
+	lsort [.table tag col test_tag]
+    } -result {30 31}
+
+test Delete_Column-14.14 {Hold Windows} -setup {
+	.table window configure 0,40 -window [entry .table.e]
+    } -body {
+	.table delete cols -holdwindows 38 5
+	.table window cget 0,40 -window
+    } -result {.table.e}
+
+test Delete_Column-14.15 {Keep Titles} -setup {
+	.table configure -titlecols 5 -titlerows 5
+	.table set 0,4 "Test value"
+    } -body {
+	.table delete cols -keeptitles 0 5
+	.table set 0,4
+    } -result {Test value}
+
+test Delete_Column-14.16 {No switches} -body {
+	.table delete cols -- 5 5
+	.table cget -cols
+    } -result {64}
+
+test Delete_Column-14.17 {Out of range min} -body {
+	.table delete cols -- -100 5
+	.table cget -cols
+    } -result {59}
+
+test Delete_Column-14.18 {Out of range max} -body {
+	.table delete cols 100 5
+	.table cget -cols
+    } -result {58}
+
+test Delete_Column-14.19 {Out of range count min} -body {
+	.table delete cols 10 -50
+	.table cget -cols
+    } -result {48}
+
+test Delete_Column-14.20 {Out of range count max} -body {
+	.table delete cols 40 100
+	.table cget -cols
+    } -result {40}
+
+test Delete_Column-14.21 {Delete All} -body {
+	.table delete cols 0 100
+	.table cget -cols
+    } -result {1}
+
+test Delete_Column-14.22 {Delete Empty Table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table delete cols 0 15
+	.table cget -cols
+    } -result {1}
+
+test Delete_Column-14.23 {Cleanup} -body {
+	destroy .table
+    }
+
+# Delete Row
+
+
+test Delete_Row-15.1 {Create} -body {
+	setup .table -cols 100 -rows 100
+    } -result {.table}
+
+test Delete_Row-15.2 {Too many args} -body {
+	.table delete rows 1 2 3 4 5 6 7 8 9 10
+    } -result {wrong # args: should be ".table delete rows ?switches? index ?count?"} -returnCodes {1}
+
+test Delete_Row-15.3 {Bad index} -body {
+	.table delete rows bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Delete_Row-15.4 {Bad count} -body {
+	.table delete rows 40 bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Delete_Row-15.5 {Bad switch} -body {
+	.table delete rows -bogus 40 50
+    } -result {bad switch "-bogus": must be -keeptitles, -holddimensions, -holdselection, -holdtags, -holdwindows, or --} -returnCodes {1}
+
+test Delete_Row-15.6 {Single} -body {
+	.table delete rows 15
+	.table cget -rows
+    } -result {99}
+
+test Delete_Row-15.7 {Multiple} -body {
+	.table delete rows 10 5
+	.table cget -rows
+    } -result {94}
+
+test Delete_Row-15.8 {Clipped range} -body {
+	.table delete rows 80 10
+	.table cget -rows
+    } -result {84}
+
+test Delete_Row-15.9 {Negative count} -body {
+	.table delete rows 20 -10
+	.table cget -rows
+    } -result {74}
+
+test Delete_Row-15.10 {Hold Dimensions} -body {
+	.table delete rows -holddimensions 16 5
+	.table cget -rows
+    } -result {74}
+
+test Delete_Row-15.11 {Hold Selection} -setup {
+	.table selection set 20,0 25,0
+    } -body {
+	.table delete rows -holdselection 20 5
+	.table selection includes 22,0
+    } -result {1}
+
+test Delete_Row-15.12 {Hold Tags} -setup {
+	.table tag row test_tag 30 31
+    } -body {
+	.table delete rows -holdtags 31
+	lsort [.table tag row test_tag]
+    } -result {30 31}
+
+test Delete_Row-15.13 {Hold Windows} -setup {
+	.table window configure 40,0 -window [entry .table.e]
+    } -body {
+	.table delete rows -holdwindows 38 5
+	.table window cget 40,0 -window
+    } -result {.table.e}
+
+test Delete_Row-15.14 {Keep Titles} -setup {
+	.table configure -titlecols 5 -titlerows 5
+	.table set 4,0 "Test value"
+    } -body {
+	.table delete rows -keeptitles 0 5
+	.table get 4,0
+    } -result {Test value}
+
+test Delete_Row-15.15 {No switches} -body {
+	.table delete rows -- 50 5
+	.table cget -rows
+    } -result {58}
+
+test Delete_Row-15.16 {Out of range min} -body {
+	.table delete rows -- -100 5
+	.table cget -rows
+    } -result {53}
+
+test Delete_Row-15.17 {Out of range max} -body {
+	.table delete rows 100 5
+	.table cget -rows
+    } -result {52}
+
+test Delete_Row-15.18 {Out of range count min} -body {
+	.table delete rows 10 -50
+	.table cget -rows
+    } -result {42}
+
+test Delete_Row-15.19 {Out of range count max} -body {
+	.table delete rows 40 100
+	.table cget -rows
+    } -result {40}
+
+test Delete_Row-15.20 {Delete All} -body {
+	.table delete rows 0 100
+	.table cget -rows
+    } -result {1}
+
+test Delete_Row-15.21 {Delete Empty Table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table delete rows 0 15
+	.table cget -rows
+    } -result {1}
+
+test Delete_Row-15.22 {Cleanup} -body {
+	destroy .table
+    }
+
+# Focus
+
+
+test Focus-16.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Focus-16.2 {Default} -body {
+	.table focus
+    }
+
+test Focus-16.3 {Too many args} -body {
+	.table focus 1 2
+    } -result {wrong # args: should be ".table focus ?index?"} -returnCodes {1}
+
+test Focus-16.4 {Invalid index} -body {
+	.table focus bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Focus-16.5 {Set} -body {
+	.table focus 5,5
+    }
+
+test Focus-16.6 {Get} -body {
+	.table focus
+    } -result {5,5}
+
+test Focus-16.7 {Check active hasn't changed} -body {
+	.table activate
+    }
+
+test Focus-16.8 {Index} -body {
+	.table index focus
+    } -result {5,5}
+
+test Focus-16.9 {Unfocus} -body {
+	.table focus {}
+	.table focus
+    }
+
+test Focus-16.10 {Unfocus index} -body {
+	.table focus {}
+	.table index focus
+    } -result {no "focus" cell in table} -returnCodes {1}
+
+test Focus-16.11 {Out of range low} -body {
+	.table focus -5,-5
+	.table focus
+    } -result {0,0}
+
+test Focus-16.12 {Out of range high} -body {
+	.table focus 50,50
+	.table focus
+    } -result {9,9}
+
+test Focus-16.13 {Origin} -body {
+	.table focus origin
+	.table focus
+    } -result {0,0}
+
+test Focus-16.14 {End} -body {
+	.table focus end
+	.table focus
+    } -result {9,9}
+
+test Focus-16.15 {Set callback} -body {
+	.table configure -browsecommand "store_val %c %C %i %r %s %S %W"
+    }
+
+test Focus-16.16 {Eval callback activate} -body {
+	.table focus 7,2
+	set ::temp
+    } -result {2 7,2 0 7 9,9 7,2 .table}
+
+test Focus-16.17 {Eval callback deactivate} -body {
+	.table focus ""
+	set ::temp
+    } -result {-1 -1,-1 0 -1 7,2 {} .table}
+
+test Focus-16.18 {Callback alias} -body {
+	.table configure -browsecmd command
+	.table cget -browsecommand
+    } -cleanup {
+	.table configure -browsecommand {}
+    } -result {command}
+
+test Focus-16.19 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table focus origin
+	.table focus
+    } -result {0,0}
+
+test Focus-16.20 {Cleanup} -body {
+	destroy .table
+    }
+
+# Get
+
+
+test Get-17.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Get-17.2 {Too few args} -body {
+	.table get
+    } -result {wrong # args: should be ".table get first ?last?"} -returnCodes {1}
+
+test Get-17.3 {Too many args} -body {
+	.table get 1 2 3
+    } -result {wrong # args: should be ".table get first ?last?"} -returnCodes {1}
+
+test Get-17.4 {Invalid first index} -body {
+	.table get bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Get-17.5 {Invalid last index} -body {
+	.table get 1,1 bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Get-17.6 {Get string} -setup {
+	.table set 5,5 "Test value"
+    } -body {
+	.table get 5,5
+    } -result {Test value}
+
+test Get-17.7 {Get value} -setup {
+	.table set 5,5 42
+    } -body {
+	.table get 5,5
+    } -result {42}
+
+test Get-17.8 {Get range} -setup {
+	.table set row 7,0 [list a b c d e f]
+    } -body {
+	.table get 7,0 7,5
+    } -result {a b c d e f}
+
+test Get-17.9 {Get range multi-line} -setup {
+	.table set row 8,0 [list g h I j k l]
+    } -body {
+	.table get 7,0 8,5
+    } -result {a b c d e f g h I j k l}
+
+test Get-17.10 {Get reverse order} -body {
+	.table get 8,5 7,0
+    } -result {a b c d e f g h I j k l}
+
+test Get-17.11 {Origin} -body {
+	.table get origin
+    } -result [lindex $::table_data 0 0]
+
+test Get-17.12 {End} -body {
+	.table get end
+    }
+
+test Get-17.13 {Out of range min} -body {
+	.table get -5,-5
+    } -result [lindex $::table_data 0 0]
+
+test Get-17.14 {Out of range max} -body {
+	.table get 50,50
+    }
+
+test Get-17.15 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table get origin
+    } -result [lindex $::table_data 0 0]
+
+test Get-17.16 {Cleanup} -body {
+	destroy .table
+    }
+
+# Get2
+
+
+test Get2-18.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Get2-18.2 {Too few args} -body {
+	.table get2
+    } -result {wrong # args: should be ".table get2 first|list ?last?"} -returnCodes {1}
+
+test Get2-18.3 {Too many args} -body {
+	.table get2 1 2 3
+    } -result {wrong # args: should be ".table get2 first|list ?last?"} -returnCodes {1}
+
+test Get2-18.4 {Invalid index} -body {
+	.table get2 bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Get2-18.5 {Get string} -setup {
+	.table set 5,5 "Test value"
+    } -body {
+	.table get2 5,5
+    } -result {Test value}
+
+test Get2-18.6 {Get value} -setup {
+	.table set 5,5 42
+    } -body {
+	.table get2 5,5
+    } -result {42}
+
+test Get2-18.7 {Get range} -setup {
+	.table set row 7,0 [list a b c d e f]
+    } -body {
+	.table get2 7,0 7,5
+    } -result [list [list a b c d e f]]
+
+test Get2-18.8 {Get range multi-line} -setup {
+	.table set row 8,0 [list g h I j k l]
+    } -body {
+	.table get2 7,0 8,5
+    } -result [list [list a b c d e f] [list  g h I j k l]]
+
+test Get2-18.9 {Get reverse order} -body {
+	.table get2 8,5 7,0
+    } -result [list [list a b c d e f] [list  g h I j k l]]
+
+test Get2-18.10 {Get list} -body {
+	.table get2 [list 7,0 7,2 7,4 8,0 8,2 8,4]
+    } -result [list [list a c e] [list g I k]]
+# Out of range index gets shifted to 0,0
+
+test Get2-18.11 {Out of range min} -body {
+	.table get -5,-5
+    } -result [lindex $::table_data 0 0]
+
+test Get2-18.12 {Out of range max} -body {
+	.table get 50,50
+    }
+
+test Get2-18.13 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table get origin
+    } -result [lindex $::table_data 0 0]
+
+test Get2-18.14 {Cleanup} -body {
+	destroy .table
+    }
+
+# Height
+
+
+test Height-19.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Height-19.2 {Get default} -body {
+	.table height
+    }
+
+test Height-19.3 {Invalid arg count} -body {
+	.table height 1 1 1
+    } -result {wrong # args: should be ".table height ?row? ?height row height ...?"} -returnCodes {1}
+
+test Height-19.4 {Invalid index} -body {
+	.table height bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Height-19.5 {Invalid value} -body {
+	.table height 1 bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Height-19.6 {Single row height} -body {
+	.table height 2 5
+	.table height 2
+    } -result {5}
+
+test Height-19.7 {Multiple row height} -body {
+	.table height 4 6 5 7
+	.table height 5
+    } -result {7}
+
+test Height-19.8 {Query row heights} -body {
+	lsort [.table height]
+    } -result [list {2 5} {4 6} {5 7}]
+
+test Height-19.9 {Height in pixels} -body {
+	.table height 6 -22
+	.table height  6
+    } -result {-22}
+
+test Height-19.10 {Default height} -body {
+	.table height 7 default
+	expr {[.table height 7] == [.table cget -rowheight]}
+    } -result {1}
+
+test Height-19.11 {Cleanup} -body {
+	destroy .table
+    }
+
+# Hidden
+
+
+test Hidden-20.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Hidden-20.2 {Default} -body {
+	.table hidden
+    }
+
+test Hidden-20.3 {Invalid index} -body {
+	.table hidden bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Hidden-20.4 {Get All} -setup {
+	.table spans 3,3 2,2
+    } -body {
+	.table hidden
+    } -result {3,4 3,5 4,3 4,4 4,5 5,3 5,4 5,5}
+
+test Hidden-20.5 {Get Span} -body {
+	.table hidden 3,4
+    } -result {3,3}
+
+test Hidden-20.6 {Check if hidden} -body {
+	.table hidden 3,4 3,5 4,3 4,4 4,5 5,3 5,4 5,5
+    } -result {1}
+
+test Hidden-20.7 {Not hidden} -body {
+	.table hidden 3,2 4,2 5,2
+    } -result {0}
+
+test Hidden-20.8 {Unhide} -body {
+	.table spans 3,3 0,0
+    }
+
+test Hidden-20.9 {Out of range min} -setup {
+	.table spans -1,-1 2,2
+    } -body {
+	.table hidden
+    } -cleanup {
+	.table spans -1,-1 0,0
+    } -result {0,1 0,2 1,0 1,1 1,2 2,0 2,1 2,2}
+
+test Hidden-20.10 {Out of range max} -setup {
+	.table spans 9,9 3,3
+    } -body {
+	.table hidden
+    } -cleanup {
+	.table spans 9,9 0,0
+    } -result {9,10 9,11 9,12 10,9 10,10 10,11 10,12 11,9 11,10 11,11 11,12 12,9 12,10 12,11 12,12}
+
+test Hidden-20.11 {Beyond range min} -setup {
+	.table spans -5,-5 2,2
+    } -body {
+	.table hidden
+    } -cleanup {
+	.table spans -1,-1 0,0
+    } -result {0,1 0,2 1,0 1,1 1,2 2,0 2,1 2,2}
+
+test Hidden-20.12 {Beyond range max} -setup {
+	.table spans 15,15 2,2
+    } -body {
+	.table hidden
+    } -cleanup {
+	.table spans 15,15 0,0
+    } -result {9,10 9,11 10,9 10,10 10,11 11,9 11,10 11,11}
+
+test Hidden-20.13 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table spans 1,1 2,2
+	.table hidden 1,0
+    } -result {0,0}
+
+test Hidden-20.14 {Cleanup} -body {
+	destroy .table
+    }
+
+# Icursor
+
+
+test Icursor-21.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Icursor-21.2 {Too many args} -body {
+	.table icursor 1 2
+    } -result {wrong # args: should be ".table icursor ?cursorPos?"} -returnCodes {1}
+
+test Icursor-21.3 {Invalid index} -body {
+	.table icursor bogus
+    } -result {-1}
+
+test Icursor-21.4 {Get Default} -body {
+	.table icursor
+    } -result {-1}
+
+test Icursor-21.5 {Set Before Activate} -body {
+	.table icursor 5
+    } -result {-1}
+# Activate sets icursor to end
+
+test Icursor-21.6 {Init} -body {
+	.table set 4,2 "Some text"
+	.table activate 4,2
+	.table icursor
+    } -result {9}
+
+test Icursor-21.7 {Invalid index} -body {
+	.table icursor bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Icursor-21.8 {Get after activate} -body {
+	.table icursor
+    } -result {9}
+
+test Icursor-21.9 {Set} -body {
+	.table icursor 5
+    } -result {5}
+
+test Icursor-21.10 {Get} -body {
+	.table icursor
+    } -result {5}
+
+test Icursor-21.11 {Insert index} -body {
+	.table icursor insert
+	.table icursor
+    } -result {5}
+
+test Icursor-21.12 {End index} -body {
+	.table icursor end
+	.table icursor
+    } -result {9}
+
+test Icursor-21.13 {Out of range min} -body {
+	.table icursor -5
+	.table icursor
+    } -result {0}
+
+test Icursor-21.14 {Out of range max} -body {
+	.table icursor 50
+	.table icursor
+    } -result {9}
+
+test Icursor-21.15 {Clear cell} -body {
+	.table curvalue {}
+	.table icursor
+    } -result {0}
+
+test Icursor-21.16 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table icursor
+    } -result {3}
+
+test Icursor-21.17 {Cleanup} -body {
+	destroy .table
+    }
+
+# Index
+
+
+test Index-22.1 {Create} -body {
+	setup .table -cols 100 -rows 100
+    } -result {.table}
+
+test Index-22.2 {Too few args} -body {
+	.table index
+    } -result {wrong # args: should be ".table index <index> ?row|col?"} -returnCodes {1}
+
+test Index-22.3 {Too many args} -body {
+	.table index arg arg arg
+    } -result {wrong # args: should be ".table index <index> ?row|col?"} -returnCodes {1}
+
+test Index-22.4 {Bad index} -body {
+	.table index bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Index-22.5 {No focus value} -body {
+	.table index focus
+    } -result {no "focus" cell in table} -returnCodes {1}
+
+test Index-22.6 {Focus} -setup {
+	.table focus 8,8
+    } -body {
+	.table index focus
+    } -result {8,8}
+
+test Index-22.7 {No anchor value} -body {
+	.table index anchor
+    } -result {no "anchor" cell in table} -returnCodes {1}
+
+test Index-22.8 {Anchor} -setup {
+	.table selection anchor 13,13
+    } -body {
+	.table index anchor
+    } -result {13,13}
+
+test Index-22.9 {No active value} -body {
+	.table index active
+    } -result {no "active" cell in table} -returnCodes {1}
+
+test Index-22.10 {Active} -setup {
+	.table activate 7,7
+    } -body {
+	.table index active
+    } -result {7,7}
+
+test Index-22.11 {End} -body {
+	.table index end
+    } -result {99,99}
+
+test Index-22.12 {Origin} -body {
+	.table index origin
+    } -result {0,0}
+
+test Index-22.13 {Topleft} -body {
+	.table index topleft
+    } -result {0,0}
+
+test Index-22.14 {Bottomright} -body {
+	.table index bottomright
+    } -result {31,12}
+
+test Index-22.15 {Coordinate} -body {
+	.table index @10,10
+    } -result {0,0}
+
+test Index-22.16 {Cell} -body {
+	.table index 23,23
+    } -result {23,23}
+
+test Index-22.17 {Out of range min} -body {
+	.table index -50,-50
+    } -result {0,0}
+
+test Index-22.18 {Out of range max} -body {
+	.table index 150,150
+    } -result {99,99}
+
+test Index-22.19 {Scroll} -body {
+	.table xview moveto .5
+	.table yview moveto .5
+    }
+
+test Index-22.20 {Scrolled End} -body {
+	.table index end
+    } -result {99,99}
+
+test Index-22.21 {Scrolled Origin} -body {
+	.table index origin
+    } -result {0,0}
+
+test Index-22.22 {Scrolled Topleft} -body {
+	.table index topleft
+    } -result {50,50}
+
+test Index-22.23 {Scrolled Bottomright} -body {
+	.table index bottomright
+    } -result {81,62}
+
+test Index-22.24 {Scrolled Coordinate} -body {
+	.table index @10,10
+    } -result {50,50}
+
+test Index-22.25 {Scrolled Cell} -body {
+	.table index 23,23
+    } -result {23,23}
+
+test Index-22.26 {Get Row} -setup {
+	.table activate 20,40
+    } -body {
+	.table index active row
+    } -result {20}
+
+test Index-22.27 {Get Column} -setup {
+	.table activate 20,40
+    } -body {
+	.table index active col
+    } -result {40}
+
+test Index-22.28 {Scroll} -body {
+	.table xview moveto 0
+	.table yview moveto 0
+    }
+
+test Index-22.29 {No Select Title Topleft} -setup {
+	.table configure -titlecols 2 -titlerows 2 -selecttitle 0
+    } -body {
+	.table index topleft
+    } -result {2,2}
+
+test Index-22.30 {No Select Title Origin} -setup {
+	.table configure -titlecols 2 -titlerows 2 -selecttitle 0
+    } -body {
+	.table index origin
+    } -result {2,2}
+
+test Index-22.31 {Select Title Topleft} -setup {
+	.table configure -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table index topleft
+    } -result {2,2}
+
+test Index-22.32 {Select Title Origin} -setup {
+	.table configure -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table index origin
+    } -result {2,2}
+
+test Index-22.33 {Empty Table} -setup {
+	.table configure -cols 0 -rows 0 -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table index topleft
+    } -result {0,0}
+
+test Index-22.34 {Cleanup} -body {
+	destroy .table
+    }
+
+# Insert
+
+
+test Insert-23.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Insert-23.2 {Too few args} -body {
+	.table insert
+    } -result {wrong # args: should be ".table insert option ?switches? arg ?arg?"} -returnCodes {1}
+
+test Insert-23.3 {Bad option} -body {
+	.table insert bogus arg
+    } -result {bad option "bogus": must be active, cols, columns, or rows} -returnCodes {1}
+
+test Insert-23.4 {Cleanup} -body {
+	destroy .table
+    }
+
+# Insert Active
+set string "Some text"
+
+
+test Insert_Active-24.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Insert_Active-24.2 {Too few args} -body {
+	.table insert active index
+    } -result {wrong # args: should be ".table insert active index string"} -returnCodes {1}
+
+test Insert_Active-24.3 {Too many args} -body {
+	.table insert active 1 2 3
+    } -result {wrong # args: should be ".table insert active index string"} -returnCodes {1}
+
+test Insert_Active-24.4 {Invalid index} -body {
+	.table insert active bogus value
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Insert_Active-24.5 {Insert before activate} -body {
+	.table insert active 0 "Some text"
+	.table icursor
+    } -result {-1}
+
+test Insert_Active-24.6 {Init} -body {
+	.table set 2,4 "Some text"
+	.table activate 2,4
+    }
+
+test Insert_Active-24.7 {Insert at 0} -setup {
+	.table set 2,4 $string
+    } -body {
+	.table insert active 0 "more "
+	.table curvalue
+    } -result {more Some text}
+
+test Insert_Active-24.8 {Insert in middle} -setup {
+	.table set 2,4 $string
+    } -body {
+	.table insert active 5 "more "
+	.table curvalue
+    } -result {Some more text}
+
+test Insert_Active-24.9 {Insert at 9} -setup {
+	.table set 2,4 $string
+    } -body {
+	.table insert active 9 " more"
+	.table curvalue
+    } -result {Some text more}
+
+test Insert_Active-24.10 {Insert at end} -setup {
+	.table set 2,4 $string
+    } -body {
+	.table insert active end " more"
+	.table curvalue
+    } -result {Some text more}
+
+test Insert_Active-24.11 {Insert at icursor} -setup {
+	.table set 2,4 $string
+	.table icursor 5
+    } -body {
+	.table insert active insert "more "
+	.table curvalue
+    } -result {Some more text}
+
+test Insert_Active-24.12 {Insert before start} -setup {
+	.table set 2,4 $string
+    } -body {
+	.table insert active -10 "more "
+	.table curvalue
+    } -result {more Some text}
+
+test Insert_Active-24.13 {Insert after end} -setup {
+	.table set 2,4 $string
+    } -body {
+	.table insert active 15 " more"
+	.table curvalue
+    } -result {Some text more}
+
+test Insert_Active-24.14 {Insert into empty cell} -setup {
+	.table set 2,4 {}
+    } -body {
+	.table insert active end "more text"
+	.table curvalue
+    } -result {more text}
+
+test Insert_Active-24.15 {Auto clear} -setup {
+	.table configure -autoclear 1
+	.table set 7,7 "more text"
+	.table activate 7,7
+    } -body {
+	.table insert active end "another text"
+	.table curvalue
+    } -result {another text}
+
+
+
+test Insert_Active-24.16 {Cleanup} -body {
+	destroy .table
+    }
+
+# Insert Column
+
+
+test Insert_Column-25.1 {Create} -body {
+	setup .table -cols 10 -rows 10
+    } -result {.table}
+
+test Insert_Column-25.2 {Too few args} -body {
+	.table insert cols
+    } -result {wrong # args: should be ".table insert option ?switches? arg ?arg?"} -returnCodes {1}
+
+test Insert_Column-25.3 {Too many args} -body {
+	.table insert cols 1 2 3 4 5 6 7 8 9 10
+    } -result {wrong # args: should be ".table insert cols ?switches? index ?count?"} -returnCodes {1}
+
+test Insert_Column-25.4 {Bad index} -body {
+	.table insert cols bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Insert_Column-25.5 {Bad count} -body {
+	.table insert cols 4 bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Insert_Column-25.6 {Bad switch} -body {
+	.table insert cols -bogus 4 5
+    } -result {bad switch "-bogus": must be -keeptitles, -holddimensions, -holdselection, -holdtags, -holdwindows, or --} -returnCodes {1}
+
+test Insert_Column-25.7 {Single} -body {
+	.table insert cols 15
+	.table cget -cols
+    } -result {11}
+
+test Insert_Column-25.8 {Single column} -body {
+	.table insert columns 14
+	.table cget -cols
+    } -result {12}
+
+test Insert_Column-25.9 {Multiple} -body {
+	.table insert cols 10 4
+	.table cget -cols
+    } -result {16}
+
+test Insert_Column-25.10 {At end} -body {
+	.table insert cols 20 10
+	.table cget -cols
+    } -result {26}
+
+test Insert_Column-25.11 {Negative count} -body {
+	.table insert cols 20 -10
+	.table cget -cols
+    } -result {36}
+
+test Insert_Column-25.12 {Hold Dimensions} -body {
+	.table insert cols -holddimensions 16 5
+	.table cget -cols
+    } -result {36}
+
+test Insert_Column-25.13 {Hold Selection} -setup {
+	.table selection set 0,20 0,25
+    } -body {
+	.table insert cols -holdselection 20 5
+	.table selection includes 0,22
+    } -result {1}
+
+test Insert_Column-25.14 {Hold Tags} -setup {
+	.table tag col test_tag 30 31
+    } -body {
+	.table insert cols -holdtags 31
+	lsort [.table tag col test_tag]
+    } -result {30 31}
+
+test Insert_Column-25.15 {Hold Windows} -setup {
+	.table window configure 0,40 -window [entry .table.e]
+    } -body {
+	.table insert cols -holdwindows 38 5
+	.table window cget 0,40 -window
+    } -result {.table.e}
+
+test Insert_Column-25.16 {Keep Titles} -setup {
+	.table configure -titlecols 5 -titlerows 5
+	.table set 0,4 "Test value"
+    } -body {
+	.table insert cols -keeptitles 0 5
+	.table set 0,4
+    } -result {Test value}
+
+test Insert_Column-25.17 {No switches} -body {
+	.table insert cols -- 5 5
+	.table cget -cols
+    } -result {53}
+
+test Insert_Column-25.18 {Out of range min} -body {
+	.table insert cols -- -100 5
+	.table cget -cols
+    } -result {58}
+
+test Insert_Column-25.19 {Out of range max} -body {
+	.table insert cols 100 5
+	.table cget -cols
+    } -result {63}
+
+test Insert_Column-25.20 {Out of range count min} -body {
+	.table insert cols 10 -50
+	.table cget -cols
+    } -result {113}
+
+test Insert_Column-25.21 {Out of range count max} -body {
+	.table insert cols 40 100
+	.table cget -cols
+    } -result {213}
+
+test Insert_Column-25.22 {Insert Empty Table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table insert cols 0 15
+	.table cget -cols
+    } -result {16}
+
+test Insert_Column-25.23 {Cleanup} -body {
+	destroy .table
+    }
+
+# Insert Row
+
+
+test Insert_Row-26.1 {Create} -body {
+	setup .table -cols 10 -rows 10
+    } -result {.table}
+
+test Insert_Row-26.2 {Too few args} -body {
+	.table insert rows
+    } -result {wrong # args: should be ".table insert option ?switches? arg ?arg?"} -returnCodes {1}
+
+test Insert_Row-26.3 {Too many args} -body {
+	.table insert rows 1 2 3 4 5 6 7 8 9 10
+    } -result {wrong # args: should be ".table insert rows ?switches? index ?count?"} -returnCodes {1}
+
+test Insert_Row-26.4 {Bad index} -body {
+	.table insert rows bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Insert_Row-26.5 {Bad count} -body {
+	.table insert rows 4 bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Insert_Row-26.6 {Bad switch} -body {
+	.table insert rows -bogus 4 5
+    } -result {bad switch "-bogus": must be -keeptitles, -holddimensions, -holdselection, -holdtags, -holdwindows, or --} -returnCodes {1}
+
+test Insert_Row-26.7 {Single} -body {
+	.table insert rows 15
+	.table cget -rows
+    } -result {11}
+
+test Insert_Row-26.8 {Multiple} -body {
+	.table insert rows 10 5
+	.table cget -rows
+    } -result {16}
+
+test Insert_Row-26.9 {At end} -body {
+	.table insert rows 80 10
+	.table cget -rows
+    } -result {26}
+
+test Insert_Row-26.10 {Negative count} -body {
+	.table insert rows 20 -10
+	.table cget -rows
+    } -result {36}
+
+test Insert_Row-26.11 {Hold Dimensions} -body {
+	.table insert rows -holddimensions 16 5
+	.table cget -rows
+    } -result {36}
+
+test Insert_Row-26.12 {Hold Selection} -setup {
+	.table selection set 20,0 25,0
+    } -body {
+	.table insert rows -holdselection 20 5
+	.table selection includes 22,0
+    } -result {1}
+
+test Insert_Row-26.13 {Hold Tags} -setup {
+	.table tag row test_tag 30 31
+    } -body {
+	.table insert rows -holdtags 31
+	lsort [.table tag row test_tag]
+    } -result {30 31}
+
+test Insert_Row-26.14 {Hold Windows} -setup {
+	.table window configure 40,0 -window [entry .table.e]
+    } -body {
+	.table insert rows -holdwindows 38 5
+	.table window cget 40,0 -window
+    } -result {.table.e}
+
+test Insert_Row-26.15 {Keep Titles} -setup {
+	.table configure -titlecols 5 -titlerows 5
+	.table set 4,0 "Test value"
+    } -body {
+	.table insert rows -keeptitles 0 5
+	.table get 4,0
+    } -result {Test value}
+
+test Insert_Row-26.16 {No switches} -body {
+	.table insert rows -- 50 5
+	.table cget -rows
+    } -result {53}
+
+test Insert_Row-26.17 {Out of range min} -body {
+	.table insert rows -- -100 5
+	.table cget -rows
+    } -result {58}
+
+test Insert_Row-26.18 {Out of range max} -body {
+	.table insert rows 100 5
+	.table cget -rows
+    } -result {63}
+
+test Insert_Row-26.19 {Out of range count min} -body {
+	.table insert rows 10 -50
+	.table cget -rows
+    } -result {113}
+
+test Insert_Row-26.20 {Out of range count max} -body {
+	.table insert rows 40 100
+	.table cget -rows
+    } -result {213}
+
+test Insert_Row-26.21 {Insert Empty Table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table insert rows 0 15
+	.table cget -rows
+    } -result {16}
+
+test Insert_Row-26.22 {Cleanup} -body {
+	destroy .table
+    }
+
+# Reread
+
+
+test Reread-27.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Reread-27.2 {Too many args} -body {
+	.table reread 1
+    } -result {wrong # args: should be ".table reread"} -returnCodes {1}
+
+test Reread-27.3 {Init} -body {
+	.table set 5,5 "Some text"
+	.table activate 5,5
+	.table curvalue
+    } -result {Some text}
+
+test Reread-27.4 {Edit} -body {
+	.table curvalue "New text"
+	.table curvalue
+    } -result {New text}
+
+test Reread-27.5 {Restore} -body {
+	.table reread
+	.table curvalue
+    } -result {Some text}
+
+test Reread-27.6 {Cleanup} -body {
+	destroy .table
+    }
+
+# Scan
+
+
+test Scan-28.1 {Create} -body {
+	setup .table -cols 100 -rows 100
+    } -result {.table}
+
+test Scan-28.2 {Too few args} -body {
+	.table scan
+    } -result {wrong # args: should be ".table scan mark|dragto x y"} -returnCodes {1}
+
+test Scan-28.3 {Too many args} -body {
+	.table scan 1 2 3 4 5
+    } -result {wrong # args: should be ".table scan mark|dragto x y"} -returnCodes {1}
+
+test Scan-28.4 {Bad option} -body {
+	.table scan bogus 1 2
+    } -result {bad option "bogus": must be mark or dragto} -returnCodes {1}
+
+test Scan-28.5 {Bad x index} -body {
+	.table scan mark bogus 1
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Scan-28.6 {Bad y index} -body {
+	.table scan mark 1 bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Scan-28.7 {Mark} -body {
+	.table scan mark 20 30
+    }
+
+test Scan-28.8 {Dragto} -body {
+	set list [.table index topleft]
+	.table scan dragto 500 500
+	lappend list [.table index topleft]
+	set list
+    } -result {0,0 69,46}
+
+test Scan-28.9 {Cleanup} -body {
+	destroy .table
+    }
+
+# See
+
+
+test See-29.1 {Create} -body {
+	setup .table -cols 100 -rows 100
+    } -result {.table}
+
+test See-29.2 {Too few args} -body {
+	.table see
+    } -result {wrong # args: should be ".table see index"} -returnCodes {1}
+
+test See-29.3 {Too many args} -body {
+	.table see arg arg
+    } -result {wrong # args: should be ".table see index"} -returnCodes {1}
+
+test See-29.4 {Invaild index} -body {
+	.table see bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test See-29.5 {Cell visible} -body {
+	.table see 6,6
+	list [.table xview] [.table yview]
+    } -result {{0.0 0.12903225806451613} {0.0 0.3157894736842105}}
+
+test See-29.6 {Cell Not visible} -body {
+	.table see 21,21
+	list [.table xview] [.table yview]
+    } -result {{0.1 0.22903225806451613} {0.0 0.3157894736842105}}
+
+test See-29.7 {Active} -setup {
+	.table activate 50,50
+    } -body {
+	.table see active
+	list [.table xview] [.table yview]
+    } -result {{0.39 0.5190322580645161} {0.2 0.5157894736842106}}
+
+test See-29.8 {Origin} -body {
+	.table see origin
+	list [.table xview] [.table yview]
+    } -result {{0.0 0.12903225806451613} {0.0 0.3157894736842105}}
+
+test See-29.9 {End} -body {
+	.table see end
+	list [.table xview] [.table yview]
+    } -result {{0.88 1.0} {0.69 1.0}}
+
+test See-29.10 {X scroll right} -setup {
+	.table activate 25,25
+	.table xview moveto 0.25
+	.table yview moveto 0.25
+	.table see active
+    } -body {
+	set list [list [.table index topleft] [.table index bottomright]]
+	.table activate 25,75
+	.table see active
+	lappend list [.table index topleft] [.table index bottomright]
+	set list
+    } -result {25,25 56,37 25,64 56,76}
+
+test See-29.11 {Y scroll down} -setup {
+	.table activate 25,25
+	.table xview moveto 0.25
+	.table yview moveto 0.25
+	.table see active
+    } -body {
+	set list [list [.table index topleft] [.table index bottomright]]
+	.table activate 75,25
+	.table see active
+	lappend list [.table index topleft] [.table index bottomright]
+	set list
+    } -result {25,25 56,37 45,25 76,37}
+
+test See-29.12 {X scroll right and Y scroll down} -setup {
+	.table activate 25,25
+	.table xview moveto 0.25
+	.table yview moveto 0.25
+	.table see active
+    } -body {
+	set list [list [.table index topleft] [.table index bottomright]]
+	.table activate 75,75
+	.table see active
+	lappend list [.table index topleft] [.table index bottomright]
+	set list
+    } -result {25,25 56,37 45,64 76,76}
+
+test See-29.13 {X scroll left} -setup {
+	.table activate 25,25
+	.table xview moveto 0.25
+	.table yview moveto 0.25
+	.table see active
+    } -body {
+	set list [list [.table index topleft] [.table index bottomright]]
+	.table activate 75,25
+	.table see active
+	lappend list [.table index topleft] [.table index bottomright]
+	set list
+    } -result {25,25 56,37 45,25 76,37}
+
+test See-29.14 {Y scroll up} -setup {
+	.table activate 25,25
+	.table xview moveto 0.25
+	.table yview moveto 0.25
+	.table see active
+    } -body {
+	set list [list [.table index topleft] [.table index bottomright]]
+	.table activate 25,75
+	.table see active
+	lappend list [.table index topleft] [.table index bottomright]
+	set list
+    } -result {25,25 56,37 25,64 56,76}
+
+test See-29.15 {X scroll left and Y scroll up} -setup {
+	.table activate 25,25
+	.table xview moveto 0.25
+	.table yview moveto 0.25
+	.table see active
+    } -body {
+	set list [list [.table index topleft] [.table index bottomright]]
+	.table activate 25,25
+	.table see active
+	lappend list [.table index topleft] [.table index bottomright]
+	set list
+    } -result {25,25 56,37 25,25 56,37}
+
+test See-29.16 {Cleanup} -body {
+	destroy .table
+    }
+
+# Selection
+
+
+test Selection-30.1 {Create} -body {
+	setup .table -cols 100 -rows 100
+    } -result {.table}
+
+test Selection-30.2 {Too few args} -body {
+	.table selection
+    } -result {wrong # args: should be ".table selection option ?arg arg ...?"} -returnCodes {1}
+
+test Selection-30.3 {Bad option} -body {
+	.table selection bogus
+    } -result {bad selection option "bogus": must be active, anchor, clear, includes, present, set, or size} -returnCodes {1}
+
+test Selection-30.4 {Cleanup} -body {
+	destroy .table
+    }
+
+# Selection Active
+
+
+test Selection_Active-31.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Selection_Active-31.2 {Too many args} -body {
+	.table selection active 1 2 3
+    } -result {wrong # args: should be ".table selection active ?start? ?end?"} -returnCodes {1}
+
+test Selection_Active-31.3 {Invalid start index} -body {
+	.table selection active bogus value
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Selection_Active-31.4 {Invalid end index} -body {
+	.table selection active 0 bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Selection_Active-31.5 {Default} -body {
+	.table selection active
+    }
+
+test Selection_Active-31.6 {Set inactive} -body {
+	.table selection active 5 10
+	.table selection active
+    }
+
+test Selection_Active-31.7 {Init} -body {
+	.table activate 6,0
+	.table set active "This is some text"
+    }
+
+test Selection_Active-31.8 {Set} -body {
+	.table selection active 5 10
+    }
+
+test Selection_Active-31.9 {Get} -body {
+	.table selection active
+    } -result {5 10}
+# String range includes last index while selection active does not. This is the same as the entry widget.
+
+test Selection_Active-31.10 {Retreive} -body {
+	lassign [.table selection active] first last
+	incr last -1
+	string range [.table curvalue] $first $last
+    } -result {is so}
+
+test Selection_Active-31.11 {Clear Selected} -body {
+	.table selection active {}
+	.table selection active
+    }
+
+test Selection_Active-31.12 {Clear None} -body {
+	.table selection active {}
+	.table selection active
+    }
+
+test Selection_Active-31.13 {Insert to End} -setup {
+	.table icursor 8
+    } -body {
+	.table selection active insert end
+	.table selection active
+    } -result {8 17}
+
+test Selection_Active-31.14 {Reverse order} -body {
+	.table selection active 10 5
+	.table selection active
+    }
+
+test Selection_Active-31.15 {Range before} -body {
+	.table selection active -5 5
+	.table selection active
+    } -result {0 5}
+
+test Selection_Active-31.16 {Range after} -body {
+	.table selection active 15 25
+	.table selection active
+    } -result {15 17}
+
+test Selection_Active-31.17 {Out of range min} -body {
+	.table selection active -10 -5
+	.table selection active
+    }
+
+test Selection_Active-31.18 {Out of range max} -body {
+	.table selection active 25 30
+	.table selection active
+    }
+
+test Selection_Active-31.19 {Empty cell} -setup {
+	.table activate 6,6
+    } -body {
+	.table selection active 5 10
+	.table selection active
+    }
+
+
+test Selection_Active-31.20 {Cleanup} -body {
+	destroy .table
+    }
+
+# Selection Anchor
+
+
+test Selection_Anchor-32.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Selection_Anchor-32.2 {Too few args} -body {
+	.table selection anchor
+    } -result {wrong # args: should be ".table selection anchor index"} -returnCodes {1}
+
+test Selection_Anchor-32.3 {Too many args} -body {
+	.table selection anchor 1 2
+    } -result {wrong # args: should be ".table selection anchor index"} -returnCodes {1}
+
+test Selection_Anchor-32.4 {Invalid index} -body {
+	.table selection anchor bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Selection_Anchor-32.5 {No anchor} -body {
+	.table index anchor
+    } -result {no "anchor" cell in table} -returnCodes {1}
+
+test Selection_Anchor-32.6 {Set} -body {
+	.table selection anchor 3,3
+    }
+
+test Selection_Anchor-32.7 {Get} -body {
+	.table index anchor
+    } -result {3,3}
+
+test Selection_Anchor-32.8 {Clear} -body {
+	.table selection anchor {}
+    }
+
+test Selection_Anchor-32.9 {Out of range min} -body {
+	.table selection anchor -5,-5
+	.table index anchor
+    } -result {0,0}
+
+test Selection_Anchor-32.10 {Out of range max} -body {
+	.table selection anchor 25,25
+	.table index anchor
+    } -result {9,9}
+
+test Selection_Anchor-32.11 {Anchor in Title With No Title Select} -setup {
+	.table configure -selecttitle 0 -titlecols 2 -titlerows 2
+    } -body {
+	.table selection anchor 1,1
+	.table index anchor
+    } -result {2,2}
+
+test Selection_Anchor-32.12 {Anchor in Title With Title Select} -setup {
+	.table configure -selecttitle 1 -titlecols 2 -titlerows 2
+    } -body {
+	.table selection anchor 1,1
+	.table index anchor
+    } -result {1,1}
+
+test Selection_Anchor-32.13 {Empty table} -setup {
+	.table configure -selecttitle 0 -titlecols 0 -titlerows 0 -cols 0 -rows 0
+    } -body {
+	.table selection anchor 0,0
+	.table index anchor
+    } -result {0,0}
+
+test Selection_Anchor-32.14 {Cleanup} -body {
+	destroy .table
+    }
+
+# Selection Clear
+
+
+test Selection_Clear-33.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Selection_Clear-33.2 {Too few args} -body {
+	.table selection clear
+    } -result {wrong # args: should be ".table selection clear all|<first> ?<last>?"} -returnCodes {1}
+
+test Selection_Clear-33.3 {Too many args} -body {
+	.table selection clear 1 2 3
+    } -result {wrong # args: should be ".table selection clear all|<first> ?<last>?"} -returnCodes {1}
+
+test Selection_Clear-33.4 {Invalid first index} -body {
+	.table selection clear bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Selection_Clear-33.5 {Invalid last index} -body {
+	.table selection clear 1,1 bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Selection_Clear-33.6 {Clear Index} -setup {
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,2
+	.table curselection
+    } -result {2,0 2,1 2,3 2,4 2,5 2,6 2,7 2,8 2,9}
+
+test Selection_Clear-33.7 {Clear Range} -setup {
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,2 2,6
+	.table curselection
+    } -result {2,0 2,1 2,7 2,8 2,9}
+
+test Selection_Clear-33.8 {Clear Reverse Range} -setup {
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,5 2,3
+	.table curselection
+    } -result {2,0 2,1 2,2 2,6 2,7 2,8 2,9}
+
+test Selection_Clear-33.9 {Clear All} -body {
+	.table selection clear all
+    }
+
+test Selection_Clear-33.10 {Select Type Cell} -setup {
+	.table configure -selecttype cell
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,5 2,7
+	.table curselection
+    } -result {2,0 2,1 2,2 2,3 2,4 2,8 2,9}
+
+test Selection_Clear-33.11 {Select Type Column} -setup {
+	.table configure -selecttype col
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,5 2,7
+	.table curselection
+    } -result {0,0 0,1 0,2 0,3 0,4 0,8 0,9 1,0 1,1 1,2 1,3 1,4 1,8 1,9 2,0 2,1 2,2 2,3 2,4 2,8 2,9 3,0 3,1 3,2 3,3 3,4 3,8 3,9 4,0 4,1 4,2 4,3 4,4 4,8 4,9 5,0 5,1 5,2 5,3 5,4 5,8 5,9 6,0 6,1 6,2 6,3 6,4 6,8 6,9 7,0 7,1 7,2 7,3 7,4 7,8 7,9 8,0 8,1 8,2 8,3 8,4 8,8 8,9 9,0 9,1 9,2 9,3 9,4 9,8 9,9}
+
+test Selection_Clear-33.12 {Select Type Row} -setup {
+	.table configure -selecttype row
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,5 2,7
+	.table curselection
+    } -result {0,0 0,1 0,2 0,3 0,4 0,8 0,9 1,0 1,1 1,2 1,3 1,4 1,8 1,9 3,0 3,1 3,2 3,3 3,4 3,8 3,9 4,0 4,1 4,2 4,3 4,4 4,8 4,9 5,0 5,1 5,2 5,3 5,4 5,8 5,9 6,0 6,1 6,2 6,3 6,4 6,8 6,9 7,0 7,1 7,2 7,3 7,4 7,8 7,9 8,0 8,1 8,2 8,3 8,4 8,8 8,9 9,0 9,1 9,2 9,3 9,4 9,8 9,9}
+
+test Selection_Clear-33.13 {Select Type Both} -setup {
+	.table configure -selecttype both
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,5 2,7
+	.table curselection
+    } -result {0,0 0,1 0,2 0,3 0,4 0,8 0,9 1,0 1,1 1,2 1,3 1,4 1,8 1,9 3,0 3,1 3,2 3,3 3,4 3,8 3,9 4,0 4,1 4,2 4,3 4,4 4,8 4,9 5,0 5,1 5,2 5,3 5,4 5,8 5,9 6,0 6,1 6,2 6,3 6,4 6,8 6,9 7,0 7,1 7,2 7,3 7,4 7,8 7,9 8,0 8,1 8,2 8,3 8,4 8,8 8,9 9,0 9,1 9,2 9,3 9,4 9,8 9,9}
+
+test Selection_Clear-33.14 {Delete table} -setup {
+	.table selection set 2,0 2,9
+	.table configure -cols 0 -rows 0 -selecttype cell
+    } -body {
+	.table selection clear all
+	.table curselection
+    }
+
+test Selection_Clear-33.15 {Empty table} -setup {
+	.table selection set 0,0 2,2
+    } -body {
+	.table selection clear all
+	.table curselection
+    }
+
+test Selection_Clear-33.16 {Empty Select Type Cell} -setup {
+	.table configure -selecttype cell
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,5 2,7
+	.table curselection
+    }
+
+test Selection_Clear-33.17 {Empty Select Type Column} -setup {
+	.table configure -selecttype col
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,5 2,7
+	.table curselection
+    }
+
+test Selection_Clear-33.18 {Empty Select Type Row} -setup {
+	.table configure -selecttype row
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,5 2,7
+	.table curselection
+    }
+
+test Selection_Clear-33.19 {Empty Select Type Both} -setup {
+	.table configure -selecttype both
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection clear 2,5 2,7
+	.table curselection
+    }
+
+test Selection_Clear-33.20 {Cleanup} -body {
+	destroy .table
+    }
+
+# Selection Includes
+
+
+test Selection_Includes-34.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Selection_Includes-34.2 {Too few args} -body {
+	.table selection includes
+    } -result {wrong # args: should be ".table selection includes index"} -returnCodes {1}
+
+test Selection_Includes-34.3 {Too many args} -body {
+	.table selection includes 1 2
+    } -result {wrong # args: should be ".table selection includes index"} -returnCodes {1}
+
+test Selection_Includes-34.4 {Invalid index} -body {
+	.table selection includes bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Selection_Includes-34.5 {In selection} -setup {
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection includes 2,5
+    } -result {1}
+
+test Selection_Includes-34.6 {Not in selection} -body {
+	.table selection includes 5,3
+    } -result {0}
+
+test Selection_Includes-34.7 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table selection includes 2,6
+    } -result {0}
+
+test Selection_Includes-34.8 {Cleanup} -body {
+	destroy .table
+    }
+
+# Selection Present
+
+
+test Selection_Present-35.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Selection_Present-35.2 {Too many args} -body {
+	.table selection present 1
+    } -result {wrong # args: should be ".table selection present"} -returnCodes {1}
+
+test Selection_Present-35.3 {Default} -body {
+	.table selection present
+    } -result {0}
+
+test Selection_Present-35.4 {Has selection} -setup {
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection present
+    } -result {1}
+
+test Selection_Present-35.5 {No selection} -setup {
+	.table selection clear all
+    } -body {
+	.table selection present
+    } -result {0}
+# Resize table does not auto clear out of range selected cells
+
+test Selection_Present-35.6 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+	.table selection clear all
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection present
+    } -result {1}
+
+test Selection_Present-35.7 {Cleanup} -body {
+	destroy .table
+    }
+
+# Selection Set
+
+
+test Selection_Set-36.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Selection_Set-36.2 {Too few args} -body {
+	.table selection set
+    } -result {wrong # args: should be ".table selection set first ?last?"} -returnCodes {1}
+
+test Selection_Set-36.3 {Too many args} -body {
+	.table selection set 1 2 3
+    } -result {wrong # args: should be ".table selection set first ?last?"} -returnCodes {1}
+
+test Selection_Set-36.4 {Invalid index} -body {
+	.table selection set bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Selection_Set-36.5 {Cell} -body {
+	.table selection set 2,2
+	.table curselection
+    } -result {2,2}
+
+test Selection_Set-36.6 {Range of cells} -body {
+	.table selection set 3,1 4,4
+	.table curselection
+    } -result {2,2 3,1 3,2 3,3 3,4 4,1 4,2 4,3 4,4}
+
+test Selection_Set-36.7 {Reverse order} -body {
+	.table selection set 6,4 5,3
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {2,2 3,1 3,2 3,3 3,4 4,1 4,2 4,3 4,4 5,3 5,4 6,3 6,4}
+
+test Selection_Set-36.8 {Select Type Cell} -setup {
+	.table configure -selecttype cell
+    } -body {
+	.table selection set 2,5 2,7
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {2,5 2,6 2,7}
+
+test Selection_Set-36.9 {Select Type Column} -setup {
+	.table configure -selecttype col
+    } -body {
+	.table selection set 2,5 2,7
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,5 0,6 0,7 1,5 1,6 1,7 2,5 2,6 2,7 3,5 3,6 3,7 4,5 4,6 4,7 5,5 5,6 5,7 6,5 6,6 6,7 7,5 7,6 7,7 8,5 8,6 8,7 9,5 9,6 9,7}
+
+test Selection_Set-36.10 {Select Type Row} -setup {
+	.table configure -selecttype row
+    } -body {
+	.table selection set 2,5 2,7
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {2,0 2,1 2,2 2,3 2,4 2,5 2,6 2,7 2,8 2,9}
+
+test Selection_Set-36.11 {Select Type Both} -setup {
+	.table configure -selecttype both
+    } -body {
+	.table selection set 2,5 2,7
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,5 0,6 0,7 1,5 1,6 1,7 2,0 2,1 2,2 2,3 2,4 2,5 2,6 2,7 2,8 2,9 3,5 3,6 3,7 4,5 4,6 4,7 5,5 5,6 5,7 6,5 6,6 6,7 7,5 7,6 7,7 8,5 8,6 8,7 9,5 9,6 9,7}
+
+test Selection_Set-36.12 {No Title Select Cell in Col Title} -setup {
+	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0
+    } -body {
+	.table selection set 0,4
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {1,4}
+
+test Selection_Set-36.13 {No Title Select Cell in Row Title} -setup {
+	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0
+    } -body {
+	.table selection set 4,0
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {4,1}
+
+test Selection_Set-36.14 {No Title Select Cell in Titles} -setup {
+	.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 0
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {2,2}
+
+test Selection_Set-36.15 {No Title Select Type Row} -setup {
+	.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 0
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {2,2 2,3 2,4 2,5 2,6 2,7 2,8 2,9}
+
+test Selection_Set-36.16 {No Title Select Type Col} -setup {
+	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {2,2 3,2 4,2 5,2 6,2 7,2 8,2 9,2}
+
+test Selection_Set-36.17 {No Title Select All} -setup {
+	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0
+    } -body {
+	.table selection set origin end
+	llength [.table curselection]
+    } -cleanup {
+	.table selection clear all
+    } -result {64}
+
+test Selection_Set-36.18 {Title Select Cell in Col Title} -setup {
+	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1
+    } -body {
+	.table selection set 0,4
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,4}
+
+test Selection_Set-36.19 {Title Select Cell in Row Title} -setup {
+	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1
+    } -body {
+	.table selection set 4,0
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {4,0}
+
+test Selection_Set-36.20 {Title Select Cell in Titles} -setup {
+	.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {1,1}
+
+test Selection_Set-36.21 {Title Select Type Row} -setup {
+	.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {1,0 1,1 1,2 1,3 1,4 1,5 1,6 1,7 1,8 1,9}
+
+test Selection_Set-36.22 {Title Select Type Col} -setup {
+	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1}
+
+test Selection_Set-36.23 {Title Select All} -setup {
+	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table selection set origin end
+	llength [.table curselection]
+    } -cleanup {
+	.table selection clear all
+    } -result {80}
+# Resize table does not auto clear out of range selected cells
+
+test Selection_Set-36.24 {Empty table} -setup {
+	.table configure -selecttype cell -cols 0 -rows 0 -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table selection set 2,5 2,7
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,0}
+
+test Selection_Set-36.25 {Empty table Select All} -setup {
+	.table configure -selecttype cell -cols 0 -rows 0
+    } -body {
+	.table selection set origin end
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,0}
+
+test Selection_Set-36.26 {Empty No Title Select Cell in Col Title} -setup {
+	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0
+    } -body {
+	.table selection set 0,4
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    }
+
+test Selection_Set-36.27 {Empty No Title Select Cell in Row Title} -setup {
+	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0
+    } -body {
+	.table selection set 4,0
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    }
+
+test Selection_Set-36.28 {Empty No Title Select Cell in Titles} -setup {
+	.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 0
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    }
+
+test Selection_Set-36.29 {Empty No Title Select Type Row} -setup {
+	.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 0
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    }
+
+test Selection_Set-36.30 {Empty No Title Select Type Col} -setup {
+	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    }
+
+test Selection_Set-36.31 {Empty No Title Select All} -setup {
+	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0
+    } -body {
+	.table selection set origin end
+	llength [.table curselection]
+    } -cleanup {
+	.table selection clear all
+    } -result {0}
+
+test Selection_Set-36.32 {Empty Title Select Cell in Col Title} -setup {
+	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1
+    } -body {
+	.table selection set 0,4
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,0}
+
+test Selection_Set-36.33 {Empty Title Select Cell in Row Title} -setup {
+	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1
+    } -body {
+	.table selection set 4,0
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,0}
+
+test Selection_Set-36.34 {Empty Title Select Cell in Titles} -setup {
+	.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,0}
+
+test Selection_Set-36.35 {Empty Title Select Type Row} -setup {
+	.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,0}
+
+test Selection_Set-36.36 {Empty Title Select Type Col} -setup {
+	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {0,0}
+
+test Selection_Set-36.37 {Empty Title Select All} -setup {
+	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1
+    } -body {
+	.table selection set origin end
+	llength [.table curselection]
+    } -cleanup {
+	.table selection clear all
+    } -result {1}
+
+test Selection_Set-36.38 {Cleanup} -body {
+	destroy .table
+    }
+
+# Selection Size
+
+
+test Selection_Size-37.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Selection_Size-37.2 {Too many args} -body {
+	.table selection size 1
+    } -result {wrong # args: should be ".table selection size"} -returnCodes {1}
+
+test Selection_Size-37.3 {Default} -body {
+	.table selection size
+    } -result {0}
+
+test Selection_Size-37.4 {Has selection} -setup {
+	.table selection set 2,0 2,9
+    } -body {
+	.table selection size
+    } -result {10}
+
+test Selection_Size-37.5 {Unselect} -setup {
+	.table selection clear 1,4 3,5
+    } -body {
+	.table selection size
+    } -result {8}
+
+test Selection_Size-37.6 {No selection} -setup {
+	.table selection clear all
+    } -body {
+	.table selection size
+    } -result {0}
+
+test Selection_Size-37.7 {Select Type Cell} -setup {
+	.table configure -selecttype cell
+    } -body {
+	.table selection set 2,5 2,7
+	.table selection size
+    } -cleanup {
+	.table selection clear all
+    } -result {3}
+
+test Selection_Size-37.8 {Select Type Column} -setup {
+	.table configure -selecttype col
+    } -body {
+	.table selection set 2,5 2,7
+	.table selection size
+    } -cleanup {
+	.table selection clear all
+    } -result {30}
+
+test Selection_Size-37.9 {Select Type Row} -setup {
+	.table configure -selecttype row
+    } -body {
+	.table selection set 2,5 2,7
+	.table selection size
+    } -cleanup {
+	.table selection clear all
+    } -result {10}
+
+test Selection_Size-37.10 {Select Type Both} -setup {
+	.table configure -selecttype both
+    } -body {
+	.table selection set 2,5 2,7
+	.table selection size
+    } -cleanup {
+	.table selection clear all
+    } -result {37}
+# Resize table does not auto clear out of range selected cells
+
+test Selection_Size-37.11 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+	.table selection clear all
+    } -body {
+	.table selection set 2,5 2,7
+	.table selection size
+    } -cleanup {
+	.table selection clear all
+    } -result {1}
+
+test Selection_Size-37.12 {Cleanup} -body {
+	destroy .table
+    }
+
+proc pause {{ms 1000}} {set ::pause 0;after $ms [list set ::pause 1];vwait ::pause}
+proc keypress {w event} {if {[focus] ne $w} {focus -force $w};event generate $w $event;pause 50}
+proc keypress {w event} {if {[focus] ne $w} {focus -force $w};event generate $w $event -when now;pause 50}
+proc do_event {w event} {focus -force $w;event generate $w $event;pause 50}
+
+# Active Cell Edit
+
+
+test Binding_Cell_Edit-38.1 {Create} -body {
+	setup .table -cols 50 -rows 50
+    } -result {.table}
+
+test Binding_Cell_Edit-38.2 {Init} -body {
+	.table set row 0,0 [list abcd efgh ijkl]
+	.table set row 1,0 [list mnop qrst uvw\nxyz]
+    }
+
+test Binding_Cell_Edit-38.3 {Move left 1 char} -setup {
+	.table activate 1,1
+	.table icursor 2
+    } -body {
+	keypress .table <<PrevChar>>
+	list [.table activate] [.table icursor]
+    } -result {1,1 1}
+
+test Binding_Cell_Edit-38.4 {Move right 1 char} -setup {
+	.table activate 1,1
+	.table icursor 2
+    } -body {
+	keypress .table <<NextChar>>
+	list [.table activate] [.table icursor]
+    } -result {1,1 3}
+
+test Binding_Cell_Edit-38.5 {Move up 1 char} -setup {
+	.table activate 1,1
+	.table icursor 2
+    } -body {
+	keypress .table <<PrevLine>>
+	list [.table activate] [.table icursor]
+    } -result {0,1 2}
+
+test Binding_Cell_Edit-38.6 {Move down 1 char} -setup {
+	.table activate 1,1
+	.table icursor 2
+    } -body {
+	keypress .table <<NextLine>>
+	list [.table activate] [.table icursor]
+    } -result {2,1 2}
+
+test Binding_Cell_Edit-38.7 {Move to start} -setup {
+	.table activate 1,1
+	.table icursor 2
+    } -body {
+	keypress .table <<LineStart>>
+	list [.table activate] [.table icursor]
+    } -result {1,1 0}
+
+test Binding_Cell_Edit-38.8 {Move to prev cell} -body {
+	keypress .table <<PrevChar>>
+	list [.table activate] [.table icursor]
+    } -result {1,0 4}
+
+test Binding_Cell_Edit-38.9 {Move to end} -setup {
+	.table activate 1,1
+	.table icursor 2
+    } -body {
+	keypress .table <<LineEnd>>
+	list [.table activate] [.table icursor]
+    } -result {1,1 4}
+
+test Binding_Cell_Edit-38.10 {Move to next cell} -body {
+	keypress .table <<NextChar>>
+	list [.table activate] [.table icursor]
+    } -result {1,2 0}
+
+test Binding_Cell_Edit-38.11 {Backspace} -setup {
+	.table activate 1,1
+	.table icursor 2
+    } -body {
+	keypress .table <BackSpace>
+	list [.table activate] [.table icursor] [string length [.table curvalue]]
+    } -result {1,1 1 3}
+
+test Binding_Cell_Edit-38.12 {Delete} -body {
+	keypress .table <Delete>
+	list [.table activate] [.table icursor] [string length [.table curvalue]]
+    } -result {1,1 1 2}
+
+test Binding_Cell_Edit-38.13 {Insert Char} -body {
+	keypress .table <Key-a>
+	list [.table activate] [.table icursor] [string length [.table curvalue]]
+    } -result {1,1 2 3}
+
+test Binding_Cell_Edit-38.14 {Insert Tab} -body {
+	keypress .table <Control-t>
+	list [.table activate] [.table icursor] [string length [.table curvalue]] [expr {[string index [.table curvalue] 2] eq "\t"}]
+    } -result {1,1 2 3 0}
+
+test Binding_Cell_Edit-38.15 {Insert Newline} -body {
+	keypress .table <Alt-Return>
+	list [.table activate] [.table icursor] [string length [.table curvalue]] [expr {[string index [.table curvalue] 3] eq "\n"}]
+    } -result {1,1 3 4 0}
+
+test Binding_Cell_Edit-38.16 {Cleanup} -body {
+	destroy .table
+    }
+
+# Active Cell Selection
+
+
+test Binding_Cell_Select-39.1 {Create} -body {
+	setup .table -cols 50 -rows 50
+    } -result {.table}
+
+test Binding_Cell_Select-39.2 {Init} -body {
+	.table set row 0,0 [list abcd efgh ijkl]
+	.table set row 1,0 [list mnop qrst uvw\nxyz]
+    }
+
+test Binding_Cell_Select-39.3 {Select left 1 char} -setup {
+	.table activate 1,1
+	.table icursor 2
+	.table selection active {}
+    } -body {
+	keypress .table <<SelectPrevChar>>
+	list [.table activate] [.table icursor] [.table selection active]
+    } -result {1,1 1 {1 2}}
+
+test Binding_Cell_Select-39.4 {Select right 1 char} -setup {
+	.table activate 1,1
+	.table icursor 2
+	.table selection active {}
+    } -body {
+	keypress .table <<SelectNextChar>>
+	list [.table activate] [.table icursor] [.table selection active]
+    } -result {1,1 3 {2 3}}
+
+test Binding_Cell_Select-39.5 {Cleanup} -body {
+	destroy .table
+    }
+
+# Cell Navigation Bindings
+
+
+test Binding_Nav-40.1 {Create} -body {
+	setup .table -cols 50 -rows 50
+    } -result {.table}
+
+test Binding_Nav-40.2 {Init} -body {
+	focus -force .table
+	.table focus 5,5
+	pause 50
+	.table focus
+    } -result {5,5}
+
+test Binding_Nav-40.3 {Move left 1 cell} -body {
+	keypress .table <<PrevChar>>
+	.table focus
+    } -result {5,4}
+
+test Binding_Nav-40.4 {Move up 1 cell} -body {
+	keypress .table <<PrevLine>>
+	.table focus
+    } -result {4,4}
+
+test Binding_Nav-40.5 {Move right 1 cell} -body {
+	keypress .table <<NextChar>>
+	.table focus
+    } -result {4,5}
+
+test Binding_Nav-40.6 {Move down 1 cell} -body {
+	keypress .table <<NextLine>>
+	.table focus
+    } -result {5,5}
+
+test Binding_Nav-40.7 {Return} -body {
+	keypress .table <Return>
+	.table focus
+    } -result {6,5}
+
+test Binding_Nav-40.8 {Shift Return} -body {
+	keypress .table <Shift-Return>
+	.table focus
+    } -result {5,5}
+
+test Binding_Nav-40.9 {Tab} -body {
+	keypress .table <Tab>
+	.table focus
+    } -result {5,6}
+
+test Binding_Nav-40.10 {Shift Tab} -body {
+	keypress .table <Shift-Tab>
+	.table focus
+    } -result {5,5}
+
+test Binding_Nav-40.11 {Move left 1 page} -body {
+	keypress .table <<PrevWord>>
+	.table focus
+    } -result {5,0}
+
+test Binding_Nav-40.12 {Move right 1 page} -body {
+	keypress .table <<NextWord>>
+	.table focus
+    } -result {5,12}
+
+test Binding_Nav-40.13 {Move to page top} -body {
+	keypress .table <<PrevPara>>
+	.table focus
+    } -result {0,12}
+
+test Binding_Nav-40.14 {Move to page bottom} -body {
+	keypress .table <<NextPara>>
+	.table focus
+    } -result {31,12}
+
+test Binding_Nav-40.15 {Move to line start} -body {
+	keypress .table <<LineStart>>
+	.table focus
+    } -result {31,0}
+
+test Binding_Nav-40.16 {Move to line end} -body {
+	keypress .table <<LineEnd>>
+	.table focus
+    } -result {31,49}
+
+test Binding_Nav-40.17 {Move to top} -body {
+	keypress .table <Control-Home>
+	.table focus
+    } -result {0,0}
+
+test Binding_Nav-40.18 {Move to bottom} -body {
+	keypress .table <Control-End>
+	.table focus
+    } -result {49,49}
+
+test Binding_Nav-40.19 {Init} -body {
+	.table xview moveto 0.45
+	.table yview moveto 0.45
+	.table focus 25,25
+    }
+
+test Binding_Nav-40.20 {Page Up} -body {
+	keypress .table <Prior>
+	.table focus
+    } -result {6,25}
+
+test Binding_Nav-40.21 {Page Left} -body {
+	keypress .table <Shift-Prior>
+	.table focus
+    } -result {6,12}
+
+test Binding_Nav-40.22 {Page Down} -body {
+	keypress .table <Next>
+	.table focus
+    } -result {25,12}
+
+test Binding_Nav-40.23 {Page Right} -body {
+	keypress .table <Shift-Next>
+	.table focus
+    } -result {25,25}
+
+test Binding_Nav-40.24 {Top of screen} -body {
+	keypress .table <Control-Prior>
+	.table focus
+    } -result {19,25}
+
+test Binding_Nav-40.25 {Left side of screen} -body {
+	keypress .table <Control-Shift-Prior>
+	.table focus
+    } -result {19,22}
+
+test Binding_Nav-40.26 {Bottom of screen} -body {
+	keypress .table <Control-Next>
+	.table focus
+    } -result {49,22}
+
+test Binding_Nav-40.27 {Right side of screen} -body {
+	keypress .table <Control-Shift-Next>
+	.table focus
+    } -result {49,34}
+
+test Binding_Nav-40.28 {Top of screen} -body {
+	keypress .table <Control-Prior>
+	.table focus
+    } -result {19,34}
+
+test Binding_Nav-40.29 {Cleanup} -body {
+	destroy .table
+    }
+
+# Binding Selection
+
+
+test Binding_Selection-41.1 {Create} -body {
+	setup .table -cols 50 -rows 50
+    } -result {.table}
+
+test Binding_Selection-41.2 {Init Single Mode} -setup {
+	.table configure -selectmode single
+	.table selection clear all
+    } -body {
+	focus -force .table
+	.table focus 5,5
+	.table selection set 5,5
+	pause 50
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.3 {Single mode extend left} -body {
+	keypress .table <<SelectPrevChar>>
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.4 {Single mode extend up} -body {
+	keypress .table <<SelectPrevLine>>
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.5 {Single mode extend right} -body {
+	keypress .table <<SelectNextChar>>
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.6 {Single mode extend down} -body {
+	keypress .table <<SelectNextLine>>
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.7 {Init Browse Mode} -setup {
+	.table configure -selectmode browse
+	.table selection clear all
+    } -body {
+	focus -force .table
+	.table focus 5,5
+	.table selection set 5,5
+	pause 50
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.8 {Browse mode extend left} -body {
+	keypress .table <<SelectPrevChar>>
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.9 {Browse mode extend up} -body {
+	keypress .table <<SelectPrevLine>>
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.10 {Browse mode extend right} -body {
+	keypress .table <<SelectNextChar>>
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.11 {Browse mode extend down} -body {
+	keypress .table <<SelectNextLine>>
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.12 {Init Multiple Mode} -setup {
+	.table configure -selectmode multiple
+	.table selection clear all
+    } -body {
+	focus -force .table
+	.table focus 5,5
+	.table selection set 5,5
+	pause 50
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.13 {Multiple mode extend left} -body {
+	do_event .table <<SelectPrevChar>>
+	.table curselection
+    } -result {5,4 5,5}
+
+test Binding_Selection-41.14 {Multiple mode extend up} -body {
+	do_event .table <<SelectPrevLine>>
+	.table curselection
+    } -result {4,4 5,4 5,5}
+
+test Binding_Selection-41.15 {Multiple mode extend right} -body {
+	do_event .table <<SelectNextChar>>
+	.table curselection
+    } -result {4,4 4,5 5,4 5,5}
+
+test Binding_Selection-41.16 {Multiple mode extend down} -body {
+	do_event .table <<SelectNextLine>>
+	.table curselection
+    } -result {4,4 4,5 5,4 5,5}
+
+test Binding_Selection-41.17 {Init Extended Mode} -setup {
+	.table configure -selectmode extended
+	.table selection clear all
+    } -body {
+	focus -force .table
+	.table focus 5,5
+	.table selection set 5,5
+	pause 50
+	.table curselection
+    } -result {5,5}
+
+test Binding_Selection-41.18 {Extended mode extend left} -body {
+	do_event .table <<SelectPrevChar>>
+	.table curselection
+    } -result {5,4 5,5}
+
+test Binding_Selection-41.19 {Extended mode extend up} -body {
+	do_event .table <<SelectPrevLine>>
+	.table curselection
+    } -result {4,4 5,4 5,5}
+
+test Binding_Selection-41.20 {Extended mode extend right} -body {
+	do_event .table <<SelectNextChar>>
+	.table curselection
+    } -result {4,4 4,5 5,4 5,5}
+
+test Binding_Selection-41.21 {Extended mode extend down} -body {
+	do_event .table <<SelectNextLine>>
+	.table curselection
+    } -result {4,4 4,5 5,4 5,5}
+
+test Binding_Selection-41.22 {Init} -setup {
+	.table xview moveto 0.45
+	.table yview moveto 0.45
+	lassign [.table bbox 25,25] x y w h
+	incr x 5
+	incr y 5
+	::tktable::Button1 .table $x $y
+	.table activate {}
+    } -body {
+	.table activate {}
+    } -cleanup {
+	.table selection clear all
+    }
+
+test Binding_Selection-41.23 {Extend selection to left edge of page} -setup {
+	.table xview moveto 0.45
+	.table yview moveto 0.45
+	lassign [.table bbox 25,25] x y w h
+	incr x 5
+	incr y 5
+	::tktable::Button1 .table $x $y
+	.table activate {}
+    } -body {
+	do_event .table <<SelectPrevWord>>
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {25,22 25,23 25,24 25,25}
+
+test Binding_Selection-41.24 {Extend selection to right edge of page} -setup {
+	.table xview moveto 0.45
+	.table yview moveto 0.45
+	lassign [.table bbox 25,25] x y w h
+	incr x 5
+	incr y 5
+	::tktable::Button1 .table $x $y
+	.table activate {}
+    } -body {
+	do_event .table <<SelectNextWord>>
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {25,25 25,26 25,27 25,28 25,29 25,30 25,31 25,32 25,33 25,34}
+
+test Binding_Selection-41.25 {Extend selection to top of page} -setup {
+	.table xview moveto 0.45
+	.table yview moveto 0.45
+	lassign [.table bbox 25,25] x y w h
+	incr x 5
+	incr y 5
+	::tktable::Button1 .table $x $y
+	.table activate {}
+    } -body {
+	do_event .table <<SelectPrevPara>>
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {19,25 20,25 21,25 22,25 23,25 24,25 25,25}
+
+test Binding_Selection-41.26 {Extend selection to bottom of page} -setup {
+	.table xview moveto 0.45
+	.table yview moveto 0.45
+	lassign [.table bbox 25,25] x y w h
+	incr x 5
+	incr y 5
+	::tktable::Button1 .table $x $y
+	.table activate {}
+    } -body {
+	do_event .table <<SelectNextPara>>
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {25,25 26,25 27,25 28,25 29,25 30,25 31,25 32,25 33,25 34,25 35,25 36,25 37,25 38,25 39,25 40,25 41,25 42,25 43,25 44,25 45,25 46,25 47,25 48,25 49,25}
+
+test Binding_Selection-41.27 {Extend selection to first cell in row} -setup {
+	.table xview moveto 0.45
+	.table yview moveto 0.45
+	lassign [.table bbox 25,25] x y w h
+	incr x 5
+	incr y 5
+	::tktable::Button1 .table $x $y
+	.table activate {}
+    } -body {
+	do_event .table <<SelectLineStart>>
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {25,0 25,1 25,2 25,3 25,4 25,5 25,6 25,7 25,8 25,9 25,10 25,11 25,12 25,13 25,14 25,15 25,16 25,17 25,18 25,19 25,20 25,21 25,22 25,23 25,24 25,25}
+
+test Binding_Selection-41.28 {Extend selection to last cell in row} -setup {
+	.table xview moveto 0.45
+	.table yview moveto 0.45
+	lassign [.table bbox 25,25] x y w h
+	incr x 5
+	incr y 5
+	::tktable::Button1 .table $x $y
+	.table activate {}
+    } -body {
+	do_event .table <<SelectLineEnd>>
+	.table curselection
+    } -cleanup {
+	.table selection clear all
+    } -result {25,25 25,26 25,27 25,28 25,29 25,30 25,31 25,32 25,33 25,34 25,35 25,36 25,37 25,38 25,39 25,40 25,41 25,42 25,43 25,44 25,45 25,46 25,47 25,48 25,49}
+
+test Binding_Selection-41.29 {Extend selection to origin cell} -setup {
+	.table xview moveto 0.45
+	.table yview moveto 0.45
+	lassign [.table bbox 25,25] x y w h
+	incr x 5
+	incr y 5
+	::tktable::Button1 .table $x $y
+	.table activate {}
+    } -body {
+	do_event .table <Control-Shift-Home>
+	llength [.table curselection]
+    } -cleanup {
+	.table selection clear all
+    } -result {676}
+
+test Binding_Selection-41.30 {Extend selection to end cell} -setup {
+	.table xview moveto 0.45
+	.table yview moveto 0.45
+	lassign [.table bbox 25,25] x y w h
+	incr x 5
+	incr y 5
+	::tktable::Button1 .table $x $y
+	.table activate {}
+    } -body {
+	do_event .table <Control-Shift-End>
+	llength [.table curselection]
+    } -cleanup {
+	.table selection clear all
+    } -result {625}
+
+test Binding_Selection-41.31 {Select mode invalid} -constraints {not_supported} -body {
+	.table configure -selectmode invalid
+    } -result {Bad mode option "invalid": must be single, browse, multiple, or extended}
+
+test Binding_Selection-41.32 {Cleanup} -body {
+	destroy .table
+    }
+
+# Set
+
+
+test Set-42.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Set-42.2 {Too few args} -body {
+	.table set
+    } -result {wrong # args: should be ".table set ?row|col? index ?value? ?index value ...?"} -returnCodes {1}
+
+test Set-42.3 {Invalid arg count} -body {
+	.table set 0,0 val 1,1
+    } -result {wrong # args: should be ".table set ?row|col? index ?value? ?index value ...?"} -returnCodes {1}
+
+test Set-42.4 {Invalid index} -body {
+	.table set bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Set-42.5 {Set cell vakue} -body {
+	.table set 2,2 test
+    }
+
+test Set-42.6 {Get cell value} -body {
+	.table set 2,2
+    } -result {test}
+
+test Set-42.7 {Set multiple cells} -body {
+	.table set 3,4 val1 3,5 val2 3,6 val3
+	.table set 3,6
+    } -result {val3}
+
+test Set-42.8 {Set invalid row} -body {
+	.table set row bogus [list 1 2 3]
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Set-42.9 {Set row} -body {
+	.table set row 5,0 [list a b c d]
+	.table set 5,3
+    } -result {d}
+
+test Set-42.10 {Set invalid column} -body {
+	.table set col bogus [list 1 2 3]
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Set-42.11 {Set column} -body {
+	.table set col 0,4 [list f g h i]
+	.table set 3,4
+    } -result {i}
+
+test Set-42.12 {Out of range} -body {
+	.table set 15,1 val4
+    }
+
+test Set-42.13 {Clipped row} -body {
+	.table set row 8,0 [list a b c d e f g h I j k l]
+	.table set 8,10
+    } -result {j}
+
+test Set-42.14 {Clipped column} -body {
+	.table set col 0,9 [list a b c d e f g h I j k l]
+	.table set 10,9
+    } -result {j}
+# Check if variable trace updated hash table per Bug #487747
+
+test Set-42.15 {Variable trace} -body {
+	.table set 7,7 "New value"
+	set tableData(7,7)
+    } -result {New value}
+
+test Set-42.16 {Cleanup} -body {
+	destroy .table
+    }
+
+# Spans
+
+
+test Spans-43.1 {Create} -body {
+	setup_data .table
+    } -result {.table}
+
+test Spans-43.2 {Wrong num of args} -body {
+	.table spans 1 2 3
+    } -result {wrong # args: should be ".table spans ?index? ?rows,cols index rows,cols ...?"} -returnCodes {1}
+
+test Spans-43.3 {Invalid index} -body {
+	.table spans bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Spans-43.4 {Default} -body {
+	.table spans
+    }
+
+test Spans-43.5 {Set} -body {
+	.table spans 5,5 3,2
+    }
+
+test Spans-43.6 {Get} -body {
+	.table spans 5,5
+    } -result {3,2}
+
+test Spans-43.7 {Get All} -body {
+	.table spans
+    } -result {5,5 3,2}
+
+test Spans-43.8 {Clear} -body {
+	.table spans 5,5 0,0
+	.table spans 5,5
+    }
+
+test Spans-43.9 {Set Multiple} -body {
+	.table spans 1,1 3,2 1,5 3,3 1,9 5,1
+	lsort -stride 2 -index 0 [.table spans]
+    } -result {1,1 3,2 1,5 3,3 1,9 5,1}
+
+test Spans-43.10 {Clear All} -body {
+	.table spans 1,1 0,0 1,5 0,0 1,9 0,0
+	lsort -stride 2 -index 0 [.table spans]
+    }
+
+test Spans-43.11 {Negative size} -body {
+	.table spans 5,5 -2,-2
+	.table spans 5,5
+    }
+
+test Spans-43.12 {Hidden cell} -setup {
+	.table spans 8,1 0,5
+    } -body {
+	.table spans 8,2 2,2
+    } -cleanup {
+	.table spans 8,1 0,0
+    } -result {cannot set spanning on hidden cell 8,2} -returnCodes {1}
+# Spans does not constrain span to visible cells
+
+test Spans-43.13 {Out of range min} -body {
+	.table spans -1,-1 2,2
+	lsort -stride 2 -index 0 [.table spans]
+    } -cleanup {
+	.table spans -1,-1 0,0
+    } -result {0,0 2,2}
+
+test Spans-43.14 {Out of range max} -body {
+	.table spans 1,9 2,2
+	lsort -stride 2 -index 0 [.table spans]
+    } -cleanup {
+	.table spans 1,9 0,0
+    } -result {1,9 2,2}
+
+test Spans-43.15 {Beyond range min} -body {
+	.table spans -5,-5 2,2
+	lsort -stride 2 -index 0 [.table spans]
+    } -cleanup {
+	.table spans -5,-5 0,0
+    } -result {0,0 2,2}
+
+test Spans-43.16 {Beyond range max} -body {
+	.table spans 15,15 3,3
+	lsort -stride 2 -index 0 [.table spans]
+    } -cleanup {
+	.table spans 15,15 0,0
+    } -result {9,9 3,3}
+
+test Spans-43.17 {Empty table} -setup {
+	.table configure -cols 0 -rows 0
+    } -body {
+	.table spans 1,1 2,2
+	lsort -stride 2 -index 0 [.table spans]
+    } -cleanup {
+	.table spans 1,1 0,0
+    } -result {0,0 2,2}
+
+test Spans-43.18 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag
+
+
+test Tag-44.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag-44.2 {Too few args} -body {
+	.table tag
+    } -result {wrong # args: should be ".table tag option ?arg arg ...?"} -returnCodes {1}
+
+test Tag-44.3 {Invalid option} -body {
+	.table tag bogus
+    } -result {bad tag option "bogus": must be celltag, cget, coltag, configure, delete, exists, get, includes, lower, names, priority, raise, or rowtag} -returnCodes {1}
+
+test Tag-44.4 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag cell
+
+
+test Tag_Cell-45.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Cell-45.2 {Too few args} -body {
+	.table tag cell
+    } -result {wrong # args: should be ".table tag celltag tagName ?arg arg ...?"} -returnCodes {1}
+
+test Tag_Cell-45.3 {Invalid index} -body {
+	.table tag cell testTag bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Tag_Cell-45.4 {Create tag} -body {
+	.table tag cell testTag 1,1
+	lsort [.table tag cell testTag]
+    } -result {1,1}
+
+test Tag_Cell-45.5 {Add tag to cell} -body {
+	.table tag cell testTag 2,2
+	lsort [.table tag cell testTag]
+    } -result {1,1 2,2}
+
+test Tag_Cell-45.6 {Add tag to multiple cells} -body {
+	.table tag cell testTag 3,3 3,4 3,5 3,6
+	lsort [.table tag cell testTag]
+    } -result {1,1 2,2 3,3 3,4 3,5 3,6}
+
+test Tag_Cell-45.7 {List of cells using tag} -body {
+	lsort [.table tag cell testTag]
+    } -result {1,1 2,2 3,3 3,4 3,5 3,6}
+
+test Tag_Cell-45.8 {Clear cell tag} -body {
+	.table tag cell {} 1,1
+	lsort [.table tag cell testTag]
+    } -result {2,2 3,3 3,4 3,5 3,6}
+
+test Tag_Cell-45.9 {Clear multiple cell tags} -body {
+	.table tag cell {} 1,1 2,2 3,3 3,4
+	lsort [.table tag cell testTag]
+    } -result {3,5 3,6}
+
+test Tag_Cell-45.10 {Active tag} -setup {
+	.table activate 9,0
+    } -body {
+	.table tag cell active
+    } -result {9,0}
+
+test Tag_Cell-45.11 {Focus tag} -setup {
+	.table focus 9,1
+    } -body {
+	.table tag cell focus
+    } -result {9,1}
+
+test Tag_Cell-45.12 {Sel tag} -setup {
+	.table selection set 9,2
+    } -body {
+	.table tag cell sel
+    } -result {9,2}
+
+test Tag_Cell-45.13 {Title tag} -setup {
+	.table configure -titlecols 0 -titlerows 1
+    } -body {
+	.table tag cell title
+    } -result {0,0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 0,8 0,9}
+
+test Tag_Cell-45.14 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag cget
+
+
+test Tag_Cget-46.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Cget-46.2 {Too few args} -body {
+	.table tag cget
+    } -result {wrong # args: should be ".table tag cget tagName option"} -returnCodes {1}
+
+test Tag_Cget-46.3 {Too many args} -body {
+	.table tag cget 1 2 3
+    } -result {wrong # args: should be ".table tag cget tagName option"} -returnCodes {1}
+
+test Tag_Cget-46.4 {Invalid tagName} -body {
+	.table tag cget invalid val
+    } -result {invalid tag name "invalid"} -returnCodes {1}
+
+test Tag_Cget-46.5 {Invalid arg} -setup {
+	.table tag configure testTag
+    } -body {
+	.table tag cget testTag -bogus
+    } -result {unknown option "-bogus"} -returnCodes {1}
+
+test Tag_Cget-46.6 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag column
+
+
+test Tag_Col-47.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Col-47.2 {Too few args} -body {
+	.table tag col
+    } -result {wrong # args: should be ".table tag coltag tagName ?arg arg ..?"} -returnCodes {1}
+
+test Tag_Col-47.3 {Invalid index} -body {
+	.table tag col testTag bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Tag_Col-47.4 {Create tag} -body {
+	.table tag col testTag 1
+	lsort -integer [.table tag col testTag]
+    } -result {1}
+
+test Tag_Col-47.5 {Add tag} -body {
+	.table tag col testTag 2
+	lsort -integer [.table tag col testTag]
+    } -result {1 2}
+
+test Tag_Col-47.6 {Add tag to multiple} -body {
+	.table tag col testTag 3 4 5 6
+	lsort -integer [.table tag col testTag]
+    } -result {1 2 3 4 5 6}
+
+test Tag_Col-47.7 {Get list} -body {
+	lsort -integer [.table tag col testTag]
+    } -result {1 2 3 4 5 6}
+
+test Tag_Col-47.8 {Clear tag} -body {
+	.table tag col {} 1
+	lsort -integer [.table tag col testTag]
+    } -result {2 3 4 5 6}
+
+test Tag_Col-47.9 {Clear tag from multiple} -body {
+	.table tag col {} 1 2 3 4
+	lsort -integer [.table tag col testTag]
+    } -result {5 6}
+
+test Tag_Col-47.10 {Active tag} -setup {
+	.table activate 9,0
+    } -body {
+	.table tag col active
+    } -result {0}
+
+test Tag_Col-47.11 {Focus tag} -setup {
+	.table focus 9,1
+    } -body {
+	.table tag col focus
+    } -result {1}
+
+test Tag_Col-47.12 {Sel tag} -setup {
+	.table selection set 9,2
+    } -body {
+	.table tag col sel
+    } -result {2}
+
+test Tag_Col-47.13 {Title tag} -setup {
+	.table configure -titlecols 1 -titlerows 0
+    } -body {
+	.table tag col title
+    } -result {0}
+
+test Tag_Col-47.14 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag configure
+
+
+test Tag_Configure-48.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Configure-48.2 {Get All} -body {
+	.table tag configure testTag
+    } -match {glob} -result {{-anchor anchor Anchor center {*}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-ellipsis ellipsis Ellipsis {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {*}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}}
+
+test Tag_Configure-48.3 {Invalid argc} -body {
+	.table tag configure testTag -bg red -bd
+    } -result {value for "-bd" missing} -returnCodes {1}
+
+test Tag_Configure-48.4 {Invalid arg} -body {
+	.table tag configure testTag -bogus
+    } -result {unknown option "-bogus"} -returnCodes {1}
+
+test Tag_Configure-48.5 {Get} -body {
+	.table tag configure testTag -bd
+    } -result "-borderwidth borderWidth BorderWidth {} {}"
+
+test Tag_Configure-48.6 {Set Single} -body {
+	.table tag configure testTag -bg red
+	.table tag configure testTag -bg
+    } -result "-background background Background {} red"
+
+test Tag_Configure-48.7 {Set Multiple} -body {
+	.table tag configure testTag -bd 10 -bg blue
+	.table tag configure testTag -bg
+    } -result "-background background Background {} blue"
+
+test Tag_Configure-48.8 {Cleanup} -body {
+	destroy .table
+    }
+
+proc tag_test {w opt def set_val get_val} {
+    set res 0
+
+    # Default value
+    set g [$w tag cget testTag $opt]
+    set s [lindex [$w tag configure testTag $opt] 3]
+    incr res [expr {[string match $def $s] && $s == $g}]
+
+    # Set and get value
+    $w tag configure testTag $opt $set_val
+    set s [lindex [$w tag configure testTag $opt] 4]
+    set g [$w tag cget testTag $opt]
+    incr res [expr {$s == $get_val && $s == $g}]
+    return $res
+}
+
+# Tag cget and configure options
+
+
+test Tag_Options-49.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Options-49.2 {Init} -body {
+	.table tag configure testTag
+    } -match {glob} -result {*}
+
+test Tag_Options-49.3 {Anchor} -body {
+	tag_test .table -anchor center n n
+    } -result {1}
+
+test Tag_Options-49.4 {Background} -body {
+	tag_test .table -background {} #ff0000 #ff0000
+    } -result {2}
+
+test Tag_Options-49.5 {Borderwidth alias} -body {
+	tag_test .table -bd {} "4 2" "4 2"
+    } -result {2}
+
+test Tag_Options-49.6 {Background alias} -body {
+	tag_test .table -bg {} #ff0000 #ff0000
+    } -result {1}
+
+test Tag_Options-49.7 {Borderwidth} -body {
+	tag_test .table -borderwidth {} 1 1
+    } -result {1}
+
+test Tag_Options-49.8 {Ellipsis} -body {
+	tag_test .table -ellipsis {} 1 1
+    } -result {2}
+
+test Tag_Options-49.9 {Foreground alias} -body {
+	tag_test .table -fg {} #110022 #110022
+    } -result {2}
+
+test Tag_Options-49.10 {Font} -body {
+	tag_test .table -font {} {Helvetica 12} {Helvetica 12}
+    } -result {2}
+
+test Tag_Options-49.11 {Foreground} -body {
+	tag_test .table -foreground {} #110022 #110022
+    } -result {1}
+
+test Tag_Options-49.12 {Image} -body {
+	tag_test .table -image {} ::tk::icons::error ::tk::icons::error
+    } -result {2}
+
+test Tag_Options-49.13 {Justify} -body {
+	tag_test .table -justify left right right
+    } -result {1}
+
+test Tag_Options-49.14 {Multiline} -body {
+	tag_test .table -multiline -1 1 1
+    } -result {2}
+
+test Tag_Options-49.15 {Relief} -body {
+	tag_test .table -relief flat groove groove
+    } -result {1}
+
+test Tag_Options-49.16 {Showtext} -body {
+	tag_test .table -showtext -1 1 1
+    } -result {2}
+
+test Tag_Options-49.17 {State} -body {
+	tag_test .table -state unknown disabled disabled
+    } -result {2}
+
+test Tag_Options-49.18 {Wrap} -body {
+	tag_test .table -wrap -1 1 1
+    } -result {2}
+
+test Tag_Options-49.19 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag invalid cget and configure
+
+
+test Tag_Options_Invalid-50.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Options_Invalid-50.2 {Init} -body {
+	.table tag configure testTag
+    } -match {glob} -result {*}
+
+test Tag_Options_Invalid-50.3 {Anchor} -body {
+	.table tag configure testTag -anchor left
+    } -match {glob} -result {bad anchor* "left": must be n, ne, e, se, s, sw, w, nw, or center} -returnCodes {1}
+
+test Tag_Options_Invalid-50.4 {Background} -body {
+	.table tag configure testTag -background bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Tag_Options_Invalid-50.5 {Borderwidth} -body {
+	.table tag configure testTag -borderwidth badValue
+    } -match {glob} -result {*screen distance* "badValue"} -returnCodes {1}
+
+test Tag_Options_Invalid-50.6 {Font} -constraints {not_supported} -body {
+	.table tag configure testTag -font "invalid"
+    } -result {font "invalid" doesn't exist} -returnCodes {1}
+
+test Tag_Options_Invalid-50.7 {Foreground} -body {
+	.table tag configure testTag -foreground bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Tag_Options_Invalid-50.8 {Image} -body {
+	.table tag configure testTag -image bogus
+    } -result {image "bogus" doesn't exist} -returnCodes {1}
+
+test Tag_Options_Invalid-50.9 {Justify} -body {
+	.table tag configure testTag -justify bogus
+    } -result {bad justification "bogus": must be left, right, or center} -returnCodes {1}
+
+test Tag_Options_Invalid-50.10 {Multiline} -body {
+	.table tag configure testTag -multiline bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Tag_Options_Invalid-50.11 {Relief} -body {
+	.table tag configure testTag -relief 1.5
+    } -result {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken} -returnCodes {1}
+
+test Tag_Options_Invalid-50.12 {Showtext} -body {
+	.table tag configure testTag -showtext bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Tag_Options_Invalid-50.13 {State} -body {
+	.table tag configure testTag -state bogus
+    } -result {bad option "bogus" must be unknown, normal, disabled} -returnCodes {1}
+
+test Tag_Options_Invalid-50.14 {Wrap} -body {
+	.table tag configure testTag -wrap bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Tag_Options_Invalid-50.15 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag delete
+
+
+test Tag_Delete-51.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Delete-51.2 {Too few args} -body {
+	.table tag delete
+    } -result {wrong # args: should be ".table tag delete tagName ?tagName ...?"} -returnCodes {1}
+
+test Tag_Delete-51.3 {Reserved tag} -body {
+	.table tag delete sel
+    } -result {cannot delete sel tag} -returnCodes {1}
+
+test Tag_Delete-51.4 {Single tag} -setup {
+	.table tag configure testTag
+    } -body {
+	.table tag delete testTag
+	.table tag exists testTag
+    } -result {0}
+
+test Tag_Delete-51.5 {Multiple tags} -setup {
+	.table tag configure testTag
+	.table tag configure altTag
+    } -body {
+	.table tag delete altTag testTag
+	.table tag exists testTag
+    } -result {0}
+
+test Tag_Delete-51.6 {Unknown tag} -body {
+	.table tag delete unknown
+	.table tag exists unknown
+    } -result {0}
+
+test Tag_Delete-51.7 {Reserved tag} -body {
+	.table tag delete active
+    } -result {cannot delete active tag} -returnCodes {1}
+
+test Tag_Delete-51.8 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag exists
+
+
+test Tag_Exists-52.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Exists-52.2 {Too few args} -body {
+	.table tag exists
+    } -result {wrong # args: should be ".table tag exists tagName"} -returnCodes {1}
+
+test Tag_Exists-52.3 {Too many args} -body {
+	.table tag exists 1 2
+    } -result {wrong # args: should be ".table tag exists tagName"} -returnCodes {1}
+
+test Tag_Exists-52.4 {Known tag} -setup {
+	.table tag configure testTag
+    } -body {
+	.table tag exists testTag
+    } -result {1}
+
+test Tag_Exists-52.5 {Unknown tag} -body {
+	.table tag exists altTag
+    } -result {0}
+
+test Tag_Exists-52.6 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag get
+
+
+test Tag_Get-53.1 {Create} -body {
+	setup .table -titlecols 0  -titlerows 0
+    } -result {.table}
+
+test Tag_Get-53.2 {Too few args} -body {
+	.table tag get
+    } -result {wrong # args: should be ".table tag get index"} -returnCodes {1}
+
+test Tag_Get-53.3 {Too many args} -body {
+	.table tag get 1 2
+    } -result {wrong # args: should be ".table tag get index"} -returnCodes {1}
+
+test Tag_Get-53.4 {Invalid index} -body {
+	.table tag get bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Tag_Get-53.5 {Focus tag} -setup {
+	.table focus 1,1
+    } -body {
+	.table tag get 1,1
+    } -result {focus}
+
+test Tag_Get-53.6 {Active tag} -setup {
+	.table activate 1,1
+    } -body {
+	.table tag get 1,1
+    } -result {active focus}
+
+test Tag_Get-53.7 {Sel tag} -setup {
+	.table selection set 1,1
+    } -body {
+	.table tag get 1,1
+    } -result {active focus sel}
+
+test Tag_Get-53.8 {Title tag} -setup {
+	.table configure -titlecols 2 -titlerows 2
+    } -body {
+	.table tag get 1,1
+    } -result {active focus sel title}
+
+test Tag_Get-53.9 {Cell tag} -setup {
+	.table tag configure testTag
+	.table tag cell testTag 1,1
+    } -body {
+	.table tag get 1,1
+    } -result {active focus sel title testTag}
+
+test Tag_Get-53.10 {Column tag} -setup {
+	.table tag col colTag 1
+    } -body {
+	.table tag get 1,1
+    } -result {active focus sel title testTag colTag}
+
+test Tag_Get-53.11 {Row tag} -setup {
+	.table tag row rowTag 1
+    } -body {
+	.table tag get 1,1
+    } -result {active focus sel title testTag rowTag colTag}
+
+test Tag_Get-53.12 {No tags} -body {
+	.table tag get 5,5
+    }
+
+test Tag_Get-53.13 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag includes
+
+
+test Tag_Includes-54.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Includes-54.2 {Too few args} -body {
+	.table tag includes
+    } -result {wrong # args: should be ".table tag includes tagName index"} -returnCodes {1}
+
+test Tag_Includes-54.3 {Too many args} -body {
+	.table tag includes 1 2 3
+    } -result {wrong # args: should be ".table tag includes tagName index"} -returnCodes {1}
+
+test Tag_Includes-54.4 {Unknown tag} -body {
+	.table tag includes unknown 1,1
+    } -result {0}
+
+test Tag_Includes-54.5 {Invalid index} -body {
+	.table tag includes active bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Tag_Includes-54.6 {Active tag} -setup {
+	.table activate 1,1
+    } -body {
+	.table tag includes active 1,1
+    } -result {1}
+
+test Tag_Includes-54.7 {Flash tag} -body {
+	.table tag includes flash 1,1
+    } -result {0}
+
+test Tag_Includes-54.8 {Focus tag} -setup {
+	.table focus 1,1
+    } -body {
+	.table tag includes focus 1,1
+    } -result {1}
+
+test Tag_Includes-54.9 {Sel tag} -setup {
+	.table selection set 1,1
+    } -body {
+	.table tag includes sel 1,1
+    } -result {1}
+
+test Tag_Includes-54.10 {Title tag} -setup {
+	.table configure -titlecols 2 -titlerows 2
+    } -body {
+	.table tag includes title 1,1
+    } -result {1}
+
+test Tag_Includes-54.11 {Cell tag} -setup {
+	.table tag cell testTag 1,1
+    } -body {
+	.table tag includes testTag 1,1
+    } -result {1}
+
+test Tag_Includes-54.12 {Column tag} -setup {
+	.table tag col colTag 1
+    } -body {
+	.table tag includes colTag 1,1
+    } -result {1}
+
+test Tag_Includes-54.13 {Row tag} -setup {
+	.table tag row rowTag 1
+    } -body {
+	.table tag includes rowTag 1,1
+    } -result {1}
+
+test Tag_Includes-54.14 {No tags} -body {
+	.table tag includes testTag 1,2
+    } -result {0}
+
+test Tag_Includes-54.15 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag lower
+
+
+test Tag_Lower-55.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Lower-55.2 {Too few args} -body {
+	.table tag lower
+    } -result {wrong # args: should be ".table tag lower tagName ?belowThis?"} -returnCodes {1}
+
+test Tag_Lower-55.3 {Too many args} -body {
+	.table tag lower 1 2 3
+    } -result {wrong # args: should be ".table tag lower tagName ?belowThis?"} -returnCodes {1}
+
+test Tag_Lower-55.4 {Invalid tagName} -body {
+	.table tag lower invalid active
+    } -result {invalid tag name "invalid"} -returnCodes {1}
+
+test Tag_Lower-55.5 {Below Invalid tag} -body {
+	.table tag lower flash invalid
+    } -result {invalid tag name "invalid"} -returnCodes {1}
+
+test Tag_Lower-55.6 {To bottom} -body {
+	.table tag lower flash
+	.table tag names
+    } -result {active focus sel title flash}
+
+test Tag_Lower-55.7 {Below tag} -body {
+	.table tag lower flash active
+	.table tag names
+    } -result {active flash focus sel title}
+
+test Tag_Lower-55.8 {Below self} -body {
+	.table tag lower flash flash
+	.table tag names
+    } -result {active flash focus sel title}
+
+test Tag_Lower-55.9 {Cleanup} -body {
+	destroy .table
+    }
+
+
+
+
+test Tag_Names-56.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Names-56.2 {Too many args} -body {
+	.table tag names 1 2
+    } -result {wrong # args: should be ".table tag names ?pattern?"} -returnCodes {1}
+
+test Tag_Names-56.3 {Default} -body {
+	.table tag names
+    } -result {flash active focus sel title}
+
+test Tag_Names-56.4 {Add tag} -setup {
+	.table tag cell testTag 1,1
+    } -body {
+	.table tag names
+    } -result {flash active focus sel title testTag}
+
+test Tag_Names-56.5 {Delete tag} -setup {
+	.table tag delete testTag
+    } -body {
+	.table tag names
+    } -result {flash active focus sel title}
+
+test Tag_Names-56.6 {Pattern All} -body {
+	.table tag names *
+    } -result {flash active focus sel title}
+
+test Tag_Names-56.7 {Pattern} -body {
+	.table tag names f*
+    } -result {flash focus}
+
+test Tag_Names-56.8 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag priority
+
+
+test Tag_Priority-57.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Priority-57.2 {Too few args} -body {
+	.table tag priority
+    } -result {wrong # args: should be ".table tag priority tagName"} -returnCodes {1}
+
+test Tag_Priority-57.3 {Too many args} -body {
+	.table tag priority 1 2
+    } -result {wrong # args: should be ".table tag priority tagName"} -returnCodes {1}
+
+test Tag_Priority-57.4 {Invalid tagName} -body {
+	.table tag priority invalid
+    } -result {invalid tag name "invalid"} -returnCodes {1}
+
+test Tag_Priority-57.5 {Flash} -body {
+	.table tag priority flash
+    } -result {0}
+
+test Tag_Priority-57.6 {Active} -body {
+	.table tag priority active
+    } -result {1}
+
+test Tag_Priority-57.7 {Focus} -body {
+	.table tag priority focus
+    } -result {2}
+
+test Tag_Priority-57.8 {Sel} -body {
+	.table tag priority sel
+    } -result {3}
+
+test Tag_Priority-57.9 {Title} -body {
+	.table tag priority title
+    } -result {4}
+
+test Tag_Priority-57.10 {Custom} -setup {
+	.table tag configure testTag
+    } -body {
+	.table tag priority testTag
+    } -result {5}
+
+test Tag_Priority-57.11 {Raise} -setup {
+	.table tag raise testTag
+    } -body {
+	.table tag priority testTag
+    } -result {0}
+
+test Tag_Priority-57.12 {Lower} -setup {
+	.table tag lower testTag
+    } -body {
+	.table tag priority testTag
+    } -result {5}
+
+test Tag_Priority-57.13 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag raise
+
+
+test Tag_Raise-58.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Raise-58.2 {Too few args} -body {
+	.table tag raise
+    } -result {wrong # args: should be ".table tag raise tagName ?aboveThis?"} -returnCodes {1}
+
+test Tag_Raise-58.3 {Too many args} -body {
+	.table tag raise 1 2 3
+    } -result {wrong # args: should be ".table tag raise tagName ?aboveThis?"} -returnCodes {1}
+
+test Tag_Raise-58.4 {Invalid tagName} -body {
+	.table tag raise invalid active
+    } -result {invalid tag name "invalid"} -returnCodes {1}
+
+test Tag_Raise-58.5 {Above Invalid tag} -body {
+	.table tag raise flash invalid
+    } -result {invalid tag name "invalid"} -returnCodes {1}
+
+test Tag_Raise-58.6 {To top} -body {
+	.table tag raise title
+	.table tag names
+    } -result {title flash active focus sel}
+
+test Tag_Raise-58.7 {Above tag} -body {
+	.table tag raise title active
+	.table tag names
+    } -result {flash title active focus sel}
+
+test Tag_Raise-58.8 {Above self} -body {
+	.table tag raise title title
+	.table tag names
+    } -result {flash title active focus sel}
+
+test Tag_Raise-58.9 {Cleanup} -body {
+	destroy .table
+    }
+
+# Tag row
+
+
+test Tag_Row-59.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Tag_Row-59.2 {Too few args} -body {
+	.table tag row
+    } -result {wrong # args: should be ".table tag rowtag tagName ?arg arg ..?"} -returnCodes {1}
+
+test Tag_Row-59.3 {Invalid index} -body {
+	.table tag row testTag bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Tag_Row-59.4 {Create tag} -body {
+	.table tag row testTag 1
+	lsort -integer [.table tag row testTag]
+    } -result {1}
+
+test Tag_Row-59.5 {Add tag} -body {
+	.table tag row testTag 2
+	lsort -integer [.table tag row testTag]
+    } -result {1 2}
+
+test Tag_Row-59.6 {Add tag to multiple} -body {
+	.table tag row testTag 3 4 5 6
+	lsort -integer [.table tag row testTag]
+    } -result {1 2 3 4 5 6}
+
+test Tag_Row-59.7 {Get list} -body {
+	lsort -integer [.table tag row testTag]
+    } -result {1 2 3 4 5 6}
+
+test Tag_Row-59.8 {Clear tag} -body {
+	.table tag row {} 1
+	lsort -integer [.table tag row testTag]
+    } -result {2 3 4 5 6}
+
+test Tag_Row-59.9 {Clear tag from multiple} -body {
+	.table tag row {} 1 2 3 4
+	lsort -integer [.table tag row testTag]
+    } -result {5 6}
+
+test Tag_Row-59.10 {Active tag} -setup {
+	.table activate 9,0
+    } -body {
+	.table tag row active
+    } -result {9}
+
+test Tag_Row-59.11 {Focus tag} -setup {
+	.table focus 8,1
+    } -body {
+	.table tag row focus
+    } -result {8}
+
+test Tag_Row-59.12 {Sel tag} -setup {
+	.table selection set 7,2
+    } -body {
+	.table tag row sel
+    } -result {7}
+
+test Tag_Row-59.13 {Title tag} -setup {
+	.table configure -titlecols 0 -titlerows 1
+    } -body {
+	.table tag row title
+    } -result {0}
+
+test Tag_Row-59.14 {Cleanup} -body {
+	destroy .table
+    }
+
+# Validate
+
+
+test Validate-60.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Validate-60.2 {Too few args} -body {
+	.table validate
+    } -result {wrong # args: should be ".table validate index"} -returnCodes {1}
+
+test Validate-60.3 {Too many args} -body {
+	.table validate 1 2
+    } -result {wrong # args: should be ".table validate index"} -returnCodes {1}
+
+test Validate-60.4 {Invalid index} -body {
+	.table validate bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Validate-60.5 {No callback} -setup {
+	.table set 5,5 "Text value"
+    } -body {
+	.table validate 5,5
+    } -result {1}
+
+test Validate-60.6 {Callback} -setup {
+	.table configure -validatecommand "store_val %c %C %i %r %s %S %W"
+    } -body {
+	.table set 5,5 "New value"
+	set ::temp
+    } -result "-1 -1,-1 0 -1 7,2 {} .table"
+
+test Validate-60.7 {Cleanup} -body {
+	destroy .table
+    }
+
+# Version
+
+
+test Version-61.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Version-61.2 {Too many args} -body {
+	.table version arg
+    } -result {wrong # args: should be ".table version"} -returnCodes {1}
+
+test Version-61.3 {Get} -body {
+	.table version
+    } -result [package require Tktable]
+
+test Version-61.4 {Cleanup} -body {
+	destroy .table
+    }
+
+# Width
+
+
+test Width-62.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Width-62.2 {Get default} -body {
+	.table width
+    }
+
+test Width-62.3 {Invalid arg count} -body {
+	.table width 1 1 1
+    } -result {wrong # args: should be ".table width ?col? ?width col width ...?"} -returnCodes {1}
+
+test Width-62.4 {Invalid index} -body {
+	.table width bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Width-62.5 {Invalid value} -body {
+	.table width 1 bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Width-62.6 {Single col width} -body {
+	.table width 2 25
+	.table width 2
+    } -result {25}
+
+test Width-62.7 {Multiple col width} -body {
+	.table width 4 44 5 55
+	.table width 5
+    } -result {55}
+
+test Width-62.8 {Query col widths} -body {
+	lsort [.table width]
+    } -result {{2 25} {4 44} {5 55}}
+
+test Width-62.9 {Width in pixels} -body {
+	.table width 6 -22
+	.table width  6
+    } -result {-22}
+
+test Width-62.10 {Default width} -body {
+	.table width 7 default
+	expr {[.table width 7] == [.table cget -colwidth]}
+    } -result {1}
+
+test Width-62.11 {Cleanup} -body {
+	destroy .table
+    }
+
+# Window
+
+
+test Window-63.1 {Create} -body {
+	setup .table
+    } -result {.table}
+
+test Window-63.2 {Too few args} -body {
+	.table window
+    } -result {wrong # args: should be ".table window option ?arg arg ...?"} -returnCodes {1}
+
+test Window-63.3 {Invalid option} -body {
+	.table window bogus
+    } -result {bad option "bogus": must be cget, configure, delete, move, or names} -returnCodes {1}
+
+test Window-63.4 {Cleanup} -body {
+	destroy .table
+    }
+
+# Window Cget
+
+
+test Window_Cget-64.1 {Create} -body {
+	setup .table
+	entry .table.e
+	.table window configure 5,5 -window .table.e
+    }
+
+test Window_Cget-64.2 {Too Few Args} -body {
+	.table window cget 5,5
+    } -result {wrong # args: should be ".table window cget index option"} -returnCodes {1}
+
+test Window_Cget-64.3 {Too Many Args} -body {
+	.table window cget 5,5 1 2
+    } -result {wrong # args: should be ".table window cget index option"} -returnCodes {1}
+
+test Window_Cget-64.4 {Invalid index} -body {
+	.table window cget bogus 1
+    } -result {no window at index "bogus"} -returnCodes {1}
+
+test Window_Cget-64.5 {Invalid arg} -body {
+	.table window cget 5,5 -bogus
+    } -result {unknown option "-bogus"} -returnCodes {1}
+
+test Window_Cget-64.6 {No window} -body {
+	.table window cget 2,2 -window
+    } -result {no window at index "2,2"} -returnCodes {1}
+
+test Window_Cget-64.7 {Get} -body {
+	.table window cget 5,5 -window
+    } -result {.table.e}
+
+test Window_Cget-64.8 {Cleanup} -body {
+	destroy .e
+	destroy .table
+    }
+
+# Window Configure
+
+
+test Window_Configure-65.1 {Create} -body {
+	setup .table
+	entry .table.e
+	.table window configure 5,5 -window .table.e
+    }
+
+test Window_Configure-65.2 {Too Few Args} -body {
+	.table window configure
+    } -result {wrong # args: should be ".table window configure index ?arg arg  ...?"} -returnCodes {1}
+
+test Window_Configure-65.3 {Invalid index} -body {
+	.table window configure bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Window_Configure-65.4 {Get All} -body {
+	.table window configure 5,5
+    } -result {{-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-create {} {} {} {}} {-padx {} {} {} -1} {-pady {} {} {} -1} {-sticky {} {} {} {}} {-relief relief Relief {} {}} {-window {} {} {} .table.e}}
+
+test Window_Configure-65.5 {Invalid argc} -body {
+	.table window configure 5,5 -bg red -bd
+    } -result {value for "-bd" missing} -returnCodes {1}
+
+test Window_Configure-65.6 {Invalid arg} -body {
+	.table window configure 5,5 -bogus
+    } -result {unknown option "-bogus"} -returnCodes {1}
+
+test Window_Configure-65.7 {Get} -body {
+	.table window configure 5,5 -bd
+    } -result "-borderwidth borderWidth BorderWidth {} {}"
+
+test Window_Configure-65.8 {Set Single} -body {
+	.table window configure 5,5 -bg red
+	.table window configure 5,5 -bg
+    } -result "-background background Background {} red"
+
+test Window_Configure-65.9 {Set Multiple} -body {
+	.table window configure 5,5 -bd 10 -bg blue
+	.table window configure 5,5 -bg
+    } -result "-background background Background {} blue"
+
+test Window_Configure-65.10 {Wrong parent} -setup {
+	toplevel .new
+	entry .new.e
+    } -body {
+	.table window configure 4,4 -window .new.e
+    } -cleanup {
+	destroy .new
+    } -result {can't embed .new.e in .table} -returnCodes {1}
+
+test Window_Configure-65.11 {Toplevel window} -setup {
+	toplevel .table.new
+    } -body {
+	.table window configure 4,4 -window .table.new
+    } -cleanup {
+	destroy .table.new
+    } -result {can't embed .table.new in .table} -returnCodes {1}
+
+test Window_Configure-65.12 {Deleted window} -body {
+	destroy .table.e
+	.table window cget 5,5 -window
+    } -result {no window at index "5,5"} -returnCodes {1}
+
+test Window_Configure-65.13 {Cleanup} -body {
+	destroy .table
+    }
+
+# Window cget and configure options
+
+
+test Window_Options-66.1 {Create} -body {
+	setup .table
+	entry .table.e
+	.table window configure 5,5 -window .table.e
+    }
+
+test Window_Options-66.2 {Create} -constraints {not_supported} -body {
+	.table window configure 5,5 -create script
+	.table window cget 5,5 -create
+    } -result {script}
+
+test Window_Options-66.3 {Background} -body {
+	.table window configure 5,5 -background #FF0000
+	.table window cget 5,5 -background
+    } -result {#FF0000}
+
+test Window_Options-66.4 {Borderwidth Alias} -body {
+	.table window configure 5,5 -bd 2
+	.table window cget 5,5 -bd
+    } -result {2}
+
+test Window_Options-66.5 {Background Alias} -body {
+	.table window configure 5,5 -bg #00FF00
+	.table window cget 5,5 -bg
+    } -result {#00FF00}
+
+test Window_Options-66.6 {Borderwidth} -body {
+	.table window configure 5,5 -bd 1
+	.table window cget 5,5 -bd
+    } -result {1}
+
+test Window_Options-66.7 {Padx} -body {
+	.table window configure 5,5 -padx 5
+	.table window cget 5,5 -padx
+    } -result {5}
+
+test Window_Options-66.8 {Pady} -body {
+	.table window configure 5,5 -pady 2
+	.table window cget 5,5 -pady
+    } -result {2}
+
+test Window_Options-66.9 {Relief} -body {
+	.table window configure 5,5 -relief sunken
+	.table window cget 5,5 -relief
+    } -result {sunken}
+
+test Window_Options-66.10 {Sticky} -body {
+	.table window configure 5,5 -sticky n
+	.table window cget 5,5 -sticky
+    } -result {n}
+
+test Window_Options-66.11 {Window} -body {
+	.table window configure 5,5 -window .table.e
+	.table window cget 5,5 -window
+    } -result {.table.e}
+
+test Window_Options-66.12 {Cleanup} -body {
+	destroy .e
+	destroy .table
+    }
+
+# Window options invalid
+
+
+test Window_Options_Invalid-67.1 {Create} -body {
+	setup .table
+	entry .table.e
+	.table window configure 5,5 -window .table.e
+    }
+
+test Window_Options_Invalid-67.2 {Create} -constraints {not_supported} -body {
+	.table window configure 5,5 -create invalid
+    } -result {invalid command name "invalid"} -returnCodes {1}
+
+test Window_Options_Invalid-67.3 {Background} -body {
+	.table window configure 5,5 -background bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Window_Options_Invalid-67.4 {Borderwidth Alias} -body {
+	.table window configure 5,5 -bd badValue
+    } -match {glob} -result {*screen distance* "badValue"} -returnCodes {1}
+
+test Window_Options_Invalid-67.5 {Background Alias} -body {
+	.table window configure 5,5 -bg bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Window_Options_Invalid-67.6 {Borderwidth} -body {
+	.table window configure 5,5 -borderwidth badValue
+    } -match {glob} -result {*screen distance* "badValue"} -returnCodes {1}
+
+test Window_Options_Invalid-67.7 {Padx} -body {
+	.table window configure 5,5 -padx bogus
+    } -result {bad screen distance "bogus"} -returnCodes {1}
+
+test Window_Options_Invalid-67.8 {Pady} -body {
+	.table window configure 5,5 -pady bogus
+    } -result {bad screen distance "bogus"} -returnCodes {1}
+
+test Window_Options_Invalid-67.9 {Relief} -body {
+	.table window configure 5,5 -relief bogus
+    } -result {bad relief "bogus": must be flat, groove, raised, ridge, solid, or sunken} -returnCodes {1}
+
+test Window_Options_Invalid-67.10 {Sticky} -body {
+	.table window configure 5,5 -sticky bogus
+    } -result {bad sticky value "bogus": must contain n, s, e or w} -returnCodes {1}
+
+test Window_Options_Invalid-67.11 {Window} -body {
+	.table window configure 5,5 -window bogus
+    } -result {bad window path name "bogus"} -returnCodes {1}
+
+test Window_Options_Invalid-67.12 {Cleanup} -body {
+	destroy .e
+	destroy .table
+    }
+
+# Window delete
+
+
+test Window_Delete-68.1 {Create} -body {
+	setup .table
+	entry .table.e
+	.table window configure 5,5 -window .table.e
+    }
+
+test Window_Delete-68.2 {Too few args} -body {
+	.table window delete
+    } -result {wrong # args: should be ".table window delete index ?index ...?"} -returnCodes {1}
+
+test Window_Delete-68.3 {Invalid window} -body {
+	.table window delete bogus
+    }
+
+test Window_Delete-68.4 {Delete single} -body {
+	.table window delete 5,5
+	winfo exists .table.e
+    } -result {0}
+
+test Window_Delete-68.5 {Delete multiple} -setup {
+	.table window configure 5,5 -window [entry .table.e]
+	.table window configure 5,6 -window [entry .table.e1]
+	.table window configure 5,7 -window [entry .table.e2]
+    } -body {
+	.table window delete 5,5 5,6 5,7
+	winfo exists .table.e2
+    } -result {0}
+
+test Window_Delete-68.6 {Delete no window} -body {
+	.table window delete 7,7
+    }
+
+test Window_Delete-68.7 {Cleanup} -body {
+	destroy .e
+	destroy .table
+    }
+
+# Window move
+
+
+test Window_Move-69.1 {Create} -body {
+	setup .table
+	entry .table.e
+	.table window configure 5,5 -window .table.e
+    }
+
+test Window_Move-69.2 {Too few args} -body {
+	.table window move
+    } -result {wrong # args: should be ".table window move srcIndex destIndex"} -returnCodes {1}
+
+test Window_Move-69.3 {Too many args} -body {
+	.table window move 1 2 3
+    } -result {wrong # args: should be ".table window move srcIndex destIndex"} -returnCodes {1}
+
+test Window_Move-69.4 {Invalid source index} -body {
+	.table window move bogus 2,2
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Window_Move-69.5 {Invalid dest index} -body {
+	.table window move 5,5 bogus
+    } -result {bad table index "bogus": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>} -returnCodes {1}
+
+test Window_Move-69.6 {Move window} -body {
+	.table window move 5,5 8,8
+	.table window cget 8,8 -window
+    } -result {.table.e}
+
+test Window_Move-69.7 {Move to same} -body {
+	.table window move 5,5 5,5
+	.table window cget 5,5 -window
+    } -result {no window at index "5,5"} -returnCodes {1}
+
+
+test Window_Delete-70.8 {Move no window} -body {
+	.table window move 7,7 3,3
+    } -result {no window at index "7,7"} -returnCodes {1}
+
+
+test Window_Move-71.8 {Cleanup} -body {
+	destroy .e
+	destroy .table
+    }
+
+# Window names
+
+
+test Window_Names-72.1 {Create} -body {
+	setup .table
+	entry .table.e
+	.table window configure 5,5 -window .table.e
+    }
+
+test Window_Names-72.2 {Too many args} -body {
+	.table window names 1 2
+    } -result {wrong # args: should be ".table window names ?pattern?"} -returnCodes {1}
+
+test Window_Names-72.3 {List} -body {
+	.table window names
+    } -result {5,5}
+
+test Window_Names-72.4 {List pattern} -body {
+	.table window names 5,*
+    } -result {5,5}
+
+test Window_Names-72.5 {List none} -body {
+	.table window names 1,*
+    }
+
+test Window_Names-72.6 {Cleanup} -body {
+	destroy .e
+	destroy .table
+    }
+
+# Xview
+
+
+test Xview-73.1 {Create} -body {
+	setup .table -cols 100 -rows 100
+    } -result {.table}
+
+test Xview-73.2 {Get} -body {
+	.table xview
+    } -result {0.0 0.12903225806451613}
+
+test Xview-73.3 {Too many args} -body {
+	.table xview 1 2 3 4 5
+    } -result {wrong # args: should be ".table xview ?args?"} -returnCodes {1}
+
+test Xview-73.4 {Invalid Column} -body {
+	.table xview bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Xview-73.5 {View Column} -body {
+	.table xview 25
+	.table xview
+    } -result {0.25 0.3790322580645161}
+
+test Xview-73.6 {Moveto too few args} -body {
+	.table xview moveto
+    } -result {expected integer but got "moveto"} -returnCodes {1}
+
+test Xview-73.7 {Moveto too many args} -body {
+	.table xview moveto 1 2
+    } -result {wrong # args: should be ".table xview moveto fraction"} -returnCodes {1}
+
+test Xview-73.8 {Moveto invalid value} -body {
+	.table xview moveto bogus
+    } -result {expected floating-point number but got "bogus"} -returnCodes {1}
+
+test Xview-73.9 {Moveto value} -body {
+	.table xview moveto 10
+	.table xview
+    } -result {0.88 1.0}
+
+test Xview-73.10 {Moveto negative value} -body {
+	.table xview moveto -10
+	.table xview
+    } -result {0.0 0.12903225806451613}
+
+test Xview-73.11 {Move to middle} -body {
+	.table xview moveto 50
+	.table xview
+    } -result {0.88 1.0}
+
+test Xview-73.12 {Scroll too few args} -body {
+	.table xview scroll
+    } -result {expected integer but got "scroll"} -returnCodes {1}
+
+test Xview-73.13 {Scroll too many args} -body {
+	.table xview scroll 1 2 3
+    } -result {wrong # args: should be ".table xview ?args?"} -returnCodes {1}
+
+test Xview-73.14 {Scroll invalid value} -body {
+	.table xview scroll bogus units
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Xview-73.15 {Scroll invalid units} -body {
+	.table xview scroll 1 bogus
+    } -result {bad argument "bogus": must be units or pages} -returnCodes {1}
+
+test Xview-73.16 {Scroll units forwards} -body {
+	.table xview scroll 10 units
+	.table xview
+    } -result {0.88 1.0}
+
+test Xview-73.17 {Scroll units backwards} -body {
+	.table xview scroll -10 units
+	.table xview
+    } -result {0.78 0.9090322580645162}
+
+test Xview-73.18 {Scroll pages forward} -body {
+	.table xview scroll 1 pages
+	.table xview
+    } -result {0.88 1.0}
+
+test Xview-73.19 {Scroll pages backwards} -body {
+	.table xview scroll -1 pages
+	.table xview
+    } -result {0.76 0.8890322580645161}
+
+test Xview-73.20 {Cleanup} -body {
+	destroy .table
+    }
+
+# Yview
+
+
+test Yview-74.1 {Create} -body {
+	setup .table -cols 100 -rows 100
+    } -result {.table}
+
+test Yview-74.2 {Get} -body {
+	.table yview
+    } -result {0.0 0.3157894736842105}
+
+test Yview-74.3 {Too many args} -body {
+	.table yview 1 2 3 4 5
+    } -result {wrong # args: should be ".table yview ?args?"} -returnCodes {1}
+
+test Yview-74.4 {Invalid Row} -body {
+	.table yview bogus
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Yview-74.5 {View Row} -body {
+	.table yview 25
+	.table yview
+    } -result {0.25 0.5657894736842105}
+
+test Yview-74.6 {Moveto too few args} -body {
+	.table yview moveto
+    } -result {expected integer but got "moveto"} -returnCodes {1}
+
+test Yview-74.7 {Moveto too many args} -body {
+	.table yview moveto 1 2
+    } -result {wrong # args: should be ".table yview moveto fraction"} -returnCodes {1}
+
+test Yview-74.8 {Moveto invalid value} -body {
+	.table yview moveto bogus
+    } -result {expected floating-point number but got "bogus"} -returnCodes {1}
+
+test Yview-74.9 {Moveto value} -body {
+	.table yview moveto 10
+	.table yview
+    } -result {0.69 1.0}
+
+test Yview-74.10 {Moveto negative value} -body {
+	.table yview moveto -10
+	.table yview
+    } -result {0.0 0.3157894736842105}
+
+test Yview-74.11 {Move to middle} -body {
+	.table yview moveto 50
+	.table yview
+    } -result {0.69 1.0}
+
+test Yview-74.12 {Scroll too few args} -body {
+	.table yview scroll
+    } -result {expected integer but got "scroll"} -returnCodes {1}
+
+test Yview-74.13 {Scroll too many args} -body {
+	.table yview scroll 1 2 3
+    } -result {wrong # args: should be ".table yview ?args?"} -returnCodes {1}
+
+test Yview-74.14 {Scroll invalid value} -body {
+	.table yview scroll bogus units
+    } -result {expected integer but got "bogus"} -returnCodes {1}
+
+test Yview-74.15 {Scroll invalid units} -body {
+	.table yview scroll 1 bogus
+    } -result {bad argument "bogus": must be units or pages} -returnCodes {1}
+
+test Yview-74.16 {Scroll units forwards} -body {
+	.table yview scroll 10 units
+	.table yview
+    } -result {0.69 1.0}
+
+test Yview-74.17 {Scroll units backwards} -body {
+	.table yview scroll -10 units
+	.table yview
+    } -result {0.59 0.9057894736842105}
+
+test Yview-74.18 {Scroll pages forward} -body {
+	.table yview scroll 1 pages
+	.table yview
+    } -result {0.69 1.0}
+
+test Yview-74.19 {Scroll pages backwards} -body {
+	.table yview scroll -1 pages
+	.table yview
+    } -result {0.38 0.6957894736842105}
+
+test Yview-74.20 {Cleanup} -body {
+	destroy .table
+    }
+
+# Cleanup
+destroy .
+
+# Cleanup
 ::tcltest::cleanupTests
 return

@@ -1,0 +1,1340 @@
+# Group,Name,Constraints,Setup,Body,Cleanup,Match,Result,Output,Error Output,Return Codes
+command,package require Tktable,,,,,,,,,
+,,,,,,,,,,
+command,# Constraints,,,,,,,,,
+command,::tcltest::testConstraint  tcl8 [expr {[info tclversion] < 9.0}],,,,,,,,,
+command,::tcltest::testConstraint  tcl9 [expr {[info tclversion] >= 9.0}],,,,,,,,,
+,,,,,,,,,,
+command,# Helper functions,,,,,,,,,
+command,"proc setup {w args} {
+    set tb [table $w {*}$args]
+    grid $w
+    tkwait visibility $w
+    return $w
+}
+",,,,,,,,,
+command,"set table_data [list [list ""abc"" ""a b c"" "" a b c ""] [list ""d\te"" ""d\te\tf"" ""\td\te\tf\t""] [list ""g\n"" ""g\n\nh"" ""\ng\nh\n""] [list ""\""hij\"""" ""h\""i\""j"" ""\nhij\n""] [list \u2020\u2021\u2022 ""\u2023 \u2024"" ""\u2025\n\u2026""] [list 1,2 3,4 5,6]]",,,,,,,,,
+command,"proc setup_data {w args} {
+    table $w {*}$args
+    grid $w
+    tkwait visibility $w
+    set row -1
+    foreach line $::table_data {
+	$w set row [incr row],0 $line
+    }
+    return $w
+}
+",,,,,,,,,
+command,proc store_val {args} {set ::temp $args;return 1},,,,,,,,,
+,,,,,,,,,,
+command,# Widget,,,,,,,,,
+Table,Defaults,,,table .table;list [winfo exists .table] [winfo class .table] [info commands .table],destroy .table,,1 Table .table,,,
+Table,Too few args,,,table,,,"wrong # args: should be ""table pathName ?options?""",,,1
+Table,Invalid Path,,,table bogus,,,"bad window path name ""bogus""",,,1
+Table,Invalid Arg,,,table .table -bogus value,,,"unknown option ""-bogus""",,,1
+Table,No option,,table .table,.table,destroy .table,,"wrong # args: should be "".table option ?arg arg ...?""",,,1
+Table,Invalid Option,,table .table,.table bogus,destroy .table,,"bad option ""bogus"": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, export, focus, get, get2, height, hidden, icursor, import, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview",,,1
+Table,Ambiguous Option,,table .table,.table c,destroy .table,,"ambiguous option ""c"": must be activate, bbox, border, cget, clear, configure, curselection, curvalue, delete, export, focus, get, get2, height, hidden, icursor, import, index, insert, reread, scan, see, selection, set, spans, tag, validate, version, window, width, xview, or yview",,,1
+,,,,,,,,,,
+command,# Activate,,,,,,,,,
+Activate,Create,,,setup .table,,,.table,,,
+Activate,Default,,,.table activate,,,,,,
+Activate,Too many args,,,.table activate 1 2,,,"wrong # args: should be "".table activate ?index?""",,,1
+Activate,Init,,,".table set 5,5 ""This is some text""",,,,,,
+Activate,Invalid index,,,.table activate bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Activate,Set,,,".table activate 5,5",,,,,,
+Activate,Get,,,.table activate,,,"5,5",,,
+Activate,Check focus changed,,,.table focus,,,"5,5",,,
+Activate,Index,,,.table index active,,,"5,5",,,
+Activate,Set icursor position,,,"lassign [.table bbox active] x y w h;incr y 2;incr x 30;.table activate @$x,$y;.table icursor",,,11,,,
+Activate,Deactive cell,,,.table activate {};.table activate,,,,,,
+Activate,Deactivate cell index,,,.table activate {};.table index active,,,"no ""active"" cell in table",,,1
+Activate,Check focus not changed,,,.table focus,,,"5,5",,,
+Activate,Out of range low,,,".table activate -5,-5;.table activate",,,"0,0",,,
+Activate,Out of range high,,,".table activate 50,50;.table activate",,,"9,9",,,
+Activate,Origin,,,.table activate origin;.table activate,,,"0,0",,,
+Activate,End,,,.table activate end;.table activate,,,"9,9",,,
+Activate,Set callback,,,".table configure -browsecommand ""store_val %c %C %i %r %s %S %W""",,,,,,
+Activate,Eval callback activate,,,".table activate 7,2;set ::temp",,,"2 7,2 0 7 9,9 7,2 .table",,,
+Activate,Eval callback deactivate,,,".table activate """";set ::temp",,,"-1 -1,-1 0 -1 7,2 {} .table",,,
+Activate,Callback alias,,,.table configure -browsecmd command;.table cget -browsecommand,.table configure -browsecommand {},,command,,,
+Activate,Empty table,,.table configure -cols 0 -rows 0,.table activate origin;.table activate,,,"0,0",,,
+Activate,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Bbox,,,,,,,,,
+Bbox,Create,,,setup .table -cols 100 -rows 100,,,.table,,,
+Bbox,Too few args,,,.table bbox,,,"wrong # args: should be "".table bbox first ?last?""",,,1
+Bbox,Too many args,,,.table bbox 1 2 3,,,"wrong # args: should be "".table bbox first ?last?""",,,1
+Bbox,Invalid first index,,,.table bbox bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Bbox,Invalid last index,,,".table bbox 0,0 bogus",,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Bbox,One cell,,,".table bbox 2,2",,,125 39 62 19,,,
+Bbox,Multiple cells,,,".table bbox 2,3 4,5",,,187 39 186 57,,,
+Bbox,Reverse order,,,".table bbox 6,3 4,2",,,125 77 124 57,,,
+Bbox,Out of range min,,,".table bbox -1,-1",,,"[.table bbox 0,0]",,,
+Bbox,Out of range max,,,".table bbox 110,110",,,,,,
+Bbox,Out of view,,,".table bbox 50,50",,,,,,
+Bbox,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Border,,,,,,,,,
+Border,Create,,,setup .table,,,.table,,,
+Border,Too few args,,,.table border,,,"wrong # args: should be "".table border mark|dragto x y ?row|col?""",,,1
+Border,Too many args,,,.table border op arg arg arg arg,,,"wrong # args: should be "".table border mark|dragto x y ?row|col?""",,,1
+Border,Invalid operation,,,.table border bogus arg arg,,,"bad option ""bogus"": must be mark or dragto",,,1
+Border,Bad x value,,,.table border mark bogus 0,,,"expected integer but got ""bogus""",,,1
+Border,Bad y value,,,.table border mark 0 bogus,,,"expected integer but got ""bogus""",,,1
+Border,Invalid qualifier,,,.table border mark 0 0 bogus,,,"wrong # args: should be "".table border mark|dragto x y ?row|col?""",,,1
+Border,Mark not at border,,"lassign [.table bbox 0,3] cx cy cw ch;incr cx 10;incr ch 5",.table border mark $cx $ch row,,,,,,
+Border,Mark row,,"lassign [.table bbox 0,3] cx cy cw ch",.table border mark $cx $ch row,,,0,,,
+Border,Mark col,,"lassign [.table bbox 0,3] cx cy cw ch",.table border mark $cx $ch col,,,2,,,
+Border,Mark,,"lassign [.table bbox 0,3] cx cy cw ch",.table border mark $cx $ch,,,0 2,,,
+Border,Dragto col resize,,,".table border dragto [incr cx 50] $ch;lindex [.table bbox 0,3] 0",,,237,,,
+Border,Dragto row resize,,,".table border dragto $cx [incr ch 25];lindex [.table bbox 1,2] 1",,,44,,,
+Border,Dragto no resize,,.table configure -resizeborders none,".table border dragto $cx [incr ch 25];lindex [.table bbox 1,2] 1",,,44,,,
+Border,Dragto col only,,.table configure -resizeborders col,".table border dragto $cx [incr ch 25];lindex [.table bbox 1,2] 1",,,44,,,
+Border,Dragto row only,,.table configure -resizeborders row,".table border dragto [incr cx 50] $ch;lindex [.table bbox 0,3] 0",,,237,,,
+Border,Invalid resize border option,,,.table configure -resizeborders bogus,,,"bad option ""bogus"" must be row, col, both, none",,,1
+Border,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Cget,,,,,,,,,
+Cget,Create,,,setup .table,,,.table,,,
+Cget,Too Few Args,,,.table cget,,,"wrong # args: should be "".table cget option""",,,1
+Cget,Too Many Args,,,.table cget 1 2,,,"wrong # args: should be "".table cget option""",,,1
+Cget,Invalid arg,,,.table cget -bogus,,,"unknown option ""-bogus""",,,1
+Cget,Get,,,.table cget -rows,,,10,,,
+Cget,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Clear,,,,,,,,,
+Clear,Create,,,setup_data .table,,,.table,,,
+Clear,Too few args,,,.table clear,,,"wrong # args: should be "".table clear option ?first? ?last?""",,,1
+Clear,Too many args,,,.table clear option 1 2 3,,,"wrong # args: should be "".table clear option ?first? ?last?""",,,1
+Clear,Bad option,,,.table clear bogus,,,"bad clear option ""bogus"": must be all, cache, sizes, or tags",,,1
+Clear,Cache Single,,".table configure -cache 1;.table set row 1,0 {a b c d e f}",".table clear cache 1,2;.table get 1,0 1,5",,,a b c d e f,,,
+Clear,Cache Multiple,,".table configure -cache 1;.table set row 1,0 {a b c d e f}",".table clear cache 1,1 1,4;.table get 1,0 1,5",,,a b c d e f,,,
+Clear,Cache all,,".table configure -cache 1;.table set row 1,0 {a b c d e f}",".table clear cache 1,1 1,4;.table get 1,0 1,5",,,a b c d e f,,,
+Clear,Sizes height,,,"set list [.table height 2];.table height 2 5;lappend list [.table height 2];.table clear sizes 2,0;lappend list [.table height 2];set list",,,1 5 1,,,
+Clear,Sizes width,,,"set list [.table width 5];.table width 5 25;lappend list [.table width 5];.table clear sizes 0,5;lappend list [.table width 5];set list",,,10 25 10,,,
+Clear,Sizes height multiple,,,"set list [.table height 3];.table height 2 5 3 7;lappend list [.table height 3];.table clear sizes 2,0 3,0;lappend list [.table height 3];set list",,,1 7 1,,,
+Clear,Sizes width multiple,,,"set list [.table width 6];.table width 5 25 6 30;lappend list [.table width 6];.table clear sizes 0,6;lappend list [.table width 6];set list",,,10 30 10,,,
+Clear,Sizes all,,.table height 1 2 2 4 3 6 4 8;.table width 5 20 6 30 7 40 8 50,set list [.table width 5];.table clear sizes;lappend list [.table width 5];set list,,,20 10,,,
+Clear,Tags cell,,".table tag cell test1 2,2",".table clear tags 2,2;.table tag cell test1",,,,,,
+Clear,Tags col,,.table tag col test2 3,".table clear tags 3,3;.table tag col test2",,,,,,
+Clear,Tags row,,.table tag row test3 4,".table clear tags 4,4;.table tag row test3",,,,,,
+Clear,Tags cell range,,".table tag cell test1 2,2 3,3 4,4 5,5",".table clear tags 0,0 3,3;.table tag cell test1",.table tag delete test1,,"4,4 5,5",,,
+Clear,Tags col range,,.table tag col test2 3 4 5,".table clear tags 0,0 4,4;.table tag col test2",,,5,,,
+Clear,Tags row range,,.table tag row test3 3 4 5,".table clear tags 0,0 4,4;.table tag row test3",,,5,,,
+Clear,Tags all,,".table tag cell test1 2,2;.table tag col test2 3;.table tag row test3 4",.table clear tags;.table tag row test3,,,,,,
+Clear,All,,".table configure -cache 1;.table set row 1,0 {a b c d e f};.table height 1 5;.table tag cell test1 1,3",".table clear all 0,0 3,3;list [.table height 1] [.table tag cell test1]",,,{1 {}},,,
+Clear,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,"proc get_data {w cdelim rdelim quote} {
+    set result """"
+    foreach line [$w get2 [$w curselection]] {
+	set data """"
+	foreach value $line {
+	    if {[string first $cdelim $value] > -1 || [string first $rdelim $value] > -1 || [string first $quote $value] > -1} {
+		append data $quote [string map [list $quote $quote$quote] $value] $quote $cdelim
+	    } else {
+		append data $value $cdelim
+	    }
+	}
+	append result [string range $data 0 end-1] $rdelim
+    }
+    return $result
+}
+",,,,,,,,,
+,,,,,,,,,,
+command,# Configure,,,,,,,,,
+Configure,Create,,,setup .table,,,.table,,,
+Configure,Get All,,,llength [.table configure],,,76,,,
+Configure,Invalid argc,,,.table configure -bg red -fg,,,"value for ""-fg"" missing",,,1
+Configure,Invalid arg,,,.table configure -bogus,,,"unknown option ""-bogus""",,,1
+Configure,Get,,,.table configure -browsecommand,,,-browsecommand browseCommand BrowseCommand {} {},,,
+Configure,Set Single,,,.table configure -fg red;.table configure -fg,,glob,"""-foreground foreground Foreground * red""",,,
+Configure,Set Multiple,,,.table configure -bd 10 -bg blue;.table configure -bg,,glob,"""-background background Background * blue""",,,
+Configure,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,"proc cfg_test {w opt def set_val get_val} {
+    set res 0
+
+    # Default value
+    set g [$w cget $opt]
+    set orig $g
+    set s [lindex [$w configure $opt] 3]
+    incr res [expr {[string match $def $s] && $s == $g}]
+
+    # Set and get value
+    $w configure $opt $set_val
+    set s [lindex [$w configure $opt] 4]
+    set g [$w cget $opt]
+    incr res [expr {$s == $get_val && $s == $g}]
+    $w configure $opt $orig
+    return $res
+}
+",,,,,,,,,
+command,proc null {args} {},,,,,,,,,
+,,,,,,,,,,
+command,# Cget and configure options,,,,,,,,,
+Options,Create,,,setup .table,,,.table,,,
+Options,Anchor,,,cfg_test .table -anchor center n n,,,2,,,
+Options,Auto Clear,,,cfg_test .table -autoclear 0 yes 1,,,2,,,
+Options,Background,,,cfg_test .table -background * #ff0000 #ff0000,,,2,,,
+Options,Borderwidth Alias,,,"cfg_test .table -bd * ""4 2"" ""4 2""",,,2,,,
+Options,Background Alias,,,cfg_test .table -bg * #ff0000 #ff0000,,,2,,,
+Options,Border Cursor,,,cfg_test .table -bordercursor crosshair arrow arrow,,,2,,,
+Options,Borderwidth,,,cfg_test .table -borderwidth * 1 1,,,2,,,
+Options,Browse Command,,,cfg_test .table -browsecommand {} {Some command} {Some command},,,2,,,
+Options,Browse Command Alias,,,cfg_test .table -browsecmd {} {Some command} {Some command},,,2,,,
+Options,Cache,,,cfg_test .table -cache 0 yes 1,,,2,,,
+Options,Column Origin,,,cfg_test .table -colorigin 0 -10 -10,,,2,,,
+Options,Columns,,,cfg_test .table -cols 10 12 12,,,2,,,
+Options,Column Separator,,,"cfg_test .table -colseparator \t , ,",,,2,,,
+Options,Column Stretch Mode,,,cfg_test .table -colstretchmode none unset unset,,,2,,,
+Options,Column Tag Command,,,cfg_test .table -coltagcommand {} {Some command} {Some command},,,2,,,
+Options,Column Width,,,cfg_test .table -colwidth 10 5 5,,,2,,,
+Options,Command,,,cfg_test .table -command {} {Some command} {Some command},,,2,,,
+Options,Cursor,,,cfg_test .table -cursor xterm arrow arrow,,,2,,,
+Options,Draw Mode,,,cfg_test .table -drawmode compatible slow slow,,,2,,,
+Options,Ellipsis,,,cfg_test .table -ellipsis {} {...} {...},,,2,,,
+Options,Export Selection,,,cfg_test .table -exportselection 1 no 0,,,2,,,
+Options,Foreground Alias,,,cfg_test .table -fg * #110022 #110022,,,2,,,
+Options,Flash Mode,,,cfg_test .table -flashmode 0 yes 1,,,2,,,
+Options,Flash Time,,,cfg_test .table -flashtime 2 5 5,,,2,,,
+Options,Font,,,cfg_test .table -font TkTextFont {Helvetica 12} {Helvetica 12},,,2,,,
+Options,Foreground,,,cfg_test .table -foreground * #110022 #110022,,,2,,,
+Options,Height,,,cfg_test .table -height 0 3 3,,,2,,,
+Options,Highlight Background,,,cfg_test .table -highlightbackground * #112233 #112233,,,2,,,
+Options,Highlight Color,,,cfg_test .table -highlightcolor * #123456 #123456,,,2,,,
+Options,Hughlight Thickness,,,cfg_test .table -highlightthickness * 6 6,,,2,,,
+Options,Insert Background,,,cfg_test .table -insertbackground * #110022 #110022,,,2,,,
+Options,Insert Borderwidth,,,cfg_test .table -insertborderwidth * 1.3 1,,,2,,,
+Options,Insert Off Time,,,cfg_test .table -insertofftime 300 100 100,,,2,,,
+Options,Insert On Time,,,cfg_test .table -insertontime 600 100 100,,,2,,,
+Options,Insert Width,,,cfg_test .table -insertwidth * 1.3 1,,,2,,,
+Options,Invert Selected,,,cfg_test .table -invertselected 0 yes 1,,,2,,,
+Options,Internal Padx,,,cfg_test .table -ipadx 0 1.3 1,,,2,,,
+Options,Internal Pady,,,cfg_test .table -ipady 0 1.3 1,,,2,,,
+Options,Justify,,,cfg_test .table -justify left right right,,,2,,,
+Options,Max Height,,,cfg_test .table -maxheight 600 300 300,,,2,,,
+Options,Max Width,,,cfg_test .table -maxwidth 800 300 300,,,2,,,
+Options,Mode,,,cfg_test .table -mode table spreadsheet spreadsheet,,,2,,,
+Options,Multiline,,,cfg_test .table -multiline 1 no 0,,,2,,,
+Options,Padx,,,cfg_test .table -padx 0 1.3 1,,,2,,,
+Options,Pady,,,cfg_test .table -pady 0 1.3 1,,,2,,,
+Options,Quote Character,,,"cfg_test .table -quotechar \"" | |",,,2,,,
+Options,Refief,,,cfg_test .table -relief sunken groove groove,,,2,,,
+Options,Row Height,,,cfg_test .table -rowheight 1 -20 -20,,,2,,,
+Options,Row Origin,,,cfg_test .table -roworigin 0 -20 -20,,,2,,,
+Options,Rows,,,cfg_test .table -rows 10 20 20,,,2,,,
+Options,Row Separator,,,cfg_test .table -rowseparator \n % %,,,2,,,
+Options,Row Stretch Mode,,,cfg_test .table -rowstretchmode none unset unset,,,2,,,
+Options,Row Tag Command,,,cfg_test .table -rowtagcommand {} {Some command} {Some command},,,2,,,
+Options,Selection Command Alias,,,cfg_test .table -selcmd {} {Some command} {Some command},,,2,,,
+Options,Selection Command,,,cfg_test .table -selectioncommand {} {Some command} {Some command},,,2,,,
+Options,Selection Background,,,cfg_test .table -selectbackground * red red,,,2,,,
+Options,Selection Borderwidth,,,cfg_test .table -selectborderwidth * 2 2,,,2,,,
+Options,Selection Foreground,,,cfg_test .table -selectforeground * blue blue,,,2,,,
+Options,Selection Mode,,,cfg_test .table -selectmode browse extended extended,,,2,,,
+Options,Select Titles,,,cfg_test .table -selecttitles 0 yes 1,,,2,,,
+Options,Select Type,,,cfg_test .table -selecttype cell row row,,,2,,,
+Options,Sparse Array,,,cfg_test .table -sparsearray 1 no 0,,,2,,,
+Options,State,,,cfg_test .table -state normal disabled disabled,,,2,,,
+Options,Take Focus,,,cfg_test .table -takefocus {} 0 0,,,2,,,
+Options,Title Columns,,,cfg_test .table -titlecols 0 4 4,,,2,,,
+Options,Title Rows,,,cfg_test .table -titlerows 0 4 4,,,2,,,
+Options,Use Command,,,cfg_test .table -usecommand 1 no 0,,,2,,,
+Options,Variable,,,cfg_test .table -variable ::tableData var var,,,2,,,
+Options,Validate,,,cfg_test .table -validate 0 yes 1,,,2,,,
+Options,Validate Command,,,cfg_test .table -validatecommand {} {Some command} {Some command},,,2,,,
+Options,Validate Command Alias,,,cfg_test .table -vcmd {} {Another command} {Another command},,,2,,,
+Options,Width,,,cfg_test .table -width 0 45 45,,,2,,,
+Options,Word Wrap,,,cfg_test .table -wrap 0 yes 1,,,2,,,
+Options,X Scroll Command,,,cfg_test .table -xscrollcommand {} {null} {null},,,2,,,
+Options,Y Scroll Command,,,cfg_test .table -yscrollcommand {} {null} {null},,,2,,,
+Options,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Invalid cget and configure,,,,,,,,,
+Options Invalid,Create,,,setup .table,,,.table,,,
+Options Invalid,Anchor,,,.table configure -anchor left,,glob,"bad anchor* ""left"": must be n, ne, e, se, s, sw, w, nw, or center",,,1
+Options Invalid,Auto Clear,,,.table configure -autoclear xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,Background,,,.table configure -background bogus,,,"unknown color name ""bogus""",,,1
+Options Invalid,Borderwidth Alias,,,.table configure -bd badValue,,glob,"*screen distance* ""badValue""",,,1
+Options Invalid,Background Alias,,,.table configure -bg bogus,,,"unknown color name ""bogus""",,,1
+Options Invalid,Border Cursor,,,.table configure -bordercursor badValue,,,"bad cursor spec ""badValue""",,,1
+Options Invalid,Borderwidth,,,.table configure -borderwidth badValue,,glob,"*screen distance* ""badValue""",,,1
+Options Invalid,Cache,,,.table configure -cache xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,Column Origin,,,.table configure -colorigin xyzzy,,,"expected integer but got ""xyzzy""",,,1
+Options Invalid,Columns,,,.table configure -cols xyzzy,,,"expected integer but got ""xyzzy""",,,1
+Options Invalid,Column Stretch Mode,,,.table configure -colstretchmode bogus,,,"bad option ""bogus"" must be none, unset, all, last, fill",,,1
+Options Invalid,Column Width,,,.table configure -colwidth xyzzy,,,"expected integer but got ""xyzzy""",,,1
+Options Invalid,Cursor,,,.table configure -cursor badValue,,,"bad cursor spec ""badValue""",,,1
+Options Invalid,Draw Mode,,,.table configure -drawmode badValue,,,"bad option ""badValue"" must be fast, compatible, slow, single",,,1
+Options Invalid,Export Selection,,,.table configure -exportselection xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,Foreground Alias,,,.table configure -fg bogus,,,"unknown color name ""bogus""",,,1
+Options Invalid,Flash Mode,,,.table configure -flashmode xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,Flash Time,,,.table configure -flashtime xyzzy,,,"expected integer but got ""xyzzy""",,,1
+Options Invalid,Font,tcl8,,.table configure -font {},,,"font """" doesn't exist",,,1
+Options Invalid,Font,tcl9,,.table configure -font {},,,"font """" does not exist",,,1
+Options Invalid,Foreground,,,.table configure -foreground bogus,,,"unknown color name ""bogus""",,,1
+Options Invalid,Height,,,.table configure -height 20p,,,"expected integer but got ""20p""",,,1
+Options Invalid,Highlight Background,,,.table configure -highlightbackground ugly,,,"unknown color name ""ugly""",,,1
+Options Invalid,Highlight Color,,,.table configure -highlightcolor bogus,,,"unknown color name ""bogus""",,,1
+Options Invalid,Hughlight Thickness,,,.table configure -highlightthickness bogus,,glob,"*screen distance* ""bogus""",,,1
+Options Invalid,Insert Background,,,.table configure -insertbackground bogus,,,"unknown color name ""bogus""",,,1
+Options Invalid,Insert Borderwidth,,,.table configure -insertborderwidth 2.6x,,glob,"*screen distance* ""2.6x""",,,1
+Options Invalid,Insert Off Time,,,.table configure -insertofftime 3.2,,,"expected integer but got ""3.2""",,,1
+Options Invalid,Insert On Time,,,.table configure -insertontime 3.2,,,"expected integer but got ""3.2""",,,1
+Options Invalid,Insert Width,,,.table configure -insertwidth 2.6x,,glob,"*screen distance* ""2.6x""",,,1
+Options Invalid,Invert Selected,,,.table configure -invertselected xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,Internal Padx,,,.table configure -ipadx 2.6x,,glob,"*screen distance* ""2.6x""",,,1
+Options Invalid,Internal Pady,,,.table configure -ipady 2.6x,,glob,"*screen distance* ""2.6x""",,,1
+Options Invalid,Justify,,,.table configure -justify wrong,,,"bad justification ""wrong"": must be left, right, or center",,,1
+Options Invalid,Max Height,,,.table configure -maxheight 2.6x,,glob,"*screen distance* ""2.6x""",,,1
+Options Invalid,Max Width,,,.table configure -maxwidth 2.6x,,glob,"*screen distance* ""2.6x""",,,1
+Options Invalid,Mode,,,.table configure -mode bogus,,glob,"bad option ""bogus"" must be table, spreadsheet",,,1
+Options Invalid,Multiline,,,.table configure -multiline xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,Padx,,,.table configure -padx 2.6x,,glob,"*screen distance* ""2.6x""",,,1
+Options Invalid,Pady,,,.table configure -pady 2.6x,,glob,"*screen distance* ""2.6x""",,,1
+Options Invalid,Refief,,,.table configure -relief bogus,,,"bad relief ""bogus"": must be flat, groove, raised, ridge, solid, or sunken",,,1
+Options Invalid,Row Height,,,.table configure -rowheight xyzzy,,,"expected integer but got ""xyzzy""",,,1
+Options Invalid,Row Origin,,,.table configure -roworigin xyzzy,,,"expected integer but got ""xyzzy""",,,1
+Options Invalid,Rows,,,.table configure -rows xyzzy,,,"expected integer but got ""xyzzy""",,,1
+Options Invalid,Row Stretch Mode,,,.table configure -rowstretchmode bogus,,,"bad option ""bogus"" must be none, unset, all, last, fill",,,1
+Options Invalid,Selection Background,,,.table configure -selectbackground bogus,,,"unknown color name ""bogus""",,,1
+Options Invalid,Selection Foreground,,,.table configure -selectforeground bogus,,,"unknown color name ""bogus""",,,1
+Options Invalid,Select Titles,,,.table configure -selecttitles xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,Select Type,,,.table configure -selecttype bogus,,,"bad option ""bogus"" must be row, col, both, cell",,,1
+Options Invalid,Sparse Array,,,.table configure -sparsearray xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,State,,,.table configure -state foo,,,"bad option ""foo"" must be normal, disabled",,,1
+Options Invalid,Title Columns,,,.table configure -titlecols 3p,,,"expected integer but got ""3p""",,,1
+Options Invalid,Title Rows,,,.table configure -titlerows 3p,,,"expected integer but got ""3p""",,,1
+Options Invalid,Use Command,,,.table configure -usecommand xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,Validate,,,.table configure -validate xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,Width,,,.table configure -width 3p,,,"expected integer but got ""3p""",,,1
+Options Invalid,Word Wrap,,,.table configure -wrap xyzzy,,,"expected boolean value but got ""xyzzy""",,,1
+Options Invalid,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Curselection,,,,,,,,,
+Curselection,Create,,,setup .table,,,.table,,,
+Curselection,Too many args,,,.table curselection 1 2,,,"wrong # args: should be "".table curselection ?value?""",,,1
+Curselection,Default,,,.table curselection,,,,,,
+Curselection,Get,,".table selection set 2,2 3,3",.table curselection,,,"2,2 2,3 3,2 3,3",,,
+Curselection,Over write,,,".table curselection ""Test value"";.table get 2,3",,,Test value,,,
+Curselection,Use negative indices,,,.table configure -colorigin -5 -roworigin -5,,,,,,
+Curselection,Get with negative indices,,".table selection set -2,-2 3,3",.table curselection,,,"""-2,-2 -2,-1 -2,0 -2,1 -2,2 -2,3 -1,-2 -1,-1 -1,0 -1,1 -1,2 -1,3 0,-2 0,-1 0,0 0,1 0,2 0,3 1,-2 1,-1 1,0 1,1 1,2 1,3 2,-2 2,-1 2,0 2,1 2,2 2,3 3,-2 3,-1 3,0 3,1 3,2 3,3""",,,
+Curselection,Reset,,,.table selection clear all,,,,,,
+Curselection,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Curvalue,,,,,,,,,
+Curvalue,Create,,,setup_data .table,,,.table,,,
+Curvalue,Too many args,,,.table curvalue 1 2,,,"wrong # args: should be "".table curvalue ?<value>?""",,,1
+Curvalue,Default,,,.table curvalue,,,,,,
+Curvalue,Set before activate,,,".table curvalue ""more text"";.table curvalue",,,,,,
+Curvalue,Init,,,".table set 1,6 ""Some text"";.table activate 1,6",,,,,,
+Curvalue,Set,,,.table curvalue 123.456,,,123.456,,,
+Curvalue,Get,,,.table curvalue,,,123.456,,,
+Curvalue,Clear,,,.table curvalue {};.table curvalue,,,,,,
+Curvalue,Validate callback,,".table configure -validate 1 -validatecommand ""store_val %c %C %i %r %s %S %W""",".table curvalue ""New value"";set ::temp",,,"6 1,6 0 1 {} {New value} .table",,,
+Curvalue,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Delete,,,,,,,,,
+Delete,Create,,,setup_data .table,,,.table,,,
+Delete,Too few args,,,.table delete,,,"wrong # args: should be "".table delete option ?switches? arg ?arg?""",,,1
+Delete,Bad option,,,.table delete bogus arg,,,"bad option ""bogus"": must be active, cols, columns, or rows",,,1
+Delete,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Delete Active,,,,,,,,,
+command,"set string ""This is some text""",,,,,,,,,
+Delete Active,Create,,,setup .table,,,.table,,,
+Delete Active,Too few args,,,.table delete active,,,"wrong # args: should be "".table delete option ?switches? arg ?arg?""",,,1
+Delete Active,Too many args,,,.table delete active 1 2 3,,,"wrong # args: should be "".table delete active first ?last?""",,,1
+Delete Active,Invalid index,,,.table delete active bogus value,,,"expected integer but got ""bogus""",,,1
+Delete Active,Init,,,".table activate 3,7",,,,,,
+Delete Active,Delete at  0,,".table set 3,7 $string",.table delete active 0;.table curvalue,,,his is some text,,,
+Delete Active,Delete range at  0,,".table set 3,7 $string",.table delete active 0 5;.table curvalue,,,is some text,,,
+Delete Active,Delete in middle,,".table set 3,7 $string",.table delete active 5;.table curvalue,,,This s some text,,,
+Delete Active,Delete range in middle,,".table set 3,7 $string",.table delete active 4 6;.table curvalue,,,Thiss some text,,,
+Delete Active,Delete at  8,,".table set 3,7 $string",.table delete active 8;.table curvalue,,,This is ome text,,,
+Delete Active,Delete range at  8,,".table set 3,7 $string",.table delete active 8 12;.table curvalue,,,This is  text,,,
+Delete Active,Delete at end,,".table set 3,7 $string",.table delete active end;.table curvalue,,,This is some text,,,
+Delete Active,Delete range at  end,,".table set 3,7 $string",.table delete active 15 17;.table curvalue,,,This is some te,,,
+Delete Active,Delete before,,".table set 3,7 $string",.table delete active -5 5;.table curvalue,,,is some text,,,
+Delete Active,Delete after,,".table set 3,7 $string",.table delete active 15 25;.table curvalue,,,This is some te,,,
+Delete Active,Empty cell,,".table set 3,7 {}",.table delete active 5 10;.table curvalue,,,,,,
+Delete Active,Empty table,,.table configure -cols 0 -rows 0;.table set origin $string;.table activate origin,.table delete active 5 10;.table curvalue,,,This me text,,,
+Delete Active,Validate,,,,,,,,,
+Delete Active,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Delete Column,,,,,,,,,
+Delete Column,Create,,,setup .table -cols 100 -rows 100,,,.table,,,
+Delete Column,Too many args,,,.table delete cols 1 2 3 4 5 6 7 8 9 10,,,"wrong # args: should be "".table delete cols ?switches? index ?count?""",,,1
+Delete Column,Bad index,,,.table delete cols bogus,,,"expected integer but got ""bogus""",,,1
+Delete Column,Bad count,,,.table delete cols 40 bogus,,,"expected integer but got ""bogus""",,,1
+Delete Column,Bad switch,,,.table delete cols -bogus 40 50,,,"bad switch ""-bogus"": must be -keeptitles, -holddimensions, -holdselection, -holdtags, -holdwindows, or --",,,1
+Delete Column,Single,,,.table delete cols 15;.table cget -cols,,,99,,,
+Delete Column,Single column,,,.table delete columns 14;.table cget -cols,,,98,,,
+Delete Column,Multiple,,,.table delete cols 10 4;.table cget -cols,,,94,,,
+Delete Column,Clipped range,,,.table delete cols 90 10;.table cget -cols,,,90,,,
+Delete Column,Negative count,,,.table delete cols 20 -10;.table cget -cols,,,80,,,
+Delete Column,Hold Dimensions,,,.table delete cols -holddimensions 16 5;.table cget -cols,,,80,,,
+Delete Column,Hold Selection,,".table selection set 0,20 0,25",".table delete cols -holdselection 20 5;.table selection includes 0,22",,,1,,,
+Delete Column,Hold Tags,,.table tag col test_tag 30 31,.table delete cols -holdtags 31;lsort [.table tag col test_tag],,,30 31,,,
+Delete Column,Hold Windows,,".table window configure 0,40 -window [entry .table.e]",".table delete cols -holdwindows 38 5;.table window cget 0,40 -window",,,.table.e,,,
+Delete Column,Keep Titles,,".table configure -titlecols 5 -titlerows 5;.table set 0,4 ""Test value""",".table delete cols -keeptitles 0 5; .table set 0,4",,,Test value,,,
+Delete Column,No switches,,,.table delete cols -- 5 5;.table cget -cols,,,64,,,
+Delete Column,Out of range min,,,.table delete cols -- -100 5;.table cget -cols,,,59,,,
+Delete Column,Out of range max,,,.table delete cols 100 5;.table cget -cols,,,58,,,
+Delete Column,Out of range count min,,,.table delete cols 10 -50;.table cget -cols,,,48,,,
+Delete Column,Out of range count max,,,.table delete cols 40 100;.table cget -cols,,,40,,,
+Delete Column,Delete All,,,.table delete cols 0 100;.table cget -cols,,,1,,,
+Delete Column,Delete Empty Table,,.table configure -cols 0 -rows 0,.table delete cols 0 15;.table cget -cols,,,1,,,
+Delete Column,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Delete Row,,,,,,,,,
+Delete Row,Create,,,setup .table -cols 100 -rows 100,,,.table,,,
+Delete Row,Too many args,,,.table delete rows 1 2 3 4 5 6 7 8 9 10,,,"wrong # args: should be "".table delete rows ?switches? index ?count?""",,,1
+Delete Row,Bad index,,,.table delete rows bogus,,,"expected integer but got ""bogus""",,,1
+Delete Row,Bad count,,,.table delete rows 40 bogus,,,"expected integer but got ""bogus""",,,1
+Delete Row,Bad switch,,,.table delete rows -bogus 40 50,,,"bad switch ""-bogus"": must be -keeptitles, -holddimensions, -holdselection, -holdtags, -holdwindows, or --",,,1
+Delete Row,Single,,,.table delete rows 15;.table cget -rows,,,99,,,
+Delete Row,Multiple,,,.table delete rows 10 5;.table cget -rows,,,94,,,
+Delete Row,Clipped range,,,.table delete rows 80 10;.table cget -rows,,,84,,,
+Delete Row,Negative count,,,.table delete rows 20 -10;.table cget -rows,,,74,,,
+Delete Row,Hold Dimensions,,,.table delete rows -holddimensions 16 5;.table cget -rows,,,74,,,
+Delete Row,Hold Selection,,".table selection set 20,0 25,0",".table delete rows -holdselection 20 5;.table selection includes 22,0",,,1,,,
+Delete Row,Hold Tags,,.table tag row test_tag 30 31,.table delete rows -holdtags 31;lsort [.table tag row test_tag],,,30 31,,,
+Delete Row,Hold Windows,,".table window configure 40,0 -window [entry .table.e]",".table delete rows -holdwindows 38 5;.table window cget 40,0 -window",,,.table.e,,,
+Delete Row,Keep Titles,,".table configure -titlecols 5 -titlerows 5;.table set 4,0 ""Test value""",".table delete rows -keeptitles 0 5;.table get 4,0",,,Test value,,,
+Delete Row,No switches,,,.table delete rows -- 50 5;.table cget -rows,,,58,,,
+Delete Row,Out of range min,,,.table delete rows -- -100 5;.table cget -rows,,,53,,,
+Delete Row,Out of range max,,,.table delete rows 100 5;.table cget -rows,,,52,,,
+Delete Row,Out of range count min,,,.table delete rows 10 -50;.table cget -rows,,,42,,,
+Delete Row,Out of range count max,,,.table delete rows 40 100;.table cget -rows,,,40,,,
+Delete Row,Delete All,,,.table delete rows 0 100;.table cget -rows,,,1,,,
+Delete Row,Delete Empty Table,,.table configure -cols 0 -rows 0,.table delete rows 0 15;.table cget -rows,,,1,,,
+Delete Row,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Focus,,,,,,,,,
+Focus,Create,,,setup .table,,,.table,,,
+Focus,Default,,,.table focus,,,,,,
+Focus,Too many args,,,.table focus 1 2,,,"wrong # args: should be "".table focus ?index?""",,,1
+Focus,Invalid index,,,.table focus bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Focus,Set,,,".table focus 5,5",,,,,,
+Focus,Get,,,.table focus,,,"5,5",,,
+Focus,Check active hasn't changed,,,.table activate,,,,,,
+Focus,Index,,,.table index focus,,,"5,5",,,
+Focus,Unfocus,,,.table focus {};.table focus,,,,,,
+Focus,Unfocus index,,,.table focus {};.table index focus,,,"no ""focus"" cell in table",,,1
+Focus,Out of range low,,,".table focus -5,-5;.table focus",,,"0,0",,,
+Focus,Out of range high,,,".table focus 50,50;.table focus",,,"9,9",,,
+Focus,Origin,,,.table focus origin;.table focus,,,"0,0",,,
+Focus,End,,,.table focus end;.table focus,,,"9,9",,,
+Focus,Set callback,,,".table configure -browsecommand ""store_val %c %C %i %r %s %S %W""",,,,,,
+Focus,Eval callback activate,,,".table focus 7,2;set ::temp",,,"2 7,2 0 7 9,9 7,2 .table",,,
+Focus,Eval callback deactivate,,,".table focus """";set ::temp",,,"-1 -1,-1 0 -1 7,2 {} .table",,,
+Focus,Callback alias,,,.table configure -browsecmd command;.table cget -browsecommand,.table configure -browsecommand {},,command,,,
+Focus,Empty table,,.table configure -cols 0 -rows 0,.table focus origin;.table focus,,,"0,0",,,
+Focus,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Get,,,,,,,,,
+Get,Create,,,setup_data .table,,,.table,,,
+Get,Too few args,,,.table get,,,"wrong # args: should be "".table get first ?last?""",,,1
+Get,Too many args,,,.table get 1 2 3,,,"wrong # args: should be "".table get first ?last?""",,,1
+Get,Invalid first index,,,.table get bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Get,Invalid last index,,,".table get 1,1 bogus",,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Get,Get string,,".table set 5,5 ""Test value""",".table get 5,5",,,Test value,,,
+Get,Get value,,".table set 5,5 42",".table get 5,5",,,42,,,
+Get,Get range,,".table set row 7,0 [list a b c d e f]",".table get 7,0 7,5",,,a b c d e f,,,
+Get,Get range multi-line,,".table set row 8,0 [list g h I j k l]",".table get 7,0 8,5",,,a b c d e f g h I j k l,,,
+Get,Get reverse order,,,".table get 8,5 7,0",,,a b c d e f g h I j k l,,,
+Get,Origin,,,.table get origin,,,[lindex $::table_data 0 0],,,
+Get,End,,,.table get end,,,,,,
+Get,Out of range min,,,".table get -5,-5",,,[lindex $::table_data 0 0],,,
+Get,Out of range max,,,".table get 50,50",,,,,,
+Get,Empty table,,.table configure -cols 0 -rows 0,.table get origin,,,[lindex $::table_data 0 0],,,
+Get,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Get2,,,,,,,,,
+Get2,Create,,,setup_data .table,,,.table,,,
+Get2,Too few args,,,.table get2,,,"wrong # args: should be "".table get2 first|list ?last?""",,,1
+Get2,Too many args,,,.table get2 1 2 3,,,"wrong # args: should be "".table get2 first|list ?last?""",,,1
+Get2,Invalid index,,,.table get2 bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Get2,Get string,,".table set 5,5 ""Test value""",".table get2 5,5",,,Test value,,,
+Get2,Get value,,".table set 5,5 42",".table get2 5,5",,,42,,,
+Get2,Get range,,".table set row 7,0 [list a b c d e f]",".table get2 7,0 7,5",,,[list [list a b c d e f]],,,
+Get2,Get range multi-line,,".table set row 8,0 [list g h I j k l]",".table get2 7,0 8,5",,,[list [list a b c d e f] [list  g h I j k l]],,,
+Get2,Get reverse order,,,".table get2 8,5 7,0",,,[list [list a b c d e f] [list  g h I j k l]],,,
+Get2,Get list,,,".table get2 [list 7,0 7,2 7,4 8,0 8,2 8,4]",,,[list [list a c e] [list g I k]],,,
+command,"# Out of range index gets shifted to 0,0",,,,,,,,,
+Get2,Out of range min,,,".table get -5,-5",,,[lindex $::table_data 0 0],,,
+Get2,Out of range max,,,".table get 50,50",,,,,,
+Get2,Empty table,,.table configure -cols 0 -rows 0,.table get origin,,,[lindex $::table_data 0 0],,,
+Get2,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Height,,,,,,,,,
+Height,Create,,,setup .table,,,.table,,,
+Height,Get default,,,.table height,,,,,,
+Height,Invalid arg count,,,.table height 1 1 1,,,"wrong # args: should be "".table height ?row? ?height row height ...?""",,,1
+Height,Invalid index,,,.table height bogus,,,"expected integer but got ""bogus""",,,1
+Height,Invalid value,,,.table height 1 bogus,,,"expected integer but got ""bogus""",,,1
+Height,Single row height,,,.table height 2 5;.table height 2,,,5,,,
+Height,Multiple row height,,,.table height 4 6 5 7;.table height 5,,,7,,,
+Height,Query row heights,,,lsort [.table height],,,[list {2 5} {4 6} {5 7}],,,
+Height,Height in pixels,,,.table height 6 -22;.table height  6,,,-22,,,
+Height,Default height,,,.table height 7 default;expr {[.table height 7] == [.table cget -rowheight]},,,1,,,
+Height,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Hidden,,,,,,,,,
+Hidden,Create,,,setup_data .table,,,.table,,,
+Hidden,Default,,,.table hidden,,,,,,
+Hidden,Invalid index,,,.table hidden bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Hidden,Get All,,".table spans 3,3 2,2",.table hidden,,,"3,4 3,5 4,3 4,4 4,5 5,3 5,4 5,5",,,
+Hidden,Get Span,,,".table hidden 3,4",,,"3,3",,,
+Hidden,Check if hidden,,,".table hidden 3,4 3,5 4,3 4,4 4,5 5,3 5,4 5,5",,,1,,,
+Hidden,Not hidden,,,".table hidden 3,2 4,2 5,2",,,0,,,
+Hidden,Unhide,,,".table spans 3,3 0,0",,,,,,
+Hidden,Out of range min,,".table spans -1,-1 2,2",.table hidden,".table spans -1,-1 0,0",,"0,1 0,2 1,0 1,1 1,2 2,0 2,1 2,2",,,
+Hidden,Out of range max,,".table spans 9,9 3,3",.table hidden,".table spans 9,9 0,0",,"9,10 9,11 9,12 10,9 10,10 10,11 10,12 11,9 11,10 11,11 11,12 12,9 12,10 12,11 12,12",,,
+Hidden,Beyond range min,,".table spans -5,-5 2,2",.table hidden,".table spans -1,-1 0,0",,"0,1 0,2 1,0 1,1 1,2 2,0 2,1 2,2",,,
+Hidden,Beyond range max,,".table spans 15,15 2,2",.table hidden,".table spans 15,15 0,0",,"9,10 9,11 10,9 10,10 10,11 11,9 11,10 11,11",,,
+Hidden,Empty table,,.table configure -cols 0 -rows 0,".table spans 1,1 2,2;.table hidden 1,0",,,"0,0",,,
+Hidden,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Icursor,,,,,,,,,
+Icursor,Create,,,setup_data .table,,,.table,,,
+Icursor,Too many args,,,.table icursor 1 2,,,"wrong # args: should be "".table icursor ?cursorPos?""",,,1
+Icursor,Invalid index,,,.table icursor bogus,,,-1,,,
+Icursor,Get Default,,,.table icursor,,,-1,,,
+Icursor,Set Before Activate,,,.table icursor 5,,,-1,,,
+command,# Activate sets icursor to end,,,,,,,,,
+Icursor,Init,,,".table set 4,2 ""Some text"";.table activate 4,2;.table icursor",,,9,,,
+Icursor,Invalid index,,,.table icursor bogus,,,"expected integer but got ""bogus""",,,1
+Icursor,Get after activate,,,.table icursor,,,9,,,
+Icursor,Set,,,.table icursor 5,,,5,,,
+Icursor,Get,,,.table icursor,,,5,,,
+Icursor,Insert index,,,.table icursor insert;.table icursor,,,5,,,
+Icursor,End index,,,.table icursor end;.table icursor,,,9,,,
+Icursor,Out of range min,,,.table icursor -5;.table icursor,,,0,,,
+Icursor,Out of range max,,,.table icursor 50;.table icursor,,,9,,,
+Icursor,Clear cell,,,.table curvalue {};.table icursor,,,0,,,
+Icursor,Empty table,,.table configure -cols 0 -rows 0,.table icursor,,,3,,,
+Icursor,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Index,,,,,,,,,
+Index,Create,,,setup .table -cols 100 -rows 100,,,.table,,,
+Index,Too few args,,,.table index,,,"wrong # args: should be "".table index <index> ?row|col?""",,,1
+Index,Too many args,,,.table index arg arg arg,,,"wrong # args: should be "".table index <index> ?row|col?""",,,1
+Index,Bad index,,,.table index bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Index,No focus value,,,.table index focus,,,"no ""focus"" cell in table",,,1
+Index,Focus,,".table focus 8,8",.table index focus,,,"8,8",,,
+Index,No anchor value,,,.table index anchor,,,"no ""anchor"" cell in table",,,1
+Index,Anchor,,".table selection anchor 13,13",.table index anchor,,,"13,13",,,
+Index,No active value,,,.table index active,,,"no ""active"" cell in table",,,1
+Index,Active,,".table activate 7,7",.table index active,,,"7,7",,,
+Index,End,,,.table index end,,,"99,99",,,
+Index,Origin,,,.table index origin,,,"0,0",,,
+Index,Topleft,,,.table index topleft,,,"0,0",,,
+Index,Bottomright,,,.table index bottomright,,,"31,12",,,
+Index,Coordinate,,,".table index @10,10",,,"0,0",,,
+Index,Cell,,,".table index 23,23",,,"23,23",,,
+Index,Out of range min,,,".table index -50,-50",,,"0,0",,,
+Index,Out of range max,,,".table index 150,150",,,"99,99",,,
+Index,Scroll,,,.table xview moveto .5;.table yview moveto .5,,,,,,
+Index,Scrolled End,,,.table index end,,,"99,99",,,
+Index,Scrolled Origin,,,.table index origin,,,"0,0",,,
+Index,Scrolled Topleft,,,.table index topleft,,,"50,50",,,
+Index,Scrolled Bottomright,,,.table index bottomright,,,"81,62",,,
+Index,Scrolled Coordinate,,,".table index @10,10",,,"50,50",,,
+Index,Scrolled Cell,,,".table index 23,23",,,"23,23",,,
+Index,Get Row,,".table activate 20,40",.table index active row,,,20,,,
+Index,Get Column,,".table activate 20,40",.table index active col,,,40,,,
+Index,Scroll,,,.table xview moveto 0;.table yview moveto 0,,,,,,
+Index,No Select Title Topleft,,.table configure -titlecols 2 -titlerows 2 -selecttitle 0,.table index topleft,,,"2,2",,,
+Index,No Select Title Origin,,.table configure -titlecols 2 -titlerows 2 -selecttitle 0,.table index origin,,,"2,2",,,
+Index,Select Title Topleft,,.table configure -titlecols 2 -titlerows 2 -selecttitle 1,.table index topleft,,,"2,2",,,
+Index,Select Title Origin,,.table configure -titlecols 2 -titlerows 2 -selecttitle 1,.table index origin,,,"2,2",,,
+Index,Empty Table,,.table configure -cols 0 -rows 0 -titlecols 2 -titlerows 2 -selecttitle 1,.table index topleft,,,"0,0",,,
+Index,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Insert,,,.table insert  ?switches? arg ?arg?,,,,,,
+Insert,Create,,,setup .table,,,.table,,,
+Insert,Too few args,,,.table insert,,,"wrong # args: should be "".table insert option ?switches? arg ?arg?""",,,1
+Insert,Bad option,,,.table insert bogus arg,,,"bad option ""bogus"": must be active, cols, columns, or rows",,,1
+Insert,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Insert Active,,,,,,,,,
+command,"set string ""Some text""",,,,,,,,,
+Insert Active,Create,,,setup .table,,,.table,,,
+Insert Active,Too few args,,,.table insert active index,,,"wrong # args: should be "".table insert active index string""",,,1
+Insert Active,Too many args,,,.table insert active 1 2 3,,,"wrong # args: should be "".table insert active index string""",,,1
+Insert Active,Invalid index,,,.table insert active bogus value,,,"expected integer but got ""bogus""",,,1
+Insert Active,Insert before activate,,,".table insert active 0 ""Some text"";.table icursor",,,-1,,,
+Insert Active,Init,,,".table set 2,4 ""Some text"";.table activate 2,4",,,,,,
+Insert Active,Insert at 0,,".table set 2,4 $string",".table insert active 0 ""more "";.table curvalue",,,more Some text,,,
+Insert Active,Insert in middle,,".table set 2,4 $string",".table insert active 5 ""more "";.table curvalue",,,Some more text,,,
+Insert Active,Insert at 9,,".table set 2,4 $string",".table insert active 9 "" more"";.table curvalue",,,Some text more,,,
+Insert Active,Insert at end,,".table set 2,4 $string",".table insert active end "" more"";.table curvalue",,,Some text more,,,
+Insert Active,Insert at icursor,,".table set 2,4 $string;.table icursor 5",".table insert active insert ""more "";.table curvalue",,,Some more text,,,
+Insert Active,Insert before start,,".table set 2,4 $string",".table insert active -10 ""more "";.table curvalue",,,more Some text,,,
+Insert Active,Insert after end,,".table set 2,4 $string",".table insert active 15 "" more"";.table curvalue",,,Some text more,,,
+Insert Active,Insert into empty cell,,".table set 2,4 {}",".table insert active end ""more text"";.table curvalue",,,more text,,,
+Insert Active,Auto clear,,".table configure -autoclear 1;.table set 7,7 ""more text"";.table activate 7,7",".table insert active end ""another text"";.table curvalue",,,another text,,,
+Insert Active,Validate,,,,,,,,,
+Insert Active,Empty table,,,,,,,,,
+Insert Active,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Insert Column,,,,,,,,,
+Insert Column,Create,,,setup .table -cols 10 -rows 10,,,.table,,,
+Insert Column,Too few args,,,.table insert cols,,,"wrong # args: should be "".table insert option ?switches? arg ?arg?""",,,1
+Insert Column,Too many args,,,.table insert cols 1 2 3 4 5 6 7 8 9 10,,,"wrong # args: should be "".table insert cols ?switches? index ?count?""",,,1
+Insert Column,Bad index,,,.table insert cols bogus,,,"expected integer but got ""bogus""",,,1
+Insert Column,Bad count,,,.table insert cols 4 bogus,,,"expected integer but got ""bogus""",,,1
+Insert Column,Bad switch,,,.table insert cols -bogus 4 5,,,"bad switch ""-bogus"": must be -keeptitles, -holddimensions, -holdselection, -holdtags, -holdwindows, or --",,,1
+Insert Column,Single,,,.table insert cols 15;.table cget -cols,,,11,,,
+Insert Column,Single column,,,.table insert columns 14;.table cget -cols,,,12,,,
+Insert Column,Multiple,,,.table insert cols 10 4;.table cget -cols,,,16,,,
+Insert Column,At end,,,.table insert cols 20 10;.table cget -cols,,,26,,,
+Insert Column,Negative count,,,.table insert cols 20 -10;.table cget -cols,,,36,,,
+Insert Column,Hold Dimensions,,,.table insert cols -holddimensions 16 5;.table cget -cols,,,36,,,
+Insert Column,Hold Selection,,".table selection set 0,20 0,25",".table insert cols -holdselection 20 5;.table selection includes 0,22",,,1,,,
+Insert Column,Hold Tags,,.table tag col test_tag 30 31,.table insert cols -holdtags 31;lsort [.table tag col test_tag],,,30 31,,,
+Insert Column,Hold Windows,,".table window configure 0,40 -window [entry .table.e]",".table insert cols -holdwindows 38 5;.table window cget 0,40 -window",,,.table.e,,,
+Insert Column,Keep Titles,,".table configure -titlecols 5 -titlerows 5;.table set 0,4 ""Test value""",".table insert cols -keeptitles 0 5; .table set 0,4",,,Test value,,,
+Insert Column,No switches,,,.table insert cols -- 5 5;.table cget -cols,,,53,,,
+Insert Column,Out of range min,,,.table insert cols -- -100 5;.table cget -cols,,,58,,,
+Insert Column,Out of range max,,,.table insert cols 100 5;.table cget -cols,,,63,,,
+Insert Column,Out of range count min,,,.table insert cols 10 -50;.table cget -cols,,,113,,,
+Insert Column,Out of range count max,,,.table insert cols 40 100;.table cget -cols,,,213,,,
+Insert Column,Insert Empty Table,,.table configure -cols 0 -rows 0,.table insert cols 0 15;.table cget -cols,,,16,,,
+Insert Column,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Insert Row,,,,,,,,,
+Insert Row,Create,,,setup .table -cols 10 -rows 10,,,.table,,,
+Insert Row,Too few args,,,.table insert rows,,,"wrong # args: should be "".table insert option ?switches? arg ?arg?""",,,1
+Insert Row,Too many args,,,.table insert rows 1 2 3 4 5 6 7 8 9 10,,,"wrong # args: should be "".table insert rows ?switches? index ?count?""",,,1
+Insert Row,Bad index,,,.table insert rows bogus,,,"expected integer but got ""bogus""",,,1
+Insert Row,Bad count,,,.table insert rows 4 bogus,,,"expected integer but got ""bogus""",,,1
+Insert Row,Bad switch,,,.table insert rows -bogus 4 5,,,"bad switch ""-bogus"": must be -keeptitles, -holddimensions, -holdselection, -holdtags, -holdwindows, or --",,,1
+Insert Row,Single,,,.table insert rows 15;.table cget -rows,,,11,,,
+Insert Row,Multiple,,,.table insert rows 10 5;.table cget -rows,,,16,,,
+Insert Row,At end,,,.table insert rows 80 10;.table cget -rows,,,26,,,
+Insert Row,Negative count,,,.table insert rows 20 -10;.table cget -rows,,,36,,,
+Insert Row,Hold Dimensions,,,.table insert rows -holddimensions 16 5;.table cget -rows,,,36,,,
+Insert Row,Hold Selection,,".table selection set 20,0 25,0",".table insert rows -holdselection 20 5;.table selection includes 22,0",,,1,,,
+Insert Row,Hold Tags,,.table tag row test_tag 30 31,.table insert rows -holdtags 31;lsort [.table tag row test_tag],,,30 31,,,
+Insert Row,Hold Windows,,".table window configure 40,0 -window [entry .table.e]",".table insert rows -holdwindows 38 5;.table window cget 40,0 -window",,,.table.e,,,
+Insert Row,Keep Titles,,".table configure -titlecols 5 -titlerows 5;.table set 4,0 ""Test value""",".table insert rows -keeptitles 0 5;.table get 4,0",,,Test value,,,
+Insert Row,No switches,,,.table insert rows -- 50 5;.table cget -rows,,,53,,,
+Insert Row,Out of range min,,,.table insert rows -- -100 5;.table cget -rows,,,58,,,
+Insert Row,Out of range max,,,.table insert rows 100 5;.table cget -rows,,,63,,,
+Insert Row,Out of range count min,,,.table insert rows 10 -50;.table cget -rows,,,113,,,
+Insert Row,Out of range count max,,,.table insert rows 40 100;.table cget -rows,,,213,,,
+Insert Row,Insert Empty Table,,.table configure -cols 0 -rows 0,.table insert rows 0 15;.table cget -rows,,,16,,,
+Insert Row,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Reread,,,,,,,,,
+Reread,Create,,,setup_data .table,,,.table,,,
+Reread,Too many args,,,.table reread 1,,,"wrong # args: should be "".table reread""",,,1
+Reread,Init,,,".table set 5,5 ""Some text"";.table activate 5,5;.table curvalue",,,Some text,,,
+Reread,Edit,,,".table curvalue ""New text"";.table curvalue",,,New text,,,
+Reread,Restore,,,.table reread;.table curvalue,,,Some text,,,
+Reread,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Scan,,,,,,,,,
+Scan,Create,,,setup .table -cols 100 -rows 100,,,.table,,,
+Scan,Too few args,,,.table scan,,,"wrong # args: should be "".table scan mark|dragto x y""",,,1
+Scan,Too many args,,,.table scan 1 2 3 4 5,,,"wrong # args: should be "".table scan mark|dragto x y""",,,1
+Scan,Bad option,,,.table scan bogus 1 2,,,"bad option ""bogus"": must be mark or dragto",,,1
+Scan,Bad x index,,,.table scan mark bogus 1,,,"expected integer but got ""bogus""",,,1
+Scan,Bad y index,,,.table scan mark 1 bogus,,,"expected integer but got ""bogus""",,,1
+Scan,Mark,,,.table scan mark 20 30,,,,,,
+Scan,Dragto,,,set list [.table index topleft];.table scan dragto 500 500;lappend list [.table index topleft];set list,,,"0,0 69,46",,,
+Scan,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# See,,,,,,,,,
+See,Create,,,setup .table -cols 100 -rows 100,,,.table,,,
+See,Too few args,,,.table see,,,"wrong # args: should be "".table see index""",,,1
+See,Too many args,,,.table see arg arg,,,"wrong # args: should be "".table see index""",,,1
+See,Invaild index,,,.table see bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+See,Cell visible,,,".table see 6,6;list [.table xview] [.table yview]",,,{{0.0 0.12903225806451613} {0.0 0.3157894736842105}},,,
+See,Cell Not visible,,,".table see 21,21;list [.table xview] [.table yview]",,,{{0.1 0.22903225806451613} {0.0 0.3157894736842105}},,,
+See,Active,,".table activate 50,50",.table see active;list [.table xview] [.table yview],,,{{0.39 0.5190322580645161} {0.2 0.5157894736842106}},,,
+See,Origin,,,.table see origin;list [.table xview] [.table yview],,,{{0.0 0.12903225806451613} {0.0 0.3157894736842105}},,,
+See,End,,,.table see end;list [.table xview] [.table yview],,,{{0.88 1.0} {0.69 1.0}},,,
+See,X scroll right,,".table activate 25,25;.table xview moveto 0.25;.table yview moveto 0.25;.table see active","set list [list [.table index topleft] [.table index bottomright]];.table activate 25,75;.table see active;lappend list [.table index topleft] [.table index bottomright];set list",,,"25,25 56,37 25,64 56,76",,,
+See,Y scroll down,,".table activate 25,25;.table xview moveto 0.25;.table yview moveto 0.25;.table see active","set list [list [.table index topleft] [.table index bottomright]];.table activate 75,25;.table see active;lappend list [.table index topleft] [.table index bottomright];set list",,,"25,25 56,37 45,25 76,37",,,
+See,X scroll right and Y scroll down,,".table activate 25,25;.table xview moveto 0.25;.table yview moveto 0.25;.table see active","set list [list [.table index topleft] [.table index bottomright]];.table activate 75,75;.table see active;lappend list [.table index topleft] [.table index bottomright];set list",,,"25,25 56,37 45,64 76,76",,,
+See,X scroll left,,".table activate 25,25;.table xview moveto 0.25;.table yview moveto 0.25;.table see active","set list [list [.table index topleft] [.table index bottomright]];.table activate 75,25;.table see active;lappend list [.table index topleft] [.table index bottomright];set list",,,"25,25 56,37 45,25 76,37",,,
+See,Y scroll up,,".table activate 25,25;.table xview moveto 0.25;.table yview moveto 0.25;.table see active","set list [list [.table index topleft] [.table index bottomright]];.table activate 25,75;.table see active;lappend list [.table index topleft] [.table index bottomright];set list",,,"25,25 56,37 25,64 56,76",,,
+See,X scroll left and Y scroll up,,".table activate 25,25;.table xview moveto 0.25;.table yview moveto 0.25;.table see active","set list [list [.table index topleft] [.table index bottomright]];.table activate 25,25;.table see active;lappend list [.table index topleft] [.table index bottomright];set list",,,"25,25 56,37 25,25 56,37",,,
+See,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Selection,,,,,,,,,
+Selection,Create,,,setup .table -cols 100 -rows 100,,,.table,,,
+Selection,Too few args,,,.table selection,,,"wrong # args: should be "".table selection option ?arg arg ...?""",,,1
+Selection,Bad option,,,.table selection bogus,,,"bad selection option ""bogus"": must be active, anchor, clear, includes, present, set, or size",,,1
+Selection,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Selection Active,,,,,,,,,
+Selection Active,Create,,,setup_data .table,,,.table,,,
+Selection Active,Too many args,,,.table selection active 1 2 3,,,"wrong # args: should be "".table selection active ?start? ?end?""",,,1
+Selection Active,Invalid start index,,,.table selection active bogus value,,,"expected integer but got ""bogus""",,,1
+Selection Active,Invalid end index,,,.table selection active 0 bogus,,,"expected integer but got ""bogus""",,,1
+Selection Active,Default,,,.table selection active,,,,,,
+Selection Active,Set inactive,,,.table selection active 5 10;.table selection active,,,,,,
+Selection Active,Init,,,".table activate 6,0;.table set active ""This is some text""",,,,,,
+Selection Active,Set,,,.table selection active 5 10,,,,,,
+Selection Active,Get,,,.table selection active,,,5 10,,,
+command,# String range includes last index while selection active does not. This is the same as the entry widget.,,,,,,,,,
+Selection Active,Retreive,,,lassign [.table selection active] first last;incr last -1;string range [.table curvalue] $first $last,,,is so,,,
+Selection Active,Clear Selected,,,.table selection active {};.table selection active,,,,,,
+Selection Active,Clear None,,,.table selection active {};.table selection active,,,,,,
+Selection Active,Insert to End,,.table icursor 8,.table selection active insert end;.table selection active,,,8 17,,,
+Selection Active,Reverse order,,,.table selection active 10 5;.table selection active,,,,,,
+Selection Active,Range before,,,.table selection active -5 5;.table selection active,,,0 5,,,
+Selection Active,Range after,,,.table selection active 15 25;.table selection active,,,15 17,,,
+Selection Active,Out of range min,,,.table selection active -10 -5;.table selection active,,,,,,
+Selection Active,Out of range max,,,.table selection active 25 30;.table selection active,,,,,,
+Selection Active,Empty cell,,".table activate 6,6",.table selection active 5 10;.table selection active,,,,,,
+Selection Active,Empty table,,,,,,,,,
+Selection Active,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Selection Anchor,,,,,,,,,
+Selection Anchor,Create,,,setup_data .table,,,.table,,,
+Selection Anchor,Too few args,,,.table selection anchor,,,"wrong # args: should be "".table selection anchor index""",,,1
+Selection Anchor,Too many args,,,.table selection anchor 1 2,,,"wrong # args: should be "".table selection anchor index""",,,1
+Selection Anchor,Invalid index,,,.table selection anchor bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Selection Anchor,No anchor,,,.table index anchor,,,"no ""anchor"" cell in table",,,1
+Selection Anchor,Set,,,".table selection anchor 3,3",,,,,,
+Selection Anchor,Get,,,.table index anchor,,,"3,3",,,
+Selection Anchor,Clear,,,.table selection anchor {},,,,,,
+Selection Anchor,Out of range min,,,".table selection anchor -5,-5;.table index anchor",,,"0,0",,,
+Selection Anchor,Out of range max,,,".table selection anchor 25,25;.table index anchor",,,"9,9",,,
+Selection Anchor,Anchor in Title With No Title Select,,.table configure -selecttitle 0 -titlecols 2 -titlerows 2,".table selection anchor 1,1;.table index anchor",,,"2,2",,,
+Selection Anchor,Anchor in Title With Title Select,,.table configure -selecttitle 1 -titlecols 2 -titlerows 2,".table selection anchor 1,1;.table index anchor",,,"1,1",,,
+Selection Anchor,Empty table,,.table configure -selecttitle 0 -titlecols 0 -titlerows 0 -cols 0 -rows 0,".table selection anchor 0,0;.table index anchor",,,"0,0",,,
+Selection Anchor,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Selection Clear,,,,,,,,,
+Selection Clear,Create,,,setup_data .table,,,.table,,,
+Selection Clear,Too few args,,,.table selection clear,,,"wrong # args: should be "".table selection clear all|<first> ?<last>?""",,,1
+Selection Clear,Too many args,,,.table selection clear 1 2 3,,,"wrong # args: should be "".table selection clear all|<first> ?<last>?""",,,1
+Selection Clear,Invalid first index,,,.table selection clear bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Selection Clear,Invalid last index,,,".table selection clear 1,1 bogus",,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Selection Clear,Clear Index,,".table selection set 2,0 2,9",".table selection clear 2,2;.table curselection",,,"2,0 2,1 2,3 2,4 2,5 2,6 2,7 2,8 2,9",,,
+Selection Clear,Clear Range,,".table selection set 2,0 2,9",".table selection clear 2,2 2,6;.table curselection",,,"2,0 2,1 2,7 2,8 2,9",,,
+Selection Clear,Clear Reverse Range,,".table selection set 2,0 2,9",".table selection clear 2,5 2,3;.table curselection",,,"2,0 2,1 2,2 2,6 2,7 2,8 2,9",,,
+Selection Clear,Clear All,,,.table selection clear all,,,,,,
+Selection Clear,Select Type Cell,,".table configure -selecttype cell;.table selection set 2,0 2,9",".table selection clear 2,5 2,7;.table curselection",,,"2,0 2,1 2,2 2,3 2,4 2,8 2,9",,,
+Selection Clear,Select Type Column,,".table configure -selecttype col;.table selection set 2,0 2,9",".table selection clear 2,5 2,7;.table curselection",,,"0,0 0,1 0,2 0,3 0,4 0,8 0,9 1,0 1,1 1,2 1,3 1,4 1,8 1,9 2,0 2,1 2,2 2,3 2,4 2,8 2,9 3,0 3,1 3,2 3,3 3,4 3,8 3,9 4,0 4,1 4,2 4,3 4,4 4,8 4,9 5,0 5,1 5,2 5,3 5,4 5,8 5,9 6,0 6,1 6,2 6,3 6,4 6,8 6,9 7,0 7,1 7,2 7,3 7,4 7,8 7,9 8,0 8,1 8,2 8,3 8,4 8,8 8,9 9,0 9,1 9,2 9,3 9,4 9,8 9,9",,,
+Selection Clear,Select Type Row,,".table configure -selecttype row;.table selection set 2,0 2,9",".table selection clear 2,5 2,7;.table curselection",,,"0,0 0,1 0,2 0,3 0,4 0,8 0,9 1,0 1,1 1,2 1,3 1,4 1,8 1,9 3,0 3,1 3,2 3,3 3,4 3,8 3,9 4,0 4,1 4,2 4,3 4,4 4,8 4,9 5,0 5,1 5,2 5,3 5,4 5,8 5,9 6,0 6,1 6,2 6,3 6,4 6,8 6,9 7,0 7,1 7,2 7,3 7,4 7,8 7,9 8,0 8,1 8,2 8,3 8,4 8,8 8,9 9,0 9,1 9,2 9,3 9,4 9,8 9,9",,,
+Selection Clear,Select Type Both,,".table configure -selecttype both;.table selection set 2,0 2,9",".table selection clear 2,5 2,7;.table curselection",,,"0,0 0,1 0,2 0,3 0,4 0,8 0,9 1,0 1,1 1,2 1,3 1,4 1,8 1,9 3,0 3,1 3,2 3,3 3,4 3,8 3,9 4,0 4,1 4,2 4,3 4,4 4,8 4,9 5,0 5,1 5,2 5,3 5,4 5,8 5,9 6,0 6,1 6,2 6,3 6,4 6,8 6,9 7,0 7,1 7,2 7,3 7,4 7,8 7,9 8,0 8,1 8,2 8,3 8,4 8,8 8,9 9,0 9,1 9,2 9,3 9,4 9,8 9,9",,,
+Selection Clear,Delete table,,".table selection set 2,0 2,9;.table configure -cols 0 -rows 0 -selecttype cell",.table selection clear all;.table curselection,,,,,,
+Selection Clear,Empty table,,".table selection set 0,0 2,2",.table selection clear all;.table curselection,,,,,,
+Selection Clear,Empty Select Type Cell,,".table configure -selecttype cell;.table selection set 2,0 2,9",".table selection clear 2,5 2,7;.table curselection",,,,,,
+Selection Clear,Empty Select Type Column,,".table configure -selecttype col;.table selection set 2,0 2,9",".table selection clear 2,5 2,7;.table curselection",,,,,,
+Selection Clear,Empty Select Type Row,,".table configure -selecttype row;.table selection set 2,0 2,9",".table selection clear 2,5 2,7;.table curselection",,,,,,
+Selection Clear,Empty Select Type Both,,".table configure -selecttype both;.table selection set 2,0 2,9",".table selection clear 2,5 2,7;.table curselection",,,,,,
+Selection Clear,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Selection Includes,,,,,,,,,
+Selection Includes,Create,,,setup_data .table,,,.table,,,
+Selection Includes,Too few args,,,.table selection includes,,,"wrong # args: should be "".table selection includes index""",,,1
+Selection Includes,Too many args,,,.table selection includes 1 2,,,"wrong # args: should be "".table selection includes index""",,,1
+Selection Includes,Invalid index,,,.table selection includes bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Selection Includes,In selection,,".table selection set 2,0 2,9",".table selection includes 2,5",,,1,,,
+Selection Includes,Not in selection,,,".table selection includes 5,3",,,0,,,
+Selection Includes,Empty table,,.table configure -cols 0 -rows 0,".table selection includes 2,6",,,0,,,
+Selection Includes,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Selection Present,,,,,,,,,
+Selection Present,Create,,,setup_data .table,,,.table,,,
+Selection Present,Too many args,,,.table selection present 1,,,"wrong # args: should be "".table selection present""",,,1
+Selection Present,Default,,,.table selection present,,,0,,,
+Selection Present,Has selection,,".table selection set 2,0 2,9",.table selection present,,,1,,,
+Selection Present,No selection,,.table selection clear all,.table selection present,,,0,,,
+command,# Resize table does not auto clear out of range selected cells,,,,,,,,,
+Selection Present,Empty table,,".table configure -cols 0 -rows 0;.table selection clear all;.table selection set 2,0 2,9",.table selection present,,,1,,,
+Selection Present,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Selection Set,,,,,,,,,
+Selection Set,Create,,,setup_data .table,,,.table,,,
+Selection Set,Too few args,,,.table selection set,,,"wrong # args: should be "".table selection set first ?last?""",,,1
+Selection Set,Too many args,,,.table selection set 1 2 3,,,"wrong # args: should be "".table selection set first ?last?""",,,1
+Selection Set,Invalid index,,,.table selection set bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Selection Set,Cell,,,".table selection set 2,2;.table curselection",,,"2,2",,,
+Selection Set,Range of cells,,,".table selection set 3,1 4,4;.table curselection",,,"2,2 3,1 3,2 3,3 3,4 4,1 4,2 4,3 4,4",,,
+Selection Set,Reverse order,,,".table selection set 6,4 5,3;.table curselection",.table selection clear all,,"2,2 3,1 3,2 3,3 3,4 4,1 4,2 4,3 4,4 5,3 5,4 6,3 6,4",,,
+Selection Set,Select Type Cell,,.table configure -selecttype cell,".table selection set 2,5 2,7;.table curselection",.table selection clear all,,"2,5 2,6 2,7",,,
+Selection Set,Select Type Column,,.table configure -selecttype col,".table selection set 2,5 2,7;.table curselection",.table selection clear all,,"0,5 0,6 0,7 1,5 1,6 1,7 2,5 2,6 2,7 3,5 3,6 3,7 4,5 4,6 4,7 5,5 5,6 5,7 6,5 6,6 6,7 7,5 7,6 7,7 8,5 8,6 8,7 9,5 9,6 9,7",,,
+Selection Set,Select Type Row,,.table configure -selecttype row,".table selection set 2,5 2,7;.table curselection",.table selection clear all,,"2,0 2,1 2,2 2,3 2,4 2,5 2,6 2,7 2,8 2,9",,,
+Selection Set,Select Type Both,,.table configure -selecttype both,".table selection set 2,5 2,7;.table curselection",.table selection clear all,,"0,5 0,6 0,7 1,5 1,6 1,7 2,0 2,1 2,2 2,3 2,4 2,5 2,6 2,7 2,8 2,9 3,5 3,6 3,7 4,5 4,6 4,7 5,5 5,6 5,7 6,5 6,6 6,7 7,5 7,6 7,7 8,5 8,6 8,7 9,5 9,6 9,7",,,
+Selection Set,No Title Select Cell in Col Title,,.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0,".table selection set 0,4;.table curselection",.table selection clear all,,"1,4",,,
+Selection Set,No Title Select Cell in Row Title,,.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0,".table selection set 4,0;.table curselection",.table selection clear all,,"4,1",,,
+Selection Set,No Title Select Cell in Titles,,.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 0,".table selection set 1,1;.table curselection",.table selection clear all,,"2,2",,,
+Selection Set,No Title Select Type Row,,.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 0,".table selection set 1,1;.table curselection",.table selection clear all,,"2,2 2,3 2,4 2,5 2,6 2,7 2,8 2,9",,,
+Selection Set,No Title Select Type Col,,.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0,".table selection set 1,1;.table curselection",.table selection clear all,,"2,2 3,2 4,2 5,2 6,2 7,2 8,2 9,2",,,
+Selection Set,No Title Select All,,.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0,.table selection set origin end;llength [.table curselection],.table selection clear all,,64,,,
+Selection Set,Title Select Cell in Col Title,,.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1,".table selection set 0,4;.table curselection",.table selection clear all,,"0,4",,,
+Selection Set,Title Select Cell in Row Title,,.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1,".table selection set 4,0;.table curselection",.table selection clear all,,"4,0",,,
+Selection Set,Title Select Cell in Titles,,.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 1,".table selection set 1,1;.table curselection",.table selection clear all,,"1,1",,,
+Selection Set,Title Select Type Row,,.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 1,".table selection set 1,1;.table curselection",.table selection clear all,,"1,0 1,1 1,2 1,3 1,4 1,5 1,6 1,7 1,8 1,9",,,
+Selection Set,Title Select Type Col,,.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1,".table selection set 1,1;.table curselection",.table selection clear all,,"0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1",,,
+Selection Set,Title Select All,,.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1,.table selection set origin end;llength [.table curselection],.table selection clear all,,80,,,
+command,# Resize table does not auto clear out of range selected cells,,,,,,,,,
+Selection Set,Empty table,,.table configure -selecttype cell -cols 0 -rows 0 -titlecols 2 -titlerows 2 -selecttitle 1,".table selection set 2,5 2,7;.table curselection",.table selection clear all,,"0,0",,,
+Selection Set,Empty table Select All,,.table configure -selecttype cell -cols 0 -rows 0,.table selection set origin end;.table curselection,.table selection clear all,,"0,0",,,
+Selection Set,Empty No Title Select Cell in Col Title,,.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0,".table selection set 0,4;.table curselection",.table selection clear all,,,,,
+Selection Set,Empty No Title Select Cell in Row Title,,.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0,".table selection set 4,0;.table curselection",.table selection clear all,,,,,
+Selection Set,Empty No Title Select Cell in Titles,,.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 0,".table selection set 1,1;.table curselection",.table selection clear all,,,,,
+Selection Set,Empty No Title Select Type Row,,.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 0,".table selection set 1,1;.table curselection",.table selection clear all,,,,,
+Selection Set,Empty No Title Select Type Col,,.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0,".table selection set 1,1;.table curselection",.table selection clear all,,,,,
+Selection Set,Empty No Title Select All,,.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0,.table selection set origin end;llength [.table curselection],.table selection clear all,,0,,,
+Selection Set,Empty Title Select Cell in Col Title,,.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1,".table selection set 0,4;.table curselection",.table selection clear all,,"0,0",,,
+Selection Set,Empty Title Select Cell in Row Title,,.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1,".table selection set 4,0;.table curselection",.table selection clear all,,"0,0",,,
+Selection Set,Empty Title Select Cell in Titles,,.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 1,".table selection set 1,1;.table curselection",.table selection clear all,,"0,0",,,
+Selection Set,Empty Title Select Type Row,,.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 1,".table selection set 1,1;.table curselection",.table selection clear all,,"0,0",,,
+Selection Set,Empty Title Select Type Col,,.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1,".table selection set 1,1;.table curselection",.table selection clear all,,"0,0",,,
+Selection Set,Empty Title Select All,,.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1,.table selection set origin end;llength [.table curselection],.table selection clear all,,1,,,
+Selection Set,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Selection Size,,,,,,,,,
+Selection Size,Create,,,setup_data .table,,,.table,,,
+Selection Size,Too many args,,,.table selection size 1,,,"wrong # args: should be "".table selection size""",,,1
+Selection Size,Default,,,.table selection size,,,0,,,
+Selection Size,Has selection,,".table selection set 2,0 2,9",.table selection size,,,10,,,
+Selection Size,Unselect,,".table selection clear 1,4 3,5",.table selection size,,,8,,,
+Selection Size,No selection,,.table selection clear all,.table selection size,,,0,,,
+Selection Size,Select Type Cell,,.table configure -selecttype cell,".table selection set 2,5 2,7;.table selection size",.table selection clear all,,3,,,
+Selection Size,Select Type Column,,.table configure -selecttype col,".table selection set 2,5 2,7;.table selection size",.table selection clear all,,30,,,
+Selection Size,Select Type Row,,.table configure -selecttype row,".table selection set 2,5 2,7;.table selection size",.table selection clear all,,10,,,
+Selection Size,Select Type Both,,.table configure -selecttype both,".table selection set 2,5 2,7;.table selection size",.table selection clear all,,37,,,
+command,# Resize table does not auto clear out of range selected cells,,,,,,,,,
+Selection Size,Empty table,,.table configure -cols 0 -rows 0;.table selection clear all,".table selection set 2,5 2,7;.table selection size",.table selection clear all,,1,,,
+Selection Size,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,proc pause {{ms 1000}} {set ::pause 0;after $ms [list set ::pause 1];vwait ::pause},,,,,,,,,
+command,proc keypress {w event} {if {[focus] ne $w} {focus -force $w};event generate $w $event;pause 50},,,,,,,,,
+command,proc keypress {w event} {if {[focus] ne $w} {focus -force $w};event generate $w $event -when now;pause 50},,,,,,,,,
+command,proc do_event {w event} {focus -force $w;event generate $w $event;pause 50},,,,,,,,,
+,,,,,,,,,,
+command,# Active Cell Edit,,,,,,,,,
+Binding Cell Edit,Create,,,setup .table -cols 50 -rows 50,,,.table,,,
+Binding Cell Edit,Init,,,".table set row 0,0 [list abcd efgh ijkl];.table set row 1,0 [list mnop qrst uvw\nxyz]",,,,,,
+Binding Cell Edit,Move left 1 char,,".table activate 1,1;.table icursor 2",keypress .table <<PrevChar>>;list [.table activate] [.table icursor],,,"1,1 1",,,
+Binding Cell Edit,Move right 1 char,,".table activate 1,1;.table icursor 2",keypress .table <<NextChar>>;list [.table activate] [.table icursor],,,"1,1 3",,,
+Binding Cell Edit,Move up 1 char,,".table activate 1,1;.table icursor 2",keypress .table <<PrevLine>>;list [.table activate] [.table icursor],,,"0,1 2",,,
+Binding Cell Edit,Move down 1 char,,".table activate 1,1;.table icursor 2",keypress .table <<NextLine>>;list [.table activate] [.table icursor],,,"2,1 2",,,
+Binding Cell Edit,Move to start,,".table activate 1,1;.table icursor 2",keypress .table <<LineStart>>;list [.table activate] [.table icursor],,,"1,1 0",,,
+Binding Cell Edit,Move to prev cell,,,keypress .table <<PrevChar>>;list [.table activate] [.table icursor],,,"1,0 4",,,
+Binding Cell Edit,Move to end,,".table activate 1,1;.table icursor 2",keypress .table <<LineEnd>>;list [.table activate] [.table icursor],,,"1,1 4",,,
+Binding Cell Edit,Move to next cell,,,keypress .table <<NextChar>>;list [.table activate] [.table icursor],,,"1,2 0",,,
+Binding Cell Edit,Backspace,,".table activate 1,1;.table icursor 2",keypress .table <BackSpace>;list [.table activate] [.table icursor] [string length [.table curvalue]],,,"1,1 1 3",,,
+Binding Cell Edit,Delete,,,keypress .table <Delete>;list [.table activate] [.table icursor] [string length [.table curvalue]],,,"1,1 1 2",,,
+Binding Cell Edit,Insert Char,,,keypress .table <Key-a>;list [.table activate] [.table icursor] [string length [.table curvalue]],,,"1,1 2 3",,,
+Binding Cell Edit,Insert Tab,,,"keypress .table <Control-t>;list [.table activate] [.table icursor] [string length [.table curvalue]] [expr {[string index [.table curvalue] 2] eq ""\t""}]",,,"1,1 2 3 0",,,
+Binding Cell Edit,Insert Newline,,,"keypress .table <Alt-Return>;list [.table activate] [.table icursor] [string length [.table curvalue]] [expr {[string index [.table curvalue] 3] eq ""\n""}]",,,"1,1 3 4 0",,,
+Binding Cell Edit,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Active Cell Selection,,,,,,,,,
+Binding Cell Select,Create,,,setup .table -cols 50 -rows 50,,,.table,,,
+Binding Cell Select,Init,,,".table set row 0,0 [list abcd efgh ijkl];.table set row 1,0 [list mnop qrst uvw\nxyz]",,,,,,
+Binding Cell Select,Select left 1 char,,".table activate 1,1;.table icursor 2;.table selection active {}",keypress .table <<SelectPrevChar>>;list [.table activate] [.table icursor] [.table selection active],,,"1,1 1 {1 2}",,,
+Binding Cell Select,Select right 1 char,,".table activate 1,1;.table icursor 2;.table selection active {}",keypress .table <<SelectNextChar>>;list [.table activate] [.table icursor] [.table selection active],,,"1,1 3 {2 3}",,,
+Binding Cell Select,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Cell Navigation Bindings,,,,,,,,,
+Binding Nav,Create,,,setup .table -cols 50 -rows 50,,,.table,,,
+Binding Nav,Init,,,"focus -force .table;.table focus 5,5;pause 50;.table focus",,,"5,5",,,
+Binding Nav,Move left 1 cell,,,keypress .table <<PrevChar>>;.table focus,,,"5,4",,,
+Binding Nav,Move up 1 cell,,,keypress .table <<PrevLine>>;.table focus,,,"4,4",,,
+Binding Nav,Move right 1 cell,,,keypress .table <<NextChar>>;.table focus,,,"4,5",,,
+Binding Nav,Move down 1 cell,,,keypress .table <<NextLine>>;.table focus,,,"5,5",,,
+Binding Nav,Return,,,keypress .table <Return>;.table focus,,,"6,5",,,
+Binding Nav,Shift Return,,,keypress .table <Shift-Return>;.table focus,,,"5,5",,,
+Binding Nav,Tab,,,keypress .table <Tab>;.table focus,,,"5,6",,,
+Binding Nav,Shift Tab,,,keypress .table <Shift-Tab>;.table focus,,,"5,5",,,
+Binding Nav,Move left 1 page,,,keypress .table <<PrevWord>>;.table focus,,,"5,0",,,
+Binding Nav,Move right 1 page,,,keypress .table <<NextWord>>;.table focus,,,"5,12",,,
+Binding Nav,Move to page top,,,keypress .table <<PrevPara>>;.table focus,,,"0,12",,,
+Binding Nav,Move to page bottom,,,keypress .table <<NextPara>>;.table focus,,,"31,12",,,
+Binding Nav,Move to line start,,,keypress .table <<LineStart>>;.table focus,,,"31,0",,,
+Binding Nav,Move to line end,,,keypress .table <<LineEnd>>;.table focus,,,"31,49",,,
+Binding Nav,Move to top,,,keypress .table <Control-Home>;.table focus,,,"0,0",,,
+Binding Nav,Move to bottom,,,keypress .table <Control-End>;.table focus,,,"49,49",,,
+Binding Nav,Init,,,".table xview moveto 0.45;.table yview moveto 0.45;.table focus 25,25",,,,,,
+Binding Nav,Page Up,,,keypress .table <Prior>;.table focus,,,"6,25",,,
+Binding Nav,Page Left,,,keypress .table <Shift-Prior>;.table focus,,,"6,12",,,
+Binding Nav,Page Down,,,keypress .table <Next>;.table focus,,,"25,12",,,
+Binding Nav,Page Right,,,keypress .table <Shift-Next>;.table focus,,,"25,25",,,
+Binding Nav,Top of screen,,,keypress .table <Control-Prior>;.table focus,,,"19,25",,,
+Binding Nav,Left side of screen,,,keypress .table <Control-Shift-Prior>;.table focus,,,"19,22",,,
+Binding Nav,Bottom of screen,,,keypress .table <Control-Next>;.table focus,,,"49,22",,,
+Binding Nav,Right side of screen,,,keypress .table <Control-Shift-Next>;.table focus,,,"49,34",,,
+Binding Nav,Top of screen,,,keypress .table <Control-Prior>;.table focus,,,"19,34",,,
+Binding Nav,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Binding Selection,,,,,,,,,
+Binding Selection,Create,,,setup .table -cols 50 -rows 50,,,.table,,,
+Binding Selection,Init Single Mode,,.table configure -selectmode single;.table selection clear all,"focus -force .table;.table focus 5,5;.table selection set 5,5;pause 50;.table curselection",,,"5,5",,,
+Binding Selection,Single mode extend left,,,keypress .table <<SelectPrevChar>>;.table curselection,,,"5,5",,,
+Binding Selection,Single mode extend up,,,keypress .table <<SelectPrevLine>>;.table curselection,,,"5,5",,,
+Binding Selection,Single mode extend right,,,keypress .table <<SelectNextChar>>;.table curselection,,,"5,5",,,
+Binding Selection,Single mode extend down,,,keypress .table <<SelectNextLine>>;.table curselection,,,"5,5",,,
+Binding Selection,Init Browse Mode,,.table configure -selectmode browse;.table selection clear all,"focus -force .table;.table focus 5,5;.table selection set 5,5;pause 50;.table curselection",,,"5,5",,,
+Binding Selection,Browse mode extend left,,,keypress .table <<SelectPrevChar>>;.table curselection,,,"5,5",,,
+Binding Selection,Browse mode extend up,,,keypress .table <<SelectPrevLine>>;.table curselection,,,"5,5",,,
+Binding Selection,Browse mode extend right,,,keypress .table <<SelectNextChar>>;.table curselection,,,"5,5",,,
+Binding Selection,Browse mode extend down,,,keypress .table <<SelectNextLine>>;.table curselection,,,"5,5",,,
+Binding Selection,Init Multiple Mode,,.table configure -selectmode multiple;.table selection clear all,"focus -force .table;.table focus 5,5;.table selection set 5,5;pause 50;.table curselection",,,"5,5",,,
+Binding Selection,Multiple mode extend left,,,do_event .table <<SelectPrevChar>>;.table curselection,,,"5,4 5,5",,,
+Binding Selection,Multiple mode extend up,,,do_event .table <<SelectPrevLine>>;.table curselection,,,"4,4 5,4 5,5",,,
+Binding Selection,Multiple mode extend right,,,do_event .table <<SelectNextChar>>;.table curselection,,,"4,4 4,5 5,4 5,5",,,
+Binding Selection,Multiple mode extend down,,,do_event .table <<SelectNextLine>>;.table curselection,,,"4,4 4,5 5,4 5,5",,,
+Binding Selection,Init Extended Mode,,.table configure -selectmode extended;.table selection clear all,"focus -force .table;.table focus 5,5;.table selection set 5,5;pause 50;.table curselection",,,"5,5",,,
+Binding Selection,Extended mode extend left,,,do_event .table <<SelectPrevChar>>;.table curselection,,,"5,4 5,5",,,
+Binding Selection,Extended mode extend up,,,do_event .table <<SelectPrevLine>>;.table curselection,,,"4,4 5,4 5,5",,,
+Binding Selection,Extended mode extend right,,,do_event .table <<SelectNextChar>>;.table curselection,,,"4,4 4,5 5,4 5,5",,,
+Binding Selection,Extended mode extend down,,,do_event .table <<SelectNextLine>>;.table curselection,,,"4,4 4,5 5,4 5,5",,,
+Binding Selection,Init,,".table xview moveto 0.45;.table yview moveto 0.45;lassign [.table bbox 25,25] x y w h;incr x 5;incr y 5;::tktable::Button1 .table $x $y;.table activate {}",.table activate {},.table selection clear all,,,,,
+Binding Selection,Extend selection to left edge of page,,".table xview moveto 0.45;.table yview moveto 0.45;lassign [.table bbox 25,25] x y w h;incr x 5;incr y 5;::tktable::Button1 .table $x $y;.table activate {}",do_event .table <<SelectPrevWord>>;.table curselection,.table selection clear all,,"25,22 25,23 25,24 25,25",,,
+Binding Selection,Extend selection to right edge of page,,".table xview moveto 0.45;.table yview moveto 0.45;lassign [.table bbox 25,25] x y w h;incr x 5;incr y 5;::tktable::Button1 .table $x $y;.table activate {}",do_event .table <<SelectNextWord>>;.table curselection,.table selection clear all,,"25,25 25,26 25,27 25,28 25,29 25,30 25,31 25,32 25,33 25,34",,,
+Binding Selection,Extend selection to top of page,,".table xview moveto 0.45;.table yview moveto 0.45;lassign [.table bbox 25,25] x y w h;incr x 5;incr y 5;::tktable::Button1 .table $x $y;.table activate {}",do_event .table <<SelectPrevPara>>;.table curselection,.table selection clear all,,"19,25 20,25 21,25 22,25 23,25 24,25 25,25",,,
+Binding Selection,Extend selection to bottom of page,,".table xview moveto 0.45;.table yview moveto 0.45;lassign [.table bbox 25,25] x y w h;incr x 5;incr y 5;::tktable::Button1 .table $x $y;.table activate {}",do_event .table <<SelectNextPara>>;.table curselection,.table selection clear all,,"25,25 26,25 27,25 28,25 29,25 30,25 31,25 32,25 33,25 34,25 35,25 36,25 37,25 38,25 39,25 40,25 41,25 42,25 43,25 44,25 45,25 46,25 47,25 48,25 49,25",,,
+Binding Selection,Extend selection to first cell in row,,".table xview moveto 0.45;.table yview moveto 0.45;lassign [.table bbox 25,25] x y w h;incr x 5;incr y 5;::tktable::Button1 .table $x $y;.table activate {}",do_event .table <<SelectLineStart>>;.table curselection,.table selection clear all,,"25,0 25,1 25,2 25,3 25,4 25,5 25,6 25,7 25,8 25,9 25,10 25,11 25,12 25,13 25,14 25,15 25,16 25,17 25,18 25,19 25,20 25,21 25,22 25,23 25,24 25,25",,,
+Binding Selection,Extend selection to last cell in row,,".table xview moveto 0.45;.table yview moveto 0.45;lassign [.table bbox 25,25] x y w h;incr x 5;incr y 5;::tktable::Button1 .table $x $y;.table activate {}",do_event .table <<SelectLineEnd>>;.table curselection,.table selection clear all,,"25,25 25,26 25,27 25,28 25,29 25,30 25,31 25,32 25,33 25,34 25,35 25,36 25,37 25,38 25,39 25,40 25,41 25,42 25,43 25,44 25,45 25,46 25,47 25,48 25,49",,,
+Binding Selection,Extend selection to origin cell,,".table xview moveto 0.45;.table yview moveto 0.45;lassign [.table bbox 25,25] x y w h;incr x 5;incr y 5;::tktable::Button1 .table $x $y;.table activate {}",do_event .table <Control-Shift-Home>;llength [.table curselection],.table selection clear all,,676,,,
+Binding Selection,Extend selection to end cell,,".table xview moveto 0.45;.table yview moveto 0.45;lassign [.table bbox 25,25] x y w h;incr x 5;incr y 5;::tktable::Button1 .table $x $y;.table activate {}",do_event .table <Control-Shift-End>;llength [.table curselection],.table selection clear all,,625,,,
+Binding Selection,Select mode invalid,not_supported,,.table configure -selectmode invalid,,,"Bad mode option ""invalid"": must be single, browse, multiple, or extended",,,
+Binding Selection,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Set,,,,,,,,,
+Set,Create,,,setup_data .table,,,.table,,,
+Set,Too few args,,,.table set,,,"wrong # args: should be "".table set ?row|col? index ?value? ?index value ...?""",,,1
+Set,Invalid arg count,,,".table set 0,0 val 1,1",,,"wrong # args: should be "".table set ?row|col? index ?value? ?index value ...?""",,,1
+Set,Invalid index,,,.table set bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Set,Set cell vakue,,,".table set 2,2 test",,,,,,
+Set,Get cell value,,,".table set 2,2",,,test,,,
+Set,Set multiple cells,,,".table set 3,4 val1 3,5 val2 3,6 val3;.table set 3,6",,,val3,,,
+Set,Set invalid row,,,.table set row bogus [list 1 2 3],,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Set,Set row,,,".table set row 5,0 [list a b c d]; .table set 5,3",,,d,,,
+Set,Set invalid column,,,.table set col bogus [list 1 2 3],,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Set,Set column,,,".table set col 0,4 [list f g h i]; .table set 3,4",,,i,,,
+Set,Out of range,,,".table set 15,1 val4",,,,,,
+Set,Clipped row,,,".table set row 8,0 [list a b c d e f g h I j k l]; .table set 8,10",,,j,,,
+Set,Clipped column,,,".table set col 0,9 [list a b c d e f g h I j k l];.table set 10,9",,,j,,,
+command,# Check if variable trace updated hash table per Bug #487747,,,,,,,,,
+Set,Variable trace,,,".table set 7,7 ""New value"";set tableData(7,7)",,,New value,,,
+Set,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Spans,,,,,,,,,
+Spans,Create,,,setup_data .table,,,.table,,,
+Spans,Wrong num of args,,,.table spans 1 2 3,,,"wrong # args: should be "".table spans ?index? ?rows,cols index rows,cols ...?""",,,1
+Spans,Invalid index,,,.table spans bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Spans,Default,,,.table spans,,,,,,
+Spans,Set,,,".table spans 5,5 3,2",,,,,,
+Spans,Get,,,".table spans 5,5",,,"3,2",,,
+Spans,Get All,,,.table spans,,,"5,5 3,2",,,
+Spans,Clear,,,".table spans 5,5 0,0;.table spans 5,5",,,,,,
+Spans,Set Multiple,,,".table spans 1,1 3,2 1,5 3,3 1,9 5,1;lsort -stride 2 -index 0 [.table spans]",,,"1,1 3,2 1,5 3,3 1,9 5,1",,,
+Spans,Clear All,,,".table spans 1,1 0,0 1,5 0,0 1,9 0,0;lsort -stride 2 -index 0 [.table spans]",,,,,,
+Spans,Negative size,,,".table spans 5,5 -2,-2;.table spans 5,5",,,,,,
+Spans,Hidden cell,,".table spans 8,1 0,5",".table spans 8,2 2,2",".table spans 8,1 0,0",,"cannot set spanning on hidden cell 8,2",,,1
+command,# Spans does not constrain span to visible cells,,,,,,,,,
+Spans,Out of range min,,,".table spans -1,-1 2,2;lsort -stride 2 -index 0 [.table spans]",".table spans -1,-1 0,0",,"0,0 2,2",,,
+Spans,Out of range max,,,".table spans 1,9 2,2;lsort -stride 2 -index 0 [.table spans]",".table spans 1,9 0,0",,"1,9 2,2",,,
+Spans,Beyond range min,,,".table spans -5,-5 2,2;lsort -stride 2 -index 0 [.table spans]",".table spans -5,-5 0,0",,"0,0 2,2",,,
+Spans,Beyond range max,,,".table spans 15,15 3,3;lsort -stride 2 -index 0 [.table spans]",".table spans 15,15 0,0",,"9,9 3,3",,,
+Spans,Empty table,,.table configure -cols 0 -rows 0,".table spans 1,1 2,2;lsort -stride 2 -index 0 [.table spans]",".table spans 1,1 0,0",,"0,0 2,2",,,
+Spans,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag,,,,,,,,,
+Tag,Create,,,setup .table,,,.table,,,
+Tag,Too few args,,,.table tag,,,"wrong # args: should be "".table tag option ?arg arg ...?""",,,1
+Tag,Invalid option,,,.table tag bogus,,,"bad tag option ""bogus"": must be celltag, cget, coltag, configure, delete, exists, get, includes, lower, names, priority, raise, or rowtag",,,1
+Tag,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag cell,,,,,,,,,
+Tag Cell,Create,,,setup .table,,,.table,,,
+Tag Cell,Too few args,,,.table tag cell,,,"wrong # args: should be "".table tag celltag tagName ?arg arg ...?""",,,1
+Tag Cell,Invalid index,,,.table tag cell testTag bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Tag Cell,Create tag,,,".table tag cell testTag 1,1;lsort [.table tag cell testTag]",,,"1,1",,,
+Tag Cell,Add tag to cell,,,".table tag cell testTag 2,2;lsort [.table tag cell testTag]",,,"1,1 2,2",,,
+Tag Cell,Add tag to multiple cells,,,".table tag cell testTag 3,3 3,4 3,5 3,6;lsort [.table tag cell testTag]",,,"1,1 2,2 3,3 3,4 3,5 3,6",,,
+Tag Cell,List of cells using tag,,,lsort [.table tag cell testTag],,,"1,1 2,2 3,3 3,4 3,5 3,6",,,
+Tag Cell,Clear cell tag,,,".table tag cell {} 1,1;lsort [.table tag cell testTag]",,,"2,2 3,3 3,4 3,5 3,6",,,
+Tag Cell,Clear multiple cell tags,,,".table tag cell {} 1,1 2,2 3,3 3,4;lsort [.table tag cell testTag]",,,"3,5 3,6",,,
+Tag Cell,Active tag,,".table activate 9,0",.table tag cell active,,,"9,0",,,
+Tag Cell,Focus tag,,".table focus 9,1",.table tag cell focus,,,"9,1",,,
+Tag Cell,Sel tag,,".table selection set 9,2",.table tag cell sel,,,"9,2",,,
+Tag Cell,Title tag,,.table configure -titlecols 0 -titlerows 1,.table tag cell title,,,"0,0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 0,8 0,9",,,
+Tag Cell,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag cget,,,,,,,,,
+Tag Cget,Create,,,setup .table,,,.table,,,
+Tag Cget,Too few args,,,.table tag cget,,,"wrong # args: should be "".table tag cget tagName option""",,,1
+Tag Cget,Too many args,,,.table tag cget 1 2 3,,,"wrong # args: should be "".table tag cget tagName option""",,,1
+Tag Cget,Invalid tagName,,,.table tag cget invalid val,,,"invalid tag name ""invalid""",,,1
+Tag Cget,Invalid arg,,.table tag configure testTag,.table tag cget testTag -bogus,,,"unknown option ""-bogus""",,,1
+Tag Cget,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag column,,,,,,,,,
+Tag Col,Create,,,setup .table,,,.table,,,
+Tag Col,Too few args,,,.table tag col,,,"wrong # args: should be "".table tag coltag tagName ?arg arg ..?""",,,1
+Tag Col,Invalid index,,,.table tag col testTag bogus,,,"expected integer but got ""bogus""",,,1
+Tag Col,Create tag,,,.table tag col testTag 1;lsort -integer [.table tag col testTag],,,1,,,
+Tag Col,Add tag,,,.table tag col testTag 2;lsort -integer [.table tag col testTag],,,1 2,,,
+Tag Col,Add tag to multiple,,,.table tag col testTag 3 4 5 6;lsort -integer [.table tag col testTag],,,1 2 3 4 5 6,,,
+Tag Col,Get list,,,lsort -integer [.table tag col testTag],,,1 2 3 4 5 6,,,
+Tag Col,Clear tag,,,.table tag col {} 1;lsort -integer [.table tag col testTag],,,2 3 4 5 6,,,
+Tag Col,Clear tag from multiple,,,.table tag col {} 1 2 3 4;lsort -integer [.table tag col testTag],,,5 6,,,
+Tag Col,Active tag,,".table activate 9,0",.table tag col active,,,0,,,
+Tag Col,Focus tag,,".table focus 9,1",.table tag col focus,,,1,,,
+Tag Col,Sel tag,,".table selection set 9,2",.table tag col sel,,,2,,,
+Tag Col,Title tag,,.table configure -titlecols 1 -titlerows 0,.table tag col title,,,0,,,
+Tag Col,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag configure,,,,,,,,,
+Tag Configure,Create,,,setup .table,,,.table,,,
+Tag Configure,Get All,,,.table tag configure testTag,,glob,{{-anchor anchor Anchor center {*}} {-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-ellipsis ellipsis Ellipsis {} {}} {-foreground foreground Foreground {} {}} {-fg foreground} {-font font Font {} {}} {-image image Image {} {}} {-justify justify Justify left {*}} {-multiline multiline Multiline -1 -1} {-relief relief Relief flat {}} {-showtext showText ShowText -1 -1} {-state state State unknown unknown} {-wrap wrap Wrap -1 -1}},,,
+Tag Configure,Invalid argc,,,.table tag configure testTag -bg red -bd,,,"value for ""-bd"" missing",,,1
+Tag Configure,Invalid arg,,,.table tag configure testTag -bogus,,,"unknown option ""-bogus""",,,1
+Tag Configure,Get,,,.table tag configure testTag -bd,,,"""-borderwidth borderWidth BorderWidth {} {}""",,,
+Tag Configure,Set Single,,,.table tag configure testTag -bg red;.table tag configure testTag -bg,,,"""-background background Background {} red""",,,
+Tag Configure,Set Multiple,,,.table tag configure testTag -bd 10 -bg blue;.table tag configure testTag -bg,,,"""-background background Background {} blue""",,,
+Tag Configure,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,"proc tag_test {w opt def set_val get_val} {
+    set res 0
+
+    # Default value
+    set g [$w tag cget testTag $opt]
+    set s [lindex [$w tag configure testTag $opt] 3]
+    incr res [expr {[string match $def $s] && $s == $g}]
+
+    # Set and get value
+    $w tag configure testTag $opt $set_val
+    set s [lindex [$w tag configure testTag $opt] 4]
+    set g [$w tag cget testTag $opt]
+    incr res [expr {$s == $get_val && $s == $g}]
+    return $res
+}",,,,,,,,,
+,,,,,,,,,,
+command,# Tag cget and configure options,,,,,,,,,
+Tag Options,Create,,,setup .table,,,.table,,,
+Tag Options,Init,,,.table tag configure testTag,,glob,*,,,
+Tag Options,Anchor,,,tag_test .table -anchor center n n,,,1,,,
+Tag Options,Background,,,tag_test .table -background {} #ff0000 #ff0000,,,2,,,
+Tag Options,Borderwidth alias,,,"tag_test .table -bd {} ""4 2"" ""4 2""",,,2,,,
+Tag Options,Background alias,,,tag_test .table -bg {} #ff0000 #ff0000,,,1,,,
+Tag Options,Borderwidth,,,tag_test .table -borderwidth {} 1 1,,,1,,,
+Tag Options,Ellipsis,,,tag_test .table -ellipsis {} 1 1,,,2,,,
+Tag Options,Foreground alias,,,tag_test .table -fg {} #110022 #110022,,,2,,,
+Tag Options,Font,,,tag_test .table -font {} {Helvetica 12} {Helvetica 12},,,2,,,
+Tag Options,Foreground,,,tag_test .table -foreground {} #110022 #110022,,,1,,,
+Tag Options,Image,,,tag_test .table -image {} ::tk::icons::error ::tk::icons::error,,,2,,,
+Tag Options,Justify,,,tag_test .table -justify left right right,,,1,,,
+Tag Options,Multiline,,,tag_test .table -multiline -1 1 1,,,2,,,
+Tag Options,Relief,,,tag_test .table -relief flat groove groove,,,1,,,
+Tag Options,Showtext,,,tag_test .table -showtext -1 1 1,,,2,,,
+Tag Options,State,,,tag_test .table -state unknown disabled disabled,,,2,,,
+Tag Options,Wrap,,,tag_test .table -wrap -1 1 1,,,2,,,
+Tag Options,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag invalid cget and configure,,,,,,,,,
+Tag Options Invalid,Create,,,setup .table,,,.table,,,
+Tag Options Invalid,Init,,,.table tag configure testTag,,glob,*,,,
+Tag Options Invalid,Anchor,,,.table tag configure testTag -anchor left,,glob,"bad anchor* ""left"": must be n, ne, e, se, s, sw, w, nw, or center",,,1
+Tag Options Invalid,Background,,,.table tag configure testTag -background bogus,,,"unknown color name ""bogus""",,,1
+Tag Options Invalid,Borderwidth,,,.table tag configure testTag -borderwidth badValue,,glob,"*screen distance* ""badValue""",,,1
+Tag Options Invalid,Font,not_supported,,".table tag configure testTag -font ""invalid""",,,"font ""invalid"" doesn't exist",,,1
+Tag Options Invalid,Foreground,,,.table tag configure testTag -foreground bogus,,,"unknown color name ""bogus""",,,1
+Tag Options Invalid,Image,tcl8,,.table tag configure testTag -image bogus,,,"image ""bogus"" doesn't exist",,,1
+Tag Options Invalid,Image,tcl9,,.table tag configure testTag -image bogus,,,"image ""bogus"" does not exist",,,1
+Tag Options Invalid,Justify,,,.table tag configure testTag -justify bogus,,,"bad justification ""bogus"": must be left, right, or center",,,1
+Tag Options Invalid,Multiline,,,.table tag configure testTag -multiline bogus,,,"expected integer but got ""bogus""",,,1
+Tag Options Invalid,Relief,,,.table tag configure testTag -relief 1.5,,,"bad relief ""1.5"": must be flat, groove, raised, ridge, solid, or sunken",,,1
+Tag Options Invalid,Showtext,,,.table tag configure testTag -showtext bogus,,,"expected integer but got ""bogus""",,,1
+Tag Options Invalid,State,,,.table tag configure testTag -state bogus,,,"bad option ""bogus"" must be unknown, normal, disabled",,,1
+Tag Options Invalid,Wrap,,,.table tag configure testTag -wrap bogus,,,"expected integer but got ""bogus""",,,1
+Tag Options Invalid,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag delete,,,,,,,,,
+Tag Delete,Create,,,setup .table,,,.table,,,
+Tag Delete,Too few args,,,.table tag delete,,,"wrong # args: should be "".table tag delete tagName ?tagName ...?""",,,1
+Tag Delete,Reserved tag,,,.table tag delete sel,,,cannot delete sel tag,,,1
+Tag Delete,Single tag,,.table tag configure testTag,.table tag delete testTag;.table tag exists testTag,,,0,,,
+Tag Delete,Multiple tags,,.table tag configure testTag;.table tag configure altTag,.table tag delete altTag testTag;.table tag exists testTag,,,0,,,
+Tag Delete,Unknown tag,,,.table tag delete unknown;.table tag exists unknown,,,0,,,
+Tag Delete,Reserved tag,,,.table tag delete active,,,cannot delete active tag,,,1
+Tag Delete,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag exists,,,,,,,,,
+Tag Exists,Create,,,setup .table,,,.table,,,
+Tag Exists,Too few args,,,.table tag exists,,,"wrong # args: should be "".table tag exists tagName""",,,1
+Tag Exists,Too many args,,,.table tag exists 1 2,,,"wrong # args: should be "".table tag exists tagName""",,,1
+Tag Exists,Known tag,,.table tag configure testTag,.table tag exists testTag,,,1,,,
+Tag Exists,Unknown tag,,,.table tag exists altTag,,,0,,,
+Tag Exists,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag get,,,,,,,,,
+Tag Get,Create,,,setup .table -titlecols 0  -titlerows 0 ,,,.table,,,
+Tag Get,Too few args,,,.table tag get,,,"wrong # args: should be "".table tag get index""",,,1
+Tag Get,Too many args,,,.table tag get 1 2,,,"wrong # args: should be "".table tag get index""",,,1
+Tag Get,Invalid index,,,.table tag get bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Tag Get,Focus tag,,".table focus 1,1",".table tag get 1,1",,,focus,,,
+Tag Get,Active tag,,".table activate 1,1",".table tag get 1,1",,,active focus,,,
+Tag Get,Sel tag,,".table selection set 1,1",".table tag get 1,1",,,active focus sel,,,
+Tag Get,Title tag,,.table configure -titlecols 2 -titlerows 2,".table tag get 1,1",,,active focus sel title,,,
+Tag Get,Cell tag,,".table tag configure testTag;.table tag cell testTag 1,1",".table tag get 1,1",,,active focus sel title testTag,,,
+Tag Get,Column tag,,.table tag col colTag 1,".table tag get 1,1",,,active focus sel title testTag colTag,,,
+Tag Get,Row tag,,.table tag row rowTag 1,".table tag get 1,1",,,active focus sel title testTag rowTag colTag,,,
+Tag Get,No tags,,,".table tag get 5,5",,,,,,
+Tag Get,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag includes,,,,,,,,,
+Tag Includes,Create,,,setup .table,,,.table,,,
+Tag Includes,Too few args,,,.table tag includes,,,"wrong # args: should be "".table tag includes tagName index""",,,1
+Tag Includes,Too many args,,,.table tag includes 1 2 3,,,"wrong # args: should be "".table tag includes tagName index""",,,1
+Tag Includes,Unknown tag,,,".table tag includes unknown 1,1",,,0,,,
+Tag Includes,Invalid index,,,.table tag includes active bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Tag Includes,Active tag,,".table activate 1,1",".table tag includes active 1,1",,,1,,,
+Tag Includes,Flash tag,,,".table tag includes flash 1,1",,,0,,,
+Tag Includes,Focus tag,,".table focus 1,1",".table tag includes focus 1,1",,,1,,,
+Tag Includes,Sel tag,,".table selection set 1,1",".table tag includes sel 1,1",,,1,,,
+Tag Includes,Title tag,,.table configure -titlecols 2 -titlerows 2,".table tag includes title 1,1",,,1,,,
+Tag Includes,Cell tag,,".table tag cell testTag 1,1",".table tag includes testTag 1,1",,,1,,,
+Tag Includes,Column tag,,.table tag col colTag 1,".table tag includes colTag 1,1",,,1,,,
+Tag Includes,Row tag,,.table tag row rowTag 1,".table tag includes rowTag 1,1",,,1,,,
+Tag Includes,No tags,,,".table tag includes testTag 1,2",,,0,,,
+Tag Includes,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag lower,,,,,,,,,
+Tag Lower,Create,,,setup .table,,,.table,,,
+Tag Lower,Too few args,,,.table tag lower,,,"wrong # args: should be "".table tag lower tagName ?belowThis?""",,,1
+Tag Lower,Too many args,,,.table tag lower 1 2 3,,,"wrong # args: should be "".table tag lower tagName ?belowThis?""",,,1
+Tag Lower,Invalid tagName,,,.table tag lower invalid active,,,"invalid tag name ""invalid""",,,1
+Tag Lower,Below Invalid tag,,,.table tag lower flash invalid,,,"invalid tag name ""invalid""",,,1
+Tag Lower,To bottom,,,.table tag lower flash;.table tag names,,,active focus sel title flash,,,
+Tag Lower,Below tag,,,.table tag lower flash active;.table tag names,,,active flash focus sel title,,,
+Tag Lower,Below self,,,.table tag lower flash flash;.table tag names,,,active flash focus sel title,,,
+Tag Lower,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+Tag,# Tag names,,,,,,,,,
+Tag Names,Create,,,setup .table,,,.table,,,
+Tag Names,Too many args,,,.table tag names 1 2,,,"wrong # args: should be "".table tag names ?pattern?""",,,1
+Tag Names,Default,,,.table tag names,,,flash active focus sel title,,,
+Tag Names,Add tag,,".table tag cell testTag 1,1",.table tag names,,,flash active focus sel title testTag,,,
+Tag Names,Delete tag,,.table tag delete testTag,.table tag names,,,flash active focus sel title,,,
+Tag Names,Pattern All,,,.table tag names *,,,flash active focus sel title,,,
+Tag Names,Pattern,,,.table tag names f*,,,flash focus,,,
+Tag Names,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag priority,,,,,,,,,
+Tag Priority,Create,,,setup .table,,,.table,,,
+Tag Priority,Too few args,,,.table tag priority,,,"wrong # args: should be "".table tag priority tagName""",,,1
+Tag Priority,Too many args,,,.table tag priority 1 2,,,"wrong # args: should be "".table tag priority tagName""",,,1
+Tag Priority,Invalid tagName,,,.table tag priority invalid,,,"invalid tag name ""invalid""",,,1
+Tag Priority,Flash,,,.table tag priority flash,,,0,,,
+Tag Priority,Active,,,.table tag priority active,,,1,,,
+Tag Priority,Focus,,,.table tag priority focus,,,2,,,
+Tag Priority,Sel,,,.table tag priority sel,,,3,,,
+Tag Priority,Title,,,.table tag priority title,,,4,,,
+Tag Priority,Custom,,.table tag configure testTag,.table tag priority testTag,,,5,,,
+Tag Priority,Raise,,.table tag raise testTag,.table tag priority testTag,,,0,,,
+Tag Priority,Lower,,.table tag lower testTag,.table tag priority testTag,,,5,,,
+Tag Priority,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag raise,,,,,,,,,
+Tag Raise,Create,,,setup .table,,,.table,,,
+Tag Raise,Too few args,,,.table tag raise,,,"wrong # args: should be "".table tag raise tagName ?aboveThis?""",,,1
+Tag Raise,Too many args,,,.table tag raise 1 2 3,,,"wrong # args: should be "".table tag raise tagName ?aboveThis?""",,,1
+Tag Raise,Invalid tagName,,,.table tag raise invalid active,,,"invalid tag name ""invalid""",,,1
+Tag Raise,Above Invalid tag,,,.table tag raise flash invalid,,,"invalid tag name ""invalid""",,,1
+Tag Raise,To top,,,.table tag raise title;.table tag names,,,title flash active focus sel,,,
+Tag Raise,Above tag,,,.table tag raise title active;.table tag names,,,flash title active focus sel,,,
+Tag Raise,Above self,,,.table tag raise title title;.table tag names,,,flash title active focus sel,,,
+Tag Raise,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Tag row,,,,,,,,,
+Tag Row,Create,,,setup .table,,,.table,,,
+Tag Row,Too few args,,,.table tag row,,,"wrong # args: should be "".table tag rowtag tagName ?arg arg ..?""",,,1
+Tag Row,Invalid index,,,.table tag row testTag bogus,,,"expected integer but got ""bogus""",,,1
+Tag Row,Create tag,,,.table tag row testTag 1;lsort -integer [.table tag row testTag],,,1,,,
+Tag Row,Add tag,,,.table tag row testTag 2;lsort -integer [.table tag row testTag],,,1 2,,,
+Tag Row,Add tag to multiple,,,.table tag row testTag 3 4 5 6;lsort -integer [.table tag row testTag],,,1 2 3 4 5 6,,,
+Tag Row,Get list,,,lsort -integer [.table tag row testTag],,,1 2 3 4 5 6,,,
+Tag Row,Clear tag,,,.table tag row {} 1;lsort -integer [.table tag row testTag],,,2 3 4 5 6,,,
+Tag Row,Clear tag from multiple,,,.table tag row {} 1 2 3 4;lsort -integer [.table tag row testTag],,,5 6,,,
+Tag Row,Active tag,,".table activate 9,0",.table tag row active,,,9,,,
+Tag Row,Focus tag,,".table focus 8,1",.table tag row focus,,,8,,,
+Tag Row,Sel tag,,".table selection set 7,2",.table tag row sel,,,7,,,
+Tag Row,Title tag,,.table configure -titlecols 0 -titlerows 1,.table tag row title,,,0,,,
+Tag Row,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Validate,,,,,,,,,
+Validate,Create,,,setup .table,,,.table,,,
+Validate,Too few args,,,.table validate,,,"wrong # args: should be "".table validate index""",,,1
+Validate,Too many args,,,.table validate 1 2,,,"wrong # args: should be "".table validate index""",,,1
+Validate,Invalid index,,,.table validate bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Validate,No callback,,".table set 5,5 ""Text value""",".table validate 5,5",,,1,,,
+Validate,Callback,,".table configure -validatecommand ""store_val %c %C %i %r %s %S %W""",".table set 5,5 ""New value"";set ::temp",,,"""-1 -1,-1 0 -1 7,2 {} .table""",,,
+Validate,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Version,,,,,,,,,
+Version,Create,,,setup .table,,,.table,,,
+Version,Too many args,,,.table version arg,,,"wrong # args: should be "".table version""",,,1
+Version,Get,,,.table version,,,[package require Tktable],,,
+Version,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Width,,,,,,,,,
+Width,Create,,,setup .table,,,.table,,,
+Width,Get default,,,.table width,,,,,,
+Width,Invalid arg count,,,.table width 1 1 1,,,"wrong # args: should be "".table width ?col? ?width col width ...?""",,,1
+Width,Invalid index,,,.table width bogus,,,"expected integer but got ""bogus""",,,1
+Width,Invalid value,,,.table width 1 bogus,,,"expected integer but got ""bogus""",,,1
+Width,Single col width,,,.table width 2 25;.table width 2,,,25,,,
+Width,Multiple col width,,,.table width 4 44 5 55;.table width 5,,,55,,,
+Width,Query col widths,,,lsort [.table width],,,{{2 25} {4 44} {5 55}},,,
+Width,Width in pixels,,,.table width 6 -22;.table width  6,,,-22,,,
+Width,Default width,,,.table width 7 default;expr {[.table width 7] == [.table cget -colwidth]},,,1,,,
+Width,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Window,,,,,,,,,
+Window,Create,,,setup .table,,,.table,,,
+Window,Too few args,,,.table window,,,"wrong # args: should be "".table window option ?arg arg ...?""",,,1
+Window,Invalid option,,,.table window bogus,,,"bad option ""bogus"": must be cget, configure, delete, move, or names",,,1
+Window,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Window Cget,,,,,,,,,
+Window Cget,Create,,,"setup .table;entry .table.e;.table window configure 5,5 -window .table.e",,,,,,
+Window Cget,Too Few Args,,,".table window cget 5,5",,,"wrong # args: should be "".table window cget index option""",,,1
+Window Cget,Too Many Args,,,".table window cget 5,5 1 2",,,"wrong # args: should be "".table window cget index option""",,,1
+Window Cget,Invalid index,,,.table window cget bogus 1,,,"no window at index ""bogus""",,,1
+Window Cget,Invalid arg,,,".table window cget 5,5 -bogus",,,"unknown option ""-bogus""",,,1
+Window Cget,No window,,,".table window cget 2,2 -window",,,"no window at index ""2,2""",,,1
+Window Cget,Get,,,".table window cget 5,5 -window",,,.table.e,,,
+Window Cget,Cleanup,,,destroy .e;destroy .table,,,,,,
+,,,,,,,,,,
+command,# Window Configure,,,,,,,,,
+Window Configure,Create,,,"setup .table;entry .table.e;.table window configure 5,5 -window .table.e",,,,,,
+Window Configure,Too Few Args,,,.table window configure,,,"wrong # args: should be "".table window configure index ?arg arg  ...?""",,,1
+Window Configure,Invalid index,,,.table window configure bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Window Configure,Get All,,,".table window configure 5,5",,,{{-background background Background {} {}} {-bd borderWidth} {-bg background} {-borderwidth borderWidth BorderWidth {} {}} {-create {} {} {} {}} {-padx {} {} {} -1} {-pady {} {} {} -1} {-sticky {} {} {} {}} {-relief relief Relief {} {}} {-window {} {} {} .table.e}},,,
+Window Configure,Invalid argc,,,".table window configure 5,5 -bg red -bd",,,"value for ""-bd"" missing",,,1
+Window Configure,Invalid arg,,,".table window configure 5,5 -bogus",,,"unknown option ""-bogus""",,,1
+Window Configure,Get,,,".table window configure 5,5 -bd",,,"""-borderwidth borderWidth BorderWidth {} {}""",,,
+Window Configure,Set Single,,,".table window configure 5,5 -bg red;.table window configure 5,5 -bg",,,"""-background background Background {} red""",,,
+Window Configure,Set Multiple,,,".table window configure 5,5 -bd 10 -bg blue;.table window configure 5,5 -bg",,,"""-background background Background {} blue""",,,
+Window Configure,Wrong parent,,toplevel .new;entry .new.e,".table window configure 4,4 -window .new.e",destroy .new,,can't embed .new.e in .table,,,1
+Window Configure,Toplevel window,,toplevel .table.new,".table window configure 4,4 -window .table.new",destroy .table.new,,can't embed .table.new in .table,,,1
+Window Configure,Deleted window,,,"destroy .table.e;.table window cget 5,5 -window",,,"no window at index ""5,5""",,,1
+Window Configure,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Window cget and configure options,,,,,,,,,
+Window Options,Create,,,"setup .table;entry .table.e;.table window configure 5,5 -window .table.e",,,,,,
+Window Options,Create,not_supported,,".table window configure 5,5 -create script;.table window cget 5,5 -create",,,script,,,
+Window Options,Background,,,".table window configure 5,5 -background #FF0000;.table window cget 5,5 -background",,,#FF0000,,,
+Window Options,Borderwidth Alias,,,".table window configure 5,5 -bd 2;.table window cget 5,5 -bd",,,2,,,
+Window Options,Background Alias,,,".table window configure 5,5 -bg #00FF00;.table window cget 5,5 -bg",,,#00FF00,,,
+Window Options,Borderwidth,,,".table window configure 5,5 -bd 1;.table window cget 5,5 -bd",,,1,,,
+Window Options,Padx,,,".table window configure 5,5 -padx 5;.table window cget 5,5 -padx",,,5,,,
+Window Options,Pady,,,".table window configure 5,5 -pady 2;.table window cget 5,5 -pady",,,2,,,
+Window Options,Relief,,,".table window configure 5,5 -relief sunken;.table window cget 5,5 -relief",,,sunken,,,
+Window Options,Sticky,,,".table window configure 5,5 -sticky n;.table window cget 5,5 -sticky",,,n,,,
+Window Options,Window,,,".table window configure 5,5 -window .table.e;.table window cget 5,5 -window",,,.table.e,,,
+Window Options,Cleanup,,,destroy .e;destroy .table,,,,,,
+,,,,,,,,,,
+command,# Window options invalid,,,,,,,,,
+Window Options Invalid,Create,,,"setup .table;entry .table.e;.table window configure 5,5 -window .table.e",,,,,,
+Window Options Invalid,Create,not_supported,,".table window configure 5,5 -create invalid",,,"invalid command name ""invalid""",,,1
+Window Options Invalid,Background,,,".table window configure 5,5 -background bogus",,,"unknown color name ""bogus""",,,1
+Window Options Invalid,Borderwidth Alias,,,".table window configure 5,5 -bd badValue",,glob,"*screen distance* ""badValue""",,,1
+Window Options Invalid,Background Alias,,,".table window configure 5,5 -bg bogus",,,"unknown color name ""bogus""",,,1
+Window Options Invalid,Borderwidth,,,".table window configure 5,5 -borderwidth badValue",,glob,"*screen distance* ""badValue""",,,1
+Window Options Invalid,Padx,tcl8,,".table window configure 5,5 -padx bogus",,,"bad screen distance ""bogus""",,,1
+Window Options Invalid,Padx,tcl9,,".table window configure 5,5 -padx bogus",,,"expected screen distance but got ""bogus""",,,1
+Window Options Invalid,Pady,tcl8,,".table window configure 5,5 -pady bogus",,,"bad screen distance ""bogus""",,,1
+Window Options Invalid,Pady,tcl9,,".table window configure 5,5 -pady bogus",,,"expected screen distance but got ""bogus""",,,1
+Window Options Invalid,Relief,,,".table window configure 5,5 -relief bogus",,,"bad relief ""bogus"": must be flat, groove, raised, ridge, solid, or sunken",,,1
+Window Options Invalid,Sticky,,,".table window configure 5,5 -sticky bogus",,,"bad sticky value ""bogus"": must contain n, s, e or w",,,1
+Window Options Invalid,Window,,,".table window configure 5,5 -window bogus",,,"bad window path name ""bogus""",,,1
+Window Options Invalid,Cleanup,,,destroy .e;destroy .table,,,,,,
+,,,,,,,,,,
+command,# Window delete,,,,,,,,,
+Window Delete,Create,,,"setup .table;entry .table.e;.table window configure 5,5 -window .table.e",,,,,,
+Window Delete,Too few args,,,.table window delete,,,"wrong # args: should be "".table window delete index ?index ...?""",,,1
+Window Delete,Invalid window,,,.table window delete bogus,,,,,,
+Window Delete,Delete single,,,".table window delete 5,5;winfo exists .table.e",,,0,,,
+Window Delete,Delete multiple,,".table window configure 5,5 -window [entry .table.e];.table window configure 5,6 -window [entry .table.e1];.table window configure 5,7 -window [entry .table.e2]",".table window delete 5,5 5,6 5,7;winfo exists .table.e2",,,0,,,
+Window Delete,Delete no window,,,".table window delete 7,7",,,,,,
+Window Delete,Cleanup,,,destroy .e;destroy .table,,,,,,
+,,,,,,,,,,
+command,# Window move,,,,,,,,,
+Window Move,Create,,,"setup .table;entry .table.e;.table window configure 5,5 -window .table.e",,,,,,
+Window Move,Too few args,,,.table window move,,,"wrong # args: should be "".table window move srcIndex destIndex""",,,1
+Window Move,Too many args,,,.table window move 1 2 3,,,"wrong # args: should be "".table window move srcIndex destIndex""",,,1
+Window Move,Invalid source index,,,".table window move bogus 2,2",,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Window Move,Invalid dest index,,,".table window move 5,5 bogus",,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
+Window Move,Move window,,,".table window move 5,5 8,8;.table window cget 8,8 -window",,,.table.e,,,
+Window Move,Move to same,,,".table window move 5,5 5,5;.table window cget 5,5 -window",,,"no window at index ""5,5""",,,1
+Window Delete,Move no window,,,".table window move 7,7 3,3",,,"no window at index ""7,7""",,,1
+Window Move,Cleanup,,,destroy .e;destroy .table,,,,,,
+,,,,,,,,,,
+command,# Window names,,,,,,,,,
+Window Names,Create,,,"setup .table;entry .table.e;.table window configure 5,5 -window .table.e",,,,,,
+Window Names,Too many args,,,.table window names 1 2,,,"wrong # args: should be "".table window names ?pattern?""",,,1
+Window Names,List,,,.table window names,,,"5,5",,,
+Window Names,List pattern,,,".table window names 5,*",,,"5,5",,,
+Window Names,List none,,,".table window names 1,*",,,,,,
+Window Names,Cleanup,,,destroy .e;destroy .table,,,,,,
+,,,,,,,,,,
+command,# Xview,,,,,,,,,
+Xview,Create,,,setup .table -cols 100 -rows 100,,,.table,,,
+Xview,Get,,,.table xview,,,0.0 0.12903225806451613,,,
+Xview,Too many args,,,.table xview 1 2 3 4 5,,,"wrong # args: should be "".table xview ?args?""",,,1
+Xview,Invalid Column,,,.table xview bogus,,,"expected integer but got ""bogus""",,,1
+Xview,View Column,,,.table xview 25;.table xview,,,0.25 0.3790322580645161,,,
+Xview,Moveto too few args,,,.table xview moveto,,,"expected integer but got ""moveto""",,,1
+Xview,Moveto too many args,,,.table xview moveto 1 2,,,"wrong # args: should be "".table xview moveto fraction""",,,1
+Xview,Moveto invalid value,,,.table xview moveto bogus,,,"expected floating-point number but got ""bogus""",,,1
+Xview,Moveto value,,,.table xview moveto 10;.table xview,,,0.88 1.0,,,
+Xview,Moveto negative value,,,.table xview moveto -10;.table xview,,,0.0 0.12903225806451613,,,
+Xview,Move to middle,,,.table xview moveto 50;.table xview,,,0.88 1.0,,,
+Xview,Scroll too few args,,,.table xview scroll,,,"expected integer but got ""scroll""",,,1
+Xview,Scroll too many args,,,.table xview scroll 1 2 3,,,"wrong # args: should be "".table xview ?args?""",,,1
+Xview,Scroll invalid value,tcl8,,.table xview scroll bogus units,,,"expected integer but got ""bogus""",,,1
+Xview,Scroll invalid value,tcl9,,.table xview scroll bogus units,,,"expected floating-point number but got ""bogus""",,,1
+Xview,Scroll invalid units,tcl8,,.table xview scroll 1 bogus,,,"bad argument ""bogus"": must be units or pages",,,1
+Xview,Scroll invalid units,tcl9,,.table xview scroll 1 bogus,,,"bad argument ""bogus"": must be pages or units",,,1
+Xview,Scroll units forwards,,,.table xview scroll 10 units;.table xview,,,0.88 1.0,,,
+Xview,Scroll units backwards,,,.table xview scroll -10 units;.table xview,,,0.78 0.9090322580645162,,,
+Xview,Scroll pages forward,,,.table xview scroll 1 pages;.table xview,,,0.88 1.0,,,
+Xview,Scroll pages backwards,,,.table xview scroll -1 pages;.table xview,,,0.76 0.8890322580645161,,,
+Xview,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Yview,,,,,,,,,
+Yview,Create,,,setup .table -cols 100 -rows 100,,,.table,,,
+Yview,Get,,,.table yview,,,0.0 0.3157894736842105,,,
+Yview,Too many args,,,.table yview 1 2 3 4 5,,,"wrong # args: should be "".table yview ?args?""",,,1
+Yview,Invalid Row,,,.table yview bogus,,,"expected integer but got ""bogus""",,,1
+Yview,View Row,,,.table yview 25;.table yview,,,0.25 0.5657894736842105,,,
+Yview,Moveto too few args,,,.table yview moveto,,,"expected integer but got ""moveto""",,,1
+Yview,Moveto too many args,,,.table yview moveto 1 2,,,"wrong # args: should be "".table yview moveto fraction""",,,1
+Yview,Moveto invalid value,,,.table yview moveto bogus,,,"expected floating-point number but got ""bogus""",,,1
+Yview,Moveto value,,,.table yview moveto 10;.table yview,,,0.69 1.0,,,
+Yview,Moveto negative value,,,.table yview moveto -10;.table yview,,,0.0 0.3157894736842105,,,
+Yview,Move to middle,,,.table yview moveto 50;.table yview,,,0.69 1.0,,,
+Yview,Scroll too few args,,,.table yview scroll,,,"expected integer but got ""scroll""",,,1
+Yview,Scroll too many args,,,.table yview scroll 1 2 3,,,"wrong # args: should be "".table yview ?args?""",,,1
+Yview,Scroll invalid value,tcl8,,.table yview scroll bogus units,,,"expected integer but got ""bogus""",,,1
+Yview,Scroll invalid value,tcl9,,.table yview scroll bogus units,,,"expected floating-point number but got ""bogus""",,,1
+Yview,Scroll invalid units,tcl8,,.table yview scroll 1 bogus,,,"bad argument ""bogus"": must be units or pages",,,1
+Yview,Scroll invalid units,tcl9,,.table yview scroll 1 bogus,,,"bad argument ""bogus"": must be pages or units",,,1
+Yview,Scroll units forwards,,,.table yview scroll 10 units;.table yview,,,0.69 1.0,,,
+Yview,Scroll units backwards,,,.table yview scroll -10 units;.table yview,,,0.59 0.9057894736842105,,,
+Yview,Scroll pages forward,,,.table yview scroll 1 pages;.table yview,,,0.69 1.0,,,
+Yview,Scroll pages backwards,,,.table yview scroll -1 pages;.table yview,,,0.38 0.6957894736842105,,,
+Yview,Cleanup,,,destroy .table,,,,,,
+,,,,,,,,,,
+command,# Cleanup,,,,,,,,,
+command,destroy .,,,,,,,,,
