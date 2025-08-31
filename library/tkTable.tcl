@@ -966,8 +966,9 @@ proc ::tktable::Motion {w el} {
     if {[$w cget -state] eq "disabled"} return
     set cell [$w index $el]
 
-    if {![info exists Priv(tablePrev)]} {
+    if {$Priv(tablePrev) eq "" || [catch {$w index anchor}]} {
 	set Priv(tablePrev) $cell
+	$w selection anchor $cell
 	return
     }
 
@@ -992,40 +993,36 @@ proc ::tktable::Motion {w el} {
     }
 
     # Select Cells
-    switch [$w cget -selectmode] {
+    set mode [$w cget -selectmode]
+    set st [$w cget -selecttitles]
+    switch $mode {
 	browse {
 	    $w selection clear all
 	    $w selection set $cell
 	    set Priv(tablePrev) $cell
 	}
-	extended {
-	    # avoid tables that have no anchor index yet.
-	    if {[catch {$w index anchor}]} { return }
-	    scan $Priv(tablePrev) %d,%d r c
-	    scan $cell %d,%d elr elc
-	    if {[$w tag includes title $cell]} {
-		if {$r < [$w cget -titlerows]+[$w cget -roworigin]} {
-		    ## We're in a column header
-		    if {$c < [$w cget -titlecols]+[$w cget -colorigin]} {
-			## We're in the topleft title area
-			$w selection clear anchor end
-		    } else {
-			$w selection clear anchor [$w index end row],$c
-		    }
-		    $w selection set anchor [$w index end row],$elc
-		} else {
-		    ## We're in a row header
-		    $w selection clear anchor $r,[$w index end col]
-		    $w selection set anchor $elr,[$w index end col]
-		}
+	extended - multiple {
+	    if {[scan $cell %d,%d r c] != 2} return
+	    set tr [expr {[$w cget -titlerows]+[$w cget -roworigin]}]
+	    set tc [expr {[$w cget -titlecols]+[$w cget -colorigin]}]
+	    if {$r < $tr && $c < $tc && $st} {
+		SelectAll $w
+
+	    } elseif {$c < $tc && $st} {
+		SelectRow $w $cell [expr {$mode eq "multiple"}]
+
+	    } elseif {$r < $tr && $st} {
+		SelectColumn $w $cell [expr {$mode eq "multiple"}]
+
 	    } else {
-		$w selection clear anchor $Priv(tablePrev)
-		$w selection set anchor $cell
+		$w selection clear all
+		$w selection set [$w index anchor] $cell
 	    }
 	    set Priv(tablePrev) $cell
 	}
     }
 }
+
 
 #
 # ::tktable::BeginExtend --
