@@ -419,6 +419,8 @@ proc ::tktable::MoveHandler {w op edit extend} {
 # Returns nothing
 #
 proc ::tktable::KeyNav {w op} {
+    if {[$w cget -state] eq "disabled"} return
+
     # Get position change
     set res [MoveHandler $w $op 1 0]
     if {[llength $res] == 0} return
@@ -447,6 +449,8 @@ proc ::tktable::KeyNav {w op} {
 # Returns nothing
 #
 proc ::tktable::SelectionExtend {w op} {
+    if {[$w cget -state] eq "disabled"} return
+
     # Get position change
     set res [MoveHandler $w $op 1 1]
     if {[llength $res] == 0} return
@@ -611,10 +615,11 @@ proc ::tktable::ScreenNav {w op} {
 # Returns nothing
 #
 proc ::tktable::ToggleFocus {w} {
-     if {[set cell [$w activate]] ne ""} {
+    set state [$w cget -state]
+     if {[set cell [$w activate]] ne "" && $state ne "disabled"} {
 	$w activate {}
 	$w focus $cell
-    } elseif {[set cell [$w focus]] ne ""} {
+    } elseif {[set cell [$w focus]] ne "" && $state eq "normal"} {
 	$w activate $cell
     }
 }
@@ -650,6 +655,8 @@ proc ::tktable::CancelRepeat {} {
 # Returns nothing
 #
 proc ::tktable::Insert {w s} {
+    if {[$w cget -state] eq "disabled"} return
+
     if {$s ne {}} {
 	$w insert active insert $s
     }
@@ -667,6 +674,8 @@ proc ::tktable::Insert {w s} {
 # Returns nothing
 #
 proc ::tktable::BackSpace {w} {
+    if {[$w cget -state] eq "disabled"} return
+
     set list [$w selection active]
     if {[llength $list] > 0} {
 	lassign $list first last
@@ -696,6 +705,8 @@ proc ::tktable::BackSpace {w} {
 # Returns nothing
 #
 proc ::tktable::Delete {w} {
+    if {[$w cget -state] eq "disabled"} return
+
     set list [$w selection active]
     if {[llength $list] > 0} {
 	lassign $list first last
@@ -743,9 +754,11 @@ proc ::tktable::Button1 {w x y {op set}} {
     }
 
     # Only do this when a border wasn't selected
-    if {$Priv(borderInfo) eq "" && [winfo exists $w]} {
-	set fn [expr {[$w cget -mode] eq "table" ? "activate" : "focus"}]
-	if {$fn eq "focus"} {
+    if {$Priv(borderInfo) eq "" && [winfo exists $w] && [$w cget -state] ne "disabled"} {
+	if {[$w cget -mode] eq "table"} {
+	    set fn "activate"
+	} else {
+	    set fn "focus"
 	    $w activate {}
 	}
 	$w $fn [format "@%d,%d" $x $y]
@@ -827,6 +840,7 @@ proc ::tktable::B1Release {w x y} {
 #
 proc ::tktable::DoubleButton1 {w x y} {
     variable Priv
+    if {[$w cget -state] eq "disabled"} return
 
     if {$Priv(borderInfo) eq "" && [winfo exists $w]} {
 	if {$Priv(bindingMode) ne "activate"} {
@@ -863,6 +877,7 @@ proc ::tktable::DoubleButton1 {w x y} {
 #
 proc ::tktable::TripleButton1 {w x y} {
     variable Priv
+    if {[$w cget -state] eq "disabled"} return
 
     if {$Priv(borderInfo) eq "" && [winfo exists $w]} {
 	$w selection active 0 end
@@ -885,6 +900,7 @@ proc ::tktable::TripleButton1 {w x y} {
 proc ::tktable::BeginSelect {w el {op set}} {
     variable Priv
     set cell [$w index $el]
+    if {[$w cget -state] eq "disabled"} return
 
     if {[scan $cell %d,%d r c] != 2} return
     set tr [expr {[$w cget -titlerows]+[$w cget -roworigin]}]
@@ -947,6 +963,7 @@ proc ::tktable::BeginSelect {w el {op set}} {
 #
 proc ::tktable::Motion {w el} {
     variable Priv
+    if {[$w cget -state] eq "disabled"} return
     set cell [$w index $el]
 
     if {![info exists Priv(tablePrev)]} {
@@ -1024,6 +1041,7 @@ proc ::tktable::Motion {w el} {
 #	one under the pointer). Must be in numerical form.
 #
 proc ::tktable::BeginExtend {w el} {
+    if {[$w cget -state] eq "disabled"} return
     # avoid tables that have no anchor index yet.
     if {[catch {$w index anchor}]} { return }
     if {[$w cget -selectmode] eq "extended" && [$w selection includes anchor]} {
@@ -1045,6 +1063,7 @@ proc ::tktable::BeginExtend {w el} {
 #	one under the pointer). Must be in numerical form.
 #
 proc ::tktable::BeginToggle {w el} {
+    if {[$w cget -state] eq "disabled"} return
     if {[$w cget -selectmode] eq "extended"} {
 	variable Priv
 	set el [$w index $el]
@@ -1123,6 +1142,7 @@ proc ::tktable::AutoScan {w} {
 #
 proc ::tktable::MoveCell {w x y {index {}}} {
     variable Priv
+    if {[$w cget -state] eq "disabled"} return
 
     if {[set cell [$w activate]] ne ""} {
 	set fn activate
@@ -1211,6 +1231,7 @@ proc ::tktable::MoveCell {w x y {index {}}} {
 # y -	+1 to move down one cell, -1 to move up one cell.
 #
 proc ::tktable::ExtendSelect {w x y} {
+    if {[$w cget -state] eq "disabled"} return
     if {[$w cget -selectmode] ni [list "extended" "multiple"]} {
 	return
     }
@@ -1248,6 +1269,7 @@ proc ::tktable::ExtendSelect {w x y} {
 # el -	An integer cell number.
 #
 proc ::tktable::DataExtend {w el} {
+    if {[$w cget -state] eq "disabled"} return
     if {[set cell [$w activate]] ne ""} {
 	set fn activate
     } elseif {[set cell [$w focus]] ne ""} {
@@ -1280,6 +1302,7 @@ proc ::tktable::DataExtend {w el} {
 # w -	The table widget.
 #
 proc ::tktable::SelectAll {w} {
+    if {[$w cget -state] eq "disabled"} return
     if {[$w activate] ne ""} {
 	$w selection active 0 end
     } elseif {[$w cget -selectmode] in [list single browse]} {
@@ -1343,7 +1366,8 @@ proc ::tktable::SelectionClear {w} {
 # w -	The table widget.
 #
 proc ::tktable::SelectRow {w {cell {}} {toggle 0}} {
-    if {$cell eq "" && [set cell [$w activate]] eq "" && [set cell [$w focus]] eq ""} {
+    if {($cell eq "" && [set cell [$w activate]] eq "" && [set cell [$w focus]] eq "")
+	    || [$w cget -state] eq "disabled"} {
 	return
     }
 
@@ -1378,7 +1402,8 @@ proc ::tktable::SelectRow {w {cell {}} {toggle 0}} {
 # w -	The table widget.
 #
 proc ::tktable::SelectColumn {w {cell {}} {toggle 0}} {
-    if {$cell eq "" && [set cell [$w activate]] eq "" && [set cell [$w focus]] eq ""} {
+    if {($cell eq "" && [set cell [$w activate]] eq "" && [set cell [$w focus]] eq "")
+	    || [$w cget -state] eq "disabled"} {
 	return
     }
 

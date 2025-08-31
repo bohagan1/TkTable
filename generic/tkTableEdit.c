@@ -506,7 +506,7 @@ int Table_EditCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	    Tcl_GetIntFromObj(interp, objv[++i], &count) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	if (count == 0 || (tablePtr->state == STATE_DISABLED)) {
+	if (count == 0 || (tablePtr->state != STATE_NORMAL)) {
 	    return TCL_OK;
 	}
 

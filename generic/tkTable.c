@@ -128,6 +128,7 @@ static Cmd_Struct stretch_vals[] = {
 
 static Cmd_Struct state_vals[]= {
     {"normal",	 STATE_NORMAL},
+    {"readonly", STATE_READONLY},
     {"disabled", STATE_DISABLED},
     {"",	 0}
 };
@@ -951,7 +952,7 @@ static int TableWidgetObjCmd(
 		break;
 	    }
 	    if (!(tablePtr->flags & HAS_ACTIVE) || (tablePtr->flags & ACTIVE_DISABLED) ||
-		    tablePtr->state == STATE_DISABLED) {
+		    (tablePtr->state == STATE_DISABLED)) {
 		Tcl_SetObjResult(interp, Tcl_NewIntObj(-1));
 		break;
 	    } else if (objc == 3) {
@@ -1001,7 +1002,7 @@ static int TableWidgetObjCmd(
 		Tcl_WrongNumArgs(interp, 2, objv, NULL);
 		result = TCL_ERROR;
 	    } else if ((tablePtr->flags & HAS_ACTIVE) && !(tablePtr->flags & ACTIVE_DISABLED) &&
-		    tablePtr->state != STATE_DISABLED) {
+		    (tablePtr->state == STATE_NORMAL)) {
 		TableGetActiveBuf(tablePtr);
 		TableRefresh(tablePtr, tablePtr->activeRow,tablePtr->activeCol,CELL|INV_FORCE);
 	    }
@@ -2034,7 +2035,7 @@ static void TableDisplay(ClientData clientdata) {
 		TableMergeTag(tablePtr, tagPtr, (TableTag *) Tcl_GetHashValue(entryPtr));
 	    }
 	    /* is this cell active? */
-	    if ((tablePtr->flags & HAS_ACTIVE) && (tablePtr->state == STATE_NORMAL) &&
+	    if ((tablePtr->flags & HAS_ACTIVE) && (tablePtr->state != STATE_DISABLED) &&
 		    row == tablePtr->activeRow && col == tablePtr->activeCol) {
 		if (tagPtr->state == STATE_DISABLED) {
 		    tablePtr->flags |= ACTIVE_DISABLED;
@@ -2043,7 +2044,7 @@ static void TableDisplay(ClientData clientdata) {
 		    activeCell = 1;
 		    tablePtr->flags &= ~ACTIVE_DISABLED;
 		}
-	    } else if ((tablePtr->state == STATE_NORMAL) &&
+	    } else if ((tablePtr->state != STATE_DISABLED) &&
 		    row == tablePtr->focusRow && col == tablePtr->focusCol) {
 		TableMergeTag(tablePtr, tagPtr, focusPtr);
 	    }
@@ -3488,7 +3489,7 @@ static void TableCursorEvent(ClientData clientData) {
 
     if (!(tablePtr->flags & HAS_FOCUS) || (tablePtr->insertOffTime == 0)
 	    || (tablePtr->flags & ACTIVE_DISABLED)
-	    || (tablePtr->state != STATE_NORMAL)) {
+	    || (tablePtr->state == STATE_DISABLED)) {
 	return;
     }
 
@@ -3527,7 +3528,7 @@ void TableConfigCursor(Table *tablePtr) {
     /*
      * To have a cursor, we have to have focus and allow edits
      */
-    if ((tablePtr->flags & HAS_FOCUS) && (tablePtr->state == STATE_NORMAL) &&
+    if ((tablePtr->flags & HAS_FOCUS) && (tablePtr->state != STATE_DISABLED) &&
 	!(tablePtr->flags & ACTIVE_DISABLED)) {
 	/*
 	 * Turn the cursor ON

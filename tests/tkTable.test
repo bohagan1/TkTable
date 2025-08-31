@@ -161,35 +161,62 @@ test Activate-2.17 {End} -body {
 	.table activate
     } -result {9,9}
 
-test Activate-2.18 {Set callback} -body {
+test Activate-2.18 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table activate 9,9
+	.table activate
+    } -cleanup {
+	.table activate {}
+    } -result {9,9}
+
+test Activate-2.19 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table activate 9,9
+	.table activate
+    } -cleanup {
+	.table activate {}
+    }
+
+test Activate-2.20 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table activate 9,9
+	.table activate
+    } -cleanup {
+	.table activate {}
+    } -result {9,9}
+
+test Activate-2.21 {Set callback} -body {
 	.table configure -browsecommand "store_val %c %C %i %r %s %S %W"
     }
 
-test Activate-2.19 {Eval callback activate} -body {
+test Activate-2.22 {Eval callback activate} -body {
 	.table activate 7,2
 	set ::temp
-    } -result {2 7,2 0 7 9,9 7,2 .table}
+    } -result {2 7,2 0 7 {} 7,2 .table}
 
-test Activate-2.20 {Eval callback deactivate} -body {
+test Activate-2.23 {Eval callback deactivate} -body {
 	.table activate ""
 	set ::temp
     } -result {-1 -1,-1 0 -1 7,2 {} .table}
 
-test Activate-2.21 {Callback alias} -body {
+test Activate-2.24 {Callback alias} -body {
 	.table configure -browsecmd command
 	.table cget -browsecommand
     } -cleanup {
 	.table configure -browsecommand {}
     } -result {command}
 
-test Activate-2.22 {Empty table} -setup {
+test Activate-2.25 {Empty table} -setup {
 	.table configure -cols 0 -rows 0
     } -body {
 	.table activate origin
 	.table activate
     } -result {0,0}
 
-test Activate-2.23 {Cleanup} -body {
+test Activate-2.26 {Cleanup} -body {
 	destroy .table
     }
 
@@ -1113,7 +1140,7 @@ test Options_Invalid-9.50 {Sparse Array} -body {
 
 test Options_Invalid-9.51 {State} -body {
 	.table configure -state foo
-    } -result {bad option "foo" must be normal, disabled} -returnCodes {1}
+    } -result {bad option "foo" must be normal, readonly, disabled} -returnCodes {1}
 
 test Options_Invalid-9.52 {Title Columns} -body {
 	.table configure -titlecols 3p
@@ -1183,7 +1210,37 @@ test Curselection-10.8 {Reset} -body {
 	.table selection clear all
     }
 
-test Curselection-10.9 {Cleanup} -body {
+test Curselection-10.9 {Readonly state} -setup {
+	.table configure -state readonly
+	.table selection set 0,0
+    } -body {
+	.table curselection
+    } -cleanup {
+	.table configure -state normal
+	.table selection clear all
+    } -result {0,0}
+
+test Curselection-10.10 {Disabled state} -setup {
+	.table configure -state disabled
+	.table selection set 0,0
+    } -body {
+	.table curselection
+    } -cleanup {
+	.table configure -state normal
+	.table selection clear all
+    }
+
+test Curselection-10.11 {Normal state} -setup {
+	.table configure -state normal
+	.table selection set 0,0
+    } -body {
+	.table curselection
+    } -cleanup {
+	.table configure -state normal
+	.table selection clear all
+    } -result {0,0}
+
+test Curselection-10.12 {Cleanup} -body {
 	destroy .table
     }
 
@@ -1225,14 +1282,35 @@ test Curvalue-11.8 {Clear} -body {
 	.table curvalue
     }
 
-test Curvalue-11.9 {Validate callback} -setup {
+test Curvalue-11.9 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table curvalue 531
+	.table curvalue
+    }
+
+test Curvalue-11.10 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table curvalue 531
+	.table curvalue
+    }
+
+test Curvalue-11.11 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table curvalue 531
+	.table curvalue
+    } -result {531}
+
+test Curvalue-11.12 {Validate callback} -setup {
 	.table configure -validate 1 -validatecommand "store_val %c %C %i %r %s %S %W"
     } -body {
 	.table curvalue "New value"
 	set ::temp
-    } -result {6 1,6 0 1 {} {New value} .table}
+    } -result {6 1,6 0 1 531 {New value} .table}
 
-test Curvalue-11.10 {Cleanup} -body {
+test Curvalue-11.13 {Cleanup} -body {
 	destroy .table
     }
 
@@ -1356,7 +1434,29 @@ test Delete_Active-13.16 {Empty cell} -setup {
 	.table curvalue
     }
 
-test Delete_Active-13.17 {Empty table} -setup {
+test Delete_Active-13.17 {Readonly state} -setup {
+	.table set 3,7 $string
+	.table configure -state readonly
+    } -body {
+	.table delete active 5 10
+	.table curvalue
+    } -result {This is some text}
+
+test Delete_Active-13.18 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table delete active 5 10
+	.table get 3,7
+    } -result {This is some text}
+
+test Delete_Active-13.19 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table delete active 5 10
+	.table curvalue
+    } -result {This me text}
+
+test Delete_Active-13.20 {Empty table} -setup {
 	.table configure -cols 0 -rows 0
 	.table set origin $string
 	.table activate origin
@@ -1366,7 +1466,7 @@ test Delete_Active-13.17 {Empty table} -setup {
     } -result {This me text}
 
 
-test Delete_Active-13.18 {Cleanup} -body {
+test Delete_Active-13.21 {Cleanup} -body {
 	destroy .table
     }
 
@@ -1477,19 +1577,40 @@ test Delete_Column-14.20 {Out of range count max} -body {
 	.table cget -cols
     } -result {40}
 
-test Delete_Column-14.21 {Delete All} -body {
+test Delete_Column-14.21 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table delete cols 0 1
+	.table cget -cols
+    } -result {40}
+
+test Delete_Column-14.22 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table delete cols 0 1
+	.table cget -cols
+    } -result {40}
+
+test Delete_Column-14.23 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table delete cols 0 1
+	.table cget -cols
+    } -result {39}
+
+test Delete_Column-14.24 {Delete All} -body {
 	.table delete cols 0 100
 	.table cget -cols
     } -result {1}
 
-test Delete_Column-14.22 {Delete Empty Table} -setup {
+test Delete_Column-14.25 {Delete Empty Table} -setup {
 	.table configure -cols 0 -rows 0
     } -body {
 	.table delete cols 0 15
 	.table cget -cols
     } -result {1}
 
-test Delete_Column-14.23 {Cleanup} -body {
+test Delete_Column-14.26 {Cleanup} -body {
 	destroy .table
     }
 
@@ -1595,19 +1716,40 @@ test Delete_Row-15.19 {Out of range count max} -body {
 	.table cget -rows
     } -result {40}
 
-test Delete_Row-15.20 {Delete All} -body {
+test Delete_Row-15.20 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table delete rows 0 1
+	.table cget -rows
+    } -result {40}
+
+test Delete_Row-15.21 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table delete rows 0 1
+	.table cget -rows
+    } -result {40}
+
+test Delete_Row-15.22 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table delete rows 0 1
+	.table cget -rows
+    } -result {39}
+
+test Delete_Row-15.23 {Delete All} -body {
 	.table delete rows 0 100
 	.table cget -rows
     } -result {1}
 
-test Delete_Row-15.21 {Delete Empty Table} -setup {
+test Delete_Row-15.24 {Delete Empty Table} -setup {
 	.table configure -cols 0 -rows 0
     } -body {
 	.table delete rows 0 15
 	.table cget -rows
     } -result {1}
 
-test Delete_Row-15.22 {Cleanup} -body {
+test Delete_Row-15.25 {Cleanup} -body {
 	destroy .table
     }
 
@@ -1676,35 +1818,62 @@ test Focus-16.14 {End} -body {
 	.table focus
     } -result {9,9}
 
-test Focus-16.15 {Set callback} -body {
+test Focus-16.15 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table focus 9,9
+	.table focus
+    } -cleanup {
+	.table focus {}
+    } -result {9,9}
+
+test Focus-16.16 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table focus 9,9
+	.table focus
+    } -cleanup {
+	.table focus {}
+    }
+
+test Focus-16.17 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table focus 9,9
+	.table focus
+    } -cleanup {
+	.table focus {}
+    } -result {9,9}
+
+test Focus-16.18 {Set callback} -body {
 	.table configure -browsecommand "store_val %c %C %i %r %s %S %W"
     }
 
-test Focus-16.16 {Eval callback activate} -body {
+test Focus-16.19 {Eval callback activate} -body {
 	.table focus 7,2
 	set ::temp
-    } -result {2 7,2 0 7 9,9 7,2 .table}
+    } -result {2 7,2 0 7 {} 7,2 .table}
 
-test Focus-16.17 {Eval callback deactivate} -body {
+test Focus-16.20 {Eval callback deactivate} -body {
 	.table focus ""
 	set ::temp
     } -result {-1 -1,-1 0 -1 7,2 {} .table}
 
-test Focus-16.18 {Callback alias} -body {
+test Focus-16.21 {Callback alias} -body {
 	.table configure -browsecmd command
 	.table cget -browsecommand
     } -cleanup {
 	.table configure -browsecommand {}
     } -result {command}
 
-test Focus-16.19 {Empty table} -setup {
+test Focus-16.22 {Empty table} -setup {
 	.table configure -cols 0 -rows 0
     } -body {
 	.table focus origin
 	.table focus
     } -result {0,0}
 
-test Focus-16.20 {Cleanup} -body {
+test Focus-16.23 {Cleanup} -body {
 	destroy .table
     }
 
@@ -2052,18 +2221,39 @@ test Icursor-21.14 {Out of range max} -body {
 	.table icursor
     } -result {9}
 
-test Icursor-21.15 {Clear cell} -body {
+test Icursor-21.15 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table icursor 5
+	.table icursor
+    } -result {5}
+
+test Icursor-21.16 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table icursor 5
+	.table icursor
+    } -result {-1}
+
+test Icursor-21.17 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table icursor 5
+	.table icursor
+    } -result {5}
+
+test Icursor-21.18 {Clear cell} -body {
 	.table curvalue {}
 	.table icursor
     } -result {0}
 
-test Icursor-21.16 {Empty table} -setup {
+test Icursor-21.19 {Empty table} -setup {
 	.table configure -cols 0 -rows 0
     } -body {
 	.table icursor
     } -result {3}
 
-test Icursor-21.17 {Cleanup} -body {
+test Icursor-21.20 {Cleanup} -body {
 	destroy .table
     }
 
@@ -2194,37 +2384,55 @@ test Index-22.28 {Scroll} -body {
 	.table yview moveto 0
     }
 
-test Index-22.29 {No Select Title Topleft} -setup {
+test Index-22.29 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table index topleft
+    } -result {0,0}
+
+test Index-22.30 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table index topleft
+    } -result {0,0}
+
+test Index-22.31 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table index topleft
+    } -result {0,0}
+
+test Index-22.32 {No Select Title Topleft} -setup {
 	.table configure -titlecols 2 -titlerows 2 -selecttitle 0
     } -body {
 	.table index topleft
     } -result {2,2}
 
-test Index-22.30 {No Select Title Origin} -setup {
+test Index-22.33 {No Select Title Origin} -setup {
 	.table configure -titlecols 2 -titlerows 2 -selecttitle 0
     } -body {
 	.table index origin
     } -result {2,2}
 
-test Index-22.31 {Select Title Topleft} -setup {
+test Index-22.34 {Select Title Topleft} -setup {
 	.table configure -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table index topleft
     } -result {2,2}
 
-test Index-22.32 {Select Title Origin} -setup {
+test Index-22.35 {Select Title Origin} -setup {
 	.table configure -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table index origin
     } -result {2,2}
 
-test Index-22.33 {Empty Table} -setup {
+test Index-22.36 {Empty Table} -setup {
 	.table configure -cols 0 -rows 0 -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table index topleft
     } -result {0,0}
 
-test Index-22.34 {Cleanup} -body {
+test Index-22.37 {Cleanup} -body {
 	destroy .table
     }
 
@@ -2334,7 +2542,29 @@ test Insert_Active-24.14 {Insert into empty cell} -setup {
 	.table curvalue
     } -result {more text}
 
-test Insert_Active-24.15 {Auto clear} -setup {
+test Insert_Active-24.15 {Readonly state} -setup {
+	.table set 2,4 $string
+	.table configure -state readonly
+    } -body {
+	.table insert active 5 "more "
+	.table curvalue
+    } -result {Some text}
+
+test Insert_Active-24.16 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table insert active 5 "more "
+	.table get 2,4
+    } -result {Some text}
+
+test Insert_Active-24.17 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table insert active 5 "more "
+	.table curvalue
+    } -result {Some more text}
+
+test Insert_Active-24.18 {Auto clear} -setup {
 	.table configure -autoclear 1
 	.table set 7,7 "more text"
 	.table activate 7,7
@@ -2345,7 +2575,7 @@ test Insert_Active-24.15 {Auto clear} -setup {
 
 
 
-test Insert_Active-24.16 {Cleanup} -body {
+test Insert_Active-24.19 {Cleanup} -body {
 	destroy .table
     }
 
@@ -2460,14 +2690,35 @@ test Insert_Column-25.21 {Out of range count max} -body {
 	.table cget -cols
     } -result {213}
 
-test Insert_Column-25.22 {Insert Empty Table} -setup {
+test Insert_Column-25.22 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table insert cols 0 1
+	.table cget -cols
+    } -result {213}
+
+test Insert_Column-25.23 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table insert cols 0 1
+	.table cget -cols
+    } -result {213}
+
+test Insert_Column-25.24 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table insert cols 0 1
+	.table cget -cols
+    } -result {214}
+
+test Insert_Column-25.25 {Insert Empty Table} -setup {
 	.table configure -cols 0 -rows 0
     } -body {
 	.table insert cols 0 15
 	.table cget -cols
     } -result {16}
 
-test Insert_Column-25.23 {Cleanup} -body {
+test Insert_Column-25.26 {Cleanup} -body {
 	destroy .table
     }
 
@@ -2577,14 +2828,35 @@ test Insert_Row-26.20 {Out of range count max} -body {
 	.table cget -rows
     } -result {213}
 
-test Insert_Row-26.21 {Insert Empty Table} -setup {
+test Insert_Row-26.21 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table insert rows 0 1
+	.table cget -rows
+    } -result {213}
+
+test Insert_Row-26.22 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table insert rows 0 1
+	.table cget -rows
+    } -result {213}
+
+test Insert_Row-26.23 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table insert rows 0 1
+	.table cget -rows
+    } -result {214}
+
+test Insert_Row-26.24 {Insert Empty Table} -setup {
 	.table configure -cols 0 -rows 0
     } -body {
 	.table insert rows 0 15
 	.table cget -rows
     } -result {16}
 
-test Insert_Row-26.22 {Cleanup} -body {
+test Insert_Row-26.25 {Cleanup} -body {
 	destroy .table
     }
 
@@ -2615,7 +2887,31 @@ test Reread-27.5 {Restore} -body {
 	.table curvalue
     } -result {Some text}
 
-test Reread-27.6 {Cleanup} -body {
+test Reread-27.6 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table curvalue "New text"
+	.table reread
+	.table curvalue
+    } -result {Some text}
+
+test Reread-27.7 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table curvalue "New text"
+	.table reread
+	.table curvalue
+    }
+
+test Reread-27.8 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table curvalue "New text"
+	.table reread
+	.table curvalue
+    } -result {Some text}
+
+test Reread-27.9 {Cleanup} -body {
 	destroy .table
     }
 
@@ -2898,7 +3194,28 @@ test Selection_Active-31.18 {Out of range max} -body {
 	.table selection active
     }
 
-test Selection_Active-31.19 {Empty cell} -setup {
+test Selection_Active-31.19 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table selection active 5 10
+	.table selection active
+    } -result {5 10}
+
+test Selection_Active-31.20 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table selection active 5 10
+	.table selection active
+    }
+
+test Selection_Active-31.21 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table selection active 5 10
+	.table selection active
+    } -result {5 10}
+
+test Selection_Active-31.22 {Empty cell} -setup {
 	.table activate 6,6
     } -body {
 	.table selection active 5 10
@@ -2906,7 +3223,7 @@ test Selection_Active-31.19 {Empty cell} -setup {
     }
 
 
-test Selection_Active-31.20 {Cleanup} -body {
+test Selection_Active-31.23 {Cleanup} -body {
 	destroy .table
     }
 
@@ -3262,7 +3579,43 @@ test Selection_Set-36.11 {Select Type Both} -setup {
 	.table selection clear all
     } -result {0,5 0,6 0,7 1,5 1,6 1,7 2,0 2,1 2,2 2,3 2,4 2,5 2,6 2,7 2,8 2,9 3,5 3,6 3,7 4,5 4,6 4,7 5,5 5,6 5,7 6,5 6,6 6,7 7,5 7,6 7,7 8,5 8,6 8,7 9,5 9,6 9,7}
 
-test Selection_Set-36.12 {No Title Select Cell in Col Title} -setup {
+test Selection_Set-36.12 {Reset} -setup {
+	.table configure -selecttype cell
+    } -body {
+	.table selection clear all
+    }
+
+test Selection_Set-36.13 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table configure -state normal
+	.table selection clear all
+    } -result {1,1}
+
+test Selection_Set-36.14 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table configure -state normal
+	.table selection clear all
+    }
+
+test Selection_Set-36.15 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table selection set 1,1
+	.table curselection
+    } -cleanup {
+	.table configure -state normal
+	.table selection clear all
+    } -result {1,1}
+
+test Selection_Set-36.16 {No Title Select Cell in Col Title} -setup {
 	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0
     } -body {
 	.table selection set 0,4
@@ -3271,7 +3624,7 @@ test Selection_Set-36.12 {No Title Select Cell in Col Title} -setup {
 	.table selection clear all
     } -result {1,4}
 
-test Selection_Set-36.13 {No Title Select Cell in Row Title} -setup {
+test Selection_Set-36.17 {No Title Select Cell in Row Title} -setup {
 	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0
     } -body {
 	.table selection set 4,0
@@ -3280,7 +3633,7 @@ test Selection_Set-36.13 {No Title Select Cell in Row Title} -setup {
 	.table selection clear all
     } -result {4,1}
 
-test Selection_Set-36.14 {No Title Select Cell in Titles} -setup {
+test Selection_Set-36.18 {No Title Select Cell in Titles} -setup {
 	.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 0
     } -body {
 	.table selection set 1,1
@@ -3289,7 +3642,7 @@ test Selection_Set-36.14 {No Title Select Cell in Titles} -setup {
 	.table selection clear all
     } -result {2,2}
 
-test Selection_Set-36.15 {No Title Select Type Row} -setup {
+test Selection_Set-36.19 {No Title Select Type Row} -setup {
 	.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 0
     } -body {
 	.table selection set 1,1
@@ -3298,7 +3651,7 @@ test Selection_Set-36.15 {No Title Select Type Row} -setup {
 	.table selection clear all
     } -result {2,2 2,3 2,4 2,5 2,6 2,7 2,8 2,9}
 
-test Selection_Set-36.16 {No Title Select Type Col} -setup {
+test Selection_Set-36.20 {No Title Select Type Col} -setup {
 	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0
     } -body {
 	.table selection set 1,1
@@ -3307,7 +3660,7 @@ test Selection_Set-36.16 {No Title Select Type Col} -setup {
 	.table selection clear all
     } -result {2,2 3,2 4,2 5,2 6,2 7,2 8,2 9,2}
 
-test Selection_Set-36.17 {No Title Select All} -setup {
+test Selection_Set-36.21 {No Title Select All} -setup {
 	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0
     } -body {
 	.table selection set origin end
@@ -3316,7 +3669,7 @@ test Selection_Set-36.17 {No Title Select All} -setup {
 	.table selection clear all
     } -result {64}
 
-test Selection_Set-36.18 {Title Select Cell in Col Title} -setup {
+test Selection_Set-36.22 {Title Select Cell in Col Title} -setup {
 	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1
     } -body {
 	.table selection set 0,4
@@ -3325,7 +3678,7 @@ test Selection_Set-36.18 {Title Select Cell in Col Title} -setup {
 	.table selection clear all
     } -result {0,4}
 
-test Selection_Set-36.19 {Title Select Cell in Row Title} -setup {
+test Selection_Set-36.23 {Title Select Cell in Row Title} -setup {
 	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1
     } -body {
 	.table selection set 4,0
@@ -3334,7 +3687,7 @@ test Selection_Set-36.19 {Title Select Cell in Row Title} -setup {
 	.table selection clear all
     } -result {4,0}
 
-test Selection_Set-36.20 {Title Select Cell in Titles} -setup {
+test Selection_Set-36.24 {Title Select Cell in Titles} -setup {
 	.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table selection set 1,1
@@ -3343,7 +3696,7 @@ test Selection_Set-36.20 {Title Select Cell in Titles} -setup {
 	.table selection clear all
     } -result {1,1}
 
-test Selection_Set-36.21 {Title Select Type Row} -setup {
+test Selection_Set-36.25 {Title Select Type Row} -setup {
 	.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table selection set 1,1
@@ -3352,7 +3705,7 @@ test Selection_Set-36.21 {Title Select Type Row} -setup {
 	.table selection clear all
     } -result {1,0 1,1 1,2 1,3 1,4 1,5 1,6 1,7 1,8 1,9}
 
-test Selection_Set-36.22 {Title Select Type Col} -setup {
+test Selection_Set-36.26 {Title Select Type Col} -setup {
 	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table selection set 1,1
@@ -3361,7 +3714,7 @@ test Selection_Set-36.22 {Title Select Type Col} -setup {
 	.table selection clear all
     } -result {0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1}
 
-test Selection_Set-36.23 {Title Select All} -setup {
+test Selection_Set-36.27 {Title Select All} -setup {
 	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table selection set origin end
@@ -3371,7 +3724,7 @@ test Selection_Set-36.23 {Title Select All} -setup {
     } -result {80}
 # Resize table does not auto clear out of range selected cells
 
-test Selection_Set-36.24 {Empty table} -setup {
+test Selection_Set-36.28 {Empty table} -setup {
 	.table configure -selecttype cell -cols 0 -rows 0 -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table selection set 2,5 2,7
@@ -3380,7 +3733,7 @@ test Selection_Set-36.24 {Empty table} -setup {
 	.table selection clear all
     } -result {0,0}
 
-test Selection_Set-36.25 {Empty table Select All} -setup {
+test Selection_Set-36.29 {Empty table Select All} -setup {
 	.table configure -selecttype cell -cols 0 -rows 0
     } -body {
 	.table selection set origin end
@@ -3389,7 +3742,7 @@ test Selection_Set-36.25 {Empty table Select All} -setup {
 	.table selection clear all
     } -result {0,0}
 
-test Selection_Set-36.26 {Empty No Title Select Cell in Col Title} -setup {
+test Selection_Set-36.30 {Empty No Title Select Cell in Col Title} -setup {
 	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0
     } -body {
 	.table selection set 0,4
@@ -3398,7 +3751,7 @@ test Selection_Set-36.26 {Empty No Title Select Cell in Col Title} -setup {
 	.table selection clear all
     }
 
-test Selection_Set-36.27 {Empty No Title Select Cell in Row Title} -setup {
+test Selection_Set-36.31 {Empty No Title Select Cell in Row Title} -setup {
 	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 0
     } -body {
 	.table selection set 4,0
@@ -3407,7 +3760,7 @@ test Selection_Set-36.27 {Empty No Title Select Cell in Row Title} -setup {
 	.table selection clear all
     }
 
-test Selection_Set-36.28 {Empty No Title Select Cell in Titles} -setup {
+test Selection_Set-36.32 {Empty No Title Select Cell in Titles} -setup {
 	.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 0
     } -body {
 	.table selection set 1,1
@@ -3416,7 +3769,7 @@ test Selection_Set-36.28 {Empty No Title Select Cell in Titles} -setup {
 	.table selection clear all
     }
 
-test Selection_Set-36.29 {Empty No Title Select Type Row} -setup {
+test Selection_Set-36.33 {Empty No Title Select Type Row} -setup {
 	.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 0
     } -body {
 	.table selection set 1,1
@@ -3425,7 +3778,7 @@ test Selection_Set-36.29 {Empty No Title Select Type Row} -setup {
 	.table selection clear all
     }
 
-test Selection_Set-36.30 {Empty No Title Select Type Col} -setup {
+test Selection_Set-36.34 {Empty No Title Select Type Col} -setup {
 	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0
     } -body {
 	.table selection set 1,1
@@ -3434,7 +3787,7 @@ test Selection_Set-36.30 {Empty No Title Select Type Col} -setup {
 	.table selection clear all
     }
 
-test Selection_Set-36.31 {Empty No Title Select All} -setup {
+test Selection_Set-36.35 {Empty No Title Select All} -setup {
 	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 0
     } -body {
 	.table selection set origin end
@@ -3443,7 +3796,7 @@ test Selection_Set-36.31 {Empty No Title Select All} -setup {
 	.table selection clear all
     } -result {0}
 
-test Selection_Set-36.32 {Empty Title Select Cell in Col Title} -setup {
+test Selection_Set-36.36 {Empty Title Select Cell in Col Title} -setup {
 	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1
     } -body {
 	.table selection set 0,4
@@ -3452,7 +3805,7 @@ test Selection_Set-36.32 {Empty Title Select Cell in Col Title} -setup {
 	.table selection clear all
     } -result {0,0}
 
-test Selection_Set-36.33 {Empty Title Select Cell in Row Title} -setup {
+test Selection_Set-36.37 {Empty Title Select Cell in Row Title} -setup {
 	.table configure -selecttype cell -titlecols 1 -titlerows 1 -selecttitle 1
     } -body {
 	.table selection set 4,0
@@ -3461,7 +3814,7 @@ test Selection_Set-36.33 {Empty Title Select Cell in Row Title} -setup {
 	.table selection clear all
     } -result {0,0}
 
-test Selection_Set-36.34 {Empty Title Select Cell in Titles} -setup {
+test Selection_Set-36.38 {Empty Title Select Cell in Titles} -setup {
 	.table configure -selecttype cell -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table selection set 1,1
@@ -3470,7 +3823,7 @@ test Selection_Set-36.34 {Empty Title Select Cell in Titles} -setup {
 	.table selection clear all
     } -result {0,0}
 
-test Selection_Set-36.35 {Empty Title Select Type Row} -setup {
+test Selection_Set-36.39 {Empty Title Select Type Row} -setup {
 	.table configure -selecttype row -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table selection set 1,1
@@ -3479,7 +3832,7 @@ test Selection_Set-36.35 {Empty Title Select Type Row} -setup {
 	.table selection clear all
     } -result {0,0}
 
-test Selection_Set-36.36 {Empty Title Select Type Col} -setup {
+test Selection_Set-36.40 {Empty Title Select Type Col} -setup {
 	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table selection set 1,1
@@ -3488,7 +3841,7 @@ test Selection_Set-36.36 {Empty Title Select Type Col} -setup {
 	.table selection clear all
     } -result {0,0}
 
-test Selection_Set-36.37 {Empty Title Select All} -setup {
+test Selection_Set-36.41 {Empty Title Select All} -setup {
 	.table configure -selecttype col -titlecols 2 -titlerows 2 -selecttitle 1
     } -body {
 	.table selection set origin end
@@ -3497,7 +3850,7 @@ test Selection_Set-36.37 {Empty Title Select All} -setup {
 	.table selection clear all
     } -result {1}
 
-test Selection_Set-36.38 {Cleanup} -body {
+test Selection_Set-36.42 {Cleanup} -body {
 	destroy .table
     }
 
@@ -4211,14 +4564,41 @@ test Set-42.14 {Clipped column} -body {
 	.table set col 0,9 [list a b c d e f g h I j k l]
 	.table set 10,9
     } -result {j}
+
+test Set-42.15 {Readonly state} -setup {
+	.table configure -state readonly
+    } -body {
+	.table set 7,5 "New value"
+	.table get 7,5
+    } -cleanup {
+	.table configure -state normal
+    }
+
+test Set-42.16 {Disabled state} -setup {
+	.table configure -state disabled
+    } -body {
+	.table set 7,5 "New value"
+	.table get 7,5
+    } -cleanup {
+	.table configure -state normal
+    }
+
+test Set-42.17 {Normal state} -setup {
+	.table configure -state normal
+    } -body {
+	.table set 7,5 "New value"
+	.table get 7,5
+    } -cleanup {
+	.table configure -state normal
+    } -result {New value}
 # Check if variable trace updated hash table per Bug #487747
 
-test Set-42.15 {Variable trace} -body {
+test Set-42.18 {Variable trace} -body {
 	.table set 7,7 "New value"
 	set tableData(7,7)
     } -result {New value}
 
-test Set-42.16 {Cleanup} -body {
+test Set-42.19 {Cleanup} -body {
 	destroy .table
     }
 
@@ -4700,7 +5080,7 @@ test Tag_Options_Invalid-50.12 {Showtext} -body {
 
 test Tag_Options_Invalid-50.13 {State} -body {
 	.table tag configure testTag -state bogus
-    } -result {bad option "bogus" must be unknown, normal, disabled} -returnCodes {1}
+    } -result {bad option "bogus" must be unknown, normal, readonly, disabled} -returnCodes {1}
 
 test Tag_Options_Invalid-50.14 {Wrap} -body {
 	.table tag configure testTag -wrap bogus

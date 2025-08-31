@@ -404,8 +404,8 @@ int Table_ExportCmd(
     }
 
     /* if we have no data source, abort */
-    if (tablePtr->dataSource == DATA_NONE) {
-	return -1;
+    if (tablePtr->state == STATE_DISABLED || tablePtr->dataSource == DATA_NONE) {
+	return TCL_OK;
     }
 
     /* Get selected data */
@@ -714,6 +714,11 @@ int Table_ImportCmd(
     /* Get selection */
     if (objc == 3 && Tcl_GetIndexFromObj(interp, objv[2], selectTypes, "type", 0, &selType) != TCL_OK) {
 	return TCL_ERROR;
+    }
+
+    /* Abort if table is disabled */
+    if (tablePtr->state != STATE_NORMAL) {
+	return TCL_OK;
     }
 
     /* target is ICCCM type, format is used for transmit */

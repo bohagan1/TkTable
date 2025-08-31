@@ -326,7 +326,7 @@ proc modes_toolbar {w table} {
 	"Cursor Blink" -insertofftime enum [list 0 300 600 900] \
 	"Drawing" -drawmode enum [list slow compatible fast single] \
 	"Resize" -resizeborders enum [list row col both none] \
-	"State" -state enum [list normal disabled]] {
+	"State" -state enum [list normal readonly disabled]] {
 	set var ::options($opt)
 	set $var [$table cget $opt]
 

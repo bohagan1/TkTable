@@ -30,6 +30,7 @@ enum tagCmd {
 static Cmd_Struct tagState_vals[]= {
     {"unknown",	 STATE_UNKNOWN},
     {"normal",	 STATE_NORMAL},
+    {"readonly", STATE_READONLY},
     {"disabled", STATE_DISABLED},
     {"",	 0}
 };

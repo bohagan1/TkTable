@@ -162,6 +162,11 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	return TCL_ERROR;
     }
 
+    /* Abort if table is disabled */
+    if (tablePtr->state == STATE_DISABLED) {
+	return TCL_OK;
+    }
+
     /* Get active cell index */
     if (objc == 2) {
 	if (tablePtr->flags & HAS_ACTIVE) {
@@ -833,7 +838,7 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	int row, col;
 
 	/* make sure there is a data source to accept a set value */
-	if ((tablePtr->state == STATE_DISABLED) || (tablePtr->dataSource == DATA_NONE)) {
+	if ((tablePtr->state != STATE_NORMAL) || (tablePtr->dataSource == DATA_NONE)) {
 	    return TCL_OK;
 	}
 	value = Tcl_GetString(objv[2]);
@@ -879,8 +884,13 @@ int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	return TCL_OK;
     }
 
+    /* Abort if table is disabled */
+    if (tablePtr->state == STATE_DISABLED) {
+	return TCL_OK;
+    }
+
     /* Set to new value */
-    if (objc == 3) {
+    if (objc == 3 && tablePtr->state == STATE_NORMAL) {
 	char *value;
 	Tcl_Size len;
 
@@ -941,9 +951,14 @@ int Table_FocusCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	return TCL_ERROR;
     }
 
+    /* Abort if table is disabled */
+    if (tablePtr->state == STATE_DISABLED) {
+	return TCL_OK;
+    }
+
     /* Get focus cell index */
     if (objc == 2) {
-	if (tablePtr->focusRow > -1 || tablePtr->focusCol > -1) {
+	if (tablePtr->focusRow > -1 && tablePtr->focusCol > -1) {
 	    row = tablePtr->focusRow + tablePtr->rowOffset;
 	    col = tablePtr->focusCol + tablePtr->colOffset;
 	    Tcl_SetObjResult(interp, TableMakeIndexObj(row, col));
@@ -1395,6 +1410,11 @@ int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
 	return TCL_ERROR;
     }
 
+    /* Abort if table is disabled */
+    if (tablePtr->state == STATE_DISABLED) {
+	return TCL_OK;
+    }
+
     /* Get current, clear, or set new selection in active cell */
     if (objc == 3 && tablePtr->selectFirst > -1) {
 	Tcl_Obj *resultPtr;
@@ -1665,8 +1685,8 @@ int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
     char buf1[INDEX_BUFSIZE];
     Tcl_HashSearch search;
     Tcl_HashEntry *entryPtr;
-
     int clo=0, chi=0, r1, c1, r2, c2, firstRow, firstCol, lastRow, lastCol;
+
     if (objc < 4 || objc > 5) {
 	Tcl_WrongNumArgs(interp, 3, objv, "first ?last?");
 	return TCL_ERROR;
@@ -1675,6 +1695,11 @@ int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	(objc==5 &&
 	 TableGetIndexObj(tablePtr, objv[4], &r2, &c2) == TCL_ERROR)) {
 	return TCL_ERROR;
+    }
+
+    /* Abort if table is disabled */
+    if (tablePtr->state == STATE_DISABLED) {
+	return TCL_OK;
     }
 
     /* Get first and last row and column */

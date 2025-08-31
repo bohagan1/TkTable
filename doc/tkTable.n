@@ -984,10 +984,13 @@ Database Class:	\fBState\fR
 
 .fi
 .IP
-Specifies one of two states for the entry: \fBnormal\fR or \fBdisabled\fR\&.
-If the table is disabled then the value may not be changed using widget
-commands and no insertion cursor will be displayed, even if the input focus
-is in the widget\&.  Also, all insert or delete methods will be ignored\&.
+Specifies the state of the table widget\&. Valid options are: \fBnormal\fR,
+\fBreadonly\fR, or \fBdisabled\fR\&. In the \fBnormal\fR state, all table
+functions and bindings can be used\&. In the \fBreadonly\fR state, the table
+cells and text in the active cell can be selected and navigated (activate,
+focus, icursor, selection, etc\&.), but the contents cannot be changed (curvalue,
+delete, insert, reread, set, etc\&.)\&. In the \fBdisabled\fR state, the table
+cells and active cell text can neither be selected, navigated, or changed\&.
 Defaults to \fBnormal\fR\&.
 .LP
 .nf

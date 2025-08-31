@@ -581,7 +581,7 @@ int TableSetCellValue(Table *tablePtr, int r, int c, char *value) {
 
     TableMakeArrayIndex(r, c, buf, INDEX_BUFSIZE);
 
-    if (tablePtr->state == STATE_DISABLED) {
+    if (tablePtr->state != STATE_NORMAL) {
 	return TCL_OK;
     }
     if (tablePtr->dataSource & DATA_COMMAND) {
