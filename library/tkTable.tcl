@@ -655,9 +655,17 @@ proc ::tktable::CancelRepeat {} {
 # Returns nothing
 #
 proc ::tktable::Insert {w s} {
-    if {[$w cget -state] eq "disabled"} return
+    if {[$w cget -state] ne "normal"} return
 
     if {$s ne {}} {
+	set list [$w selection active]
+	if {[llength $list] > 0} {
+	    lassign $list first last
+	    set i [$w icursor]
+	    if {$i >= $first || $i <= $last} {
+		$w delete active $first $last
+	    }
+	}
 	$w insert active insert $s
     }
 }
@@ -674,7 +682,7 @@ proc ::tktable::Insert {w s} {
 # Returns nothing
 #
 proc ::tktable::BackSpace {w} {
-    if {[$w cget -state] eq "disabled"} return
+    if {[$w cget -state] ne "normal"} return
 
     set list [$w selection active]
     if {[llength $list] > 0} {
@@ -705,7 +713,7 @@ proc ::tktable::BackSpace {w} {
 # Returns nothing
 #
 proc ::tktable::Delete {w} {
-    if {[$w cget -state] eq "disabled"} return
+    if {[$w cget -state] ne "normal"} return
 
     set list [$w selection active]
     if {[llength $list] > 0} {
