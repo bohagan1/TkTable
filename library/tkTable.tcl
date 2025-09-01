@@ -216,6 +216,7 @@ bind Table <Control-h>		{ ::tktable::BackSpace %W }
 bind Table <Control-i>		{ ::tktable::Insert %W "\t" }
 bind Table <Control-k>		{ %W delete active insert end }
 bind Table <Control-n>		{ ::tktable::Insert %W "\n" }
+bind Table <Control-t>		{ ::tktable::Transpose %W }
 bind Table <F2>			{ %W activate focus }
 
 # Column resize functions
@@ -728,6 +729,28 @@ proc ::tktable::Delete {w} {
 	set index [$w icursor]
 	$w delete active $index
     }
+}
+
+# ::tktable::Transpose -
+#
+# Transpose the characters on either side of the insertion cursor, unless the
+# cursor is at the beginning or end of the text.
+#
+# Arguments:
+# w -	the table widget
+
+proc ::tktable::Transpose {w} {
+    if {[$w cget -state] ne "normal"} return
+
+    set i [$w icursor]
+    set val [$w curvalue]
+    set len [string length $val]
+    if {$i < 1 || $i >= $len} {
+	return
+    }
+    set word [string reverse [string range $val [incr i -1] [incr i]]]
+    set val [string replace $val [incr i -1] [incr i] $word]
+    $w curvalue $val
 }
 
 #
