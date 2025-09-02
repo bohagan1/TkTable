@@ -11,6 +11,8 @@ set auto_path [concat [list [file dirname [file dirname [info script]]]] $auto_p
 package require Tktable
 
 # Constraints
+::tcltest::testConstraint  tcl8 [expr {[info tclversion] < 9.0}]
+::tcltest::testConstraint  tcl9 [expr {[info tclversion] >= 9.0}]
 
 # Helper functions
 proc setup {w args} {
@@ -33,6 +35,7 @@ proc setup_data {w args} {
 }
 
 proc store_val {args} {set ::temp $args;return 1}
+proc pause {{ms 1000}} {set ::pause 0;after $ms [list set ::pause 1];vwait ::pause}
 
 # Widget
 
@@ -1014,159 +1017,163 @@ test Options_Invalid-9.19 {Flash Time} -body {
 	.table configure -flashtime xyzzy
     } -result {expected integer but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.20 {Font} -body {
+test Options_Invalid-9.20 {Font} -constraints {tcl8} -body {
 	.table configure -font {}
     } -result {font "" doesn't exist} -returnCodes {1}
 
-test Options_Invalid-9.21 {Foreground} -body {
+test Options_Invalid-9.21 {Font} -constraints {tcl9} -body {
+	.table configure -font {}
+    } -result {font "" does not exist} -returnCodes {1}
+
+test Options_Invalid-9.22 {Foreground} -body {
 	.table configure -foreground bogus
     } -result {unknown color name "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.22 {Height} -body {
+test Options_Invalid-9.23 {Height} -body {
 	.table configure -height 20p
     } -result {expected integer but got "20p"} -returnCodes {1}
 
-test Options_Invalid-9.23 {Highlight Background} -body {
+test Options_Invalid-9.24 {Highlight Background} -body {
 	.table configure -highlightbackground ugly
     } -result {unknown color name "ugly"} -returnCodes {1}
 
-test Options_Invalid-9.24 {Highlight Color} -body {
+test Options_Invalid-9.25 {Highlight Color} -body {
 	.table configure -highlightcolor bogus
     } -result {unknown color name "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.25 {Hughlight Thickness} -body {
+test Options_Invalid-9.26 {Hughlight Thickness} -body {
 	.table configure -highlightthickness bogus
     } -match {glob} -result {*screen distance* "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.26 {Insert Background} -body {
+test Options_Invalid-9.27 {Insert Background} -body {
 	.table configure -insertbackground bogus
     } -result {unknown color name "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.27 {Insert Borderwidth} -body {
+test Options_Invalid-9.28 {Insert Borderwidth} -body {
 	.table configure -insertborderwidth 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.28 {Insert Off Time} -body {
+test Options_Invalid-9.29 {Insert Off Time} -body {
 	.table configure -insertofftime 3.2
     } -result {expected integer but got "3.2"} -returnCodes {1}
 
-test Options_Invalid-9.29 {Insert On Time} -body {
+test Options_Invalid-9.30 {Insert On Time} -body {
 	.table configure -insertontime 3.2
     } -result {expected integer but got "3.2"} -returnCodes {1}
 
-test Options_Invalid-9.30 {Insert Width} -body {
+test Options_Invalid-9.31 {Insert Width} -body {
 	.table configure -insertwidth 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.31 {Invert Selected} -body {
+test Options_Invalid-9.32 {Invert Selected} -body {
 	.table configure -invertselected xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.32 {Internal Padx} -body {
+test Options_Invalid-9.33 {Internal Padx} -body {
 	.table configure -ipadx 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.33 {Internal Pady} -body {
+test Options_Invalid-9.34 {Internal Pady} -body {
 	.table configure -ipady 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.34 {Justify} -body {
+test Options_Invalid-9.35 {Justify} -body {
 	.table configure -justify wrong
     } -result {bad justification "wrong": must be left, right, or center} -returnCodes {1}
 
-test Options_Invalid-9.35 {Max Height} -body {
+test Options_Invalid-9.36 {Max Height} -body {
 	.table configure -maxheight 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.36 {Max Width} -body {
+test Options_Invalid-9.37 {Max Width} -body {
 	.table configure -maxwidth 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.37 {Mode} -body {
+test Options_Invalid-9.38 {Mode} -body {
 	.table configure -mode bogus
     } -match {glob} -result {bad option "bogus" must be table, spreadsheet} -returnCodes {1}
 
-test Options_Invalid-9.38 {Multiline} -body {
+test Options_Invalid-9.39 {Multiline} -body {
 	.table configure -multiline xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.39 {Padx} -body {
+test Options_Invalid-9.40 {Padx} -body {
 	.table configure -padx 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.40 {Pady} -body {
+test Options_Invalid-9.41 {Pady} -body {
 	.table configure -pady 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.41 {Refief} -body {
+test Options_Invalid-9.42 {Refief} -body {
 	.table configure -relief bogus
     } -result {bad relief "bogus": must be flat, groove, raised, ridge, solid, or sunken} -returnCodes {1}
 
-test Options_Invalid-9.42 {Row Height} -body {
+test Options_Invalid-9.43 {Row Height} -body {
 	.table configure -rowheight xyzzy
     } -result {expected integer but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.43 {Row Origin} -body {
+test Options_Invalid-9.44 {Row Origin} -body {
 	.table configure -roworigin xyzzy
     } -result {expected integer but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.44 {Rows} -body {
+test Options_Invalid-9.45 {Rows} -body {
 	.table configure -rows xyzzy
     } -result {expected integer but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.45 {Row Stretch Mode} -body {
+test Options_Invalid-9.46 {Row Stretch Mode} -body {
 	.table configure -rowstretchmode bogus
     } -result {bad option "bogus" must be none, unset, all, last, fill} -returnCodes {1}
 
-test Options_Invalid-9.46 {Selection Background} -body {
+test Options_Invalid-9.47 {Selection Background} -body {
 	.table configure -selectbackground bogus
     } -result {unknown color name "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.47 {Selection Foreground} -body {
+test Options_Invalid-9.48 {Selection Foreground} -body {
 	.table configure -selectforeground bogus
     } -result {unknown color name "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.48 {Select Titles} -body {
+test Options_Invalid-9.49 {Select Titles} -body {
 	.table configure -selecttitles xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.49 {Select Type} -body {
+test Options_Invalid-9.50 {Select Type} -body {
 	.table configure -selecttype bogus
     } -result {bad option "bogus" must be row, col, both, cell} -returnCodes {1}
 
-test Options_Invalid-9.50 {Sparse Array} -body {
+test Options_Invalid-9.51 {Sparse Array} -body {
 	.table configure -sparsearray xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.51 {State} -body {
+test Options_Invalid-9.52 {State} -body {
 	.table configure -state foo
     } -result {bad option "foo" must be normal, readonly, disabled} -returnCodes {1}
 
-test Options_Invalid-9.52 {Title Columns} -body {
+test Options_Invalid-9.53 {Title Columns} -body {
 	.table configure -titlecols 3p
     } -result {expected integer but got "3p"} -returnCodes {1}
 
-test Options_Invalid-9.53 {Title Rows} -body {
+test Options_Invalid-9.54 {Title Rows} -body {
 	.table configure -titlerows 3p
     } -result {expected integer but got "3p"} -returnCodes {1}
 
-test Options_Invalid-9.54 {Use Command} -body {
+test Options_Invalid-9.55 {Use Command} -body {
 	.table configure -usecommand xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.55 {Validate} -body {
+test Options_Invalid-9.56 {Validate} -body {
 	.table configure -validate xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.56 {Width} -body {
+test Options_Invalid-9.57 {Width} -body {
 	.table configure -width 3p
     } -result {expected integer but got "3p"} -returnCodes {1}
 
-test Options_Invalid-9.57 {Word Wrap} -body {
+test Options_Invalid-9.58 {Word Wrap} -body {
 	.table configure -wrap xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.58 {Cleanup} -body {
+test Options_Invalid-9.59 {Cleanup} -body {
 	destroy .table
     }
 
@@ -3938,8 +3945,6 @@ test Selection_Size-37.12 {Cleanup} -body {
 	destroy .table
     }
 
-proc pause {{ms 1000}} {set ::pause 0;after $ms [list set ::pause 1];vwait ::pause}
-proc keypress {w event} {if {[focus] ne $w} {focus -force $w};event generate $w $event;pause 50}
 proc keypress {w event} {if {[focus] ne $w} {focus -force $w};event generate $w $event -when now;pause 50}
 proc do_event {w event} {focus -force $w;event generate $w $event;pause 50}
 
@@ -5058,35 +5063,39 @@ test Tag_Options_Invalid-50.7 {Foreground} -body {
 	.table tag configure testTag -foreground bogus
     } -result {unknown color name "bogus"} -returnCodes {1}
 
-test Tag_Options_Invalid-50.8 {Image} -body {
+test Tag_Options_Invalid-50.8 {Image} -constraints {tcl8} -body {
 	.table tag configure testTag -image bogus
     } -result {image "bogus" doesn't exist} -returnCodes {1}
 
-test Tag_Options_Invalid-50.9 {Justify} -body {
+test Tag_Options_Invalid-50.9 {Image} -constraints {tcl9} -body {
+	.table tag configure testTag -image bogus
+    } -result {image "bogus" does not exist} -returnCodes {1}
+
+test Tag_Options_Invalid-50.10 {Justify} -body {
 	.table tag configure testTag -justify bogus
     } -result {bad justification "bogus": must be left, right, or center} -returnCodes {1}
 
-test Tag_Options_Invalid-50.10 {Multiline} -body {
+test Tag_Options_Invalid-50.11 {Multiline} -body {
 	.table tag configure testTag -multiline bogus
     } -result {expected integer but got "bogus"} -returnCodes {1}
 
-test Tag_Options_Invalid-50.11 {Relief} -body {
+test Tag_Options_Invalid-50.12 {Relief} -body {
 	.table tag configure testTag -relief 1.5
     } -result {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken} -returnCodes {1}
 
-test Tag_Options_Invalid-50.12 {Showtext} -body {
+test Tag_Options_Invalid-50.13 {Showtext} -body {
 	.table tag configure testTag -showtext bogus
     } -result {expected integer but got "bogus"} -returnCodes {1}
 
-test Tag_Options_Invalid-50.13 {State} -body {
+test Tag_Options_Invalid-50.14 {State} -body {
 	.table tag configure testTag -state bogus
     } -result {bad option "bogus" must be unknown, normal, readonly, disabled} -returnCodes {1}
 
-test Tag_Options_Invalid-50.14 {Wrap} -body {
+test Tag_Options_Invalid-50.15 {Wrap} -body {
 	.table tag configure testTag -wrap bogus
     } -result {expected integer but got "bogus"} -returnCodes {1}
 
-test Tag_Options_Invalid-50.15 {Cleanup} -body {
+test Tag_Options_Invalid-50.16 {Cleanup} -body {
 	destroy .table
     }
 
@@ -5890,27 +5899,35 @@ test Window_Options_Invalid-67.6 {Borderwidth} -body {
 	.table window configure 5,5 -borderwidth badValue
     } -match {glob} -result {*screen distance* "badValue"} -returnCodes {1}
 
-test Window_Options_Invalid-67.7 {Padx} -body {
+test Window_Options_Invalid-67.7 {Padx} -constraints {tcl8} -body {
 	.table window configure 5,5 -padx bogus
     } -result {bad screen distance "bogus"} -returnCodes {1}
 
-test Window_Options_Invalid-67.8 {Pady} -body {
+test Window_Options_Invalid-67.8 {Padx} -constraints {tcl9} -body {
+	.table window configure 5,5 -padx bogus
+    } -result {expected screen distance but got "bogus"} -returnCodes {1}
+
+test Window_Options_Invalid-67.9 {Pady} -constraints {tcl8} -body {
 	.table window configure 5,5 -pady bogus
     } -result {bad screen distance "bogus"} -returnCodes {1}
 
-test Window_Options_Invalid-67.9 {Relief} -body {
+test Window_Options_Invalid-67.10 {Pady} -constraints {tcl9} -body {
+	.table window configure 5,5 -pady bogus
+    } -result {expected screen distance but got "bogus"} -returnCodes {1}
+
+test Window_Options_Invalid-67.11 {Relief} -body {
 	.table window configure 5,5 -relief bogus
     } -result {bad relief "bogus": must be flat, groove, raised, ridge, solid, or sunken} -returnCodes {1}
 
-test Window_Options_Invalid-67.10 {Sticky} -body {
+test Window_Options_Invalid-67.12 {Sticky} -body {
 	.table window configure 5,5 -sticky bogus
     } -result {bad sticky value "bogus": must contain n, s, e or w} -returnCodes {1}
 
-test Window_Options_Invalid-67.11 {Window} -body {
+test Window_Options_Invalid-67.13 {Window} -body {
 	.table window configure 5,5 -window bogus
     } -result {bad window path name "bogus"} -returnCodes {1}
 
-test Window_Options_Invalid-67.12 {Cleanup} -body {
+test Window_Options_Invalid-67.14 {Cleanup} -body {
 	destroy .e
 	destroy .table
     }
@@ -6090,35 +6107,43 @@ test Xview-73.13 {Scroll too many args} -body {
 	.table xview scroll 1 2 3
     } -result {wrong # args: should be ".table xview ?args?"} -returnCodes {1}
 
-test Xview-73.14 {Scroll invalid value} -body {
+test Xview-73.14 {Scroll invalid value} -constraints {tcl8} -body {
 	.table xview scroll bogus units
     } -result {expected integer but got "bogus"} -returnCodes {1}
 
-test Xview-73.15 {Scroll invalid units} -body {
+test Xview-73.15 {Scroll invalid value} -constraints {tcl9} -body {
+	.table xview scroll bogus units
+    } -result {expected floating-point number but got "bogus"} -returnCodes {1}
+
+test Xview-73.16 {Scroll invalid units} -constraints {tcl8} -body {
 	.table xview scroll 1 bogus
     } -result {bad argument "bogus": must be units or pages} -returnCodes {1}
 
-test Xview-73.16 {Scroll units forwards} -body {
+test Xview-73.17 {Scroll invalid units} -constraints {tcl9} -body {
+	.table xview scroll 1 bogus
+    } -result {bad argument "bogus": must be pages or units} -returnCodes {1}
+
+test Xview-73.18 {Scroll units forwards} -body {
 	.table xview scroll 10 units
 	.table xview
     } -result {0.88 1.0}
 
-test Xview-73.17 {Scroll units backwards} -body {
+test Xview-73.19 {Scroll units backwards} -body {
 	.table xview scroll -10 units
 	.table xview
     } -result {0.78 0.9090322580645162}
 
-test Xview-73.18 {Scroll pages forward} -body {
+test Xview-73.20 {Scroll pages forward} -body {
 	.table xview scroll 1 pages
 	.table xview
     } -result {0.88 1.0}
 
-test Xview-73.19 {Scroll pages backwards} -body {
+test Xview-73.21 {Scroll pages backwards} -body {
 	.table xview scroll -1 pages
 	.table xview
     } -result {0.76 0.8890322580645161}
 
-test Xview-73.20 {Cleanup} -body {
+test Xview-73.22 {Cleanup} -body {
 	destroy .table
     }
 
@@ -6181,35 +6206,43 @@ test Yview-74.13 {Scroll too many args} -body {
 	.table yview scroll 1 2 3
     } -result {wrong # args: should be ".table yview ?args?"} -returnCodes {1}
 
-test Yview-74.14 {Scroll invalid value} -body {
+test Yview-74.14 {Scroll invalid value} -constraints {tcl8} -body {
 	.table yview scroll bogus units
     } -result {expected integer but got "bogus"} -returnCodes {1}
 
-test Yview-74.15 {Scroll invalid units} -body {
+test Yview-74.15 {Scroll invalid value} -constraints {tcl9} -body {
+	.table yview scroll bogus units
+    } -result {expected floating-point number but got "bogus"} -returnCodes {1}
+
+test Yview-74.16 {Scroll invalid units} -constraints {tcl8} -body {
 	.table yview scroll 1 bogus
     } -result {bad argument "bogus": must be units or pages} -returnCodes {1}
 
-test Yview-74.16 {Scroll units forwards} -body {
+test Yview-74.17 {Scroll invalid units} -constraints {tcl9} -body {
+	.table yview scroll 1 bogus
+    } -result {bad argument "bogus": must be pages or units} -returnCodes {1}
+
+test Yview-74.18 {Scroll units forwards} -body {
 	.table yview scroll 10 units
 	.table yview
     } -result {0.69 1.0}
 
-test Yview-74.17 {Scroll units backwards} -body {
+test Yview-74.19 {Scroll units backwards} -body {
 	.table yview scroll -10 units
 	.table yview
     } -result {0.59 0.9057894736842105}
 
-test Yview-74.18 {Scroll pages forward} -body {
+test Yview-74.20 {Scroll pages forward} -body {
 	.table yview scroll 1 pages
 	.table yview
     } -result {0.69 1.0}
 
-test Yview-74.19 {Scroll pages backwards} -body {
+test Yview-74.21 {Scroll pages backwards} -body {
 	.table yview scroll -1 pages
 	.table yview
     } -result {0.38 0.6957894736842105}
 
-test Yview-74.20 {Cleanup} -body {
+test Yview-74.22 {Cleanup} -body {
 	destroy .table
     }
 

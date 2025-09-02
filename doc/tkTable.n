@@ -929,14 +929,14 @@ The selection can be cleared via the keyboard bindings\&.
 \fBextended\fR
 Multiple cells can be selected, but the default is for only one cell to be
 selected at a time\&. More cells can be selected by dragging the mouse pointer
-with Button-1 is pressed or by extending the selection using the Shift key
+while Button-1 is pressed or by extending the selection using the Shift key
 bindings\&. In this mode, the selection follows the focus during keyboard
 traversal\&. The selection can be cleared via the keyboard bindings\&.
 .RE
 .IP
 Note that the \fBselection\fR method can set the selection to include any
 cell regardless of the value of \fB-selectmode\fR\&. This mode also doesn't
-impact the \fBselection active\fR controlled active cell selection\&.
+impact the \fBselection active\fR controlled selection\&.
 .LP
 .nf
 .ta 6c
@@ -946,7 +946,7 @@ Database Class:	\fBSelectTitles\fR
 
 .fi
 .IP
-Specifies whether title cells should be allowed in the selection\&.
+Specifies whether title cells should be allowed in the selection or not\&.
 Defaults to 0, not allowed\&.
 .LP
 .nf
@@ -2017,7 +2017,7 @@ the first/last visible cell in that row or column\&.
 .IP [10]
 When \fB-selectmode\fR is \fBextended\fR, Control (or Option on Mac) plus
 Shift and the left, right, up, and down arrow keys extend the selection to the
-first/last visible column or row in that direction\&.
+first/last visible cell in that column or row\&.
 .IP [11]
 Home moves to the first cell in the current row\&.
 .IP [12]
@@ -2041,11 +2041,11 @@ Next or Prior (aka Page Down or Page Up) will move one screen-full down or up\&.
 .IP [20]
 Shift-Next or Shift-Prior will move one screen-full right or left\&.
 .IP [21]
-Control-Next or Control-Prior will move to the bottom or top cell in the
-current column\&.
+Control-Next or Control-Prior will move to the bottom or top visible cell in
+the current column\&.
 .IP [22]
-Control-Shift-Next or Control-Shift-Prior will move to the last or first cell
-in the row\&.
+Control-Shift-Next or Control-Shift-Prior will move to the last or first
+visible cell in the row\&.
 .IP [23]
 When \fB-selectmode\fR is \fBextended\fR or \fBmultiple\fR, Control-slash
 (Command-a on Mac) selects all the cells in the table\&.
@@ -2061,25 +2061,33 @@ will select all cells in the current column\&.
 .IP [27]
 Control-Return will toggle whether the cell is activated or just has the focus\&.
 .IP [28]
+Return moves to the below cell\&.
+.IP [29]
+Shift-Return moves to the above cell\&.
+.IP [30]
+Tab moves to the next cell in the row\&.
+.IP [31]
+Shift-Tab moves to the previous cell in the row\&.
+.IP [32]
 ScrollLock and the left, right, up, and down arrow keys will scroll the xview
 or yview by 1 unit in that direction\&.
-.IP [29]
+.IP [33]
 ScrollLock-Home or ScrollLock-End will scroll the xview by 1 page left or right\&.
-.IP [30]
+.IP [34]
 ScrollLock-Prior or ScrollLock-Next will scroll the yview by 1 page up or down\&.
-.IP [31]
+.IP [35]
 ScrollLock-Control-Home or ScrollLock-Control-End will scroll the xview to the
 0\&.0 or 1\&.0 position\&.
-.IP [32]
+.IP [36]
 ScrollLock-Control-Prior or ScrollLock-Control-Next will scroll the yview to the
 0\&.0 or 1\&.0 position\&.
-.IP [33]
+.IP [37]
 The virtual event <<Copy>> will copy the contents of the selected cells to the
 clipboard\&.
-.IP [34]
+.IP [38]
 The virtual event <<Cut>> will copy the contents of the selected cells to the
 clipboard and clear the cells\&.
-.IP [35]
+.IP [39]
 The virtual event <<Paste>> will paste the clipboard contents into the
 table cells\&.
 .PP
@@ -2087,56 +2095,117 @@ table cells\&.
 When a cell is active, the following bindings are available in addition to or
 in place of the above bindings:
 .IP [1]
-The left or right arrow keys will move the insertion cursor left or right one
-character\&. If already at the first or last character, the cell to left or right
-will be activated and the insertion cursor set to after the last or before the
-first character, respectively\&.
+Pressing Button-1 in a cell will activate it and set the icursor position to
+the location under the mouse pointer\&.
 .IP [2]
-The up and down arrow keys will move to and activate the above or below
-cell and put the insertion cursor at the same location in the new cell\&.
+Moving the mouse while Button-1 is pressed will extend the character selection
+in the active cell\&.
 .IP [3]
-Home moves the insertion cursor to the beginning of the active cell\&.
+A Double-Button-1 in the active cell will select the underlying word\&.
 .IP [4]
-End moves the insertion cursor to the end of the active cell\&.
+A Triple-Button-1 in the active cell will select all text in the cell\&.
 .IP [5]
-Backspace deletes the selected text or if none the character before the
-insertion cursor in the active cell\&.
+If any normal printing characters are typed into the active cell, they are
+inserted at the insertion cursor\&.
 .IP [6]
-Delete deletes the selected text or if none the character after the insertion
-cursor in the active cell\&.
+The left arrow key will move the insertion cursor left 1 character and clear
+any selection\&. If already at the first character, the cell to left will be
+activated and the insertion cursor set to just after the last character\&.
 .IP [7]
-Return accepts any changes made to the cell and activates the below cell\&.
+The right arrow key will move the insertion cursor right 1 character and clear
+any selection\&. If already at the last character, the cell to right will be
+activated and the insertion cursor set to just before the first character\&.
 .IP [8]
-Shift-Return accepts any changes made to the cell and activates the above cell\&.
+Shift-Left will extend the selection 1 character to the left from the insertion
+cursor\&.
 .IP [9]
+Shift-Right will extend the selection 1 character to the right from the
+insertion cursor\&.
+.IP [10]
+Control-Left will move the insertion cursor left to the start of the word
+before the insertion cursor\&.
+.IP [11]
+Control-Right will move the insertion cursor right to the start of the word
+after the insertion cursor\&.
+.IP [12]
+Control-Shift-Left will extend the selection 1 word to the left from the
+insertion cursor\&.
+.IP [13]
+Control-Shift-Right will extend the selection 1 word to the right from the
+insertion cursor\&.
+.IP [14]
+The up and down arrow keys will move up or down one line in the cell or if at
+the top or bottom line already, move to and activate the above or below
+cell\&. The insertion cursor at the same location in the new line or cell\&.
+.IP [15]
+Shift-Up will extend the selection up 1 line\&.
+.IP [16]
+Shift-Down will extend the selection down 1 line\&.
+.IP [17]
+Home moves the insertion cursor to the beginning of the cell line\&.
+This is used for multi-line cells\&.
+.IP [18]
+End moves the insertion cursor to the end of the cell line\&.
+This is used for multi-line cells\&.
+.IP [19]
+Shift-Home extends the selection from the insertion cursor to the beginning of
+the cell line\&.
+.IP [20]
+Shift-End extends the selection from the insertion cursor to the end of the
+cell line\&.
+.IP [21]
+Control-Home moves the insertion cursor to the start of the cell text\&.
+.IP [22]
+Control-End moves the insertion cursor to the end of the cell text\&.
+enum]
+Control-Shift-Home extends the selection from the insertion cursor to the
+beginning of the cell text\&.
+.IP [23]
+Control-Shift-End extends the selection from the insertion cursor to the end
+of the cell text\&.
+.IP [24]
+Backspace or Control-h deletes the selected text or if none the character before the
+insertion cursor in the active cell\&.
+.IP [25]
+Delete or Control-d deletes the selected text or if none the character after the insertion
+cursor in the active cell\&.
+.IP [26]
+Return accepts any changes made to the cell and activates the below cell\&.
+.IP [27]
+Shift-Return accepts any changes made to the cell and activates the above cell\&.
+.IP [28]
+Alt-Return, Option-Return on the Mac, or Control-n inserts a newline character\&.
+.IP [29]
+Control-Return will toggle whether the cell is activated or just has the focus\&.
+.IP [30]
 Tab accepts any changes made to the cell and activates the cell to the
 right of the current cell\&.
-.IP [10]
+.IP [31]
 Shift-Tab accepts any changes made to the cell and activates the cell to
 the left of the current cell\&.
-.IP [11]
-Alt-Return inserts a newline character\&.
-.IP [12]
-Escape rereads the value of the active cell from the specified data source,
-discarding any edits that have may been performed on the cell\&.
-.IP [13]
-Control-a moves the insertion cursor to the beginning of the active cell\&.
-.IP [14]
-Control-e moves the insertion cursor to the end of the active cell\&.
-.IP [15]
-Control-i inserts a tab character\&.
-.IP [16]
+.IP [32]
+Escape aborts and discards the active cell edit, rereads the value of the cell
+from the specified data source, and deactivates the cell\&.
+.IP [33]
+F2 will activate the current focus cell\&.
+.IP [34]
+Control-i, Option-Tab on the Mac, or Alt-Tab inserts a tab character\&.
+.IP [35]
 Control-k deletes from the insertion cursor to the end of the active cell\&.
-.IP [17]
+.IP [36]
+Control-slash (Command-a on Mac) selects all the text in the cell\&.
+.IP [37]
+Control-backslash (except on Mac) unselects all text in the cell\&.
+.IP [38]
 Control-minus and Control-equals decrease and increase the
 width of the column with the active cell in it\&.
-.IP [18]
+.IP [39]
 The virtual event <<Copy>> will copy the selected text in the active cell to
 the clipboard\&.
-.IP [19]
+.IP [40]
 The virtual event <<Cut>> will copy the selected text in the active cell to
 the clipboard and clear the selected text\&.
-.IP [20]
+.IP [41]
 The virtual event <<Paste>> will paste the clipboard contents into the active
 cell at the insertion cursor location replacing any selected text\&.
 .PP

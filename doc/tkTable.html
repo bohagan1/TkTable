@@ -580,18 +580,18 @@ The selection can be cleared via the keyboard bindings.</p></dd>
 <dt><b class="option">extended</b></dt>
 <dd><p>Multiple cells can be selected, but the default is for only one cell to be
 selected at a time. More cells can be selected by dragging the mouse pointer
-with Button-1 is pressed or by extending the selection using the Shift key
+while Button-1 is pressed or by extending the selection using the Shift key
 bindings. In this mode, the selection follows the focus during keyboard
 traversal. The selection can be cleared via the keyboard bindings.</p></dd>
 </dl>
 <p>Note that the <b class="method">selection</b> method can set the selection to include any
 cell regardless of the value of <b class="option">-selectmode</b>. This mode also doesn't
-impact the <b class="method">selection active</b> controlled active cell selection.</p></dd>
+impact the <b class="method">selection active</b> controlled selection.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-selecttitles</b><br>
 Database Name:	<b class="optdbname">selectTitles</b><br>
 Database Class:	<b class="optdbclass">SelectTitles</b><br>
 </dt>
-<dd><p>Specifies whether title cells should be allowed in the selection.
+<dd><p>Specifies whether title cells should be allowed in the selection or not.
 Defaults to 0, not allowed.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-selecttype</b><br>
 Database Name:	<b class="optdbname">selectType</b><br>
@@ -1462,7 +1462,7 @@ and down arrow keys extend the selection one cell in that direction.</p></li>
 the first/last visible cell in that row or column.</p></li>
 <li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, Control (or Option on Mac) plus
 Shift and the left, right, up, and down arrow keys extend the selection to the
-first/last visible column or row in that direction.</p></li>
+first/last visible cell in that column or row.</p></li>
 <li><p>Home moves to the first cell in the current row.</p></li>
 <li><p>End moves to the last cell in the current row.</p></li>
 <li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b>, Shift-Home selects all cells
@@ -1475,10 +1475,10 @@ from the current cell to the last cell in the current row.</p></li>
 <li><p>Shift-Control-End extends the selection to the <b class="const">end</b> cell.</p></li>
 <li><p>Next or Prior (aka Page Down or Page Up) will move one screen-full down or up.</p></li>
 <li><p>Shift-Next or Shift-Prior will move one screen-full right or left.</p></li>
-<li><p>Control-Next or Control-Prior will move to the bottom or top cell in the
-current column.</p></li>
-<li><p>Control-Shift-Next or Control-Shift-Prior will move to the last or first cell
-in the row.</p></li>
+<li><p>Control-Next or Control-Prior will move to the bottom or top visible cell in
+the current column.</p></li>
+<li><p>Control-Shift-Next or Control-Shift-Prior will move to the last or first
+visible cell in the row.</p></li>
 <li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b> or <b class="const">multiple</b>, Control-slash
 (Command-a on Mac) selects all the cells in the table.</p></li>
 <li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b> or <b class="const">multiple</b>, Control-backslash
@@ -1488,6 +1488,10 @@ will select all cells in the current row.</p></li>
 <li><p>When <b class="option">-selectmode</b> is <b class="const">extended</b> or <b class="const">multiple</b>, Control-space
 will select all cells in the current column.</p></li>
 <li><p>Control-Return will toggle whether the cell is activated or just has the focus.</p></li>
+<li><p>Return moves to the below cell.</p></li>
+<li><p>Shift-Return moves to the above cell.</p></li>
+<li><p>Tab moves to the next cell in the row.</p></li>
+<li><p>Shift-Tab moves to the previous cell in the row.</p></li>
 <li><p>ScrollLock and the left, right, up, and down arrow keys will scroll the xview
 or yview by 1 unit in that direction.</p></li>
 <li><p>ScrollLock-Home or ScrollLock-End will scroll the xview by 1 page left or right.</p></li>
@@ -1506,31 +1510,71 @@ table cells.</p></li>
 <p>When a cell is active, the following bindings are available in addition to or
 in place of the above bindings:</p>
 <ol class="doctools_enumerated">
-<li><p>The left or right arrow keys will move the insertion cursor left or right one
-character. If already at the first or last character, the cell to left or right
-will be activated and the insertion cursor set to after the last or before the
-first character, respectively.</p></li>
-<li><p>The up and down arrow keys will move to and activate the above or below
-cell and put the insertion cursor at the same location in the new cell.</p></li>
-<li><p>Home moves the insertion cursor to the beginning of the active cell.</p></li>
-<li><p>End moves the insertion cursor to the end of the active cell.</p></li>
-<li><p>Backspace deletes the selected text or if none the character before the
+<li><p>Pressing Button-1 in a cell will activate it and set the icursor position to
+the location under the mouse pointer.</p></li>
+<li><p>Moving the mouse while Button-1 is pressed will extend the character selection
+in the active cell.</p></li>
+<li><p>A Double-Button-1 in the active cell will select the underlying word.</p></li>
+<li><p>A Triple-Button-1 in the active cell will select all text in the cell.</p></li>
+<li><p>If any normal printing characters are typed into the active cell, they are
+inserted at the insertion cursor.</p></li>
+<li><p>The left arrow key will move the insertion cursor left 1 character and clear
+any selection. If already at the first character, the cell to left will be
+activated and the insertion cursor set to just after the last character.</p></li>
+<li><p>The right arrow key will move the insertion cursor right 1 character and clear
+any selection. If already at the last character, the cell to right will be
+activated and the insertion cursor set to just before the first character.</p></li>
+<li><p>Shift-Left will extend the selection 1 character to the left from the insertion
+cursor.</p></li>
+<li><p>Shift-Right will extend the selection 1 character to the right from the
+insertion cursor.</p></li>
+<li><p>Control-Left will move the insertion cursor left to the start of the word
+before the insertion cursor.</p></li>
+<li><p>Control-Right will move the insertion cursor right to the start of the word
+after the insertion cursor.</p></li>
+<li><p>Control-Shift-Left will extend the selection 1 word to the left from the
+insertion cursor.</p></li>
+<li><p>Control-Shift-Right will extend the selection 1 word to the right from the
+insertion cursor.</p></li>
+<li><p>The up and down arrow keys will move up or down one line in the cell or if at
+the top or bottom line already, move to and activate the above or below
+cell. The insertion cursor at the same location in the new line or cell.</p></li>
+<li><p>Shift-Up will extend the selection up 1 line.</p></li>
+<li><p>Shift-Down will extend the selection down 1 line.</p></li>
+<li><p>Home moves the insertion cursor to the beginning of the cell line.
+This is used for multi-line cells.</p></li>
+<li><p>End moves the insertion cursor to the end of the cell line.
+This is used for multi-line cells.</p></li>
+<li><p>Shift-Home extends the selection from the insertion cursor to the beginning of
+the cell line.</p></li>
+<li><p>Shift-End extends the selection from the insertion cursor to the end of the
+cell line.</p></li>
+<li><p>Control-Home moves the insertion cursor to the start of the cell text.</p></li>
+<li><p>Control-End moves the insertion cursor to the end of the cell text.
+enum]
+Control-Shift-Home extends the selection from the insertion cursor to the
+beginning of the cell text.</p></li>
+<li><p>Control-Shift-End extends the selection from the insertion cursor to the end
+of the cell text.</p></li>
+<li><p>Backspace or Control-h deletes the selected text or if none the character before the
 insertion cursor in the active cell.</p></li>
-<li><p>Delete deletes the selected text or if none the character after the insertion
+<li><p>Delete or Control-d deletes the selected text or if none the character after the insertion
 cursor in the active cell.</p></li>
 <li><p>Return accepts any changes made to the cell and activates the below cell.</p></li>
 <li><p>Shift-Return accepts any changes made to the cell and activates the above cell.</p></li>
+<li><p>Alt-Return, Option-Return on the Mac, or Control-n inserts a newline character.</p></li>
+<li><p>Control-Return will toggle whether the cell is activated or just has the focus.</p></li>
 <li><p>Tab accepts any changes made to the cell and activates the cell to the
 right of the current cell.</p></li>
 <li><p>Shift-Tab accepts any changes made to the cell and activates the cell to
 the left of the current cell.</p></li>
-<li><p>Alt-Return inserts a newline character.</p></li>
-<li><p>Escape rereads the value of the active cell from the specified data source,
-discarding any edits that have may been performed on the cell.</p></li>
-<li><p>Control-a moves the insertion cursor to the beginning of the active cell.</p></li>
-<li><p>Control-e moves the insertion cursor to the end of the active cell.</p></li>
-<li><p>Control-i inserts a tab character.</p></li>
+<li><p>Escape aborts and discards the active cell edit, rereads the value of the cell
+from the specified data source, and deactivates the cell.</p></li>
+<li><p>F2 will activate the current focus cell.</p></li>
+<li><p>Control-i, Option-Tab on the Mac, or Alt-Tab inserts a tab character.</p></li>
 <li><p>Control-k deletes from the insertion cursor to the end of the active cell.</p></li>
+<li><p>Control-slash (Command-a on Mac) selects all the text in the cell.</p></li>
+<li><p>Control-backslash (except on Mac) unselects all text in the cell.</p></li>
 <li><p>Control-minus and Control-equals decrease and increase the
 width of the column with the active cell in it.</p></li>
 <li><p>The virtual event &lt;&lt;Copy&gt;&gt; will copy the selected text in the active cell to

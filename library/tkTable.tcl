@@ -25,7 +25,7 @@
 namespace eval ::tktable {
     variable Priv
     array set Priv [list x 0 y 0 afterId {} mouseMoved 0 borderInfo {} \
-	borderB1 1 bindingMode focus hidden {} icursor -1]
+	borderB1 1 bindingMode focus hidden {} icursor -1 tablePrev {}]
     namespace export tk_tableCopy tk_tableCut tk_tablePaste
 }
 
@@ -154,10 +154,10 @@ bind Table <<LineStart>>	{ ::tktable::KeyNav %W first }
 bind Table <<LineEnd>>		{ ::tktable::KeyNav %W last }
 bind Table <<SelectLineStart>>	{ ::tktable::SelectionExtend %W first }
 bind Table <<SelectLineEnd>>	{ ::tktable::SelectionExtend %W last }
-bind Table <Control-Home>	{ ::tktable::KeyNav %W top }
-bind Table <Control-End>	{ ::tktable::KeyNav %W bottom }
-bind Table <Control-Shift-Home>	{ ::tktable::SelectionExtend %W top }
-bind Table <Control-Shift-End>	{ ::tktable::SelectionExtend %W bottom }
+bind Table <Control-Home>	{ ::tktable::KeyNav %W origin }
+bind Table <Control-End>	{ ::tktable::KeyNav %W end }
+bind Table <Control-Shift-Home>	{ ::tktable::SelectionExtend %W origin }
+bind Table <Control-Shift-End>	{ ::tktable::SelectionExtend %W end }
 #bind Table <Control-Shift-Home> { ::tktable::DataExtend %W origin }
 #bind Table <Control-Shift-End>	{ ::tktable::DataExtend %W end }
 
@@ -192,11 +192,13 @@ bind Table <Return>		{ ::tktable::MoveCell %W 0 1 0 }
 bind Table <Shift-Return>	{ ::tktable::MoveCell %W 0 -1 0 }
 bind Table <Control-Return>	{ ::tktable::ToggleFocus %W }
 bind Table <Alt-Return>		{ ::tktable::Insert %W "\n" }
+bind Table <Option-Return>	{ ::tktable::Insert %W "\n" }
 bind Table <Tab>		{ ::tktable::MoveCell %W 1 0 0; break }
 bind Table <Shift-Tab>		{ ::tktable::MoveCell %W -1 0 end; break }
 bind Table <Control-Tab>	[bind all <<NextWindow>>]
 bind Table <Control-Shift-Tab>	[bind all <<PrevWindow>>]
 bind Table <Alt-Tab>		{ ::tktable::Insert %W "\t" }
+bind Table <Option-Tab>		{ ::tktable::Insert %W "\t" }
 
 # Other selection functions
 bind Table <<SelectAll>>	{ ::tktable::SelectAll %W }
@@ -264,16 +266,17 @@ if {[tk windowingsystem] ne "win32"} {
 # w -	The widget for which the operation will be applied.
 # op -	Operation to perform
 # edit - Check cell edit first or not
+# constrain - Constrain move to cell or not
 #
 # Results:
-# Returns current cell, new cell, current icursor position, and new icursor position
+# Returns current cell, new row, new column, current icursor position, and new icursor position
 #
-proc ::tktable::MoveHandler {w op edit extend} {
+proc ::tktable::MoveHandler {w op edit constrain} {
     set orig -1
     set pos -1
 
-    if {[$w cget -state] ne "disabled" && [set cell [$w activate]] ne "" && $edit &&
-	$op ni [list bottom end origin pageBottom pageLeft pageRight pageTop top]} {
+    if {[set cell [$w activate]] ne "" && $edit &&
+	$op ni [list bottom pageBottom pageTop top]} {
 	# Cell edit mode
 	if {[scan $cell %d,%d row col] != 2} return
 	set pos [$w icursor]
@@ -281,18 +284,24 @@ proc ::tktable::MoveHandler {w op edit extend} {
 
 	switch $op {
 	    "first" {
-		# Move to first char
-		set pos 0
+		# Move to first char in line
+		set val [$w curvalue]
+		set pos [string last "\n" $val [incr pos -1]]
+		incr pos
 	    }
 	    "last" {
-		# Move to last char
-		set pos end
+		# Move to last char in line
+		set val [$w curvalue]
+		set pos [string first "\n" $val [incr pos]]
+		if {$pos == -1} {
+		    set pos [string length $val]
+		}
 	    }
 	    "left" {
 		# Move left 1 char or cell
 		if {$pos > 0} {
 		    incr pos -1
-		} elseif {$extend} {
+		} elseif {$constrain} {
 		    set pos 0
 		} else {
 		    incr col -1
@@ -301,10 +310,11 @@ proc ::tktable::MoveHandler {w op edit extend} {
 	    }
 	    "right" {
 		# Move right 1 char or cell
-		set len [string length [$w curvalue]]
+		set val [$w curvalue]
+		set len [string length $val]
 		if {$pos > -1 && $pos < $len} {
 		    incr pos
-		} elseif {$extend} {
+		} elseif {$constrain} {
 		    set pos $len
 		} else {
 		    incr col
@@ -312,30 +322,46 @@ proc ::tktable::MoveHandler {w op edit extend} {
 		}
 	    }
 	    "up" {
-		# Move up 1 line or cell, keep same position
-		set val [$w curvalue]
-		set index [string last \n $val $pos]
-		if {$index > -1 && $index < $pos} {
-		    set pos [expr {$pos - $index - 1}]
-		} else {
-		    incr row -1
-		    set pos [format "nl+%d" $pos]
-		}
+		# Move up 1 line in cell, keep same position
+		lassign [::tktable::MoveLine $w $op $row $pos] row pos
 	    }
 	    "down" {
-		# Move down 1 line or cell, keep same position
+		# Move down 1 line in cell, keep same position
+		lassign [::tktable::MoveLine $w $op $row $pos] row pos
+	    }
+	    "pageLeft" {
+		# Move to start of previous word or previous cell
 		set val [$w curvalue]
-		set index [string first \n $val $pos]
-		if {$index > -1} {
-		    set last [string last \n $val [expr {$pos - 1}]]
-		    if {$last == -1} {set last 0}
-		    set pos [expr {$pos - $last + $index + 1}]
+		if {$pos > 0} {
+		    set pos [tcl_startOfPreviousWord $val $pos]
+		} elseif {$constrain} {
+		    set pos 0
 		} else {
-		    set last [string last \n $val [expr {$pos - 1}]]
-		    incr last
-		    incr row
-		    set pos [expr {$pos - $last}]
+		    incr col -1
+		    set pos end
 		}
+	    }
+	    "pageRight" {
+		# Move to start of next word or next cell
+		set val [$w curvalue]
+		set len [string length $val]
+		if {$pos > -1 && $pos < $len} {
+		    set pos [tcl_startOfNextWord $val $pos]
+		    if {$pos < 0} {set pos $len}
+		} elseif {$constrain} {
+		    set pos $len
+		} else {
+		    incr col
+		    set pos 0
+		}
+	    }
+	    "origin" {
+		# Move to start of text in cell
+		set pos 0
+	    }
+	    "end" {
+		# Move to end of text in cell
+		set pos end
 	    }
 	    default {
 		return
@@ -372,29 +398,37 @@ proc ::tktable::MoveHandler {w op edit extend} {
 		# Move to last cell in row
 		set col [$w index end col]
 	    }
-	    "origin" - "top" {
+	    "origin" {
 		# Move to origin cell
 		if {[scan [$w index origin] %d,%d row col] != 2} return
 	    }
-	    "end" - "bottom" {
+	    "end" {
 		# Move to end cell
 		if {[scan [$w index end] %d,%d row col] != 2} return
 	    }
 	    "pageLeft" {
-		# Move to first visible cell in row
+		# Move to left most visible cell in row
 		set col [$w index topleft col]
 	    }
 	    "pageRight" {
-		# Move to last visible cell in row
+		# Move to right most visible cell in row
 		set col [$w index bottomright col]
 	    }
 	    "pageTop" {
-		# Move to top visible cell in column
+		# Move to top most visible cell in column
 		set row [$w index topleft row]
 	    }
 	    "pageBottom" {
-		# Move to bottom visible cell in column
+		# Move to bottom most visible cell in column
 		set row [$w index bottomright row]
+	    }
+	    "top" {
+		# Move to top row
+		set row [$w index origin row]
+	    }
+	    "bottom" {
+		# Move to bottom row
+		set row [$w index end row]
 	    }
 	    default {
 		return
@@ -430,7 +464,7 @@ proc ::tktable::KeyNav {w op} {
     # Move to new cell and/or icursor position
     lassign [split $cell ","] r c
     if {$r != $row || $c != $col} {
-	::tktable::MoveCell $w [expr {$col - $c}] [expr {$row - $r}] $pos
+	MoveCell $w [expr {$col - $c}] [expr {$row - $r}] $pos
     } elseif {$pos != $orig} {
 	$w icursor $pos
 	$w selection active 0
@@ -453,15 +487,15 @@ proc ::tktable::SelectionExtend {w op} {
     if {[$w cget -state] eq "disabled"} return
 
     # Get position change
-    set res [MoveHandler $w $op 1 1]
-    if {[llength $res] == 0} return
+    set res [MoveHandler $w $op 1 0]
+    if {[llength $res] == 0} {return}
     lassign $res cell row col orig pos
 
     # Extend selection to new cell or index position
     lassign [split $cell ","] r c
     if {$r != $row || $c != $col} {
-	::tktable::ExtendSelect $w [expr {$col - $c}] [expr {$row - $r}]
-	#::tktable::DataExtend $w origin|end
+	ExtendSelect $w [expr {$col - $c}] [expr {$row - $r}]
+	#DataExtend $w origin|end
 
     } elseif {$pos != $orig} {
 	if {$pos eq "end"} {set pos [string length [$w curvalue]]}
@@ -534,6 +568,7 @@ proc ::tktable::PageNav {w op} {
     set cell [$w index focus]
     $w selection clear all
     $w selection set $cell
+    $w selection anchor $cell
 }
 
 #
@@ -601,6 +636,7 @@ proc ::tktable::ScreenNav {w op} {
 	$w $fn $cell
 	$w selection clear all
 	$w selection set $cell
+	$w selection anchor $cell
     }
 }
 
@@ -793,7 +829,7 @@ proc ::tktable::Button1 {w x y {op set}} {
 	    $w activate {}
 	}
 	$w $fn [format "@%d,%d" $x $y]
-	::tktable::BeginSelect $w [format "@%d,%d" $x $y] $op
+	BeginSelect $w [format "@%d,%d" $x $y] $op
 	focus $w
 	array set Priv [list x $x y $y mouseMoved 0 bindingMode $fn icursor [$w icursor]]
     }
@@ -829,7 +865,7 @@ proc ::tktable::B1Motion {w x y} {
 	    set Priv(mouseMoved) 1
 	}
 	if {$Priv(mouseMoved)} {
-	    ::tktable::Motion $w [format "@%d,%d" $x $y]
+	    Motion $w [format "@%d,%d" $x $y]
 	}
     }
 }
@@ -851,7 +887,7 @@ proc ::tktable::B1Release {w x y} {
     variable Priv
 
     if {$Priv(borderInfo) eq "" && [winfo exists $w]} {
-	::tktable::CancelRepeat
+	CancelRepeat
     }
     set Priv(mouseMoved) 0
 }
@@ -965,8 +1001,6 @@ proc ::tktable::BeginSelect {w el {op set}} {
 		    $w selection set $cell
 		}
 	    }
-	    set Priv(tablePrev) $cell
-	    $w selection anchor $cell
 	}
 	default {
 	    if {($r < $tr || $c < $tc) && ![$w cget -selecttitle]} {
@@ -974,11 +1008,11 @@ proc ::tktable::BeginSelect {w el {op set}} {
 	    } else {
 		$w selection clear all
 		$w selection set $cell
-		set Priv(tablePrev) $cell
-		$w selection anchor $cell
 	    }
 	}
     }
+    set Priv(tablePrev) $cell
+    $w selection anchor $cell
 }
 
 #
@@ -1054,7 +1088,6 @@ proc ::tktable::Motion {w el} {
     }
 }
 
-
 #
 # ::tktable::BeginExtend --
 #
@@ -1072,8 +1105,8 @@ proc ::tktable::BeginExtend {w el} {
     if {[$w cget -state] eq "disabled"} return
     # avoid tables that have no anchor index yet.
     if {[catch {$w index anchor}]} { return }
-    if {[$w cget -selectmode] eq "extended" && [$w selection includes anchor]} {
-	::tktable::Motion $w $el
+    if {[$w cget -selectmode] in [list "extended" "multiple"] && [$w selection includes anchor]} {
+	Motion $w $el
     }
 }
 
@@ -1150,7 +1183,7 @@ proc ::tktable::AutoScan {w} {
     } else {
 	return
     }
-    ::tktable::Motion $w [format "@%d,%d" $x $y]
+    Motion $w [format "@%d,%d" $x $y]
     set Priv(afterId) [after 50 [list ::tktable::AutoScan $w]]
 }
 
@@ -1166,9 +1199,9 @@ proc ::tktable::AutoScan {w} {
 # w -	The table widget.
 # x -	+1 to move right one cell, -1 to move left one cell.
 # y -	+1 to move down one cell, -1 to move up one cell.
-#	index = New icursor index
+# index - New icursor index
 #
-proc ::tktable::MoveCell {w x y {index {}}} {
+proc ::tktable::MoveCell {w dx dy {index {}}} {
     variable Priv
     if {[$w cget -state] eq "disabled"} return
 
@@ -1191,9 +1224,9 @@ proc ::tktable::MoveCell {w x y {index {}}} {
 
     # Find next cell
     while 1 {
-	incr c $x
+	incr c $dx
 	if {$c < $c0} {set c $c0} elseif {$c > $c1} {set c $c1}
-	incr r $y
+	incr r $dy
 	if {$r < $r0} {set r $r0} elseif {$r > $r1} {set r $r1}
 	set cell [format "%d,%d" $r $c]
 
@@ -1212,13 +1245,14 @@ proc ::tktable::MoveCell {w x y {index {}}} {
 	    set cell $hidden
 	    break
 	}
-	if {$x > 0} {set x 1} elseif {$x < 0} {set x -1}
-	if {$y > 0} {set y 1} elseif {$y < 0} {set y -1}
+	if {$dx > 0} {set dx 1} elseif {$dx < 0} {set dx -1}
+	if {$dy > 0} {set dy 1} elseif {$dy < 0} {set dy -1}
     }
 
     # Move to new cell
     $w $fn $cell
     $w see $cell
+    $w selection anchor $cell
     switch [$w cget -selectmode] {
 	browse {
 	    $w selection clear all
@@ -1227,23 +1261,123 @@ proc ::tktable::MoveCell {w x y {index {}}} {
 	extended {
 	    $w selection clear all
 	    $w selection set $cell
-	    $w selection anchor $cell
 	    set Priv(tablePrev) $cell
 	}
     }
 
     # Move icursor index
     if {$index ne ""} {
-	if {[string match "nl*" $index]} {
+	if {[string match "start*" $index]} {
 	    set val [$w curvalue]
-	    set last [string last \n $val]
+	    set first [string first "\n" $val]
+	    if {$first == -1} {set first [string length $val]}
+	    lassign [split $index "-"] prefix offset
+	    if {$offset > $first} {set offset $first}
+	    set index $offset
+	} elseif {[string match "last*" $index]} {
+	    set val [$w curvalue]
+	    set last [string last "\n" $val]
 	    incr last
-	    scan $index "nl+%d" offset
+	    lassign [split $index "-"] prefix offset
 	    set index [expr {$last + $offset}]
 	}
 	$w icursor $index
 	$w selection active 0
     }
+}
+
+#
+# ::tktable::MoveLine --
+#
+# Move up or down within multi-line cell.
+#
+# Arguments:
+# w -	The table widget.
+# op -	Operation to perform
+#
+# Returns:
+#	New row and icursor position
+#
+proc ::tktable::MoveLine {w op row pos} {
+    set val [$w curvalue]
+
+    # Get text justification
+    set justify [$w cget -justify]
+    foreach tagName [$w tag get active] {
+	set new [$w tag cget $tagName -justify]
+	if {$new in [list left center right]} {
+	    set justify $new
+	    break
+	}
+    }
+
+    if {$op eq "up"} {
+	set before [string last "\n" $val [expr {$pos - 1}]]
+	set after [string first "\n" $val $pos]
+	if {$after == -1} {set after [string length $val]}
+
+	if {$before == -1} {
+	    # Go to above cell
+	    incr row -1
+	    set pos [format "last-%d" $pos]
+
+	} elseif {$justify eq "left"} {
+	    set offset [expr {$pos - $before - 1}]
+	    set temp [string last "\n" $val [expr {$before - 1}]]
+	    set pos [expr {$temp + $offset + 1}]
+	    if {$pos > $before} {set pos $before}
+
+	} elseif {$justify eq "right"} {
+	    set offset [expr {$after - $pos}]
+	    set temp [string last "\n" $val [expr {$before - 1}]]
+	    if {$temp == -1} {set temp 0}
+	    set pos [expr {$before - $offset}]
+	    if {$pos < $temp} {set pos [expr {$temp + 1}]}
+
+	} else {
+	    # Center
+	    set offset [expr {$pos - (($after + $before) / 2)}]
+	    set temp [string last "\n" $val [expr {$before - 1}]]
+	    if {$temp == -1} {set temp 0}
+	    set pos [expr {(($before + $temp)/2) + $offset}]
+	    if {$pos > $before} {set pos $before}
+	    if {$pos <= $temp} {set pos [expr {$temp + 1}]}
+	}
+    } else {
+	set before [string last "\n" $val [expr {$pos - 1}]]
+	set after [string first "\n" $val $pos]
+	incr before
+
+	set offset [expr {$pos - $before}]
+	if {$after == -1} {
+	    # Go to below cell
+	    incr row
+	    set pos [format "start-%d" $offset]
+
+	} elseif {$justify eq "left"} {
+	    set temp [string first "\n" $val [expr {$after + 1}]]
+	    if {$temp == -1} {set temp [string length $val]}
+	    set pos [expr {$after + $offset + 1}]
+	    if {$pos > $temp} {set pos $temp}
+
+	} elseif {$justify eq "right"} {
+	    set offset [expr {$after - $pos}]
+	    set temp [string first "\n" $val [expr {$after + 1}]]
+	    if {$temp == -1} {set temp [string length $val]}
+	    set pos [expr {$temp - $offset}]
+	    if {$pos < $after} {set pos [expr {$after + 1}]}
+
+	} else {
+	    # Center
+	    set offset [expr {$pos - (($after + $before) / 2)}]
+	    set temp [string first "\n" $val [expr {$after + 1}]]
+	    if {$temp == -1} {set temp [string length $val]}
+	    set pos [expr {(($temp + $after)/2) + $offset}]
+	    if {$pos <= $after} {set pos [expr {$after + 1}]}
+	    if {$pos > $temp} {set pos $temp}
+	}
+    }
+    return [list $row $pos]
 }
 
 #
@@ -1255,33 +1389,26 @@ proc ::tktable::MoveCell {w x y {index {}}} {
 #
 # Arguments:
 # w -	The table widget.
-# x -	+1 to move right one cell, -1 to move left one cell.
-# y -	+1 to move down one cell, -1 to move up one cell.
+# dx -	+1 to move right one cell, -1 to move left one cell.
+# dy -	+1 to move down one cell, -1 to move up one cell.
 #
-proc ::tktable::ExtendSelect {w x y} {
-    if {[$w cget -state] eq "disabled"} return
-    if {[$w cget -selectmode] ni [list "extended" "multiple"]} {
+proc ::tktable::ExtendSelect {w dx dy} {
+    variable Priv
+
+    if {[$w cget -state] eq "disabled" || [$w cget -selectmode] ni [list "extended" "multiple"]} {
 	return
     }
-    if {[set cell [$w activate]] ne ""} {
-	set fn activate
-	set id active
-    } elseif {[set cell [$w focus]] ne ""} {
-	set fn focus
-	set id focus
-    } else {
+    set cell $Priv(tablePrev)
+    if {$cell eq "" && [set cell [$w activate]] eq "" && [set cell [$w focus]] eq ""} {
 	return
     }
 
     lassign [split $cell ","] r c
-    $w $fn [format "%d,%d" [incr r $y] [incr c $x]]
-    if {[$w bbox $id] eq ""} {
-	$w xview scroll $x units
-	$w yview scroll $y units
-    }
-    $w see $id
-    $w selection set $id
-    ::tktable::Motion $w $id
+    incr r $dy
+    incr c $dx
+    set current [$w index [format "%d,%d" $r $c]]
+    $w see $current
+    Motion $w $current
 }
 
 #
@@ -1311,7 +1438,7 @@ proc ::tktable::DataExtend {w el} {
 	$w $fn $el
 	$w see $el
 	if {[$w selection includes anchor]} {
-	    ::tktable::Motion $w $el
+	    Motion $w $el
 	}
     } elseif {$mode eq "multiple"} {
 	$w $fn $el
@@ -1529,7 +1656,6 @@ proc ::tktable::TableScanDrag {w x y} {
 # w -		Name of table widget.
 #
 proc ::tktable::tk_tableCopy {w} {
-    variable Priv
     set type [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
 
     # Abort if no selection or in disabled state
@@ -1566,7 +1692,6 @@ proc ::tktable::tk_tableCopy {w} {
 # w -		Name of table widget.
 #
 proc ::tktable::tk_tableCut {w} {
-    variable Priv
     set type [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
 
     # Abort if no selection or in disabled state
@@ -1610,7 +1735,6 @@ proc ::tktable::tk_tableCut {w} {
 # cell -	Cell to start pasting in (default is active, focus, or origin cell)
 #
 proc ::tktable::tk_tablePaste {w {cell {}}} {
-    variable Priv
     set type [expr {$::tcl_platform(platform) ne "windows" ? "UTF8_STRING" : "STRING"}]
 
     # Abort if widget is disabled

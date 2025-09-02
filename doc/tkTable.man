@@ -369,17 +369,17 @@ The selection can be cleared via the keyboard bindings.
 [opt_def extended]
 Multiple cells can be selected, but the default is for only one cell to be
 selected at a time. More cells can be selected by dragging the mouse pointer
-with Button-1 is pressed or by extending the selection using the Shift key
+while Button-1 is pressed or by extending the selection using the Shift key
 bindings. In this mode, the selection follows the focus during keyboard
 traversal. The selection can be cleared via the keyboard bindings.
 [list_end]
 
 Note that the [method selection] method can set the selection to include any
 cell regardless of the value of [option -selectmode]. This mode also doesn't
-impact the [method "selection active"] controlled active cell selection.
+impact the [method "selection active"] controlled selection.
 
 [tkoption_def -selecttitles selectTitles SelectTitles]
-Specifies whether title cells should be allowed in the selection.
+Specifies whether title cells should be allowed in the selection or not.
 Defaults to 0, not allowed.
 
 [tkoption_def -selecttype selectType SelectType]
@@ -1391,7 +1391,7 @@ the first/last visible cell in that row or column.
 [enum]
 When [option -selectmode] is [const extended], Control (or Option on Mac) plus
 Shift and the left, right, up, and down arrow keys extend the selection to the
-first/last visible column or row in that direction.
+first/last visible cell in that column or row.
 [enum]
 Home moves to the first cell in the current row.
 [enum]
@@ -1415,11 +1415,11 @@ Next or Prior (aka Page Down or Page Up) will move one screen-full down or up.
 [enum]
 Shift-Next or Shift-Prior will move one screen-full right or left.
 [enum]
-Control-Next or Control-Prior will move to the bottom or top cell in the
-current column.
+Control-Next or Control-Prior will move to the bottom or top visible cell in
+the current column.
 [enum]
-Control-Shift-Next or Control-Shift-Prior will move to the last or first cell
-in the row.
+Control-Shift-Next or Control-Shift-Prior will move to the last or first
+visible cell in the row.
 [enum]
 When [option -selectmode] is [const extended] or [const multiple], Control-slash
 (Command-a on Mac) selects all the cells in the table.
@@ -1434,6 +1434,14 @@ When [option -selectmode] is [const extended] or [const multiple], Control-space
 will select all cells in the current column.
 [enum]
 Control-Return will toggle whether the cell is activated or just has the focus.
+[enum]
+Return moves to the below cell.
+[enum]
+Shift-Return moves to the above cell.
+[enum]
+Tab moves to the next cell in the row.
+[enum]
+Shift-Tab moves to the previous cell in the row.
 [enum]
 ScrollLock and the left, right, up, and down arrow keys will scroll the xview
 or yview by 1 unit in that direction.
@@ -1463,27 +1471,89 @@ When a cell is active, the following bindings are available in addition to or
 in place of the above bindings:
 [list_begin enumerated]
 [enum]
-The left or right arrow keys will move the insertion cursor left or right one
-character. If already at the first or last character, the cell to left or right
-will be activated and the insertion cursor set to after the last or before the
-first character, respectively.
+Pressing Button-1 in a cell will activate it and set the icursor position to
+the location under the mouse pointer.
 [enum]
-The up and down arrow keys will move to and activate the above or below
-cell and put the insertion cursor at the same location in the new cell.
+Moving the mouse while Button-1 is pressed will extend the character selection
+in the active cell.
 [enum]
-Home moves the insertion cursor to the beginning of the active cell.
+A Double-Button-1 in the active cell will select the underlying word.
 [enum]
-End moves the insertion cursor to the end of the active cell.
+A Triple-Button-1 in the active cell will select all text in the cell.
+
 [enum]
-Backspace deletes the selected text or if none the character before the
+If any normal printing characters are typed into the active cell, they are
+inserted at the insertion cursor.
+[enum]
+The left arrow key will move the insertion cursor left 1 character and clear
+any selection. If already at the first character, the cell to left will be
+activated and the insertion cursor set to just after the last character.
+[enum]
+The right arrow key will move the insertion cursor right 1 character and clear
+any selection. If already at the last character, the cell to right will be
+activated and the insertion cursor set to just before the first character.
+[enum]
+Shift-Left will extend the selection 1 character to the left from the insertion
+cursor.
+[enum]
+Shift-Right will extend the selection 1 character to the right from the
+insertion cursor.
+[enum]
+Control-Left will move the insertion cursor left to the start of the word
+before the insertion cursor.
+[enum]
+Control-Right will move the insertion cursor right to the start of the word
+after the insertion cursor.
+[enum]
+Control-Shift-Left will extend the selection 1 word to the left from the
+insertion cursor.
+[enum]
+Control-Shift-Right will extend the selection 1 word to the right from the
+insertion cursor.
+[enum]
+The up and down arrow keys will move up or down one line in the cell or if at
+the top or bottom line already, move to and activate the above or below
+cell. The insertion cursor at the same location in the new line or cell.
+[enum]
+Shift-Up will extend the selection up 1 line.
+[enum]
+Shift-Down will extend the selection down 1 line.
+[enum]
+Home moves the insertion cursor to the beginning of the cell line.
+This is used for multi-line cells.
+[enum]
+End moves the insertion cursor to the end of the cell line.
+This is used for multi-line cells.
+[enum]
+Shift-Home extends the selection from the insertion cursor to the beginning of
+the cell line.
+[enum]
+Shift-End extends the selection from the insertion cursor to the end of the
+cell line.
+[enum]
+Control-Home moves the insertion cursor to the start of the cell text.
+[enum]
+Control-End moves the insertion cursor to the end of the cell text.
+enum]
+Control-Shift-Home extends the selection from the insertion cursor to the
+beginning of the cell text.
+[enum]
+Control-Shift-End extends the selection from the insertion cursor to the end
+of the cell text.
+[enum]
+Backspace or Control-h deletes the selected text or if none the character before the
 insertion cursor in the active cell.
 [enum]
-Delete deletes the selected text or if none the character after the insertion
+Delete or Control-d deletes the selected text or if none the character after the insertion
 cursor in the active cell.
 [enum]
 Return accepts any changes made to the cell and activates the below cell.
 [enum]
 Shift-Return accepts any changes made to the cell and activates the above cell.
+[enum]
+Alt-Return, Option-Return on the Mac, or Control-n inserts a newline character.
+[enum]
+Control-Return will toggle whether the cell is activated or just has the focus.
 [enum]
 Tab accepts any changes made to the cell and activates the cell to the
 right of the current cell.
@@ -1491,18 +1561,18 @@ right of the current cell.
 Shift-Tab accepts any changes made to the cell and activates the cell to
 the left of the current cell.
 [enum]
-Alt-Return inserts a newline character.
+Escape aborts and discards the active cell edit, rereads the value of the cell
+from the specified data source, and deactivates the cell.
 [enum]
-Escape rereads the value of the active cell from the specified data source,
-discarding any edits that have may been performed on the cell.
+F2 will activate the current focus cell.
 [enum]
-Control-a moves the insertion cursor to the beginning of the active cell.
-[enum]
-Control-e moves the insertion cursor to the end of the active cell.
-[enum]
-Control-i inserts a tab character.
+Control-i, Option-Tab on the Mac, or Alt-Tab inserts a tab character.
 [enum]
 Control-k deletes from the insertion cursor to the end of the active cell.
+[enum]
+Control-slash (Command-a on Mac) selects all the text in the cell.
+[enum]
+Control-backslash (except on Mac) unselects all text in the cell.
 [enum]
 Control-minus and Control-equals decrease and increase the
 width of the column with the active cell in it.
