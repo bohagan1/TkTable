@@ -666,6 +666,9 @@ static int TableConfigure(
     result = Tk_ConfigureWidget(interp, tablePtr->tkwin, tableSpecs, objc, (void *) objv,
 	(char *) tablePtr, flags|TK_CONFIG_OBJS);
     if (result != TCL_OK) {
+	/* Free oldVar if it was allocated */
+	if (oldVar != NULL) ckfree(oldVar);
+
 	return TCL_ERROR;
     }
 
