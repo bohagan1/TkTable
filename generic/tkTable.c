@@ -407,8 +407,8 @@ static int Tk_ClassOptionObjCmd(
 static char * TableVarProc(
      ClientData clientData,	/* Information about table. */
      Tcl_Interp *interp,	/* Interpreter containing variable. */
-     char *name,		/* Not used. */
-     char *index,		/* Not used. */
+     const char *name,		/* Not used. */
+     const char *index,		/* Not used. */
      int flags)	{		/* Information about what happened. */
 
     Table *tablePtr = (Table *) clientData;
@@ -427,7 +427,7 @@ static char * TableVarProc(
 
 	    /* set a trace on the variable */
 	    Tcl_TraceVar(interp, name, TCL_TRACE_WRITES | TCL_TRACE_UNSETS | TCL_GLOBAL_ONLY,
-		    (Tcl_VarTraceProc *)TableVarProc, (ClientData) tablePtr);
+		    TableVarProc, (ClientData) tablePtr);
 
 	    /* only do the following if arrayVar is our data source */
 	    if (tablePtr->dataSource & DATA_ARRAY) {
@@ -695,7 +695,7 @@ static int TableConfigure(
 	/* remove the trace on the old array variable if there was one */
 	if (oldVar != NULL)
 	    Tcl_UntraceVar(interp, oldVar, TCL_TRACE_WRITES|TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
-		(Tcl_VarTraceProc *)TableVarProc, (ClientData) tablePtr);
+		TableVarProc, (ClientData) tablePtr);
 	/* Check whether variable is an array and trace it if it is */
 	if (tablePtr->arrayVar != NULL) {
 	    /* does the variable exist as an array? */
@@ -713,7 +713,7 @@ static int TableConfigure(
 		/* set a trace on the variable */
 		Tcl_TraceVar(interp, tablePtr->arrayVar,
 			TCL_TRACE_WRITES|TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
-			(Tcl_VarTraceProc *)TableVarProc, (ClientData) tablePtr);
+			TableVarProc, (ClientData) tablePtr);
 
 		/* only do the following if arrayVar is our data source */
 		if (tablePtr->dataSource & DATA_ARRAY) {
@@ -1185,7 +1185,7 @@ static void TableDestroy(ClientData clientdata) {
     if (tablePtr->arrayVar != NULL) {
 	Tcl_UntraceVar(tablePtr->interp, tablePtr->arrayVar,
 		TCL_TRACE_WRITES | TCL_TRACE_UNSETS | TCL_GLOBAL_ONLY,
-		(Tcl_VarTraceProc *)TableVarProc, (ClientData) tablePtr);
+		TableVarProc, (ClientData) tablePtr);
     }
 
     /* free the int arrays */
