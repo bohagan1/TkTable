@@ -1214,10 +1214,11 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    goto invalidtag;
 		}
 		tag2Ptr  = (TableTag *) Tcl_GetHashValue(entryPtr);
-		if (cmdIndex == TAG_LOWER) {
-		    value = TableTagGetPriority(tablePtr, tag2Ptr);
-		} else {
-		    value = TableTagGetPriority(tablePtr, tag2Ptr) - 1;
+		value = TableTagGetPriority(tablePtr, tag2Ptr);
+		if (cmdIndex == TAG_LOWER && value < tagPrio) {
+		    value++;
+		} else if (cmdIndex == TAG_RAISE && value > tagPrio) {
+		    value--;
 		}
 	    } else {
 		if (cmdIndex == TAG_LOWER) {
@@ -1229,7 +1230,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    /*
 		     * Raise this tag's priority to the top.
 		     */
-		    value = -1;
+		    value = 0;
 		}
 	    }
 	    if (value < tagPrio) {
@@ -1240,7 +1241,6 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    tablePtr->tagPrioNames[i] = tablePtr->tagPrioNames[i-1];
 		    tablePtr->tagPrios[i]     = tablePtr->tagPrios[i-1];
 		}
-		i++;
 		tablePtr->tagPrioNames[i] = keybuf;
 		tablePtr->tagPrios[i]     = tagPtr;
 		refresh = 1;
