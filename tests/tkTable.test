@@ -4872,25 +4872,25 @@ test Tag_Col-47.9 {Clear tag from multiple} -body {
 	lsort -integer [.table tag col testTag]
     } -result {5 6}
 
-test Tag_Col-47.10 {Active tag} -setup {
+test Tag_Col-47.10 {Get active tag column} -setup {
 	.table activate 9,0
     } -body {
 	.table tag col active
     } -result {0}
 
-test Tag_Col-47.11 {Focus tag} -setup {
+test Tag_Col-47.11 {Get focus tag column} -setup {
 	.table focus 9,1
     } -body {
 	.table tag col focus
     } -result {1}
 
-test Tag_Col-47.12 {Sel tag} -setup {
+test Tag_Col-47.12 {Get sel tag column} -setup {
 	.table selection set 9,2
     } -body {
 	.table tag col sel
     } -result {2}
 
-test Tag_Col-47.13 {Title tag} -setup {
+test Tag_Col-47.13 {Get title tag column} -setup {
 	.table configure -titlecols 1 -titlerows 0
     } -body {
 	.table tag col title
@@ -5347,16 +5347,31 @@ test Tag_Lower-55.6 {To bottom} -body {
     } -result {active focus sel title flash}
 
 test Tag_Lower-55.7 {Below tag} -body {
-	.table tag lower flash active
+	.table tag lower flash focus
 	.table tag names
-    } -result {active flash focus sel title}
+    } -result {active focus flash sel title}
 
 test Tag_Lower-55.8 {Below self} -body {
 	.table tag lower flash flash
 	.table tag names
+    } -result {active focus flash sel title}
+
+test Tag_Lower-55.9 {Below first} -body {
+	.table tag lower flash active
+	.table tag names
     } -result {active flash focus sel title}
 
-test Tag_Lower-55.9 {Cleanup} -body {
+test Tag_Lower-55.10 {Below last} -body {
+	.table tag lower flash title
+	.table tag names
+    } -result {active focus sel title flash}
+
+test Tag_Lower-55.11 {Beyond last} -body {
+	.table tag lower flash
+	.table tag names
+    } -result {active focus sel title flash}
+
+test Tag_Lower-55.12 {Cleanup} -body {
 	destroy .table
     }
 
@@ -5498,7 +5513,22 @@ test Tag_Raise-58.8 {Above self} -body {
 	.table tag names
     } -result {flash title active focus sel}
 
-test Tag_Raise-58.9 {Cleanup} -body {
+test Tag_Raise-58.9 {Above last} -body {
+	.table tag raise title sel
+	.table tag names
+    } -result {flash active focus title sel}
+
+test Tag_Raise-58.10 {Above first} -body {
+	.table tag raise title flash
+	.table tag names
+    } -result {title flash active focus sel}
+
+test Tag_Raise-58.11 {Beyond first} -body {
+	.table tag raise title
+	.table tag names
+    } -result {title flash active focus sel}
+
+test Tag_Raise-58.12 {Cleanup} -body {
 	destroy .table
     }
 
@@ -5546,25 +5576,25 @@ test Tag_Row-59.9 {Clear tag from multiple} -body {
 	lsort -integer [.table tag row testTag]
     } -result {5 6}
 
-test Tag_Row-59.10 {Active tag} -setup {
+test Tag_Row-59.10 {Get active tag row} -setup {
 	.table activate 9,0
     } -body {
 	.table tag row active
     } -result {9}
 
-test Tag_Row-59.11 {Focus tag} -setup {
+test Tag_Row-59.11 {Get focus tag row} -setup {
 	.table focus 8,1
     } -body {
 	.table tag row focus
     } -result {8}
 
-test Tag_Row-59.12 {Sel tag} -setup {
+test Tag_Row-59.12 {Get sel tag row} -setup {
 	.table selection set 7,2
     } -body {
 	.table tag row sel
     } -result {7}
 
-test Tag_Row-59.13 {Title tag} -setup {
+test Tag_Row-59.13 {Get title tag row} -setup {
 	.table configure -titlecols 0 -titlerows 1
     } -body {
 	.table tag row title
