@@ -151,9 +151,11 @@
 #	define INSERT_BG	NORMAL_FG
 #	define INSERT_WIDTH	"2"
 #	define SELECT_BD	"1"
-#	define SELECT_BG	"#c3c3c3"
+#	define SELECT_BG	"#6ea1d5"
 #	define SELECT_FG	NORMAL_FG
 #   endif
+#	define TITLE_BG		"#73787c"
+#	define TITLE_FG		"#ffffff"
 #endif /* NORMAL_BG */
 
 #define MAX(A,B)	(((A)>(B))?(A):(B))
