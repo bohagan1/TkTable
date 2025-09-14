@@ -1058,10 +1058,10 @@ int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp,
 	r1 = MIN(row,r2); r2 = MAX(row,r2);
 	c1 = MIN(col,c2); c2 = MAX(col,c2);
     }
+    if (firstCol > lastCol) c2--; /* No selectable columns in table */
+    if (firstRow > lastRow) r2--; /* No selectable rows in table */
     switch (tablePtr->selectType) {
     case SEL_BOTH:
-	if (firstCol > lastCol) c2--; /* No selectable columns in table */
-	if (firstRow > lastRow) r2--; /* No selectable rows in table */
 	clo = c1; chi = c2;
 	c1 = firstCol;
 	c2 = lastCol;
@@ -1073,12 +1073,10 @@ int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp,
     case SEL_COL:
 	r1 = firstRow;
 	r2 = lastRow;
-	if (firstCol > lastCol) c2--; /* No selectable columns in table */
 	break;
     case SEL_ROW:
 	c1 = firstCol;
 	c2 = lastCol;
-	if (firstRow>lastRow) r2--; /* No selectable rows in table */
 	break;
     }
 SET_CELLS:
