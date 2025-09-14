@@ -897,6 +897,7 @@ static int TableWidgetObjCmd(
 	return result;
     }
 
+    Tcl_ResetResult(interp);
     Tcl_Preserve((ClientData) tablePtr);
     switch ((enum command) cmdIndex) {
 	case CMD_ACTIVATE:
@@ -963,7 +964,7 @@ static int TableWidgetObjCmd(
 	    break;
 
 	case CMD_ICURSOR:
-	    if (objc != 2 && objc != 3) {
+	    if (objc < 2 || objc > 3) {
 		Tcl_WrongNumArgs(interp, 2, objv, "?cursorPos?");
 		result = TCL_ERROR;
 		break;

@@ -381,7 +381,7 @@ int TableAtBorder(Table * tablePtr, int x, int y, int *row, int *col) {
      * In that case, we have to decrement our border count.
      */
     if (tablePtr->spanAffTbl && !(tablePtr->flags & AVOID_SPANS) && borders) {
-	Tcl_HashEntry *entryPtr1, *entryPtr2 ;
+	Tcl_HashEntry *entryPtr1, *entryPtr2;
 	char buf1[INDEX_BUFSIZE], buf2[INDEX_BUFSIZE];
 	char *val;
 
@@ -810,6 +810,7 @@ int TableGetIndex(
 	TableWhatCell(tablePtr, x, y, &r, &c);
 	r += tablePtr->rowOffset;
 	c += tablePtr->colOffset;
+
     } else if (*str == '-' || isdigit(str[0])) {
 	if (sscanf(str, "%d,%d%c", &r, &c, &dummy) != 2) {
 	    /* Make sure it won't work for "2,3extrastuff" */
@@ -818,6 +819,7 @@ int TableGetIndex(
 	/* ensure appropriate user index */
 	CONSTRAIN(r, tablePtr->rowOffset, tablePtr->rows-1+tablePtr->rowOffset);
 	CONSTRAIN(c, tablePtr->colOffset, tablePtr->cols-1+tablePtr->colOffset);
+
     } else if (len > 1 && strncmp(str, "active", len) == 0 ) {	/* active */
 	if (tablePtr->flags & HAS_ACTIVE) {
 	    r = tablePtr->activeRow+tablePtr->rowOffset;
@@ -827,6 +829,7 @@ int TableGetIndex(
 		    Tcl_NewStringObj("no \"active\" cell in table", -1));
 	    return TCL_ERROR;
 	}
+
     } else if (len > 1 && strncmp(str, "anchor", len) == 0) {	/* anchor */
 	if (tablePtr->flags & HAS_ANCHOR) {
 	    r = tablePtr->anchorRow+tablePtr->rowOffset;
@@ -836,15 +839,19 @@ int TableGetIndex(
 		    Tcl_NewStringObj("no \"anchor\" cell in table", -1));
 	    return TCL_ERROR;
 	}
+
     } else if (strncmp(str, "end", len) == 0) {		/* end */
 	r = tablePtr->rows-1+tablePtr->rowOffset;
 	c = tablePtr->cols-1+tablePtr->colOffset;
+
     } else if (strncmp(str, "origin", len) == 0) {	/* origin */
 	r = tablePtr->titleRows+tablePtr->rowOffset;
 	c = tablePtr->titleCols+tablePtr->colOffset;
+
     } else if (strncmp(str, "topleft", len) == 0) {	/* topleft */
 	r = tablePtr->topRow+tablePtr->rowOffset;
 	c = tablePtr->leftCol+tablePtr->colOffset;
+
     } else if (strncmp(str, "bottomright", len) == 0) {	/* bottomright */
 	/*
 	 * FIX: Should this avoid spans, or consider them in the bottomright?
@@ -854,9 +861,10 @@ int TableGetIndex(
 	TableGetLastCell(tablePtr, &r, &c);
 	r += tablePtr->rowOffset;
 	c += tablePtr->colOffset;
+
     } else {
-    IndexError:
-	Tcl_AppendStringsToObj(Tcl_GetObjResult(tablePtr->interp),
+IndexError:
+	Tcl_AppendResult(tablePtr->interp,
 		"bad table index \"", str, "\": must be active, anchor, end, ",
 		"origin, topleft, bottomright, @x,y, or <row>,<col>",
 		(char *)NULL);
@@ -906,11 +914,11 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 
     str = Tcl_GetStringFromObj(objv[2], &len);
     if (strncmp(str, "row", (size_t) len) == 0 || strncmp(str, "col", (size_t) len) == 0) {
-	Tcl_Obj *resultPtr = Tcl_GetObjResult(interp);
 	/* set row index list ?index list ...? */
 	if (objc < 4) {
 	    goto CMD_SET_USAGE;
 	} else if (objc == 4) {
+	    Tcl_Obj *resultPtr = Tcl_NewListObj(0, NULL);
 	    if (TableGetIndexObj(tablePtr, objv[3], &row, &col) != TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -927,6 +935,8 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    Tcl_ListObjAppendElement(NULL, resultPtr, Tcl_NewStringObj(str, -1));
 		}
 	    }
+	    Tcl_SetObjResult(interp, resultPtr);
+
 	} else if (tablePtr->state == STATE_NORMAL) {
 	    Tcl_Size listc;
 	    Tcl_Obj *itemObj;
@@ -974,17 +984,15 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		}
 	    }
 	}
+
     } else if (objc == 3) {
 	/* set index */
 	if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
 	    return TCL_ERROR;
 	} else {
-	    /*
-	     * Cannot use Tcl_GetObjResult here because TableGetCellValue
-	     * can corrupt the resultPtr.
-	     */
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col),-1));
 	}
+
     } else {
 	/* set index val ?index val ...? */
 	/* make sure there are an even number of index/value pairs */
@@ -1047,8 +1055,8 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 	/* We have to make sure this was not already hidden
 	 * that's an error */
 	if ((char *)Tcl_GetHashValue(entryPtr) != NULL) {
-	    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-		"cannot set spanning on hidden cell ", cell, (char *) NULL);
+	    Tcl_AppendResult(interp, "cannot set spanning on hidden cell ", cell,
+		(char *)NULL);
 	    return TCL_ERROR;
 	}
     }
@@ -1092,8 +1100,8 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 	    entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
 	    if (entryPtr != NULL) {
 		/* Something already spans here */
-		Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-			"cannot overlap already spanned cell ", buf, (char *) NULL);
+		Tcl_AppendResult(interp, "cannot overlap already spanned cell ", buf,
+		    (char *)NULL);
 		result = TCL_ERROR;
 		rs = ors;
 		cs = ocs;
@@ -1247,7 +1255,7 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
     if (tablePtr->spanTbl == NULL) {
 	/* Avoid the whole thing if we have no spans */
 	if (objc > 3) {
-	    Tcl_SetBooleanObj(Tcl_GetObjResult(interp), 0);
+	    Tcl_SetObjResult(interp, Tcl_NewBooleanObj(0));
 	}
 	return TCL_OK;
     }

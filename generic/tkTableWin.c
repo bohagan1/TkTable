@@ -157,8 +157,8 @@ static int StickyParseProc(
 	case 'w': case 'W': sticky |= STICK_WEST;  break;
 	case ' ': case ',': case '\t': case '\r': case '\n': break;
 	default:
-	    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-		"bad sticky value \"", --value, "\": must contain n, s, e or w", (char *) NULL);
+	    Tcl_AppendResult(interp, "bad sticky value \"", --value,
+		"\": must contain n, s, e or w", (char *)NULL);
 	    return TCL_ERROR;
 	}
     }
@@ -614,9 +614,8 @@ static int EmbWinConfigure(
 		}
 		if (Tk_IsTopLevel(ancestor)) {
 		badMaster:
-		    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp), "can't embed ",
-			Tk_PathName(ewPtr->tkwin), " in ", Tk_PathName(tablePtr->tkwin),
-			(char *)NULL);
+		    Tcl_AppendResult(interp, "can't embed ", Tk_PathName(ewPtr->tkwin),
+			" in ", Tk_PathName(tablePtr->tkwin), (char *)NULL);
 		    ewPtr->tkwin = NULL;
 		    return TCL_ERROR;
 		}
@@ -668,8 +667,8 @@ int Table_WinMove(Table *tablePtr, char *const srcPtr, char *const destPtr, int 
 	if (flags & INV_NO_ERR_MSG) {
 	    return TCL_OK;
 	} else {
-	    Tcl_AppendStringsToObj(Tcl_GetObjResult(tablePtr->interp),
-		    "no window at index \"", srcPtr, "\"", (char *) NULL);
+	    Tcl_AppendResult(tablePtr->interp, "no window at index \"", srcPtr, "\"",
+		(char *)NULL);
 	    return TCL_ERROR;
 	}
     }
@@ -779,8 +778,8 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	}
 	entryPtr = Tcl_FindHashEntry(tablePtr->winTable, Tcl_GetString(objv[3]));
 	if (entryPtr == NULL) {
-	    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-		"no window at index \"", Tcl_GetString(objv[3]), "\"", (char *)NULL);
+	    Tcl_AppendResult(interp, "no window at index \"", Tcl_GetString(objv[3]),
+		"\"", (char *)NULL);
 	    return TCL_ERROR;
 	} else {
 	    ewPtr = (TableEmbWindow *) Tcl_GetHashValue(entryPtr);
