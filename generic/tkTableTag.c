@@ -562,9 +562,9 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
     objv[0] = Tcl_NewStringObj("-bd",-1);
     objv[1] = Tcl_NewStringObj(BORDER_WIDTH,-1);
     objv[2] = Tcl_NewStringObj("-bg",-1);
-    objv[3] = Tcl_NewStringObj(DISABLED_FG,-1);
+    objv[3] = Tcl_NewStringObj(TITLE_BG,-1);
     objv[4] = Tcl_NewStringObj("-fg",-1);
-    objv[5] = Tcl_NewStringObj(DISABLED_BG,-1);
+    objv[5] = Tcl_NewStringObj(TITLE_FG,-1);
     objv[6] = Tcl_NewStringObj("-font",-1);
     objv[7] = Tcl_NewStringObj("TkHeadingFont",-1);
     objv[8] = Tcl_NewStringObj("-relief",-1);

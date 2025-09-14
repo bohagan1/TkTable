@@ -112,7 +112,7 @@
 #	define DISABLED_FG	"SystemDisabledText"
 #	define HIGHLIGHT	"SystemWindowFrame"
 #	define HIGHLIGHT_BG	NORMAL_BG
-#	define HIGHLIGHT_WIDTH	"2"
+#	define HIGHLIGHT_WIDTH	"1"
 #	define INSERT_BD	"0"
 #	define INSERT_BG	NORMAL_FG
 #	define INSERT_WIDTH	"2"
@@ -124,7 +124,7 @@
 #	define NORMAL_FG	"systemTextColor"
 #	define ACTIVE_BG	"systemWindowBackgroundColor"
 #	define ACTIVE_FG	NORMAL_FG
-#	define BORDER_WIDTH	"2"
+#	define BORDER_WIDTH	"1"
 #	define DISABLED_BG	NORMAL_BG
 #	define DISABLED_FG	"systemDisabledControlTextColor"
 #	define HIGHLIGHT	NORMAL_FG
@@ -137,13 +137,13 @@
 #	define SELECT_BG	"systemSelectedTextBackgroundColor"
 #	define SELECT_FG	"systemSelectedTextColor"
 #   else
-#	define NORMAL_BG	"white"
-#	define NORMAL_FG	"black"
+#	define NORMAL_BG	"#ffffff"
+#	define NORMAL_FG	"#000000"
 #	define ACTIVE_BG	"#ececec"
 #	define ACTIVE_FG	NORMAL_FG
 #	define BORDER_WIDTH	"1"
 #	define DISABLED_BG	NORMAL_BG
-#	define DISABLED_FG	"gray"
+#	define DISABLED_FG	"#a3a3a3"
 #	define HIGHLIGHT	NORMAL_FG
 #	define HIGHLIGHT_BG	NORMAL_BG
 #	define HIGHLIGHT_WIDTH	"1"
@@ -151,9 +151,11 @@
 #	define INSERT_BG	NORMAL_FG
 #	define INSERT_WIDTH	"2"
 #	define SELECT_BD	"1"
-#	define SELECT_BG	"cornflowerblue"
+#	define SELECT_BG	"#6ea1d5"
 #	define SELECT_FG	NORMAL_FG
 #   endif
+#	define TITLE_BG		"#73787c"
+#	define TITLE_FG		"#ffffff"
 #endif /* NORMAL_BG */
 
 #define MAX(A,B)	(((A)>(B))?(A):(B))

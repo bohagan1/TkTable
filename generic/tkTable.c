@@ -407,8 +407,8 @@ static int Tk_ClassOptionObjCmd(
 static char * TableVarProc(
      ClientData clientData,	/* Information about table. */
      Tcl_Interp *interp,	/* Interpreter containing variable. */
-     const char *name,		/* Not used. */
-     const char *index,		/* Not used. */
+     const char *name,		/* Array variable name. Not used. */
+     const char *index,		/* Array index. */
      int flags)	{		/* Information about what happened. */
 
     Table *tablePtr = (Table *) clientData;
@@ -473,7 +473,7 @@ static char * TableVarProc(
 	    TableGetIcursor(tablePtr, "end", (int *)0);
 	    tablePtr->flags |= TEXT_CHANGED;
 	}
-    } else if (TableParseArrayIndex(&row, &col, index) == 2) {
+    } else if (TableParseArrayIndex(&row, &col, (char *)index) == 2) {
 	char buf[INDEX_BUFSIZE];
 
 	/* Make sure it won't trigger on array(2,3extrastuff) */
