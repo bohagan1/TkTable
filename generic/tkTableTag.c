@@ -686,7 +686,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
     Tcl_HashTable *hashTblPtr;
     Tcl_HashSearch search;
     Tk_Image image;
-    Tcl_Obj *objPtr, *resultPtr;
+    Tcl_Obj *objPtr, *resultPtr = NULL;
     char buf[INDEX_BUFSIZE], *keybuf, *tagname;
 
     if (objc < 3) {
@@ -725,12 +725,11 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		 * Handle specially tags named: active, flash, sel, title
 		 */
 
-		if ((tablePtr->flags & HAS_ACTIVE) &&
-			STREQ(tagname, "active")) {
+		if ((tablePtr->flags & HAS_ACTIVE) && STREQ(tagname, "active")) {
 		    TableMakeArrayIndex(
 			tablePtr->activeRow+tablePtr->rowOffset,
 			tablePtr->activeCol+tablePtr->colOffset, buf);
-		    Tcl_SetStringObj(resultPtr, buf, -1);
+		    resultPtr = Tcl_NewStringObj(buf, -1);
 		} else if ((tablePtr->flashMode && STREQ(tagname, "flash"))
 			|| STREQ(tagname, "sel")) {
 		    hashTblPtr = (*tagname == 's') ?
@@ -862,9 +861,9 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		/* Special handling for tags: active, flash, sel, title */
 
 		if ((tablePtr->flags & HAS_ACTIVE) && strcmp(tagname, "active") == 0) {
-		    Tcl_SetIntObj(resultPtr, (forRows ?
+		    resultPtr = Tcl_NewIntObj(forRows ?
 			    tablePtr->activeRow+tablePtr->rowOffset :
-			    tablePtr->activeCol+tablePtr->colOffset));
+			    tablePtr->activeCol+tablePtr->colOffset);
 		} else if ((tablePtr->flashMode && STREQ(tagname, "flash"))
 			|| STREQ(tagname, "sel")) {
 		    Tcl_HashTable *cacheTblPtr;

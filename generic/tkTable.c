@@ -3931,9 +3931,9 @@ BuildInfoCommand(Tcl_Interp* interp) {
 /*
  *-----------------------------------------------------------------------------
  *
- * Vfs_Init --
+ * Tktable_Init --
  *
- *	This procedure is the main initialization point of the Vfs
+ *	This procedure is the main initialization point of the TkTable
  *	extension.
  *
  * Results:
