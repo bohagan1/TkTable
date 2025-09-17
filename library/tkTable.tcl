@@ -620,7 +620,7 @@ proc ::tktable::MoveCell {w x y} {
 	}
 	if {$x > 0} {incr r} elseif {$x < 0} {incr r -1}
 	if {$y > 0} {incr c} elseif {$y < 0} {incr c -1}
-	if {[$w index $r,$c] ne $cell]} {
+	if {[$w index $r,$c] ne $cell} {
 	    set cell [$w index $r,$c]
 	} else {
 	    # We couldn't find a non-hidden cell, just don't move
