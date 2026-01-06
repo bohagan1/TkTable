@@ -406,41 +406,45 @@ pkgIndex.tcl: $(srcdir)/pkgIndex.tcl.in
 # You may need to tweak this target to make it work correctly.
 #========================================================================
 
+TEMP_DIR	= $(srcdir)/$(PKG_DIR)/
 #COMPRESS	= tar cvf $(PKG_DIR).tar $(PKG_DIR); compress $(PKG_DIR).tar
-COMPRESS	= tar zcvf $(PKG_DIR).tar.gz $(PKG_DIR)
-DIST_ROOT	= $(TEMP)/dist
-DIST_DIR	= $(DIST_ROOT)/$(PKG_DIR)
+COMPRESS	= tar zcvf $(PKG_DIR).tar.gz $(TEMP_DIR)
 
 DIST_INSTALL_DATA	= CPPROG='cp -p' $(INSTALL) -m 644
 DIST_INSTALL_SCRIPT	= CPPROG='cp -p' $(INSTALL) -m 755
+ 
+${TEMP_DIR}:
+	mkdir -p ${TEMP_DIR}
+
 
 dist-clean:
-	rm -rf $(DIST_DIR) "$(top_builddir)/$(PKG_DIR).tar.*"
+	rm -rf "$(srcdir)/$(PKG_DIR).tar.*"
 
-dist: dist-clean manifest.uuid
+dist: ${TEMP_DIR} dist-clean manifest.uuid
 	# TEA files
-	$(INSTALL_DATA_DIR) $(DIST_DIR)
+	$(INSTALL_DATA_DIR) $(TEMP_DIR)
 	$(DIST_INSTALL_DATA) $(srcdir)/Makefile.in \
-		$(srcdir)/aclocal.m4 $(srcdir)/configure.ac $(DIST_DIR)/
-	$(DIST_INSTALL_SCRIPT) $(srcdir)/configure $(DIST_DIR)/
+		$(srcdir)/aclocal.m4 $(srcdir)/configure.ac $(TEMP_DIR)/
+	$(DIST_INSTALL_SCRIPT) $(srcdir)/configure $(TEMP_DIR)/
 
 	# Extension files
 	$(DIST_INSTALL_DATA) $(srcdir)/ChangeLog \
 		$(srcdir)/license.txt $(srcdir)/manifest.uuid \
 		$(srcdir)/README.txt $(srcdir)/pkgIndex.tcl.in \
-		$(srcdir)/TODO.txt $(DIST_DIR)/
+		$(srcdir)/TODO.txt $(TEMP_DIR)
 
-	list='demos doc generic library tclconfig macosx tests unix win'; \
+	list='demos doc generic library tclconfig tests win'; \
 	for p in $$list; do \
-	    if test -d '$(srcdir)/$$p' ; then \
-		$(INSTALL_DATA_DIR) '$(DIST_DIR)/$$p'; \
-		$(DIST_INSTALL_DATA) '$(srcdir)/$$p/*' '$(DIST_DIR)/$$p/'; \
+	    if test -d "$(srcdir)/$$p" ; then \
+		$(INSTALL_DATA_DIR) "$(TEMP_DIR)/$$p"; \
+		for i in "$(srcdir)/$$p/*"; do \
+		    $(INSTALL_DATA) $$i "$(TEMP_DIR)/$$p/"; \
+		done; \
 	    fi; \
 	done
 
-	(cd '$(DIST_ROOT)'; $(COMPRESS);)
-	mv $(DIST_ROOT)/$(PKG_DIR).tar.gz $(top_builddir)
-	cd '$(top_builddir)'
+	$(COMPRESS)
+	rm -fR $(TEMP_DIR)
 
 #========================================================================
 # End of user-definable section
