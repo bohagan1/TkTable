@@ -10287,6 +10287,118 @@ else
   DTPLITE="$ac_cv_path_DTPLITE"
 fi
 
+    if test "x$DTPLITE" = "x:"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}dtplite.tcl", so it can be a program name with args.
+set dummy ${ac_tool_prefix}dtplite.tcl; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_path_DTPLITE+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) case $DTPLITE in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_DTPLITE="$DTPLITE" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_path_DTPLITE="$as_dir$ac_word$ac_exec_ext"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac ;;
+esac
+fi
+DTPLITE=$ac_cv_path_DTPLITE
+if test -n "$DTPLITE"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $DTPLITE" >&5
+printf "%s\n" "$DTPLITE" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_DTPLITE"; then
+  ac_pt_DTPLITE=$DTPLITE
+  # Extract the first word of "dtplite.tcl", so it can be a program name with args.
+set dummy dtplite.tcl; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_path_ac_pt_DTPLITE+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) case $ac_pt_DTPLITE in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_DTPLITE="$ac_pt_DTPLITE" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_DTPLITE="$as_dir$ac_word$ac_exec_ext"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac ;;
+esac
+fi
+ac_pt_DTPLITE=$ac_cv_path_ac_pt_DTPLITE
+if test -n "$ac_pt_DTPLITE"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_pt_DTPLITE" >&5
+printf "%s\n" "$ac_pt_DTPLITE" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+  if test "x$ac_pt_DTPLITE" = x; then
+    DTPLITE=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+printf "%s\n" "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    DTPLITE=$ac_pt_DTPLITE
+  fi
+else
+  DTPLITE="$ac_cv_path_DTPLITE"
+fi
+
+    fi
 
 
 #--------------------------------------------------------------------
