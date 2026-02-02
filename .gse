@@ -3,13 +3,13 @@
         "enable": true,
         "pull": [
             {
-                "origin": "origin",
+                "origin": "teclab",
                 "branch": "master"
             }
         ],
         "push": [
             {
-                "origin": "origin",
+                "origin": "teclab",
                 "branch": "master"
             }
         ]
