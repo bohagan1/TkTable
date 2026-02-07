@@ -393,6 +393,7 @@ static void EmbWinRemove(TableEmbWindow *ewPtr) {
 	/* this will cause windows removed from the table to actually
 	 * cause the associated embdedded window hash data to be removed */
 	Tcl_DeleteHashEntry(ewPtr->hPtr);
+	ewPtr->hPtr = NULL;
 	if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
 		col-tablePtr->colOffset, &x, &y, &width, &height, 0))
 	    TableInvalidate(tablePtr, x, y, width, height, 1);
@@ -400,6 +401,9 @@ static void EmbWinRemove(TableEmbWindow *ewPtr) {
     /* this will cause windows removed from the table to actually
      * cause the associated embdedded window hash data to be removed */
     EmbWinCleanup(tablePtr, ewPtr);
+    if (ewPtr->hPtr != NULL) {
+	Tcl_DeleteHashEntry(ewPtr->hPtr);
+    }
     ckfree((char *) ewPtr);
 }
 
@@ -541,6 +545,7 @@ void EmbWinDelete(Table *tablePtr, TableEmbWindow *ewPtr) {
 	int row, col, x, y, width, height;
 	TableParseArrayIndex(&row, &col, Tcl_GetHashKey(tablePtr->winTable, entryPtr));
 	Tcl_DeleteHashEntry(entryPtr);
+	entryPtr = NULL;
 
 	if (TableCellVCoords(tablePtr, row-tablePtr->rowOffset,
 		col-tablePtr->colOffset, &x, &y, &width, &height, 0))
@@ -550,6 +555,9 @@ void EmbWinDelete(Table *tablePtr, TableEmbWindow *ewPtr) {
     Tcl_CancelIdleCall(EmbWinDelayedUnmap, (ClientData) ewPtr);
 #endif
     EmbWinCleanup(tablePtr, ewPtr);
+    if (entryPtr != NULL) {
+	Tcl_DeleteHashEntry(entryPtr);
+    }
     ckfree((char *) ewPtr);
 }
 
@@ -812,10 +820,13 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	    if (result == TCL_ERROR) {
 		/* release the structure */
 		EmbWinCleanup(tablePtr, ewPtr);
+		entryPtr = ewPtr->hPtr;
 		ckfree((char *) ewPtr);
 
 		/* and free the hash table entry */
-		Tcl_DeleteHashEntry(entryPtr);
+		if (entryPtr != NULL) {
+		    Tcl_DeleteHashEntry(entryPtr);
+		}
 	    }
 	} else {
 	    /* window exists, do a reconfig if we have enough args */

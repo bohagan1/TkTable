@@ -312,7 +312,7 @@ shell: binaries libraries
 gdb:
 	$(TCLSH_ENV) $(PKG_ENV) $(GDB) $(TCLSH_PROG) $(SCRIPT)
 
-gdb-test: binaries libraries 
+gdb-test: binaries libraries
 	$(TCLSH_ENV) $(PKG_ENV) $(GDB) \
 	    --args $(TCLSH_PROG) `@CYGPATH@ $(srcdir)/tests/all.tcl` \
 	    $(TESTFLAGS) -singleproc 1 \
@@ -360,7 +360,7 @@ tkTable.tcl.h: library/tkTable.tcl
 	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' \
 	    -e 's/$$/\\n"/' '$?' > '$@' || { rm -f '$@'; exit 1; }
 
-# Create header file with fossil, git, or svn UUID for build-info command 
+# Create header file with fossil, git, or svn UUID for build-info command
 $(srcdir)/manifest.uuid:
 	printf "git-" >$(srcdir)/manifest.uuid
 	(cd '$(srcdir)'; git rev-parse HEAD >>$(srcdir)/manifest.uuid || \
@@ -418,7 +418,7 @@ COMPRESS	= tar zcvf $(PKG_DIR).tar.gz $(TEMP_DIR)
 
 DIST_INSTALL_DATA	= CPPROG='cp -p' $(INSTALL) -m 644
 DIST_INSTALL_SCRIPT	= CPPROG='cp -p' $(INSTALL) -m 755
- 
+
 ${TEMP_DIR}:
 	mkdir -p ${TEMP_DIR}
 
