@@ -2607,6 +2607,9 @@ ShowSel:
 			topGc    = Tk_3DBorderGC(tkwin, tagPtr->bg, TK_3D_LIGHT_GC);
 			bottomGc = Tk_3DBorderGC(tkwin, tagPtr->bg, TK_3D_DARK_GC);
 			break;
+		    case TK_RELIEF_SOLID:
+			topGc = bottomGc = Tk_3DBorderGC(tkwin, tagPtr->bg, TK_3D_DARK_GC);
+			break;
 		    default: /* TK_RELIEF_SUNKEN TK_RELIEF_GROOVE */
 			bottomGc = Tk_3DBorderGC(tkwin, tagPtr->bg, TK_3D_LIGHT_GC);
 			topGc    = Tk_3DBorderGC(tkwin, tagPtr->bg, TK_3D_DARK_GC);
