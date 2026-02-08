@@ -662,6 +662,36 @@ further limited by \fB-maxheight\fR\&.
 .LP
 .nf
 .ta 6c
+Command-Line Switch:	\fB-inactiveselectbackground\fR
+Database Name:	\fBinactiveSelectBackground\fR
+Database Class:	\fBForeground\fR
+
+.fi
+.IP
+Specifies the background color to use for the selection when the window does
+not have the input focus\&. The option's value may be an empty string or have
+any of the forms accepted by \fBTk_GetColor\fR\&. If empty then the value of the
+\fB-selectbackground\fR widget configuration option is used when the
+window does not have the focus\&.
+.LP
+.nf
+.ta 6c
+Command-Line Switch:	\fB-inactiveselectforeground\fR
+Database Name:	\fBinactiveSelectForeground\fR
+Database Class:	\fBBackground\fR
+
+.fi
+.IP
+Specifies the foreground color to use for the selection when the window does
+not have the input focus\&. The option's value may be an empty string or have
+any of the forms accepted by \fBTk_GetColor\fR\&. This option is only relevant
+if the value of the \fB-inactiveselectbackground\fR option is non-empty, in
+which case, if the value of this option is an empty string then the value of
+the \fB-selectforeground\fR widget configuration option is used when the
+window does not have the focus\&.
+.LP
+.nf
+.ta 6c
 Command-Line Switch:	\fB-invertselected\fR
 Database Name:	\fBinvertSelected\fR
 Database Class:	\fBInvertSelected\fR
@@ -1191,7 +1221,11 @@ This tag is associated with the \fBactive\fR cell\&.
 This tag is associated with the \fBfocus\fR cell\&.
 .TP
 \fBsel\fR
-This tag is associated with all selected cells\&.
+This tag is associated with all selected cells when the widget has the focus\&.
+.TP
+\fBinactivesel\fR
+This tag is associated with all selected cells when the widget does not have
+the focus\&.
 .TP
 \fBtitle\fR
 This tag is associated with all title row and column cells\&.

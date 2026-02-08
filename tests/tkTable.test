@@ -579,7 +579,7 @@ test Configure-7.1 {Create} -body {
 
 test Configure-7.2 {Get All} -body {
 	llength [.table configure]
-    } -result {76}
+    } -result {78}
 
 test Configure-7.3 {Invalid argc} -body {
 	.table configure -bg red -fg
@@ -750,191 +750,199 @@ test Options-8.30 {Highlight Color} -body {
 	cfg_test .table -highlightcolor * #123456 #123456
     } -result {2}
 
-test Options-8.31 {Hughlight Thickness} -body {
+test Options-8.31 {Highlight Thickness} -body {
 	cfg_test .table -highlightthickness * 6 6
     } -result {2}
 
-test Options-8.32 {Insert Background} -body {
+test Options-8.32 {Inactive Selection Background} -body {
+	cfg_test .table -inactiveselectbackground * red red
+    } -result {2}
+
+test Options-8.33 {Inactive Selection Foreground} -body {
+	cfg_test .table -inactiveselectforeground * blue blue
+    } -result {2}
+
+test Options-8.34 {Insert Background} -body {
 	cfg_test .table -insertbackground * #110022 #110022
     } -result {2}
 
-test Options-8.33 {Insert Borderwidth} -body {
+test Options-8.35 {Insert Borderwidth} -body {
 	cfg_test .table -insertborderwidth * 1.3 1
     } -result {2}
 
-test Options-8.34 {Insert Off Time} -body {
+test Options-8.36 {Insert Off Time} -body {
 	cfg_test .table -insertofftime 300 100 100
     } -result {2}
 
-test Options-8.35 {Insert On Time} -body {
+test Options-8.37 {Insert On Time} -body {
 	cfg_test .table -insertontime 600 100 100
     } -result {2}
 
-test Options-8.36 {Insert Width} -body {
+test Options-8.38 {Insert Width} -body {
 	cfg_test .table -insertwidth * 1.3 1
     } -result {2}
 
-test Options-8.37 {Invert Selected} -body {
+test Options-8.39 {Invert Selected} -body {
 	cfg_test .table -invertselected 0 yes 1
     } -result {2}
 
-test Options-8.38 {Internal Padx} -body {
+test Options-8.40 {Internal Padx} -body {
 	cfg_test .table -ipadx 0 1.3 1
     } -result {2}
 
-test Options-8.39 {Internal Pady} -body {
+test Options-8.41 {Internal Pady} -body {
 	cfg_test .table -ipady 0 1.3 1
     } -result {2}
 
-test Options-8.40 {Justify} -body {
+test Options-8.42 {Justify} -body {
 	cfg_test .table -justify left right right
     } -result {2}
 
-test Options-8.41 {Max Height} -body {
+test Options-8.43 {Max Height} -body {
 	cfg_test .table -maxheight 600 300 300
     } -result {2}
 
-test Options-8.42 {Max Width} -body {
+test Options-8.44 {Max Width} -body {
 	cfg_test .table -maxwidth 800 300 300
     } -result {2}
 
-test Options-8.43 {Mode} -body {
+test Options-8.45 {Mode} -body {
 	cfg_test .table -mode table spreadsheet spreadsheet
     } -result {2}
 
-test Options-8.44 {Multiline} -body {
+test Options-8.46 {Multiline} -body {
 	cfg_test .table -multiline 1 no 0
     } -result {2}
 
-test Options-8.45 {Padx} -body {
+test Options-8.47 {Padx} -body {
 	cfg_test .table -padx 0 1.3 1
     } -result {2}
 
-test Options-8.46 {Pady} -body {
+test Options-8.48 {Pady} -body {
 	cfg_test .table -pady 0 1.3 1
     } -result {2}
 
-test Options-8.47 {Quote Character} -body {
+test Options-8.49 {Quote Character} -body {
 	cfg_test .table -quotechar \" | |
     } -result {2}
 
-test Options-8.48 {Refief} -body {
+test Options-8.50 {Refief} -body {
 	cfg_test .table -relief sunken groove groove
     } -result {2}
 
-test Options-8.49 {Row Height} -body {
+test Options-8.51 {Row Height} -body {
 	cfg_test .table -rowheight 1 -20 -20
     } -result {2}
 
-test Options-8.50 {Row Origin} -body {
+test Options-8.52 {Row Origin} -body {
 	cfg_test .table -roworigin 0 -20 -20
     } -result {2}
 
-test Options-8.51 {Rows} -body {
+test Options-8.53 {Rows} -body {
 	cfg_test .table -rows 10 20 20
     } -result {2}
 
-test Options-8.52 {Row Separator} -body {
+test Options-8.54 {Row Separator} -body {
 	cfg_test .table -rowseparator \n % %
     } -result {2}
 
-test Options-8.53 {Row Stretch Mode} -body {
+test Options-8.55 {Row Stretch Mode} -body {
 	cfg_test .table -rowstretchmode none unset unset
     } -result {2}
 
-test Options-8.54 {Row Tag Command} -body {
+test Options-8.56 {Row Tag Command} -body {
 	cfg_test .table -rowtagcommand {} {Some command} {Some command}
     } -result {2}
 
-test Options-8.55 {Selection Command Alias} -body {
+test Options-8.57 {Selection Command Alias} -body {
 	cfg_test .table -selcmd {} {Some command} {Some command}
     } -result {2}
 
-test Options-8.56 {Selection Command} -body {
+test Options-8.58 {Selection Command} -body {
 	cfg_test .table -selectioncommand {} {Some command} {Some command}
     } -result {2}
 
-test Options-8.57 {Selection Background} -body {
+test Options-8.59 {Selection Background} -body {
 	cfg_test .table -selectbackground * red red
     } -result {2}
 
-test Options-8.58 {Selection Borderwidth} -body {
+test Options-8.60 {Selection Borderwidth} -body {
 	cfg_test .table -selectborderwidth * 2 2
     } -result {2}
 
-test Options-8.59 {Selection Foreground} -body {
+test Options-8.61 {Selection Foreground} -body {
 	cfg_test .table -selectforeground * blue blue
     } -result {2}
 
-test Options-8.60 {Selection Mode} -body {
+test Options-8.62 {Selection Mode} -body {
 	cfg_test .table -selectmode browse extended extended
     } -result {2}
 
-test Options-8.61 {Select Titles} -body {
+test Options-8.63 {Select Titles} -body {
 	cfg_test .table -selecttitles 0 yes 1
     } -result {2}
 
-test Options-8.62 {Select Type} -body {
+test Options-8.64 {Select Type} -body {
 	cfg_test .table -selecttype cell row row
     } -result {2}
 
-test Options-8.63 {Sparse Array} -body {
+test Options-8.65 {Sparse Array} -body {
 	cfg_test .table -sparsearray 1 no 0
     } -result {2}
 
-test Options-8.64 {State} -body {
+test Options-8.66 {State} -body {
 	cfg_test .table -state normal disabled disabled
     } -result {2}
 
-test Options-8.65 {Take Focus} -body {
+test Options-8.67 {Take Focus} -body {
 	cfg_test .table -takefocus {} 0 0
     } -result {2}
 
-test Options-8.66 {Title Columns} -body {
+test Options-8.68 {Title Columns} -body {
 	cfg_test .table -titlecols 0 4 4
     } -result {2}
 
-test Options-8.67 {Title Rows} -body {
+test Options-8.69 {Title Rows} -body {
 	cfg_test .table -titlerows 0 4 4
     } -result {2}
 
-test Options-8.68 {Use Command} -body {
+test Options-8.70 {Use Command} -body {
 	cfg_test .table -usecommand 1 no 0
     } -result {2}
 
-test Options-8.69 {Variable} -body {
+test Options-8.71 {Variable} -body {
 	cfg_test .table -variable ::tableData var var
     } -result {2}
 
-test Options-8.70 {Validate} -body {
+test Options-8.72 {Validate} -body {
 	cfg_test .table -validate 0 yes 1
     } -result {2}
 
-test Options-8.71 {Validate Command} -body {
+test Options-8.73 {Validate Command} -body {
 	cfg_test .table -validatecommand {} {Some command} {Some command}
     } -result {2}
 
-test Options-8.72 {Validate Command Alias} -body {
+test Options-8.74 {Validate Command Alias} -body {
 	cfg_test .table -vcmd {} {Another command} {Another command}
     } -result {2}
 
-test Options-8.73 {Width} -body {
+test Options-8.75 {Width} -body {
 	cfg_test .table -width 0 45 45
     } -result {2}
 
-test Options-8.74 {Word Wrap} -body {
+test Options-8.76 {Word Wrap} -body {
 	cfg_test .table -wrap 0 yes 1
     } -result {2}
 
-test Options-8.75 {X Scroll Command} -body {
+test Options-8.77 {X Scroll Command} -body {
 	cfg_test .table -xscrollcommand {} {null} {null}
     } -result {2}
 
-test Options-8.76 {Y Scroll Command} -body {
+test Options-8.78 {Y Scroll Command} -body {
 	cfg_test .table -yscrollcommand {} {null} {null}
     } -result {2}
 
-test Options-8.77 {Cleanup} -body {
+test Options-8.79 {Cleanup} -body {
 	destroy .table
     }
 
@@ -1041,139 +1049,147 @@ test Options_Invalid-9.25 {Highlight Color} -body {
 	.table configure -highlightcolor bogus
     } -result {unknown color name "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.26 {Hughlight Thickness} -body {
+test Options_Invalid-9.26 {Highlight Thickness} -body {
 	.table configure -highlightthickness bogus
     } -match {glob} -result {*screen distance* "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.27 {Insert Background} -body {
+test Options_Invalid-9.27 {Inactive Selection Background} -body {
+	.table configure -inactiveselectbackground bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.28 {Inactive Selection Foreground} -body {
+	.table configure -inactiveselectforeground bogus
+    } -result {unknown color name "bogus"} -returnCodes {1}
+
+test Options_Invalid-9.29 {Insert Background} -body {
 	.table configure -insertbackground bogus
     } -result {unknown color name "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.28 {Insert Borderwidth} -body {
+test Options_Invalid-9.30 {Insert Borderwidth} -body {
 	.table configure -insertborderwidth 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.29 {Insert Off Time} -body {
+test Options_Invalid-9.31 {Insert Off Time} -body {
 	.table configure -insertofftime 3.2
     } -result {expected integer but got "3.2"} -returnCodes {1}
 
-test Options_Invalid-9.30 {Insert On Time} -body {
+test Options_Invalid-9.32 {Insert On Time} -body {
 	.table configure -insertontime 3.2
     } -result {expected integer but got "3.2"} -returnCodes {1}
 
-test Options_Invalid-9.31 {Insert Width} -body {
+test Options_Invalid-9.33 {Insert Width} -body {
 	.table configure -insertwidth 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.32 {Invert Selected} -body {
+test Options_Invalid-9.34 {Invert Selected} -body {
 	.table configure -invertselected xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.33 {Internal Padx} -body {
+test Options_Invalid-9.35 {Internal Padx} -body {
 	.table configure -ipadx 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.34 {Internal Pady} -body {
+test Options_Invalid-9.36 {Internal Pady} -body {
 	.table configure -ipady 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.35 {Justify} -body {
+test Options_Invalid-9.37 {Justify} -body {
 	.table configure -justify wrong
     } -result {bad justification "wrong": must be left, right, or center} -returnCodes {1}
 
-test Options_Invalid-9.36 {Max Height} -body {
+test Options_Invalid-9.38 {Max Height} -body {
 	.table configure -maxheight 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.37 {Max Width} -body {
+test Options_Invalid-9.39 {Max Width} -body {
 	.table configure -maxwidth 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.38 {Mode} -body {
+test Options_Invalid-9.40 {Mode} -body {
 	.table configure -mode bogus
     } -match {glob} -result {bad option "bogus" must be table, spreadsheet} -returnCodes {1}
 
-test Options_Invalid-9.39 {Multiline} -body {
+test Options_Invalid-9.41 {Multiline} -body {
 	.table configure -multiline xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.40 {Padx} -body {
+test Options_Invalid-9.42 {Padx} -body {
 	.table configure -padx 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.41 {Pady} -body {
+test Options_Invalid-9.43 {Pady} -body {
 	.table configure -pady 2.6x
     } -match {glob} -result {*screen distance* "2.6x"} -returnCodes {1}
 
-test Options_Invalid-9.42 {Refief} -body {
+test Options_Invalid-9.44 {Refief} -body {
 	.table configure -relief bogus
     } -result {bad relief "bogus": must be flat, groove, raised, ridge, solid, or sunken} -returnCodes {1}
 
-test Options_Invalid-9.43 {Row Height} -body {
+test Options_Invalid-9.45 {Row Height} -body {
 	.table configure -rowheight xyzzy
     } -result {expected integer but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.44 {Row Origin} -body {
+test Options_Invalid-9.46 {Row Origin} -body {
 	.table configure -roworigin xyzzy
     } -result {expected integer but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.45 {Rows} -body {
+test Options_Invalid-9.47 {Rows} -body {
 	.table configure -rows xyzzy
     } -result {expected integer but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.46 {Row Stretch Mode} -body {
+test Options_Invalid-9.48 {Row Stretch Mode} -body {
 	.table configure -rowstretchmode bogus
     } -result {bad option "bogus" must be none, unset, all, last, fill} -returnCodes {1}
 
-test Options_Invalid-9.47 {Selection Background} -body {
+test Options_Invalid-9.49 {Selection Background} -body {
 	.table configure -selectbackground bogus
     } -result {unknown color name "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.48 {Selection Foreground} -body {
+test Options_Invalid-9.50 {Selection Foreground} -body {
 	.table configure -selectforeground bogus
     } -result {unknown color name "bogus"} -returnCodes {1}
 
-test Options_Invalid-9.49 {Select Titles} -body {
+test Options_Invalid-9.51 {Select Titles} -body {
 	.table configure -selecttitles xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.50 {Select Type} -body {
+test Options_Invalid-9.52 {Select Type} -body {
 	.table configure -selecttype bogus
     } -result {bad option "bogus" must be row, col, both, cell} -returnCodes {1}
 
-test Options_Invalid-9.51 {Sparse Array} -body {
+test Options_Invalid-9.53 {Sparse Array} -body {
 	.table configure -sparsearray xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.52 {State} -body {
+test Options_Invalid-9.54 {State} -body {
 	.table configure -state foo
     } -result {bad option "foo" must be normal, readonly, disabled} -returnCodes {1}
 
-test Options_Invalid-9.53 {Title Columns} -body {
+test Options_Invalid-9.55 {Title Columns} -body {
 	.table configure -titlecols 3p
     } -result {expected integer but got "3p"} -returnCodes {1}
 
-test Options_Invalid-9.54 {Title Rows} -body {
+test Options_Invalid-9.56 {Title Rows} -body {
 	.table configure -titlerows 3p
     } -result {expected integer but got "3p"} -returnCodes {1}
 
-test Options_Invalid-9.55 {Use Command} -body {
+test Options_Invalid-9.57 {Use Command} -body {
 	.table configure -usecommand xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.56 {Validate} -body {
+test Options_Invalid-9.58 {Validate} -body {
 	.table configure -validate xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.57 {Width} -body {
+test Options_Invalid-9.59 {Width} -body {
 	.table configure -width 3p
     } -result {expected integer but got "3p"} -returnCodes {1}
 
-test Options_Invalid-9.58 {Word Wrap} -body {
+test Options_Invalid-9.60 {Word Wrap} -body {
 	.table configure -wrap xyzzy
     } -result {expected boolean value but got "xyzzy"} -returnCodes {1}
 
-test Options_Invalid-9.59 {Cleanup} -body {
+test Options_Invalid-9.61 {Cleanup} -body {
 	destroy .table
     }
 
@@ -5206,38 +5222,44 @@ test Tag_Get-53.7 {Sel tag} -setup {
 	.table selection set 1,1
     } -body {
 	.table tag get 1,1
-    } -result {active focus sel}
+    } -result {active focus sel inactivesel}
 
-test Tag_Get-53.8 {Title tag} -setup {
+test Tag_Get-53.8 {Inactive Sel tag} -setup {
+	.table selection set 1,1
+    } -body {
+	.table tag get 1,1
+    } -result {active focus sel inactivesel}
+
+test Tag_Get-53.9 {Title tag} -setup {
 	.table configure -titlecols 2 -titlerows 2
     } -body {
 	.table tag get 1,1
-    } -result {active focus sel title}
+    } -result {active focus sel inactivesel title}
 
-test Tag_Get-53.9 {Cell tag} -setup {
+test Tag_Get-53.10 {Cell tag} -setup {
 	.table tag configure testTag
 	.table tag cell testTag 1,1
     } -body {
 	.table tag get 1,1
-    } -result {active focus sel title testTag}
+    } -result {active focus sel inactivesel title testTag}
 
-test Tag_Get-53.10 {Column tag} -setup {
+test Tag_Get-53.11 {Column tag} -setup {
 	.table tag col colTag 1
     } -body {
 	.table tag get 1,1
-    } -result {active focus sel title testTag colTag}
+    } -result {active focus sel inactivesel title testTag colTag}
 
-test Tag_Get-53.11 {Row tag} -setup {
+test Tag_Get-53.12 {Row tag} -setup {
 	.table tag row rowTag 1
     } -body {
 	.table tag get 1,1
-    } -result {active focus sel title testTag rowTag colTag}
+    } -result {active focus sel inactivesel title testTag rowTag colTag}
 
-test Tag_Get-53.12 {No tags} -body {
+test Tag_Get-53.13 {No tags} -body {
 	.table tag get 5,5
     }
 
-test Tag_Get-53.13 {Cleanup} -body {
+test Tag_Get-53.14 {Cleanup} -body {
 	destroy .table
     }
 
@@ -5286,35 +5308,41 @@ test Tag_Includes-54.9 {Sel tag} -setup {
 	.table tag includes sel 1,1
     } -result {1}
 
-test Tag_Includes-54.10 {Title tag} -setup {
+test Tag_Includes-54.10 {Inactive Sel tag} -setup {
+	.table selection set 1,1
+    } -body {
+	.table tag includes sel 1,1
+    } -result {1}
+
+test Tag_Includes-54.11 {Title tag} -setup {
 	.table configure -titlecols 2 -titlerows 2
     } -body {
 	.table tag includes title 1,1
     } -result {1}
 
-test Tag_Includes-54.11 {Cell tag} -setup {
+test Tag_Includes-54.12 {Cell tag} -setup {
 	.table tag cell testTag 1,1
     } -body {
 	.table tag includes testTag 1,1
     } -result {1}
 
-test Tag_Includes-54.12 {Column tag} -setup {
+test Tag_Includes-54.13 {Column tag} -setup {
 	.table tag col colTag 1
     } -body {
 	.table tag includes colTag 1,1
     } -result {1}
 
-test Tag_Includes-54.13 {Row tag} -setup {
+test Tag_Includes-54.14 {Row tag} -setup {
 	.table tag row rowTag 1
     } -body {
 	.table tag includes rowTag 1,1
     } -result {1}
 
-test Tag_Includes-54.14 {No tags} -body {
+test Tag_Includes-54.15 {No tags} -body {
 	.table tag includes testTag 1,2
     } -result {0}
 
-test Tag_Includes-54.15 {Cleanup} -body {
+test Tag_Includes-54.16 {Cleanup} -body {
 	destroy .table
     }
 
@@ -5344,32 +5372,32 @@ test Tag_Lower-55.5 {Below Invalid tag} -body {
 test Tag_Lower-55.6 {To bottom} -body {
 	.table tag lower flash
 	.table tag names
-    } -result {active focus sel title flash}
+    } -result {active focus sel inactivesel title flash}
 
 test Tag_Lower-55.7 {Below tag} -body {
 	.table tag lower flash focus
 	.table tag names
-    } -result {active focus flash sel title}
+    } -result {active focus flash sel inactivesel title}
 
 test Tag_Lower-55.8 {Below self} -body {
 	.table tag lower flash flash
 	.table tag names
-    } -result {active focus flash sel title}
+    } -result {active focus flash sel inactivesel title}
 
 test Tag_Lower-55.9 {Below first} -body {
 	.table tag lower flash active
 	.table tag names
-    } -result {active flash focus sel title}
+    } -result {active flash focus sel inactivesel title}
 
 test Tag_Lower-55.10 {Below last} -body {
 	.table tag lower flash title
 	.table tag names
-    } -result {active focus sel title flash}
+    } -result {active focus sel inactivesel title flash}
 
 test Tag_Lower-55.11 {Beyond last} -body {
 	.table tag lower flash
 	.table tag names
-    } -result {active focus sel title flash}
+    } -result {active focus sel inactivesel title flash}
 
 test Tag_Lower-55.12 {Cleanup} -body {
 	destroy .table
@@ -5388,23 +5416,23 @@ test Tag_Names-56.2 {Too many args} -body {
 
 test Tag_Names-56.3 {Default} -body {
 	.table tag names
-    } -result {flash active focus sel title}
+    } -result {flash active focus sel inactivesel title}
 
 test Tag_Names-56.4 {Add tag} -setup {
 	.table tag cell testTag 1,1
     } -body {
 	.table tag names
-    } -result {flash active focus sel title testTag}
+    } -result {flash active focus sel inactivesel title testTag}
 
 test Tag_Names-56.5 {Delete tag} -setup {
 	.table tag delete testTag
     } -body {
 	.table tag names
-    } -result {flash active focus sel title}
+    } -result {flash active focus sel inactivesel title}
 
 test Tag_Names-56.6 {Pattern All} -body {
 	.table tag names *
-    } -result {flash active focus sel title}
+    } -result {flash active focus sel inactivesel title}
 
 test Tag_Names-56.7 {Pattern} -body {
 	.table tag names f*
@@ -5449,29 +5477,33 @@ test Tag_Priority-57.8 {Sel} -body {
 	.table tag priority sel
     } -result {3}
 
-test Tag_Priority-57.9 {Title} -body {
-	.table tag priority title
+test Tag_Priority-57.9 {Inactive Sel} -body {
+	.table tag priority inactivesel
     } -result {4}
 
-test Tag_Priority-57.10 {Custom} -setup {
+test Tag_Priority-57.10 {Title} -body {
+	.table tag priority title
+    } -result {5}
+
+test Tag_Priority-57.11 {Custom} -setup {
 	.table tag configure testTag
     } -body {
 	.table tag priority testTag
-    } -result {5}
+    } -result {6}
 
-test Tag_Priority-57.11 {Raise} -setup {
+test Tag_Priority-57.12 {Raise} -setup {
 	.table tag raise testTag
     } -body {
 	.table tag priority testTag
     } -result {0}
 
-test Tag_Priority-57.12 {Lower} -setup {
+test Tag_Priority-57.13 {Lower} -setup {
 	.table tag lower testTag
     } -body {
 	.table tag priority testTag
-    } -result {5}
+    } -result {6}
 
-test Tag_Priority-57.13 {Cleanup} -body {
+test Tag_Priority-57.14 {Cleanup} -body {
 	destroy .table
     }
 
@@ -5501,32 +5533,32 @@ test Tag_Raise-58.5 {Above Invalid tag} -body {
 test Tag_Raise-58.6 {To top} -body {
 	.table tag raise title
 	.table tag names
-    } -result {title flash active focus sel}
+    } -result {title flash active focus sel inactivesel}
 
 test Tag_Raise-58.7 {Above tag} -body {
 	.table tag raise title active
 	.table tag names
-    } -result {flash title active focus sel}
+    } -result {flash title active focus sel inactivesel}
 
 test Tag_Raise-58.8 {Above self} -body {
 	.table tag raise title title
 	.table tag names
-    } -result {flash title active focus sel}
+    } -result {flash title active focus sel inactivesel}
 
 test Tag_Raise-58.9 {Above last} -body {
 	.table tag raise title sel
 	.table tag names
-    } -result {flash active focus title sel}
+    } -result {flash active focus title sel inactivesel}
 
 test Tag_Raise-58.10 {Above first} -body {
 	.table tag raise title flash
 	.table tag names
-    } -result {title flash active focus sel}
+    } -result {title flash active focus sel inactivesel}
 
 test Tag_Raise-58.11 {Beyond first} -body {
 	.table tag raise title
 	.table tag names
-    } -result {title flash active focus sel}
+    } -result {title flash active focus sel inactivesel}
 
 test Tag_Raise-58.12 {Cleanup} -body {
 	destroy .table

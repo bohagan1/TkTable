@@ -210,6 +210,10 @@ Tk_ConfigSpec tableSpecs[] = {
 	offsetof(Table, highlightColorPtr), 0},
     {TK_CONFIG_PIXELS, "-highlightthickness", "highlightThickness", "HighlightThickness",
 	HIGHLIGHT_WIDTH, offsetof(Table, highlightWidth), 0},
+    {TK_CONFIG_COLOR, "-inactiveselectbackground", "inactiveSelectBackground", "Foreground",
+	INACTIVE_SELECT_BG, offsetof(Table, inactiveSelColorPtr), 0},
+    {TK_CONFIG_COLOR, "-inactiveselectforeground", "inactiveSelectForeground", "Background",
+	INACTIVE_SELECT_FG, offsetof(Table, inactiveSelFgColorPtr), TK_CONFIG_NULL_OK},
     {TK_CONFIG_BORDER, "-insertbackground", "insertBackground", "Foreground", INSERT_BG,
 	offsetof(Table, insertBg), 0},
     {TK_CONFIG_PIXELS, "-insertborderwidth", "insertBorderWidth", "BorderWidth", INSERT_BD,
@@ -1341,11 +1345,16 @@ static void TableEventProc(
 	case FocusIn:
 	case FocusOut:
 	    if (eventPtr->xfocus.detail != NotifyInferior) {
+		Tcl_HashSearch search;
 		tablePtr->flags |= REDRAW_BORDER;
 		if (eventPtr->type == FocusOut) {
 		    tablePtr->flags &= ~HAS_FOCUS;
 		} else {
 		    tablePtr->flags |= HAS_FOCUS;
+		}
+		if (Tcl_FirstHashEntry(tablePtr->selCells, &search) != NULL) {
+		    tablePtr->flags |= REDRAW_PENDING;
+		    Tcl_DoWhenIdle(TableDisplay, (ClientData) tablePtr);
 		}
 		TableRedrawHighlight(tablePtr);
 		/* cancel the timer */
@@ -1765,7 +1774,8 @@ static void TableDisplay(ClientData clientdata) {
     GC tagGc = NULL, topGc, bottomGc, selTextGc = NULL;
     char *string = NULL;
     char buf[INDEX_BUFSIZE];
-    TableTag *tagPtr = NULL, *titlePtr, *selPtr, *activePtr, *focusPtr, *flashPtr, *rowPtr, *colPtr, *selTextPtr = NULL;
+    TableTag *tagPtr = NULL, *titlePtr, *inactiveSelPtr, *selPtr, *activePtr;
+    TableTag *focusPtr, *flashPtr, *rowPtr, *colPtr, *selTextPtr = NULL;
     Tcl_HashEntry *entryPtr;
     XPoint rect[3];
     Tcl_HashTable *colTagsCache = NULL;
@@ -1821,6 +1831,8 @@ static void TableDisplay(ClientData clientdata) {
     /* set up the permanent tag styles */
     entryPtr	= Tcl_FindHashEntry(tablePtr->tagTable, "title");
     titlePtr	= (TableTag *) Tcl_GetHashValue(entryPtr);
+    entryPtr	= Tcl_FindHashEntry(tablePtr->tagTable, "inactivesel");
+    inactiveSelPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
     entryPtr	= Tcl_FindHashEntry(tablePtr->tagTable, "sel");
     selPtr	= (TableTag *) Tcl_GetHashValue(entryPtr);
     entryPtr	= Tcl_FindHashEntry(tablePtr->tagTable, "active");
@@ -2037,7 +2049,7 @@ static void TableDisplay(ClientData clientdata) {
 	    if (entryPtr != NULL) {
 		TableMergeTag(tablePtr, tagPtr, (TableTag *) Tcl_GetHashValue(entryPtr));
 	    }
-	    /* is this cell active? */
+	    /* Is this cell active? */
 	    if ((tablePtr->flags & HAS_ACTIVE) && (tablePtr->state != STATE_DISABLED) &&
 		    row == tablePtr->activeRow && col == tablePtr->activeCol) {
 		if (tagPtr->state == STATE_DISABLED) {
@@ -2051,24 +2063,34 @@ static void TableDisplay(ClientData clientdata) {
 		    row == tablePtr->focusRow && col == tablePtr->focusCol) {
 		TableMergeTag(tablePtr, tagPtr, focusPtr);
 	    }
-	    /* is this cell selected? */
-	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL && selPtr != NULL) {
+	    /* Is this cell selected with or without focus? */
+	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL) {
 		if (tablePtr->invertSelected && !activeCell) {
 		    shouldInvert = 1;
-		} else {
+		} else if ((tablePtr->flags & HAS_FOCUS) && selPtr) {
 		    TableMergeTag(tablePtr, tagPtr, selPtr);
+		} else if (!(tablePtr->flags & HAS_FOCUS) && inactiveSelPtr) {
+		    TableMergeTag(tablePtr, tagPtr, inactiveSelPtr);
 		}
 	    }
 
 	    /* If active cell, create selected text tag */
-	    if (activeCell && selPtr != NULL) {
+	    if (activeCell) {
 		TableResetTag(tablePtr, selTextPtr);
 		TableMergeTag(tablePtr, selTextPtr, activePtr);
-		TableMergeTag(tablePtr, selTextPtr, selPtr);
-		selTextPtr->bg = Tk_Get3DBorder(tablePtr->interp, tkwin,
-		    Tk_NameOfColor(tablePtr->selColorPtr));
-		selTextPtr->fg = Tk_Get3DBorder(tablePtr->interp, tkwin,
-		    Tk_NameOfColor(tablePtr->selFgColorPtr));
+		if ((tablePtr->flags & HAS_FOCUS) && selPtr) {
+		    TableMergeTag(tablePtr, selTextPtr, selPtr);
+		    selTextPtr->bg = Tk_Get3DBorder(tablePtr->interp, tkwin,
+			Tk_NameOfColor(tablePtr->selColorPtr));
+		    selTextPtr->fg = Tk_Get3DBorder(tablePtr->interp, tkwin,
+			Tk_NameOfColor(tablePtr->selFgColorPtr));
+		} else if (!(tablePtr->flags & HAS_FOCUS) && inactiveSelPtr) {
+		    TableMergeTag(tablePtr, selTextPtr, inactiveSelPtr);
+		    selTextPtr->bg = Tk_Get3DBorder(tablePtr->interp, tkwin,
+			Tk_NameOfColor(tablePtr->inactiveSelColorPtr));
+		    selTextPtr->fg = Tk_Get3DBorder(tablePtr->interp, tkwin,
+			Tk_NameOfColor(tablePtr->inactiveSelFgColorPtr));
+		}
 		selTextPtr->tkfont = tagPtr->tkfont;
 	    }
 
@@ -2280,7 +2302,8 @@ static void TableDisplay(ClientData clientdata) {
 			showSelection = 1;
 		    } else {
 #endif
-			showSelection = (tablePtr->flags & HAS_FOCUS) ? 1 : 0;
+			/*showSelection = (tablePtr->flags & HAS_FOCUS) ? 1 : 0;*/
+			showSelection = 1;
 #if TCL_MAJOR_VERSION > 8
 		    }
 #endif

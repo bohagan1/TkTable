@@ -534,7 +534,7 @@ done:
  *	Creates the static table tags in priority order.
  *
  * Results:
- *	active, flash, focus, sel, and title are created as tags.
+ *	active, flash, focus, sel, inactivesel, and title are created as tags.
  *
  * Side effects:
  *	Creates tags.
@@ -581,6 +581,16 @@ int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
     objv[4] = Tcl_NewStringObj("-fg",-1);
     objv[5] = Tcl_NewStringObj(Tk_NameOfColor(tablePtr->selFgColorPtr),-1);
     if (DoTableInitTags(interp, tablePtr, 6, objv, "sel") != TCL_OK) {
+	return TCL_ERROR;
+    }
+
+    objv[0] = Tcl_NewStringObj("-bd",-1);
+    objv[1] = Tcl_NewIntObj(tablePtr->selBorderWidth);
+    objv[2] = Tcl_NewStringObj("-bg",-1);
+    objv[3] = Tcl_NewStringObj(Tk_NameOfColor(tablePtr->inactiveSelColorPtr),-1);
+    objv[4] = Tcl_NewStringObj("-fg",-1);
+    objv[5] = Tcl_NewStringObj(Tk_NameOfColor(tablePtr->inactiveSelFgColorPtr),-1);
+    if (DoTableInitTags(interp, tablePtr, 6, objv, "inactivesel") != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -789,8 +799,8 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    resultPtr = TableMakeIndexObj(row, col);
 
 		} else if ((tablePtr->flashMode && STREQ(tagname, "flash"))
-			|| STREQ(tagname, "sel")) {
-		    hashTblPtr = (*tagname == 's') ? 
+			|| STREQ(tagname, "sel") || STREQ(tagname, "inactivesel")) {
+		    hashTblPtr = (*tagname != 'f') ? 
 			tablePtr->selCells : tablePtr->flashCells;
 		    resultPtr = Tcl_NewListObj(0, NULL);
 		    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
@@ -924,15 +934,15 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 			    tablePtr->focusCol+tablePtr->colOffset);
 
 		} else if ((tablePtr->flashMode && STREQ(tagname, "flash"))
-			|| STREQ(tagname, "sel")) {
+			|| STREQ(tagname, "sel") || STREQ(tagname, "inactivesel")) {
 		    Tcl_HashTable *cacheTblPtr;
 
 		    cacheTblPtr = (Tcl_HashTable *)
 			ckalloc(sizeof(Tcl_HashTable));
 		    Tcl_InitHashTable(cacheTblPtr, TCL_ONE_WORD_KEYS);
-
 		    resultPtr = Tcl_NewListObj(0, NULL);
-		    hashTblPtr = (*tagname == 's') ? tablePtr->selCells : tablePtr->flashCells;
+
+		    hashTblPtr = (*tagname != 'f') ? tablePtr->selCells : tablePtr->flashCells;
 		    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
 			 scanPtr != NULL;
 			 scanPtr = Tcl_NextHashEntry(&search)) {
@@ -1103,6 +1113,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 
 		/* cannot delete special tags */
 		if (STREQ(tagname, "title") ||
+			STREQ(tagname, "inactivesel") ||
 			STREQ(tagname, "sel") ||
 			STREQ(tagname, "focus") ||
 			STREQ(tagname, "flash") ||
@@ -1207,6 +1218,9 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL) {
 		Tcl_ListObjAppendElement(interp, resultPtr, Tcl_NewStringObj("sel",-1));
 	    }
+	    if (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL) {
+		Tcl_ListObjAppendElement(interp, resultPtr, Tcl_NewStringObj("inactivesel",-1));
+	    }
 	    if (row < tablePtr->titleRows+tablePtr->rowOffset || col < tablePtr->titleCols+tablePtr->colOffset) {
 		Tcl_ListObjAppendElement(interp, resultPtr, Tcl_NewStringObj("title",-1));
 	    }
@@ -1269,6 +1283,8 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		result = (tablePtr->focusRow+tablePtr->rowOffset==row &&
 			tablePtr->focusCol+tablePtr->colOffset==col);
 	    } else if (STREQ(tagname, "sel")) {
+		result = (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL);
+	    } else if (STREQ(tagname, "inactivesel")) {
 		result = (Tcl_FindHashEntry(tablePtr->selCells, buf) != NULL);
 	    } else if (STREQ(tagname, "title")) {
 		result = (row < tablePtr->titleRows+tablePtr->rowOffset ||

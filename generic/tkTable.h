@@ -113,6 +113,8 @@
 #	define HIGHLIGHT	"SystemWindowFrame"
 #	define HIGHLIGHT_BG	NORMAL_BG
 #	define HIGHLIGHT_WIDTH	"1"
+#	define INACTIVE_SELECT_BG "#d9d9d9"
+#	define INACTIVE_SELECT_FG NORMAL_FG
 #	define INSERT_BD	"0"
 #	define INSERT_BG	NORMAL_FG
 #	define INSERT_WIDTH	"2"
@@ -130,6 +132,8 @@
 #	define HIGHLIGHT	NORMAL_FG
 #	define HIGHLIGHT_BG	NORMAL_BG
 #	define HIGHLIGHT_WIDTH	"1"
+#	define INACTIVE_SELECT_BG "systemUnemphasizedSelectedTextBackgroundColor"
+#	define INACTIVE_SELECT_FG "systemSelectedControlTextColor"
 #	define INSERT_BD	"0"
 #	define INSERT_BG	NORMAL_FG
 #	define INSERT_WIDTH	"2"
@@ -147,6 +151,8 @@
 #	define HIGHLIGHT	NORMAL_FG
 #	define HIGHLIGHT_BG	NORMAL_BG
 #	define HIGHLIGHT_WIDTH	"1"
+#	define INACTIVE_SELECT_BG "gray50"
+#	define INACTIVE_SELECT_FG NORMAL_FG
 #	define INSERT_BD	"0"
 #	define INSERT_BG	NORMAL_FG
 #	define INSERT_WIDTH	"2"
@@ -392,6 +398,10 @@ typedef struct {
 				 * characters. */
     int selBorderWidth;		/* Width of border around selection. */
     XColor *selFgColorPtr;	/* Foreground color for selected text. */
+    XColor *inactiveSelColorPtr; /* Border and background color for selected
+				 * characters when focus is lost. */
+    XColor *inactiveSelFgColorPtr; /* Foreground color for selected text when
+				 * focus is lost. */
 
     /*
      * Cached Information

@@ -240,6 +240,22 @@ If zero or less, then the desired height for the window is made just
 large enough to hold all the rows in the table.  The height can be
 further limited by [option -maxheight].
 
+[tkoption_def -inactiveselectbackground inactiveSelectBackground Foreground]
+Specifies the background color to use for the selection when the window does
+not have the input focus. The option's value may be an empty string or have
+any of the forms accepted by [cmd Tk_GetColor]. If empty then the value of the
+[option -selectbackground] widget configuration option is used when the
+window does not have the focus.
+
+[tkoption_def -inactiveselectforeground inactiveSelectForeground Background]
+Specifies the foreground color to use for the selection when the window does
+not have the input focus. The option's value may be an empty string or have
+any of the forms accepted by [cmd Tk_GetColor]. This option is only relevant
+if the value of the [option -inactiveselectbackground] option is non-empty, in
+which case, if the value of this option is an empty string then the value of
+the [option -selectforeground] widget configuration option is used when the
+window does not have the focus.
+
 [tkoption_def -invertselected invertSelected InvertSelected]
 Specifies whether the foreground and background of an item should simply
 have their values swapped instead of merging the [const sel] tag options
@@ -555,7 +571,11 @@ This tag is associated with the [const active] cell.
 This tag is associated with the [const focus] cell.
 
 [opt_def sel]
-This tag is associated with all selected cells.
+This tag is associated with all selected cells when the widget has the focus.
+
+[opt_def inactivesel]
+This tag is associated with all selected cells when the widget does not have
+the focus.
 
 [opt_def title]
 This tag is associated with all title row and column cells.

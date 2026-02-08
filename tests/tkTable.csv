@@ -149,7 +149,7 @@ command,"proc get_data {w cdelim rdelim quote} {
 ,,,,,,,,,,
 command,# Configure,,,,,,,,,
 Configure,Create,,,setup .table,,,.table,,,
-Configure,Get All,,,llength [.table configure],,,76,,,
+Configure,Get All,,,llength [.table configure],,,78,,,
 Configure,Invalid argc,,,.table configure -bg red -fg,,,"value for ""-fg"" missing",,,1
 Configure,Invalid arg,,,.table configure -bogus,,,"unknown option ""-bogus""",,,1
 Configure,Get,,,.table configure -browsecommand,,,-browsecommand browseCommand BrowseCommand {} {},,,
@@ -208,7 +208,9 @@ Options,Foreground,,,cfg_test .table -foreground * #110022 #110022,,,2,,,
 Options,Height,,,cfg_test .table -height 0 3 3,,,2,,,
 Options,Highlight Background,,,cfg_test .table -highlightbackground * #112233 #112233,,,2,,,
 Options,Highlight Color,,,cfg_test .table -highlightcolor * #123456 #123456,,,2,,,
-Options,Hughlight Thickness,,,cfg_test .table -highlightthickness * 6 6,,,2,,,
+Options,Highlight Thickness,,,cfg_test .table -highlightthickness * 6 6,,,2,,,
+Options,Inactive Selection Background,,,cfg_test .table -inactiveselectbackground * red red,,,2,,,
+Options,Inactive Selection Foreground,,,cfg_test .table -inactiveselectforeground * blue blue,,,2,,,
 Options,Insert Background,,,cfg_test .table -insertbackground * #110022 #110022,,,2,,,
 Options,Insert Borderwidth,,,cfg_test .table -insertborderwidth * 1.3 1,,,2,,,
 Options,Insert Off Time,,,cfg_test .table -insertofftime 300 100 100,,,2,,,
@@ -282,7 +284,9 @@ Options Invalid,Foreground,,,.table configure -foreground bogus,,,"unknown color
 Options Invalid,Height,,,.table configure -height 20p,,,"expected integer but got ""20p""",,,1
 Options Invalid,Highlight Background,,,.table configure -highlightbackground ugly,,,"unknown color name ""ugly""",,,1
 Options Invalid,Highlight Color,,,.table configure -highlightcolor bogus,,,"unknown color name ""bogus""",,,1
-Options Invalid,Hughlight Thickness,,,.table configure -highlightthickness bogus,,glob,"*screen distance* ""bogus""",,,1
+Options Invalid,Highlight Thickness,,,.table configure -highlightthickness bogus,,glob,"*screen distance* ""bogus""",,,1
+Options Invalid,Inactive Selection Background,,,.table configure -inactiveselectbackground bogus,,,"unknown color name ""bogus""",,,1
+Options Invalid,Inactive Selection Foreground,,,.table configure -inactiveselectforeground bogus,,,"unknown color name ""bogus""",,,1
 Options Invalid,Insert Background,,,.table configure -insertbackground bogus,,,"unknown color name ""bogus""",,,1
 Options Invalid,Insert Borderwidth,,,.table configure -insertborderwidth 2.6x,,glob,"*screen distance* ""2.6x""",,,1
 Options Invalid,Insert Off Time,,,.table configure -insertofftime 3.2,,,"expected integer but got ""3.2""",,,1
@@ -1131,11 +1135,12 @@ Tag Get,Too many args,,,.table tag get 1 2,,,"wrong # args: should be "".table t
 Tag Get,Invalid index,,,.table tag get bogus,,,"bad table index ""bogus"": must be active, anchor, end, focus, origin, topleft, bottomright, @x,y, or <row>,<col>",,,1
 Tag Get,Focus tag,,".table focus 1,1",".table tag get 1,1",,,focus,,,
 Tag Get,Active tag,,".table activate 1,1",".table tag get 1,1",,,active focus,,,
-Tag Get,Sel tag,,".table selection set 1,1",".table tag get 1,1",,,active focus sel,,,
-Tag Get,Title tag,,.table configure -titlecols 2 -titlerows 2,".table tag get 1,1",,,active focus sel title,,,
-Tag Get,Cell tag,,".table tag configure testTag;.table tag cell testTag 1,1",".table tag get 1,1",,,active focus sel title testTag,,,
-Tag Get,Column tag,,.table tag col colTag 1,".table tag get 1,1",,,active focus sel title testTag colTag,,,
-Tag Get,Row tag,,.table tag row rowTag 1,".table tag get 1,1",,,active focus sel title testTag rowTag colTag,,,
+Tag Get,Sel tag,,".table selection set 1,1",".table tag get 1,1",,,active focus sel inactivesel,,,
+Tag Get,Inactive Sel tag,,".table selection set 1,1",".table tag get 1,1",,,active focus sel inactivesel,,,
+Tag Get,Title tag,,.table configure -titlecols 2 -titlerows 2,".table tag get 1,1",,,active focus sel inactivesel title,,,
+Tag Get,Cell tag,,".table tag configure testTag;.table tag cell testTag 1,1",".table tag get 1,1",,,active focus sel inactivesel title testTag,,,
+Tag Get,Column tag,,.table tag col colTag 1,".table tag get 1,1",,,active focus sel inactivesel title testTag colTag,,,
+Tag Get,Row tag,,.table tag row rowTag 1,".table tag get 1,1",,,active focus sel inactivesel title testTag rowTag colTag,,,
 Tag Get,No tags,,,".table tag get 5,5",,,,,,
 Tag Get,Cleanup,,,destroy .table,,,,,,
 ,,,,,,,,,,
@@ -1149,6 +1154,7 @@ Tag Includes,Active tag,,".table activate 1,1",".table tag includes active 1,1",
 Tag Includes,Flash tag,,,".table tag includes flash 1,1",,,0,,,
 Tag Includes,Focus tag,,".table focus 1,1",".table tag includes focus 1,1",,,1,,,
 Tag Includes,Sel tag,,".table selection set 1,1",".table tag includes sel 1,1",,,1,,,
+Tag Includes,Inactive Sel tag,,".table selection set 1,1",".table tag includes sel 1,1",,,1,,,
 Tag Includes,Title tag,,.table configure -titlecols 2 -titlerows 2,".table tag includes title 1,1",,,1,,,
 Tag Includes,Cell tag,,".table tag cell testTag 1,1",".table tag includes testTag 1,1",,,1,,,
 Tag Includes,Column tag,,.table tag col colTag 1,".table tag includes colTag 1,1",,,1,,,
@@ -1162,21 +1168,21 @@ Tag Lower,Too few args,,,.table tag lower,,,"wrong # args: should be "".table ta
 Tag Lower,Too many args,,,.table tag lower 1 2 3,,,"wrong # args: should be "".table tag lower tagName ?belowThis?""",,,1
 Tag Lower,Invalid tagName,,,.table tag lower invalid active,,,"invalid tag name ""invalid""",,,1
 Tag Lower,Below Invalid tag,,,.table tag lower flash invalid,,,"invalid tag name ""invalid""",,,1
-Tag Lower,To bottom,,,.table tag lower flash;.table tag names,,,active focus sel title flash,,,
-Tag Lower,Below tag,,,.table tag lower flash focus;.table tag names,,,active focus flash sel title,,,
-Tag Lower,Below self,,,.table tag lower flash flash;.table tag names,,,active focus flash sel title,,,
-Tag Lower,Below first,,,.table tag lower flash active;.table tag names,,,active flash focus sel title,,,
-Tag Lower,Below last,,,.table tag lower flash title;.table tag names,,,active focus sel title flash,,,
-Tag Lower,Beyond last,,,.table tag lower flash;.table tag names,,,active focus sel title flash,,,
+Tag Lower,To bottom,,,.table tag lower flash;.table tag names,,,active focus sel inactivesel title flash,,,
+Tag Lower,Below tag,,,.table tag lower flash focus;.table tag names,,,active focus flash sel inactivesel title,,,
+Tag Lower,Below self,,,.table tag lower flash flash;.table tag names,,,active focus flash sel inactivesel title,,,
+Tag Lower,Below first,,,.table tag lower flash active;.table tag names,,,active flash focus sel inactivesel title,,,
+Tag Lower,Below last,,,.table tag lower flash title;.table tag names,,,active focus sel inactivesel title flash,,,
+Tag Lower,Beyond last,,,.table tag lower flash;.table tag names,,,active focus sel inactivesel title flash,,,
 Tag Lower,Cleanup,,,destroy .table,,,,,,
 ,,,,,,,,,,
 Tag,# Tag names,,,,,,,,,
 Tag Names,Create,,,setup .table,,,.table,,,
 Tag Names,Too many args,,,.table tag names 1 2,,,"wrong # args: should be "".table tag names ?pattern?""",,,1
-Tag Names,Default,,,.table tag names,,,flash active focus sel title,,,
-Tag Names,Add tag,,".table tag cell testTag 1,1",.table tag names,,,flash active focus sel title testTag,,,
-Tag Names,Delete tag,,.table tag delete testTag,.table tag names,,,flash active focus sel title,,,
-Tag Names,Pattern All,,,.table tag names *,,,flash active focus sel title,,,
+Tag Names,Default,,,.table tag names,,,flash active focus sel inactivesel title,,,
+Tag Names,Add tag,,".table tag cell testTag 1,1",.table tag names,,,flash active focus sel inactivesel title testTag,,,
+Tag Names,Delete tag,,.table tag delete testTag,.table tag names,,,flash active focus sel inactivesel title,,,
+Tag Names,Pattern All,,,.table tag names *,,,flash active focus sel inactivesel title,,,
 Tag Names,Pattern,,,.table tag names f*,,,flash focus,,,
 Tag Names,Cleanup,,,destroy .table,,,,,,
 ,,,,,,,,,,
@@ -1189,10 +1195,11 @@ Tag Priority,Flash,,,.table tag priority flash,,,0,,,
 Tag Priority,Active,,,.table tag priority active,,,1,,,
 Tag Priority,Focus,,,.table tag priority focus,,,2,,,
 Tag Priority,Sel,,,.table tag priority sel,,,3,,,
-Tag Priority,Title,,,.table tag priority title,,,4,,,
-Tag Priority,Custom,,.table tag configure testTag,.table tag priority testTag,,,5,,,
+Tag Priority,Inactive Sel,,,.table tag priority inactivesel,,,4,,,
+Tag Priority,Title,,,.table tag priority title,,,5,,,
+Tag Priority,Custom,,.table tag configure testTag,.table tag priority testTag,,,6,,,
 Tag Priority,Raise,,.table tag raise testTag,.table tag priority testTag,,,0,,,
-Tag Priority,Lower,,.table tag lower testTag,.table tag priority testTag,,,5,,,
+Tag Priority,Lower,,.table tag lower testTag,.table tag priority testTag,,,6,,,
 Tag Priority,Cleanup,,,destroy .table,,,,,,
 ,,,,,,,,,,
 command,# Tag raise,,,,,,,,,
@@ -1201,12 +1208,12 @@ Tag Raise,Too few args,,,.table tag raise,,,"wrong # args: should be "".table ta
 Tag Raise,Too many args,,,.table tag raise 1 2 3,,,"wrong # args: should be "".table tag raise tagName ?aboveThis?""",,,1
 Tag Raise,Invalid tagName,,,.table tag raise invalid active,,,"invalid tag name ""invalid""",,,1
 Tag Raise,Above Invalid tag,,,.table tag raise flash invalid,,,"invalid tag name ""invalid""",,,1
-Tag Raise,To top,,,.table tag raise title;.table tag names,,,title flash active focus sel,,,
-Tag Raise,Above tag,,,.table tag raise title active;.table tag names,,,flash title active focus sel,,,
-Tag Raise,Above self,,,.table tag raise title title;.table tag names,,,flash title active focus sel,,,
-Tag Raise,Above last,,,.table tag raise title sel;.table tag names,,,flash active focus title sel,,,
-Tag Raise,Above first,,,.table tag raise title flash;.table tag names,,,title flash active focus sel,,,
-Tag Raise,Beyond first,,,.table tag raise title;.table tag names,,,title flash active focus sel,,,
+Tag Raise,To top,,,.table tag raise title;.table tag names,,,title flash active focus sel inactivesel,,,
+Tag Raise,Above tag,,,.table tag raise title active;.table tag names,,,flash title active focus sel inactivesel,,,
+Tag Raise,Above self,,,.table tag raise title title;.table tag names,,,flash title active focus sel inactivesel,,,
+Tag Raise,Above last,,,.table tag raise title sel;.table tag names,,,flash active focus title sel inactivesel,,,
+Tag Raise,Above first,,,.table tag raise title flash;.table tag names,,,title flash active focus sel inactivesel,,,
+Tag Raise,Beyond first,,,.table tag raise title;.table tag names,,,title flash active focus sel inactivesel,,,
 Tag Raise,Cleanup,,,destroy .table,,,,,,
 ,,,,,,,,,,
 command,# Tag row,,,,,,,,,

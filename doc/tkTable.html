@@ -413,6 +413,26 @@ Database Class:	<b class="optdbclass">Height</b><br>
 If zero or less, then the desired height for the window is made just
 large enough to hold all the rows in the table.  The height can be
 further limited by <b class="option">-maxheight</b>.</p></dd>
+<dt>Command-Line Switch:	<b class="option">-inactiveselectbackground</b><br>
+Database Name:	<b class="optdbname">inactiveSelectBackground</b><br>
+Database Class:	<b class="optdbclass">Foreground</b><br>
+</dt>
+<dd><p>Specifies the background color to use for the selection when the window does
+not have the input focus. The option's value may be an empty string or have
+any of the forms accepted by <b class="cmd">Tk_GetColor</b>. If empty then the value of the
+<b class="option">-selectbackground</b> widget configuration option is used when the
+window does not have the focus.</p></dd>
+<dt>Command-Line Switch:	<b class="option">-inactiveselectforeground</b><br>
+Database Name:	<b class="optdbname">inactiveSelectForeground</b><br>
+Database Class:	<b class="optdbclass">Background</b><br>
+</dt>
+<dd><p>Specifies the foreground color to use for the selection when the window does
+not have the input focus. The option's value may be an empty string or have
+any of the forms accepted by <b class="cmd">Tk_GetColor</b>. This option is only relevant
+if the value of the <b class="option">-inactiveselectbackground</b> option is non-empty, in
+which case, if the value of this option is an empty string then the value of
+the <b class="option">-selectforeground</b> widget configuration option is used when the
+window does not have the focus.</p></dd>
 <dt>Command-Line Switch:	<b class="option">-invertselected</b><br>
 Database Name:	<b class="optdbname">invertSelected</b><br>
 Database Class:	<b class="optdbclass">InvertSelected</b><br>
@@ -765,7 +785,10 @@ They are in default priority order:</p>
 <dt><b class="option">focus</b></dt>
 <dd><p>This tag is associated with the <b class="const">focus</b> cell.</p></dd>
 <dt><b class="option">sel</b></dt>
-<dd><p>This tag is associated with all selected cells.</p></dd>
+<dd><p>This tag is associated with all selected cells when the widget has the focus.</p></dd>
+<dt><b class="option">inactivesel</b></dt>
+<dd><p>This tag is associated with all selected cells when the widget does not have
+the focus.</p></dd>
 <dt><b class="option">title</b></dt>
 <dd><p>This tag is associated with all title row and column cells.
 This tag has <b class="option">-state</b> <b class="const">disabled</b> by default.</p></dd>
