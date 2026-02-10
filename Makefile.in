@@ -215,26 +215,27 @@ libraries:
 #========================================================================
 
 DTPLITE=`@CYGPATH@ @DTPLITE@`
+DOC_NAME=tkTable
 
 doc: make-docs-n make-docs-html
 
-make-docs-n: doc/tkTable.man
+make-docs-n: doc/$(DOC_NAME).man
 	@echo "make nroff documentation"
 	@if [ -n "$(DTPLITE)" -a -e "$(DTPLITE)" ]; then \
-	    $(TCLSH) $(DTPLITE) -o doc/tkTable.n nroff doc/tkTable.man; \
+	    $(TCLSH) $(DTPLITE) -o doc/$(DOC_NAME).n nroff doc/$(DOC_NAME).man; \
 	else \
 	    echo "Can't find dtplite. Please install Tcllib."; \
 	fi
 
-make-docs-html: doc/tkTable.man
+make-docs-html: doc/$(DOC_NAME).man
 	@echo "make HTML documentation"
 	@if [ -n "$(DTPLITE)" -a -e "$(DTPLITE)" ]; then \
-	    $(TCLSH) $(DTPLITE) -o doc/tkTable.html html doc/tkTable.man; \
+	    $(TCLSH) $(DTPLITE) -o doc/$(DOC_NAME).html html doc/$(DOC_NAME).man; \
 	else \
 	    echo "Can't find dtplite. Please install Tcllib."; \
 	fi
 
-make-docs: doc/tkTable.man
+make-docs: doc/$(DOC_NAME).man
 	@echo "make documentation"
 	@if [ -n "$(DTPLITE)" -a -e "$(DTPLITE)" ]; then \
 	    $(TCLSH) $(DTPLITE) -o doc nroff doc; \
