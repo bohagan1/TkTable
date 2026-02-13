@@ -736,7 +736,7 @@ int Table_ImportCmd(
 #endif
 
     /* Allocate temp storage for selection conversion data */
-    dPtr = (TableGetSelection *) ckalloc(sizeof(TableGetSelection));
+    dPtr = (TableGetSelection *) Tcl_Alloc(sizeof(TableGetSelection));
     if (dPtr == NULL) {
 	return TCL_ERROR;
     }
@@ -749,7 +749,7 @@ int Table_ImportCmd(
     dPtr->quoted = 0;
     dPtr->length = 0;
     dPtr->pending_quote = 0;
-    dPtr->buffer = (char *) ckalloc(MAX_CELL_SIZE + 8);
+    dPtr->buffer = (char *) Tcl_Alloc(MAX_CELL_SIZE + 8);
 
     if (dPtr->listPtr == NULL || dPtr->resultPtr == NULL || dPtr->buffer == NULL) {
 	Tcl_AppendResult(interp, "Memory allocation error", (char *)NULL);
@@ -802,9 +802,9 @@ cleanup:
 	}
     }
     if (dPtr->buffer != NULL) {
-	ckfree(dPtr->buffer);
+	Tcl_Free(dPtr->buffer);
     }
-    ckfree(dPtr);
+    Tcl_Free((char *)dPtr);
     return result;
 }
 

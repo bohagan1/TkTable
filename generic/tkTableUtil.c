@@ -38,7 +38,7 @@ void Table_ClearHashTable(Tcl_HashTable *hashTblPtr) {
     for (entryPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
 	    entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
 	value = (char *) Tcl_GetHashValue(entryPtr);
-	if (value != NULL) ckfree(value);
+	if (value != NULL) Tcl_Free(value);
     }
 
     Tcl_DeleteHashTable(hashTblPtr);
@@ -127,10 +127,10 @@ int TableOptionBdSet(
 		    bdPtr[i] = MAX(0, bd[i]);
 		}
 		if (*borderStr) {
-		    ckfree(*borderStr);
+		    Tcl_Free(*borderStr);
 		}
 		if (value) {
-		    *borderStr	= (char *) ckalloc(strlen(value) + 1);
+		    *borderStr	= (char *) Tcl_Alloc((Tcl_Size)strlen(value) + 1);
 		    strcpy(*borderStr, value);
 		} else {
 		    *borderStr	= NULL;
@@ -138,7 +138,7 @@ int TableOptionBdSet(
 		*bordersPtr	= (int) argc;
 	    }
 	}
-	ckfree ((char *) argv);
+	Tcl_Free ((char *) argv);
     }
 
     return result;
@@ -235,13 +235,13 @@ int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int n
 		}
 		tagPtr->borders = (int) argc;
 	    }
-	    ckfree ((char *) argv);
+	    Tcl_Free ((char *) argv);
 	}
     }
 
     if (result != TCL_OK) {
 	if (tagPtr->borderStr) {
-	    ckfree ((char *) tagPtr->borderStr);
+	    Tcl_Free ((char *) tagPtr->borderStr);
 	}
 	if (oldValue != NULL) {
 	    size_t length = strlen(oldValue) + 1;
@@ -254,9 +254,9 @@ int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int n
 	    for (i = 0; i < argc; i++) {
 		Tk_GetPixels(tablePtr->interp, tablePtr->tkwin, argv[i], &(tagPtr->bd[i]));
 	    }
-	    ckfree ((char *) argv);
+	    Tcl_Free ((char *) argv);
 	    tagPtr->borders	= (int) argc;
-	    tagPtr->borderStr	= (char *) ckalloc(length);
+	    tagPtr->borderStr	= (char *) Tcl_Alloc((Tcl_Size)length);
 	    memcpy(tagPtr->borderStr, oldValue, length);
 	} else {
 	    tagPtr->borders	= 0;

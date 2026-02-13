@@ -308,7 +308,7 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
 	return listObjPtr;
     }
 
-    elementArray = (SortElement *) ckalloc(length * sizeof(SortElement));
+    elementArray = (SortElement *) Tcl_Alloc(length * sizeof(SortElement));
     for (i=0; i < length; i++){
 	elementArray[i].objPtr = listObjPtrs[i];
 	elementArray[i].nextPtr = &elementArray[i+1];
@@ -320,7 +320,7 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
     for (; elementPtr != NULL; elementPtr = elementPtr->nextPtr) {
 	Tcl_ListObjAppendElement(NULL, sortedObjPtr, elementPtr->objPtr);
     }
-    ckfree((char*) elementArray);
+    Tcl_Free((char*) elementArray);
     for (i=0; i < length; i++){
 	Tcl_DecrRefCount(listObjPtrs[i]);
     }
@@ -399,7 +399,7 @@ Tcl_Obj * TableGetSortedIndices(Tcl_HashTable *hashTablePtr) {
 
     /* Allocate storage */
     listPtr = Tcl_NewListObj(numEntries, NULL);
-    indexArray = (indexType *)ckalloc((size_t)numEntries * sizeof(indexType));
+    indexArray = (indexType *)Tcl_Alloc((size_t)numEntries * sizeof(indexType));
     if (listPtr == NULL || indexArray == NULL) {
 	return NULL;
     }
@@ -430,7 +430,7 @@ Tcl_Obj * TableGetSortedIndices(Tcl_HashTable *hashTablePtr) {
 	    break;
 	}
     }
-    ckfree((char *) indexArray);
+    Tcl_Free((char *) indexArray);
     return listPtr;
 }
 
@@ -466,7 +466,7 @@ Tcl_Obj * TableGetSortedIndicesFiltered(Tcl_HashTable *hashTablePtr, int has_val
 
     /* Allocate storage */
     listPtr = Tcl_NewListObj(numEntries, NULL);
-    indexArray = (indexType *)ckalloc((size_t)numEntries * sizeof(indexType));
+    indexArray = (indexType *)Tcl_Alloc((size_t)numEntries * sizeof(indexType));
     if (listPtr == NULL || indexArray == NULL) {
 	return NULL;
     }
@@ -502,7 +502,7 @@ Tcl_Obj * TableGetSortedIndicesFiltered(Tcl_HashTable *hashTablePtr, int has_val
 	    break;
 	}
     }
-    ckfree((char *) indexArray);
+    Tcl_Free((char *) indexArray);
     return listPtr;
 }
 

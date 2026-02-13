@@ -512,7 +512,7 @@ char * TableGetCellValue(Table *tablePtr, int r, int c) {
 	 */
 	char *val = NULL;
 	if (result) {
-	    val = (char *)ckalloc(strlen(result)+1);
+	    val = (char *)Tcl_Alloc((Tcl_Size)strlen(result)+1);
 	    strcpy(val, result);
 	}
 	Tcl_SetHashValue(entryPtr, val);
@@ -632,10 +632,10 @@ int TableSetCellValue(Table *tablePtr, int r, int c, char *value) {
 	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
 	if (!new) {
 	    val = (char *) Tcl_GetHashValue(entryPtr);
-	    if (val) ckfree(val);
+	    if (val) Tcl_Free(val);
 	}
 	if (value) {
-	    val = (char *)ckalloc(strlen(value)+1);
+	    val = (char *)Tcl_Alloc((Tcl_Size)strlen(value)+1);
 	    strcpy(val, value);
 	}
 	Tcl_SetHashValue(entryPtr, val);
@@ -711,14 +711,14 @@ int TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf, int
 	     */
 	    if (!new) {
 		val = (char *) Tcl_GetHashValue(entryPtr);
-		if (val) ckfree(val);
+		if (val) Tcl_Free(val);
 	    }
 	    Tcl_SetHashValue(entryPtr, result);
 	} else {
 	    entryPtr = Tcl_FindHashEntry(tablePtr->cache, tobuf);
 	    if (entryPtr) {
 		val = (char *) Tcl_GetHashValue(entryPtr);
-		if (val) ckfree(val);
+		if (val) Tcl_Free(val);
 		Tcl_DeleteHashEntry(entryPtr);
 	    }
 	}
@@ -1089,9 +1089,9 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
     TableMakeArrayIndex(urow, ucol, cell, INDEX_BUFSIZE);
 
     if (tablePtr->spanTbl == NULL) {
-	tablePtr->spanTbl = (Tcl_HashTable *)ckalloc(sizeof(Tcl_HashTable));
+	tablePtr->spanTbl = (Tcl_HashTable *)Tcl_Alloc(sizeof(Tcl_HashTable));
 	Tcl_InitHashTable(tablePtr->spanTbl, TCL_STRING_KEYS);
-	tablePtr->spanAffTbl = (Tcl_HashTable *)ckalloc(sizeof(Tcl_HashTable));
+	tablePtr->spanAffTbl = (Tcl_HashTable *)Tcl_Alloc(sizeof(Tcl_HashTable));
 	Tcl_InitHashTable(tablePtr->spanAffTbl, TCL_STRING_KEYS);
     }
 
@@ -1122,7 +1122,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
     if ((entryPtr = Tcl_FindHashEntry(tablePtr->spanTbl, cell)) != NULL) {
 	/* We have to readjust for what was there first */
 	TableParseArrayIndex(&ors, &ocs, (char *)Tcl_GetHashValue(entryPtr));
-	ckfree((char *) Tcl_GetHashValue(entryPtr));
+	Tcl_Free((char *) Tcl_GetHashValue(entryPtr));
 	Tcl_DeleteHashEntry(entryPtr);
 	for (i = urow; i <= urow+ors; i++) {
 	    for (j = ucol; j <= ucol+ocs; j++) {
@@ -1161,7 +1161,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
     if (rs == 0 && cs == 0) {
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanTbl, cell);
 	if (entryPtr != NULL) {
-	    ckfree((char *) Tcl_GetHashValue(entryPtr));
+	    Tcl_Free((char *) Tcl_GetHashValue(entryPtr));
 	    Tcl_DeleteHashEntry(entryPtr);
 	}
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, cell);
@@ -1172,9 +1172,9 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 	    /* There are no more spans, so delete tables to improve
 	     * performance of TableCellCoords */
 	    Tcl_DeleteHashTable(tablePtr->spanTbl);
-	    ckfree((char *) (tablePtr->spanTbl));
+	    Tcl_Free((char *) (tablePtr->spanTbl));
 	    Tcl_DeleteHashTable(tablePtr->spanAffTbl);
-	    ckfree((char *) (tablePtr->spanAffTbl));
+	    Tcl_Free((char *) (tablePtr->spanAffTbl));
 	    tablePtr->spanTbl = NULL;
 	    tablePtr->spanAffTbl = NULL;
 	}
@@ -1189,7 +1189,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
     Tcl_SetHashValue(entryPtr, (char *) NULL);
     /* set the spanning cells table with span value */
     entryPtr = Tcl_CreateHashEntry(tablePtr->spanTbl, cell, &new);
-    dbuf = (char *)ckalloc(strlen(span)+1);
+    dbuf = (char *)Tcl_Alloc((Tcl_Size)strlen(span)+1);
     strcpy(dbuf, span);
     Tcl_SetHashValue(entryPtr, dbuf);
     dbuf = Tcl_GetHashKey(tablePtr->spanTbl, entryPtr);
