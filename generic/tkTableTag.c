@@ -115,7 +115,7 @@ static void TableImageProc(ClientData clientData, int x, int y, int width, int h
  *----------------------------------------------------------------------
  *
  * TableNewTag --
- *	ckallocs space for a new tag structure and inits the structure.
+ *	Tcl_Allocs space for a new tag structure and inits the structure.
  *
  * Results:
  *	Returns a pointer to the new structure.  Must be freed later.
@@ -132,7 +132,7 @@ TableTag * TableNewTag(Table *tablePtr) {
      * If tablePtr is NULL, make a regular tag, otherwise make a join tag.
      */
     if (tablePtr == NULL) {
-	tagPtr = (TableTag *) ckalloc(sizeof(TableTag));
+	tagPtr = (TableTag *) Tcl_Alloc(sizeof(TableTag));
 	memset((void *) tagPtr, 0, sizeof(TableTag));
 
 	/*
@@ -146,7 +146,7 @@ TableTag * TableNewTag(Table *tablePtr) {
 	tagPtr->state		= STATE_UNKNOWN;
 	tagPtr->wrap		= -1;
     } else {
-	TableJoinTag *jtagPtr = (TableJoinTag *) ckalloc(sizeof(TableJoinTag));
+	TableJoinTag *jtagPtr = (TableJoinTag *) Tcl_Alloc(sizeof(TableJoinTag));
 	memset((void *) jtagPtr, 0, sizeof(TableJoinTag));
 	tagPtr = (TableTag *) jtagPtr;
 
@@ -463,10 +463,10 @@ static TableTag * TableTagGetEntry(Table *tablePtr, char *name, Tcl_Size objc, T
 	     * Increase the priority list size in blocks of 10
 	     */
 	    tablePtr->tagPrioMax += 10;
-	    tablePtr->tagPrioNames = (char **) ckrealloc(
+	    tablePtr->tagPrioNames = (char **) Tcl_Realloc(
 		(char *) tablePtr->tagPrioNames,
 		sizeof(TableTag *) * tablePtr->tagPrioMax);
-	    tablePtr->tagPrios = (TableTag **) ckrealloc(
+	    tablePtr->tagPrios = (TableTag **) Tcl_Realloc(
 		(char *) tablePtr->tagPrios,
 		sizeof(TableTag *) * tablePtr->tagPrioMax);
 	    for (i = tablePtr->tagPrioSize; i < tablePtr->tagPrioMax; i++) {
@@ -869,7 +869,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    Tcl_HashTable *cacheTblPtr;
 
 		    cacheTblPtr = (Tcl_HashTable *)
-			ckalloc(sizeof(Tcl_HashTable));
+			Tcl_Alloc(sizeof(Tcl_HashTable));
 		    Tcl_InitHashTable(cacheTblPtr, TCL_ONE_WORD_KEYS);
 		    resultPtr = Tcl_NewListObj(0, NULL);
 
@@ -886,7 +886,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    }
 
 		    Tcl_DeleteHashTable(cacheTblPtr);
-		    ckfree((char *) (cacheTblPtr));
+		    Tcl_Free((char *) (cacheTblPtr));
 		} else if (STREQ(tagname, "title") &&
 			(forRows?tablePtr->titleRows:tablePtr->titleCols)) {
 		    resultPtr = Tcl_NewListObj(0, NULL);
@@ -1095,7 +1095,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 
 		    /* Release the tag structure */
 		    TableCleanupTag(tablePtr, tagPtr);
-		    ckfree((char *) tagPtr);
+		    Tcl_Free((char *) tagPtr);
 
 		    /* And free the hash table entry */
 		    Tcl_DeleteHashEntry(entryPtr);

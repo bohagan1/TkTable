@@ -513,7 +513,7 @@ void TableDeleteChars(
 	(string + byteIndex));
 
     newByteCount = numBytes + 1 - byteCount;
-    new = (char *) ckalloc((unsigned) newByteCount);
+    new = (char *) Tcl_Alloc((unsigned) newByteCount);
     memcpy(new, string, (size_t) byteIndex);
     strcpy(new + byteIndex, string + byteIndex + byteCount);
 
@@ -521,11 +521,11 @@ void TableDeleteChars(
     if (tablePtr->validate &&
 	TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
 	tablePtr->activeCol+tablePtr->colOffset, tablePtr->activeBuf, new, index) != TCL_OK) {
-	ckfree(new);
+	Tcl_Free(new);
 	return;
     }
 
-    ckfree(tablePtr->activeBuf);
+    Tcl_Free(tablePtr->activeBuf);
     tablePtr->activeBuf = new;
 
     /* mark the text as changed */
@@ -577,7 +577,7 @@ void TableInsertChars(
     /* Note that this clears without validating */
     if (tablePtr->autoClear && !(tablePtr->flags & TEXT_CHANGED)) {
 	/* set the buffer to be empty */
-	tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf, 1);
+	tablePtr->activeBuf = (char *)Tcl_Realloc(tablePtr->activeBuf, 1);
 	tablePtr->activeBuf[0] = '\0';
 	/* the insert position now has to be 0 */
 	index = 0;
@@ -588,7 +588,7 @@ void TableInsertChars(
     byteIndex = (int) (Tcl_UtfAtIndex(string, (Tcl_Size)index) - string);
 
     oldlen = (int) strlen(string);
-    new = (char *) ckalloc((unsigned)(oldlen + byteCount + 1));
+    new = (char *) Tcl_Alloc((unsigned)(oldlen + byteCount + 1));
     memcpy(new, string, (size_t) byteIndex);
     strcpy(new + byteIndex, value);
     strcpy(new + byteIndex + byteCount, string + byteIndex);
@@ -599,7 +599,7 @@ void TableInsertChars(
 	    TableValidateChange(tablePtr, tablePtr->activeRow+tablePtr->rowOffset,
 	    tablePtr->activeCol+tablePtr->colOffset, tablePtr->activeBuf, new,
 	    byteIndex) != TCL_OK) {
-	ckfree(new);
+	Tcl_Free(new);
 	return;
     }
 
@@ -618,7 +618,7 @@ void TableInsertChars(
 	    - Tcl_NumUtfChars(tablePtr->activeBuf, (Tcl_Size)oldlen));
     }
 
-    ckfree(string);
+    Tcl_Free(string);
     tablePtr->activeBuf = new;
 
     /* mark the text as changed */

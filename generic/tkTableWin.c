@@ -106,7 +106,7 @@ static CONST86 char * StickyPrintProc(
 
     int flags = ((TableEmbWindow *) widgRec)->sticky;
     int count = 0;
-    char *result = (char *) ckalloc(5*sizeof(char));
+    char *result = (char *) Tcl_Alloc(5*sizeof(char));
     (void) clientData;
 
     if (flags&STICK_NORTH) result[count++] = 'n';
@@ -167,11 +167,11 @@ static int StickyParseProc(
 }
 
 /*
- * ckallocs space for a new embedded window structure and clears the structure
+ * Tcl_Allocs space for a new embedded window structure and clears the structure
  * returns the pointer to the new structure
  */
 static TableEmbWindow * TableNewEmbWindow(Table *tablePtr) {
-    TableEmbWindow *ewPtr = (TableEmbWindow *) ckalloc(sizeof(TableEmbWindow));
+    TableEmbWindow *ewPtr = (TableEmbWindow *) Tcl_Alloc(sizeof(TableEmbWindow));
     memset((void *) ewPtr, 0, sizeof(TableEmbWindow));
 
     /*
@@ -404,7 +404,7 @@ static void EmbWinRemove(TableEmbWindow *ewPtr) {
     if (ewPtr->hPtr != NULL) {
 	Tcl_DeleteHashEntry(ewPtr->hPtr);
     }
-    ckfree((char *) ewPtr);
+    Tcl_Free((char *) ewPtr);
 }
 
 /*
@@ -558,7 +558,7 @@ void EmbWinDelete(Table *tablePtr, TableEmbWindow *ewPtr) {
     if (entryPtr != NULL) {
 	Tcl_DeleteHashEntry(entryPtr);
     }
-    ckfree((char *) ewPtr);
+    Tcl_Free((char *) ewPtr);
 }
 
 /*
@@ -821,7 +821,7 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 		/* release the structure */
 		EmbWinCleanup(tablePtr, ewPtr);
 		entryPtr = ewPtr->hPtr;
-		ckfree((char *) ewPtr);
+		Tcl_Free((char *) ewPtr);
 
 		/* and free the hash table entry */
 		if (entryPtr != NULL) {
