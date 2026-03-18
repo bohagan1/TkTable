@@ -880,7 +880,7 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	break;
 
     case WIN_NAMES: {
-	Tcl_Obj *objPtr;
+	Tcl_Obj *objPtr, *resultPtr;
 
 	/* just print out the window names */
 	if (objc < 3 || objc > 4) {
@@ -898,7 +898,10 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	    entryPtr = Tcl_NextHashEntry(&search);
 	}
 	Tcl_IncrRefCount(objPtr);
-	Tcl_SetObjResult(interp, TableCellSortObj(interp, objPtr));
+	resultPtr = TableCellSortObj(interp, objPtr);
+	if (resultPtr) {
+	    Tcl_SetObjResult(interp, resultPtr);
+	}
 	Tcl_DecrRefCount(objPtr);
 	break;
     }
