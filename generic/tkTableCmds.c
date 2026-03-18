@@ -666,7 +666,7 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp,
 	    TableRefresh(tablePtr, row, col, CELL);
 	}
     } else {
-	Tcl_Obj *objPtr = Tcl_NewObj(), resultPtr;
+	Tcl_Obj *objPtr = Tcl_NewObj(), *resultPtr;
 
 	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
 	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
@@ -674,7 +674,7 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp,
 	    Tcl_ListObjAppendElement(NULL, objPtr, Tcl_NewStringObj(value, -1));
 	}
 	Tcl_IncrRefCount(objPtr);
-	resultPtr = TableCellSortObj(interp, objPtr)
+	resultPtr = TableCellSortObj(interp, objPtr);
 	if (resultPtr) {
 	    Tcl_SetObjResult(interp, resultPtr);
 	}

@@ -1262,7 +1262,7 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
     if (objc == 2) {
 	/* return all "hidden" cells */
 	Tcl_HashSearch search;
-	Tcl_Obj *objPtr = Tcl_NewObj(), resultPtr;
+	Tcl_Obj *objPtr = Tcl_NewObj(), *resultPtr;
 
 	for (entryPtr = Tcl_FirstHashEntry(tablePtr->spanAffTbl, &search);
 	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
