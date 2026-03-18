@@ -879,12 +879,20 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 
     case WIN_NAMES: {
 	/* just print out the window names */
+	Tcl_Obj *listPtr;
+
 	if (objc < 3 || objc > 4) {
 	    Tcl_WrongNumArgs(interp, 3, objv, "?pattern?");
 	    return TCL_ERROR;
 	}
 	winname = (objc == 4) ? Tcl_GetString(objv[3]) : NULL;
-	Tcl_SetObjResult(interp, TableGetSortedIndicesFiltered(tablePtr->winTable, 0, winname));
+	listPtr = TableGetSortedIndicesFiltered(tablePtr->winTable, 0, winname);
+	if (listPtr) {
+	    Tcl_SetObjResult(interp, listPtr);
+	} else {
+	    Tcl_AppendResult(interp, "Memory allocation error", (char *)NULL);
+	    return TCL_ERROR;
+	}
 	break;
     }
     }

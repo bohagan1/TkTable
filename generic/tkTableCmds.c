@@ -823,7 +823,7 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp, int objc,
     /* Get sorted list of selected cells */
     if (objc == 2) {
 	Tcl_Obj *listPtr = TableGetSortedIndices(tablePtr->selCells);
-	if (listPtr != NULL) {
+	if (listPtr) {
 	    Tcl_SetObjResult(interp, listPtr);
 	} else {
 	    Tcl_AppendResult(interp, "Memory allocation error", (char *)NULL);

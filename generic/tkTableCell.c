@@ -1300,8 +1300,15 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 
     if (objc == 2) {
 	/* return all "hidden" cells */
+	Tcl_Obj *listPtr;
 	if (tablePtr->spanTbl != NULL) {
-	    Tcl_SetObjResult(interp, TableGetSortedIndicesFiltered(tablePtr->spanAffTbl, 1, NULL));
+	    listPtr = TableGetSortedIndicesFiltered(tablePtr->spanAffTbl, 1, NULL);
+	    if (listPtr) {
+		Tcl_SetObjResult(interp, listPtr);
+	    } else {
+		Tcl_AppendResult(interp, "Memory allocation error", (char *)NULL);
+		return TCL_ERROR;
+	    }
 	}
 	return TCL_OK;
 
