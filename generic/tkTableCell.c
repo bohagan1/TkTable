@@ -1273,7 +1273,9 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    Tcl_ListObjAppendElement(NULL, objPtr,
 		Tcl_NewStringObj(Tcl_GetHashKey(tablePtr->spanAffTbl, entryPtr), -1));
 	}
+	Tcl_IncrRefCount(objPtr);
 	Tcl_SetObjResult(interp, TableCellSortObj(interp, objPtr));
+	Tcl_DecrRefCount(objPtr);
 	return TCL_OK;
     }
     if (objc == 3) {

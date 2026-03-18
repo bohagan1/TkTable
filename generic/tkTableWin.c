@@ -880,7 +880,7 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	break;
 
     case WIN_NAMES: {
-	Tcl_Obj *objPtr = Tcl_NewObj();
+	Tcl_Obj *objPtr;
 
 	/* just print out the window names */
 	if (objc < 3 || objc > 4) {
@@ -888,6 +888,7 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	    return TCL_ERROR;
 	}
 	winname = (objc == 4) ? Tcl_GetString(objv[3]) : NULL;
+	objPtr = Tcl_NewObj();
 	entryPtr = Tcl_FirstHashEntry(tablePtr->winTable, &search);
 	while (entryPtr != NULL) {
 	    keybuf = Tcl_GetHashKey(tablePtr->winTable, entryPtr);
@@ -896,7 +897,9 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	    }
 	    entryPtr = Tcl_NextHashEntry(&search);
 	}
+	Tcl_IncrRefCount(objPtr);
 	Tcl_SetObjResult(interp, TableCellSortObj(interp, objPtr));
+	Tcl_DecrRefCount(objPtr);
 	break;
     }
     }

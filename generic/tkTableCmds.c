@@ -673,7 +673,9 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp,
 	    value = Tcl_GetHashKey(tablePtr->selCells, entryPtr);
 	    Tcl_ListObjAppendElement(NULL, objPtr, Tcl_NewStringObj(value, -1));
 	}
+	Tcl_IncrRefCount(objPtr);
 	Tcl_SetObjResult(interp, TableCellSortObj(interp, objPtr));
+	Tcl_DecrRefCount(objPtr);
     }
     return TCL_OK;
 }
