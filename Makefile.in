@@ -214,27 +214,34 @@ libraries:
 # end user machine when building from source.
 #========================================================================
 
-DTPLITE=$(TCLSH) @DTPLITE@
+DTPLITE=`@CYGPATH@ @DTPLITE@`
+DOC_NAME=tkTable
 
 doc: make-docs-n make-docs-html
 
-make-docs-n: doc/tkTable.man
+make-docs-n: doc/$(DOC_NAME).man
 	@echo "make nroff documentation"
-	@if [ -n "$(DTPLITE)" -a -x "$(DTPLITE)" ]; then \
-	    $(DTPLITE) -o doc/tkTable.n nroff doc/tkTable.man ; \
+	@if [ -n "$(DTPLITE)" -a -e "$(DTPLITE)" ]; then \
+	    $(TCLSH) $(DTPLITE) -o doc/$(DOC_NAME).n nroff doc/$(DOC_NAME).man; \
+	else \
+	    echo "Can't find dtplite. Please install Tcllib."; \
 	fi
 
-make-docs-html: doc/tkTable.man
+make-docs-html: doc/$(DOC_NAME).man
 	@echo "make HTML documentation"
-	@if [ -n "$(DTPLITE)" -a -x "$(DTPLITE)" ]; then \
-	    $(DTPLITE) -o doc/tkTable.html html doc/tkTable.man ; \
+	@if [ -n "$(DTPLITE)" -a -e "$(DTPLITE)" ]; then \
+	    $(TCLSH) $(DTPLITE) -o doc/$(DOC_NAME).html html doc/$(DOC_NAME).man; \
+	else \
+	    echo "Can't find dtplite. Please install Tcllib."; \
 	fi
 
-make-docs: doc/tkTable.man
+make-docs: doc/$(DOC_NAME).man
 	@echo "make documentation"
-	@if [ -n "$(DTPLITE)" -a -x "$(DTPLITE)" ]; then \
-	    $(DTPLITE) -o doc nroff doc ; \
-	    $(DTPLITE) -o doc html doc ; \
+	@if [ -n "$(DTPLITE)" -a -e "$(DTPLITE)" ]; then \
+	    $(TCLSH) $(DTPLITE) -o doc nroff doc; \
+	    $(TCLSH) $(DTPLITE) -o doc html doc; \
+	else \
+	    echo "Can't find dtplite. Please install Tcllib."; \
 	fi
 
 #========================================================================
@@ -254,8 +261,8 @@ install-libraries: libraries
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(includedir)"
 	@echo "Installing header files in $(DESTDIR)$(includedir)"
 	@list='$(PKG_HEADERS)'; for i in $$list; do \
-	    echo "Installing $(srcdir)/$$i" ; \
-	    $(INSTALL_DATA) "$(srcdir)/$$i" "$(DESTDIR)$(includedir)" ; \
+	    echo "Installing $(srcdir)/$$i"; \
+	    $(INSTALL_DATA) "$(srcdir)/$$i" "$(DESTDIR)$(includedir)"; \
 	done
 
 #========================================================================
@@ -267,7 +274,7 @@ install-doc-html: make-docs-html
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(pkglibdir)/html"
 	@echo "Installing HTML documentation in $(DESTDIR)$(pkglibdir)/html"
 	@list='$(srcdir)/doc/*.html'; for i in $$list; do \
-	    if test -f "$$i" ; then \
+	    if test -f "$$i"; then \
 		echo "Installing $$i"; \
 		$(INSTALL_DATA) "$$i" "$(DESTDIR)$(pkglibdir)/html"; \
 	    fi; \
@@ -277,16 +284,16 @@ install-doc-n: make-docs-n
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(mandir)/mann"
 	@echo "Installing nroff documentation in $(DESTDIR)$(mandir)/mann"
 	@list='$(srcdir)/doc/*.n'; for i in $$list; do \
-	    if test -f "$$i" ; then \
+	    if test -f "$$i"; then \
 		if test -f "$(DESTDIR)$(mandir)/mann/Tcl.n.gz" -o \
-		    "$(DESTDIR)$(mandir)/mann/Tcl*.n.gz" ; then \
-		    gzip -k "$$i" ; \
+		    "$(DESTDIR)$(mandir)/mann/Tcl*.n.gz"; then \
+		    gzip -k "$$i"; \
 		    echo "Installing $$i.gz"; \
-		    $(INSTALL_DATA) "$$i.gz" "$(DESTDIR)$(mandir)/mann" ; \
+		    $(INSTALL_DATA) "$$i.gz" "$(DESTDIR)$(mandir)/mann"; \
 		    rm -f "$$i.gz";\
 		else \
 		    echo "Installing $$i"; \
-		    $(INSTALL_DATA) "$$i" "$(DESTDIR)$(mandir)/mann" ; \
+		    $(INSTALL_DATA) "$$i" "$(DESTDIR)$(mandir)/mann"; \
 		fi; \
 	    fi; \
 	done
@@ -306,7 +313,7 @@ shell: binaries libraries
 gdb:
 	$(TCLSH_ENV) $(PKG_ENV) $(GDB) $(TCLSH_PROG) $(SCRIPT)
 
-gdb-test: binaries libraries 
+gdb-test: binaries libraries
 	$(TCLSH_ENV) $(PKG_ENV) $(GDB) \
 	    --args $(TCLSH_PROG) `@CYGPATH@ $(srcdir)/tests/all.tcl` \
 	    $(TESTFLAGS) -singleproc 1 \
@@ -354,11 +361,11 @@ tkTable.tcl.h: library/tkTable.tcl
 	sed -e '/^\#/d' -e '/^$$/d' -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/^/"/' \
 	    -e 's/$$/\\n"/' '$?' > '$@' || { rm -f '$@'; exit 1; }
 
-# Create header file with fossil, git, or svn UUID for build-info command 
+# Create header file with fossil, git, or svn UUID for build-info command
 $(srcdir)/manifest.uuid:
 	printf "git-" >$(srcdir)/manifest.uuid
 	(cd '$(srcdir)'; git rev-parse HEAD >>$(srcdir)/manifest.uuid || \
-	    (printf "svn-r" >$(srcdir)/manifest.uuid ; \
+	    (printf "svn-r" >$(srcdir)/manifest.uuid; \
 	    svn info --show-item last-changed-revision >>$(srcdir)/manifest.uuid) || \
 	    printf "unknown" >$(srcdir)/manifest.uuid)
 
@@ -412,7 +419,7 @@ COMPRESS	= tar zcvf $(PKG_DIR).tar.gz $(TEMP_DIR)
 
 DIST_INSTALL_DATA	= CPPROG='cp -p' $(INSTALL) -m 644
 DIST_INSTALL_SCRIPT	= CPPROG='cp -p' $(INSTALL) -m 755
- 
+
 ${TEMP_DIR}:
 	mkdir -p ${TEMP_DIR}
 
@@ -435,7 +442,7 @@ dist: ${TEMP_DIR} dist-clean manifest.uuid
 
 	list='demos doc generic library tclconfig tests win'; \
 	for p in $$list; do \
-	    if test -d "$(srcdir)/$$p" ; then \
+	    if test -d "$(srcdir)/$$p"; then \
 		$(INSTALL_DATA_DIR) "$(TEMP_DIR)/$$p"; \
 		for i in "$(srcdir)/$$p/*"; do \
 		    $(INSTALL_DATA) $$i "$(TEMP_DIR)/$$p/"; \

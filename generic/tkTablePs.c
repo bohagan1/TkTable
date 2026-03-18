@@ -799,7 +799,7 @@ int Table_PostscriptCmd(
     titlePtr = (TableTag *) Tcl_GetHashValue(hPtr);
 
     total = 0;
-    colWidths = (int *) ckalloc((lastCol-firstCol) * sizeof(int));
+    colWidths = (int *) Tcl_Alloc((lastCol-firstCol) * sizeof(int));
     for (col = 0; col <= lastCol-firstCol; col++) colWidths[col] = 0;
     Tcl_DStringAppend(&buffer, "gsave\n", -1);
     for (row = firstRow; row <= lastRow; row++) {
@@ -919,45 +919,45 @@ int Table_PostscriptCmd(
    */
 
 cleanup:
-    ckfree(colWidths);
+    Tcl_Free(colWidths);
     Tcl_DStringResult(interp, &postscript);
     Tcl_DStringFree(&postscript);
     Tcl_DStringFree(&buffer);
     if (psInfo.first != NULL) {
-	ckfree(psInfo.first);
+	Tcl_Free(psInfo.first);
     }
     if (psInfo.last != NULL) {
-	ckfree(psInfo.last);
+	Tcl_Free(psInfo.last);
     }
     if (psInfo.pageXString != NULL) {
-	ckfree(psInfo.pageXString);
+	Tcl_Free(psInfo.pageXString);
     }
     if (psInfo.pageYString != NULL) {
-	ckfree(psInfo.pageYString);
+	Tcl_Free(psInfo.pageYString);
     }
     if (psInfo.pageWidthString != NULL) {
-	ckfree(psInfo.pageWidthString);
+	Tcl_Free(psInfo.pageWidthString);
     }
     if (psInfo.pageHeightString != NULL) {
-	ckfree(psInfo.pageHeightString);
+	Tcl_Free(psInfo.pageHeightString);
     }
     if (psInfo.fontVar != NULL) {
-	ckfree(psInfo.fontVar);
+	Tcl_Free(psInfo.fontVar);
     }
     if (psInfo.colorVar != NULL) {
-	ckfree(psInfo.colorVar);
+	Tcl_Free(psInfo.colorVar);
     }
     if (psInfo.colorMode != NULL) {
-	ckfree(psInfo.colorMode);
+	Tcl_Free(psInfo.colorMode);
     }
     if (psInfo.fileName != NULL) {
-	ckfree(psInfo.fileName);
+	Tcl_Free(psInfo.fileName);
     }
     if ((psInfo.chan != NULL) && (psInfo.channelName == NULL)) {
 	Tcl_Close(interp, psInfo.chan);
     }
     if (psInfo.channelName != NULL) {
-	ckfree(psInfo.channelName);
+	Tcl_Free(psInfo.channelName);
     }
     Tcl_DeleteHashTable(&psInfo.fontTable);
     tablePtr->psInfoPtr = oldInfoPtr;
@@ -1112,7 +1112,7 @@ int Tk_TablePsFont(
 	    Tcl_DStringAppend(&ds, argv[0], -1);
 	    points = (int) size;
 
-	    ckfree((char *) argv);
+	    Tcl_Free((char *) argv);
 	    goto findfont;
 	}
     }

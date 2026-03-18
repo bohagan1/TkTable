@@ -1,5 +1,5 @@
 '\"
-'\" Generated from file 'Tktable\&.man' by tcllib/doctools with format 'nroff'
+'\" Generated from file 'tkTable\&.man' by tcllib/doctools with format 'nroff'
 '\" Copyright (c) 1997-2002 Jeffrey Hobbs
 '\"
 .TH "tkTable" n 2\&.12\&.1 tkTable "TkTable extension"
@@ -274,7 +274,7 @@ Database Class:	\\fB\\$3\\fR
 .SH NAME
 tkTable \- Create and manipulate table widgets
 .SH SYNOPSIS
-package require \fBTcl ?8\&.5?\fR
+package require \fBTcl ?8\&.5-?\fR
 .sp
 package require \fBTktable ?2\&.12\&.1?\fR
 .sp
@@ -1881,6 +1881,8 @@ table is not causing proper refresh):
 $table configure -padx [$table cget -padx]
 
 .CE
+.SH "SEE ALSO"
+widget
 .SH KEYWORDS
 TkTable, cell, column, extension, row, table, widget
 .SH CATEGORY

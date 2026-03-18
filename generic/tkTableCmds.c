@@ -99,7 +99,7 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp,
 	    tablePtr->activeRow = row;
 	    tablePtr->activeCol = col;
 	    if (tablePtr->activeTagPtr != NULL) {
-		ckfree((char *) (tablePtr->activeTagPtr));
+		Tcl_Free((char *) (tablePtr->activeTagPtr));
 		tablePtr->activeTagPtr = NULL;
 	    }
 	    TableAdjustActive(tablePtr);
@@ -594,7 +594,7 @@ int Table_ClearCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
 		if ((cmdIndex == CLEAR_CACHE || cmdIndex == CLEAR_ALL) &&
 			(entryPtr = Tcl_FindHashEntry(tablePtr->cache, buf))) {
 		    value = (char *) Tcl_GetHashValue(entryPtr);
-		    if (value) { ckfree(value); }
+		    if (value) { Tcl_Free(value); }
 		    Tcl_DeleteHashEntry(entryPtr);
 		    /* if the cache is our data source,
 		     * we need to invalidate the cells changed */
@@ -666,14 +666,19 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp,
 	    TableRefresh(tablePtr, row, col, CELL);
 	}
     } else {
-	Tcl_Obj *objPtr = Tcl_NewObj();
+	Tcl_Obj *objPtr = Tcl_NewObj(), resultPtr;
 
 	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
 	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
 	    value = Tcl_GetHashKey(tablePtr->selCells, entryPtr);
 	    Tcl_ListObjAppendElement(NULL, objPtr, Tcl_NewStringObj(value, -1));
 	}
-	Tcl_SetObjResult(interp, TableCellSortObj(interp, objPtr));
+	Tcl_IncrRefCount(objPtr);
+	resultPtr = TableCellSortObj(interp, objPtr)
+	if (resultPtr) {
+	    Tcl_SetObjResult(interp, resultPtr);
+	}
+	Tcl_DecrRefCount(objPtr);
     }
     return TCL_OK;
 }
@@ -722,7 +727,7 @@ int Table_CurvalueCmd(ClientData clientData, Tcl_Interp *interp,
 		value, tablePtr->icursor) != TCL_OK) {
 	    return TCL_OK;
 	}
-	tablePtr->activeBuf = (char *)ckrealloc(tablePtr->activeBuf, len+1);
+	tablePtr->activeBuf = (char *)Tcl_Realloc(tablePtr->activeBuf, len+1);
 	strcpy(tablePtr->activeBuf, value);
 	/* mark the text as changed */
 	tablePtr->flags |= TEXT_CHANGED;
