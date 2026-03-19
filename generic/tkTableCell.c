@@ -937,6 +937,7 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    goto CMD_SET_USAGE;
 	} else if (objc == 4) {
 	    Tcl_Obj *resultPtr = Tcl_NewListObj(0, NULL);
+	    if (!resultPtr) return TCL_ERROR;
 	    if (TableGetIndexObj(tablePtr, objv[3], &row, &col) != TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -1239,6 +1240,7 @@ int Table_SpanCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	    Tcl_HashSearch search;
 	    Tcl_Obj *objPtr, *resultPtr = Tcl_NewObj();
 
+	    if (!resultPtr) return TCL_ERROR;
 	    for (entryPtr = Tcl_FirstHashEntry(tablePtr->spanTbl, &search);
 		 entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
 		objPtr = Tcl_NewStringObj(Tcl_GetHashKey(tablePtr->spanTbl, entryPtr), -1);

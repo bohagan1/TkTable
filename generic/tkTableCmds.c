@@ -449,6 +449,7 @@ int Table_BboxCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
     }
 
     resultPtr = Tcl_NewListObj(0, NULL);
+    if (!resultPtr) return TCL_ERROR;
     if (objc == 3) {
 	/* Get cell bbox info */
 	row -= tablePtr->rowOffset; col -= tablePtr->colOffset;
@@ -551,6 +552,7 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    return TCL_OK;
 	}
 	resultPtr = Tcl_NewListObj(0, NULL);
+	if (!resultPtr) return TCL_ERROR;
 	TableCellCoords(tablePtr, row, col, &x, &y, &dummy, &dummy);
 	tablePtr->scanMarkX = x;
 	tablePtr->scanMarkY = y;
@@ -1081,26 +1083,24 @@ int Table_GetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	return TCL_ERROR;
 
     } else {
-	Tcl_Obj *objPtr, *listPtr;
+	Tcl_Obj *objPtr, *resultPtr;
 
 	r1 = MIN(row,r2); r2 = MAX(row,r2);
 	c1 = MIN(col,c2); c2 = MAX(col,c2);
-	listPtr = Tcl_NewListObj((c2-c1+1)*(r2-r1+1), NULL);
-	if (listPtr == NULL) {
-	    return TCL_ERROR;
-	}
+	resultPtr = Tcl_NewListObj((c2-c1+1)*(r2-r1+1), NULL);
 
+	if (!resultPtr) return TCL_ERROR;
 	for (row = r1; row <= r2; row++) {
 	    for (col = c1; col <= c2; col++) {
 		if ((objPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1))
-		    == NULL || Tcl_ListObjAppendElement(interp, listPtr, objPtr) != TCL_OK) {
-		    Tcl_IncrRefCount(listPtr);
-		    Tcl_DecrRefCount(listPtr);
+		    == NULL || Tcl_ListObjAppendElement(interp, resultPtr, objPtr) != TCL_OK) {
+		    Tcl_IncrRefCount(resultPtr);
+		    Tcl_DecrRefCount(resultPtr);
 		    return TCL_ERROR;
 		}
 	    }
 	}
-	Tcl_SetObjResult(interp, listPtr);
+	Tcl_SetObjResult(interp, resultPtr);
     }
     return TCL_OK;
 }
@@ -1892,6 +1892,7 @@ int Table_ViewCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	double first, last;
 
 	resultPtr = Tcl_NewListObj(0, NULL);
+	if (!resultPtr) return TCL_ERROR;
 	TableGetLastCell(tablePtr, &row, &col);
 	TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 0);
 	if (*xy == 'y') {

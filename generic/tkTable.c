@@ -1436,6 +1436,9 @@ static int Tk_TableObjCmd(
     }
 
     tablePtr = (Table *) Tcl_Alloc(sizeof(Table));
+    if (tablePtr == NULL) {
+	return TCL_ERROR;
+    }
     memset((void *) tablePtr, 0, sizeof(Table));
 
     /*

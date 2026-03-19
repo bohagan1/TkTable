@@ -245,6 +245,9 @@ int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int n
 	}
 	if (oldValue != NULL) {
 	    size_t length = strlen(oldValue) + 1;
+	    argc = 0;
+	    argv = NULL;
+
 	    /*
 	     * We are making the assumption that oldValue is correct.
 	     * We have to reparse in case the bad new value had a couple
@@ -254,7 +257,9 @@ int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int n
 	    for (i = 0; i < argc; i++) {
 		Tk_GetPixels(tablePtr->interp, tablePtr->tkwin, argv[i], &(tagPtr->bd[i]));
 	    }
-	    Tcl_Free ((char *) argv);
+	    if (argv) {
+		Tcl_Free ((char *) argv);
+	    }
 	    tagPtr->borders	= (int) argc;
 	    tagPtr->borderStr	= (char *) Tcl_Alloc((Tcl_Size)length);
 	    memcpy(tagPtr->borderStr, oldValue, length);
