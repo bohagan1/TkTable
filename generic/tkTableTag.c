@@ -735,6 +735,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    hashTblPtr = (*tagname == 's') ?
 			tablePtr->selCells : tablePtr->flashCells;
 		    resultPtr = Tcl_NewListObj(0, NULL);
+		    if (!resultPtr) return TCL_ERROR;
 		    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
 			 scanPtr != NULL;
 			 scanPtr = Tcl_NextHashEntry(&search)) {
@@ -745,6 +746,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		} else if (STREQ(tagname, "title") &&
 			(tablePtr->titleRows || tablePtr->titleCols)) {
 		    resultPtr = Tcl_NewListObj(0, NULL);
+		    if (!resultPtr) return TCL_ERROR;
 		    for (row = tablePtr->rowOffset;
 			 row < tablePtr->rowOffset+tablePtr->rows; row++) {
 			for (col = tablePtr->colOffset;
@@ -770,6 +772,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		     * Check this tag pointer amongst all tagged cells
 		     */
 		    resultPtr = Tcl_NewListObj(0, NULL);
+		    if (!resultPtr) return TCL_ERROR;
 		    for (scanPtr = Tcl_FirstHashEntry(tablePtr->cellStyles, &search);
 			 scanPtr != NULL;
 			 scanPtr = Tcl_NextHashEntry(&search)) {
@@ -872,7 +875,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 			Tcl_Alloc(sizeof(Tcl_HashTable));
 		    Tcl_InitHashTable(cacheTblPtr, TCL_ONE_WORD_KEYS);
 		    resultPtr = Tcl_NewListObj(0, NULL);
-
+		    if (!resultPtr) return TCL_ERROR;
 		    hashTblPtr = (*tagname == 's') ? tablePtr->selCells : tablePtr->flashCells;
 		    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
 			 scanPtr != NULL;
@@ -890,6 +893,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		} else if (STREQ(tagname, "title") &&
 			(forRows?tablePtr->titleRows:tablePtr->titleCols)) {
 		    resultPtr = Tcl_NewListObj(0, NULL);
+		    if (!resultPtr) return TCL_ERROR;
 		    if (forRows) {
 			for (row = tablePtr->rowOffset;
 			     row < tablePtr->rowOffset+tablePtr->titleRows;
@@ -905,6 +909,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		    }
 		} else {
 		    resultPtr = Tcl_NewListObj(0, NULL);
+		    if (!resultPtr) return TCL_ERROR;
 		    for (scanPtr = Tcl_FirstHashEntry(hashTblPtr, &search);
 			 scanPtr != NULL;
 			 scanPtr = Tcl_NextHashEntry(&search)) {
@@ -1177,6 +1182,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		return TCL_ERROR;
 	    }
 	    resultPtr = Tcl_NewListObj(0, NULL);
+	    if (!resultPtr) return TCL_ERROR;
 	    tagname = (objc == 4) ? Tcl_GetString(objv[3]) : NULL;
 	    for (i = 0; i < tablePtr->tagPrioSize; i++) {
 		keybuf = tablePtr->tagPrioNames[i];

@@ -880,7 +880,7 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	break;
 
     case WIN_NAMES: {
-	Tcl_Obj *objPtr, *resultPtr;
+	Tcl_Obj *listPtr, *resultPtr;
 
 	/* just print out the window names */
 	if (objc < 3 || objc > 4) {
@@ -888,21 +888,22 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	    return TCL_ERROR;
 	}
 	winname = (objc == 4) ? Tcl_GetString(objv[3]) : NULL;
-	objPtr = Tcl_NewObj();
+	listPtr = Tcl_NewObj();
+	if (!listPtr) return TCL_ERROR;
 	entryPtr = Tcl_FirstHashEntry(tablePtr->winTable, &search);
 	while (entryPtr != NULL) {
 	    keybuf = Tcl_GetHashKey(tablePtr->winTable, entryPtr);
 	    if (objc == 3 || Tcl_StringMatch(keybuf, winname)) {
-		Tcl_ListObjAppendElement(NULL, objPtr, Tcl_NewStringObj(keybuf, -1));
+		Tcl_ListObjAppendElement(NULL, listPtr, Tcl_NewStringObj(keybuf, -1));
 	    }
 	    entryPtr = Tcl_NextHashEntry(&search);
 	}
-	Tcl_IncrRefCount(objPtr);
-	resultPtr = TableCellSortObj(interp, objPtr);
+	Tcl_IncrRefCount(listPtr);
+	resultPtr = TableCellSortObj(interp, listPtr);
 	if (resultPtr) {
 	    Tcl_SetObjResult(interp, resultPtr);
 	}
-	Tcl_DecrRefCount(objPtr);
+	Tcl_DecrRefCount(listPtr);
 	break;
     }
     }

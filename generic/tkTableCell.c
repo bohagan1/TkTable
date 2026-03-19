@@ -919,6 +919,9 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    goto CMD_SET_USAGE;
 	} else if (objc == 4) {
 	    Tcl_Obj *resultPtr = Tcl_NewListObj(0, NULL);
+	    if (!resultPtr) {
+		return TCL_ERROR;
+	    }
 	    if (TableGetIndexObj(tablePtr, objv[3], &row, &col) != TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -1194,6 +1197,7 @@ int Table_SpanCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	    Tcl_HashSearch search;
 	    Tcl_Obj *objPtr, *resultPtr = Tcl_NewObj();
 
+	    if (!resultPtr) return TCL_ERROR;
 	    for (entryPtr = Tcl_FirstHashEntry(tablePtr->spanTbl, &search);
 		 entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
 		objPtr = Tcl_NewStringObj(Tcl_GetHashKey(tablePtr->spanTbl, entryPtr), -1);
@@ -1262,26 +1266,26 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
     if (objc == 2) {
 	/* return all "hidden" cells */
 	Tcl_HashSearch search;
-	Tcl_Obj *objPtr = Tcl_NewObj(), resultPtr;
+	Tcl_Obj *listPtr = Tcl_NewObj(), *resultPtr;
 
+	if (!listPtr) return TCL_ERROR;
 	for (entryPtr = Tcl_FirstHashEntry(tablePtr->spanAffTbl, &search);
 	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
 	    if ((span = (char *) Tcl_GetHashValue(entryPtr)) == NULL) {
 		/* this is actually a spanning cell */
 		continue;
 	    }
-	    Tcl_ListObjAppendElement(NULL, objPtr,
+	    Tcl_ListObjAppendElement(NULL, listPtr,
 		Tcl_NewStringObj(Tcl_GetHashKey(tablePtr->spanAffTbl, entryPtr), -1));
 	}
-	Tcl_IncrRefCount(objPtr);
-	resultPtr = TableCellSortObj(interp, objPtr);
+	Tcl_IncrRefCount(listPtr);
+	resultPtr = TableCellSortObj(interp, listPtr);
 	if (resultPtr) {
 	    Tcl_SetObjResult(interp, resultPtr);
 	}
-	Tcl_DecrRefCount(objPtr);
+	Tcl_DecrRefCount(listPtr);
 	return TCL_OK;
-    }
-    if (objc == 3) {
+    } else if (objc == 3) {
 	if (TableGetIndexObj(tablePtr, objv[2], &row, &col) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -1294,6 +1298,7 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	}
 	return TCL_OK;
     }
+
     for (i = 2; i < objc; i++) {
 	if (TableGetIndexObj(tablePtr, objv[i], &row, &col) == TCL_ERROR) {
 	    return TCL_ERROR;

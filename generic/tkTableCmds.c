@@ -287,6 +287,7 @@ int Table_BboxCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
     }
 
     resultPtr = Tcl_NewListObj(0, NULL);
+    if (!resultPtr) return TCL_ERROR;
     if (objc == 3) {
 	row -= tablePtr->rowOffset; col -= tablePtr->colOffset;
 	if (TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 0)) {
@@ -387,6 +388,7 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    return TCL_OK;
 	}
 	resultPtr = Tcl_NewListObj(0, NULL);
+	if (!resultPtr) return TCL_ERROR;
 	TableCellCoords(tablePtr, row, col, &x, &y, &dummy, &dummy);
 	tablePtr->scanMarkX = x;
 	tablePtr->scanMarkY = y;
@@ -666,19 +668,20 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp,
 	    TableRefresh(tablePtr, row, col, CELL);
 	}
     } else {
-	Tcl_Obj *objPtr = Tcl_NewObj(), resultPtr;
+	Tcl_Obj *listPtr = Tcl_NewObj(), *resultPtr;
 
+	if (!listPtr) return TCL_ERROR;
 	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
 	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
 	    value = Tcl_GetHashKey(tablePtr->selCells, entryPtr);
-	    Tcl_ListObjAppendElement(NULL, objPtr, Tcl_NewStringObj(value, -1));
+	    Tcl_ListObjAppendElement(NULL, listPtr, Tcl_NewStringObj(value, -1));
 	}
-	Tcl_IncrRefCount(objPtr);
-	resultPtr = TableCellSortObj(interp, objPtr)
+	Tcl_IncrRefCount(listPtr);
+	resultPtr = TableCellSortObj(interp, listPtr);
 	if (resultPtr) {
 	    Tcl_SetObjResult(interp, resultPtr);
 	}
-	Tcl_DecrRefCount(objPtr);
+	Tcl_DecrRefCount(listPtr);
     }
     return TCL_OK;
 }
@@ -772,17 +775,18 @@ int Table_GetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
     } else if (TableGetIndexObj(tablePtr, objv[3], &r2, &c2) == TCL_ERROR) {
 	result = TCL_ERROR;
     } else {
-	Tcl_Obj *objPtr = Tcl_NewObj();
+	Tcl_Obj *resultPtr = Tcl_NewObj();
 
+	if (!resultPtr) return TCL_ERROR;
 	r1 = MIN(row,r2); r2 = MAX(row,r2);
 	c1 = MIN(col,c2); c2 = MAX(col,c2);
 	for ( row = r1; row <= r2; row++ ) {
 	    for ( col = c1; col <= c2; col++ ) {
-		Tcl_ListObjAppendElement(NULL, objPtr,
+		Tcl_ListObjAppendElement(NULL, resultPtr,
 		    Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1));
 	    }
 	}
-	Tcl_SetObjResult(interp, objPtr);
+	Tcl_SetObjResult(interp, resultPtr);
     }
     return result;
 }
@@ -1142,6 +1146,7 @@ int Table_ViewCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 	double first, last;
 
 	resultPtr = Tcl_NewListObj(0, NULL);
+	if (!resultPtr) return TCL_ERROR;
 	TableGetLastCell(tablePtr, &row, &col);
 	TableCellVCoords(tablePtr, row, col, &x, &y, &w, &h, 0);
 	if (*xy == 'y') {
