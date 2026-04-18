@@ -800,6 +800,7 @@ int Table_PostscriptCmd(
 
     total = 0;
     colWidths = (int *) Tcl_Alloc((lastCol-firstCol) * sizeof(int));
+    if (!colWidths) return NULL;
     for (col = 0; col <= lastCol-firstCol; col++) colWidths[col] = 0;
     Tcl_DStringAppend(&buffer, "gsave\n", -1);
     for (row = firstRow; row <= lastRow; row++) {

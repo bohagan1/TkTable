@@ -487,18 +487,22 @@ static char * TableVarProc(
 	    char *val, *data;
 
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
-	    if (!new) {
+	    if (entryPtr && !new) {
 		data = (char *) Tcl_GetHashValue(entryPtr);
 		if (data) { Tcl_Free(data); }
 	    }
 	    data = (char *) Tcl_GetVar2(interp, name, index, TCL_GLOBAL_ONLY);
 	    if (data && *data != '\0') {
 		val = (char *)Tcl_Alloc((Tcl_Size)strlen(data)+1);
-		strcpy(val, data);
+		if (val) {
+		    strcpy(val, data);
+		}
 	    } else {
 		val = NULL;
 	    }
-	    Tcl_SetHashValue(entryPtr, val);
+	    if (entryPtr) {
+		Tcl_SetHashValue(entryPtr, val);
+	    }
 	}
 	/* convert index to real coords */
 	row -= tablePtr->rowOffset;
@@ -659,7 +663,9 @@ static int TableConfigure(
     oldTitleCols	= tablePtr->titleCols;
     if (tablePtr->arrayVar != NULL) {
 	oldVar = Tcl_Alloc((Tcl_Size)strlen(tablePtr->arrayVar) + 1);
-	strcpy(oldVar, tablePtr->arrayVar);
+	if (oldVar) {
+	    strcpy(oldVar, tablePtr->arrayVar);
+	}
     }
 
     /* Do the configuration */
@@ -2242,11 +2248,13 @@ static void TableDisplay(ClientData clientdata) {
 	     * if not, run the findColTag routine and cache the value
 	     */
 	    entryPtr = Tcl_CreateHashEntry(colTagsCache, INT2PTR(ucol), &new);
-	    if (new) {
-		colPtr = FindRowColTag(tablePtr, ucol, COL);
-		Tcl_SetHashValue(entryPtr, colPtr);
-	    } else {
-		colPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
+	    if (entryPtr) {
+		if (new) {
+		    colPtr = FindRowColTag(tablePtr, ucol, COL);
+		    Tcl_SetHashValue(entryPtr, colPtr);
+		} else {
+		    colPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
+		}
 	    }
 	    if (colPtr != (TableTag *) NULL) {
 		TableMergeTag(tablePtr, tagPtr, colPtr);
@@ -2946,7 +2954,9 @@ void TableAddFlash(Table *tablePtr, int row, int col) {
 
     /* add the flash to the hash table */
     entryPtr = Tcl_CreateHashEntry(tablePtr->flashCells, buf, &dummy);
-    Tcl_SetHashValue(entryPtr, INT2PTR(tablePtr->flashTime));
+    if (entryPtr) {
+	Tcl_SetHashValue(entryPtr, INT2PTR(tablePtr->flashTime));
+    }
 
     /* now set the timer if it's not already going and invalidate the area */
     if (tablePtr->flashTimer == NULL) {

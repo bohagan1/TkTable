@@ -365,6 +365,7 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
     }
 
     elementArray = (SortElement *) Tcl_Alloc(length * sizeof(SortElement));
+    if (!elementArray) return NULL;
     for (i=0; i < length; i++){
 	elementArray[i].objPtr = listObjPtrs[i];
 	elementArray[i].nextPtr = &elementArray[i+1];

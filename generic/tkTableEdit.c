@@ -88,14 +88,18 @@ static void TableModifyRC(
 	    entryPtr = Tcl_FindHashEntry(tagTblPtr, INT2PTR(to));
 	    if (entryPtr != NULL) {
 		newPtr = Tcl_CreateHashEntry(tagTblPtr, INT2PTR(from), &new);
-		Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-		Tcl_DeleteHashEntry(entryPtr);
+		if (newPtr) {
+		    Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+		    Tcl_DeleteHashEntry(entryPtr);
+		}
 	    }
 	    entryPtr = Tcl_FindHashEntry(dimTblPtr, INT2PTR(to-offset));
 	    if (entryPtr != NULL) {
 		newPtr = Tcl_CreateHashEntry(dimTblPtr, INT2PTR(from-offset), &new);
-		Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-		Tcl_DeleteHashEntry(entryPtr);
+		if (newPtr) {
+		    Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+		    Tcl_DeleteHashEntry(entryPtr);
+		}
 	    }
 	}
     }
@@ -141,8 +145,10 @@ static void TableModifyRC(
 		entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf1);
 		if (entryPtr != NULL) {
 		    newPtr = Tcl_CreateHashEntry(tablePtr->cellStyles, buf, &new);
-		    Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-		    Tcl_DeleteHashEntry(entryPtr);
+		    if (newPtr) {
+			Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+			Tcl_DeleteHashEntry(entryPtr);
+		    }
 		}
 	    }
 	}
@@ -180,7 +186,9 @@ static void TableModifyRC(
 		     * Table_WinDelete above should guarantee that no window
 		     * is there.  Just set the new entry's value.
 		     */
-		    Tcl_SetHashValue(entryPtr, (ClientData) ewPtr);
+		    if (entryPtr) {
+			Tcl_SetHashValue(entryPtr, (ClientData) ewPtr);
+		    }
 		    ewPtr->hPtr = entryPtr;
 		}
 	    }
@@ -514,6 +522,7 @@ void TableDeleteChars(
 
     newByteCount = numBytes + 1 - byteCount;
     new = (char *) Tcl_Alloc((unsigned) newByteCount);
+    if (!new) return;
     memcpy(new, string, (size_t) byteIndex);
     strcpy(new + byteIndex, string + byteIndex + byteCount);
 
@@ -589,6 +598,7 @@ void TableInsertChars(
 
     oldlen = (int) strlen(string);
     new = (char *) Tcl_Alloc((unsigned)(oldlen + byteCount + 1));
+    if (!new) return;
     memcpy(new, string, (size_t) byteIndex);
     strcpy(new + byteIndex, value);
     strcpy(new + byteIndex + byteCount, string + byteIndex);

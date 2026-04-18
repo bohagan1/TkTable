@@ -109,6 +109,7 @@ static CONST86 char * StickyPrintProc(
     char *result = (char *) Tcl_Alloc(5*sizeof(char));
     (void) clientData;
 
+    if (!result) return NULL;
     if (flags&STICK_NORTH) result[count++] = 'n';
     if (flags&STICK_EAST)  result[count++] = 'e';
     if (flags&STICK_SOUTH) result[count++] = 's';
@@ -172,6 +173,7 @@ static int StickyParseProc(
  */
 static TableEmbWindow * TableNewEmbWindow(Table *tablePtr) {
     TableEmbWindow *ewPtr = (TableEmbWindow *) Tcl_Alloc(sizeof(TableEmbWindow));
+    if (!ewPtr) return NULL;
     memset((void *) ewPtr, 0, sizeof(TableEmbWindow));
 
     /*
@@ -690,6 +692,7 @@ int Table_WinMove(Table *tablePtr, char *const srcPtr, char *const destPtr, int 
     Tcl_DeleteHashEntry(entryPtr);
 
     entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, destPtr, &new);
+    if (!entryPtr) return TCL_ERROR;
     if (!new) {
 	/* window already there - just delete it */
 	TableEmbWindow *ewPtrDel;
@@ -806,10 +809,15 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	}
 	TableMakeArrayIndex(row, col, buf);
 	entryPtr = Tcl_CreateHashEntry(tablePtr->winTable, buf, &new);
+	if (!entryPtr) return TCL_ERROR;
 
 	if (new) {
 	    /* create the structure */
 	    ewPtr = TableNewEmbWindow(tablePtr);
+	    if (!ewPtr) {
+		Tcl_AppendResult(interp, "memory allocation error", (char *)NULL);
+		return TCL_ERROR;
+	    }
 
 	    /* insert it into the table */
 	    Tcl_SetHashValue(entryPtr, (ClientData) ewPtr);

@@ -468,7 +468,7 @@ char * TableGetCellValue(Table *tablePtr, int r, int c) {
 	 * from the other data source.
 	 */
 	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
-	if (!new) {
+	if (entryPtr && !new) {
 	    result = (char *) Tcl_GetHashValue(entryPtr);
 	    goto VALUE;
 	}
@@ -505,7 +505,9 @@ char * TableGetCellValue(Table *tablePtr, int r, int c) {
 	char *val = NULL;
 	if (result) {
 	    val = (char *)Tcl_Alloc((Tcl_Size)strlen(result)+1);
-	    strcpy(val, result);
+	    if (val) {
+		strcpy(val, result);
+	    }
 	}
 	Tcl_SetHashValue(entryPtr, val);
     }
@@ -519,6 +521,7 @@ VALUE:
 	    Tcl_DString script;
 	    /* provides a rough mutex on preventing proc loops */
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->inProc, buf, &new);
+	    if (!entryPtr) return NULL;
 	    if (!new) {
 		Tcl_SetHashValue(entryPtr, 1);
 		Tcl_AddErrorInfo(interp, "\n\t(loop hit in proc evaled by table)");
@@ -622,13 +625,16 @@ int TableSetCellValue(Table *tablePtr, int r, int c, char *value) {
 	char *val = NULL;
 
 	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
+	if (!entryPtr) return TCL_ERROR;
 	if (!new) {
 	    val = (char *) Tcl_GetHashValue(entryPtr);
 	    if (val) Tcl_Free(val);
 	}
 	if (value) {
 	    val = (char *)Tcl_Alloc((Tcl_Size)strlen(value)+1);
-	    strcpy(val, value);
+	    if (val) {
+		strcpy(val, value);
+	    }
 	}
 	Tcl_SetHashValue(entryPtr, val);
 	flash = 1;
@@ -698,6 +704,7 @@ int TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf, int
 	     * set 'to' to the 'from' value without new mallocing.
 	     */
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->cache, tobuf, &new);
+	    if (!entryPtr) return TCL_ERROR;
 	    /*
 	     * free old value
 	     */
@@ -1048,8 +1055,10 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 
     if (tablePtr->spanTbl == NULL) {
 	tablePtr->spanTbl = (Tcl_HashTable *)Tcl_Alloc((Tcl_Size)sizeof(Tcl_HashTable));
+	if (!tablePtr->spanTbl) return TCL_ERROR;
 	Tcl_InitHashTable(tablePtr->spanTbl, TCL_STRING_KEYS);
 	tablePtr->spanAffTbl = (Tcl_HashTable *)Tcl_Alloc((Tcl_Size)sizeof(Tcl_HashTable));
+	if (!tablePtr->spanAffTbl) return TCL_ERROR;
 	Tcl_InitHashTable(tablePtr->spanAffTbl, TCL_STRING_KEYS);
     }
 
@@ -1144,10 +1153,12 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 
     /* Set affected cell table to a NULL value */
     entryPtr = Tcl_CreateHashEntry(tablePtr->spanAffTbl, cell, &new);
+    if (!entryPtr) return TCL_ERROR;
     Tcl_SetHashValue(entryPtr, (char *) NULL);
     /* set the spanning cells table with span value */
     entryPtr = Tcl_CreateHashEntry(tablePtr->spanTbl, cell, &new);
     dbuf = (char *)Tcl_Alloc((Tcl_Size)strlen(span)+1);
+    if (!dbuf) return TCL_ERROR;
     strcpy(dbuf, span);
     Tcl_SetHashValue(entryPtr, dbuf);
     dbuf = Tcl_GetHashKey(tablePtr->spanTbl, entryPtr);

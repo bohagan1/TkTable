@@ -239,7 +239,9 @@ int Table_AdjustCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 		}
 	    } else {
 		entryPtr = Tcl_CreateHashEntry(hashTablePtr, INT2PTR(posn), &dummy);
-		Tcl_SetHashValue(entryPtr, INT2PTR(value));
+		if (entryPtr) {
+		    Tcl_SetHashValue(entryPtr, INT2PTR(value));
+		}
 	    }
 	}
 	TableAdjustParams(tablePtr);
@@ -425,7 +427,9 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    if (value != tablePtr->scanMarkY) {
 		entryPtr = Tcl_CreateHashEntry(tablePtr->rowHeights, INT2PTR(row), &dummy);
 		/* -value means rowHeight will be interp'd as pixels, not lines */
-		Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
+		if (entryPtr) {
+		    Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
+		}
 		tablePtr->scanMarkY = value;
 		key++;
 	    }
@@ -437,7 +441,9 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    if (value != tablePtr->scanMarkX) {
 		entryPtr = Tcl_CreateHashEntry(tablePtr->colWidths, INT2PTR(col), &dummy);
 		/* -value means colWidth will be interp'd as pixels, not chars */
-		Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
+		if (entryPtr) {
+		    Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
+		}
 		tablePtr->scanMarkX = value;
 		key++;
 	    }

@@ -24,7 +24,7 @@ _RULES_VC = 1
 # For modifications that are not backward-compatible, you *must* change
 # the major version.
 RULES_VERSION_MAJOR = 1
-RULES_VERSION_MINOR = 15
+RULES_VERSION_MINOR = 16
 
 # The PROJECT macro must be defined by parent makefile.
 !if "$(PROJECT)" == ""
