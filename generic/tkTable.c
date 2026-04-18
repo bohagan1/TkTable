@@ -504,18 +504,22 @@ static char * TableVarProc(
 	    char *val, *data;
 
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
-	    if (!new) {
+	    if (entryPtr && !new) {
 		data = (char *) Tcl_GetHashValue(entryPtr);
 		if (data) { Tcl_Free(data); }
 	    }
 	    data = (char *) Tcl_GetVar2(interp, name, index, TCL_GLOBAL_ONLY);
 	    if (data && *data != '\0') {
 		val = (char *)Tcl_Alloc((Tcl_Size)strlen(data)+1);
-		strcpy(val, data);
+		if (val) {
+		    strcpy(val, data);
+		}
 	    } else {
 		val = NULL;
 	    }
-	    Tcl_SetHashValue(entryPtr, val);
+	    if (entryPtr) {
+		Tcl_SetHashValue(entryPtr, val);
+	    }
 	}
 	/* convert index to real coords */
 	row -= tablePtr->rowOffset;
@@ -630,14 +634,16 @@ static int TableConfigure(
     Tcl_DString error;
     Tk_FontMetrics fm;
 
-    oldExport	= tablePtr->exportSelection;
-    oldCaching	= tablePtr->caching;
-    oldUse	= tablePtr->useCmd;
+    oldExport		= tablePtr->exportSelection;
+    oldCaching		= tablePtr->caching;
+    oldUse		= tablePtr->useCmd;
     oldTitleRows	= tablePtr->titleRows;
     oldTitleCols	= tablePtr->titleCols;
-    if (tablePtr->arrayVar != NULL) {
+    if (tablePtr->arrayVar) {
 	oldVar = Tcl_Alloc((Tcl_Size)strlen(tablePtr->arrayVar) + 1);
-	strcpy(oldVar, tablePtr->arrayVar);
+	if (oldVar) {
+	    strcpy(oldVar, tablePtr->arrayVar);
+	}
     }
 
     /* Do the configuration */
@@ -645,7 +651,7 @@ static int TableConfigure(
 	(char *) tablePtr, flags|TK_CONFIG_OBJS);
     if (result != TCL_OK) {
 	/* Free oldVar if it was allocated */
-	if (oldVar != NULL) Tcl_Free(oldVar);
+	if (oldVar) Tcl_Free(oldVar);
 
 	return TCL_ERROR;
     }
@@ -674,11 +680,11 @@ static int TableConfigure(
 	    oldCaching = !(tablePtr->caching);
 	}
 	/* remove the trace on the old array variable if there was one */
-	if (oldVar != NULL)
+	if (oldVar)
 	    Tcl_UntraceVar(interp, oldVar, TCL_TRACE_WRITES|TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
 		TableVarProc, (ClientData) tablePtr);
 	/* Check whether variable is an array and trace it if it is */
-	if (tablePtr->arrayVar != NULL) {
+	if (tablePtr->arrayVar) {
 	    /* does the variable exist as an array? */
 	    if (Tcl_SetVar2(interp, tablePtr->arrayVar, TEST_KEY, "", TCL_GLOBAL_ONLY) == NULL) {
 		Tcl_DStringAppend(&error, "invalid variable value \"", -1);
@@ -706,7 +712,7 @@ static int TableConfigure(
     }
 
     /* Free oldVar if it was allocated */
-    if (oldVar != NULL) Tcl_Free(oldVar);
+    if (oldVar) Tcl_Free(oldVar);
 
     if ((tablePtr->command && tablePtr->useCmd && !oldUse) ||
 	(tablePtr->arrayVar && !(tablePtr->useCmd) && oldUse)) {
@@ -1136,7 +1142,7 @@ static void TableDestroy(ClientData clientdata) {
     Tcl_DeleteTimerHandler(tablePtr->flashTimer);
 
     /* Delete the variable trace */
-    if (tablePtr->arrayVar != NULL) {
+    if (tablePtr->arrayVar) {
 	Tcl_UntraceVar(tablePtr->interp, tablePtr->arrayVar,
 		TCL_TRACE_WRITES | TCL_TRACE_UNSETS | TCL_GLOBAL_ONLY,
 		TableVarProc, (ClientData) tablePtr);
@@ -1150,7 +1156,7 @@ static void TableDestroy(ClientData clientdata) {
 
     /* Delete cached active tag and string */
     if (tablePtr->activeTagPtr) Tcl_Free((char *) tablePtr->activeTagPtr);
-    if (tablePtr->activeBuf != NULL) Tcl_Free(tablePtr->activeBuf);
+    if (tablePtr->activeBuf) Tcl_Free(tablePtr->activeBuf);
 
     /*
      * Delete the various hash tables, make sure to clear the STRING_KEYS
@@ -2030,11 +2036,13 @@ static void TableDisplay(ClientData clientdata) {
 	     * if not, run the findColTag routine and cache the value
 	     */
 	    entryPtr = Tcl_CreateHashEntry(colTagsCache, INT2PTR(ucol), &new);
-	    if (new) {
-		colPtr = FindRowColTag(tablePtr, ucol, COL);
-		Tcl_SetHashValue(entryPtr, colPtr);
-	    } else {
-		colPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
+	    if (entryPtr) {
+		if (new) {
+		    colPtr = FindRowColTag(tablePtr, ucol, COL);
+		    Tcl_SetHashValue(entryPtr, colPtr);
+		} else {
+		    colPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
+		}
 	    }
 	    if (colPtr != (TableTag *) NULL) {
 		TableMergeTag(tablePtr, tagPtr, colPtr);
@@ -2049,7 +2057,7 @@ static void TableDisplay(ClientData clientdata) {
 	    }
 	    /* Does this have a cell tag */
 	    entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf);
-	    if (entryPtr != NULL) {
+	    if (entryPtr) {
 		TableMergeTag(tablePtr, tagPtr, (TableTag *) Tcl_GetHashValue(entryPtr));
 	    }
 	    /* Is this cell active? */
@@ -2921,7 +2929,9 @@ void TableAddFlash(Table *tablePtr, int row, int col) {
 
     /* add the flash to the hash table */
     entryPtr = Tcl_CreateHashEntry(tablePtr->flashCells, buf, &dummy);
-    Tcl_SetHashValue(entryPtr, INT2PTR(tablePtr->flashTime));
+    if (entryPtr) {
+	Tcl_SetHashValue(entryPtr, INT2PTR(tablePtr->flashTime));
+    }
 
     /* now set the timer if it's not already going and invalidate the area */
     if (tablePtr->flashTimer == NULL) {
@@ -3160,6 +3170,7 @@ void TableAdjustParams(Table *tablePtr) {
     tablePtr->colPixels = (int *) Tcl_Alloc(tablePtr->cols * sizeof(int));
     if (tablePtr->colStarts) Tcl_Free((char *) tablePtr->colStarts);
     tablePtr->colStarts = (int *) Tcl_Alloc((tablePtr->cols+1) * sizeof(int));
+    if (!tablePtr->colPixels || !tablePtr->colStarts) return;
 
     /*
      * Get all the preset columns and set their widths
@@ -3169,7 +3180,7 @@ void TableAdjustParams(Table *tablePtr) {
     unpreset = 0;
     for (i = 0; i < tablePtr->cols; i++) {
 	entryPtr = Tcl_FindHashEntry(tablePtr->colWidths, INT2PTR(i));
-	if (entryPtr == NULL) {
+	if (!entryPtr) {
 	    tablePtr->colPixels[i] = -1;
 	    unpreset++;
 	    lastUnpreset = i;
@@ -3262,7 +3273,7 @@ void TableAdjustParams(Table *tablePtr) {
 	unpreset	= 0;
 	for (i = 0; i < tablePtr->rows; i++) {
 	    entryPtr = Tcl_FindHashEntry(tablePtr->rowHeights, INT2PTR(i));
-	    if (entryPtr == NULL) {
+	    if (!entryPtr) {
 		tablePtr->rowPixels[i] = -1;
 		unpreset++;
 		lastUnpreset = i;

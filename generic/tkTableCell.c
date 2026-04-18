@@ -308,10 +308,9 @@ void TableWhatCell(Table *tablePtr, int x, int y, int *row, int *col) {
 	TableMakeArrayIndex(*row+tablePtr->rowOffset, *col+tablePtr->colOffset,
 	    buf, INDEX_BUFSIZE);
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
-	if ((entryPtr != NULL) &&
-	    /* We have to make sure this was not already hidden
-	     * that's an error */
-	    ((char *)Tcl_GetHashValue(entryPtr) != NULL)) {
+	if (entryPtr && ((char *)Tcl_GetHashValue(entryPtr) != NULL)) {
+	    /* We have to make sure this was not already hidden, that's an error */
+	    
 	    /* this is a "hidden" cell */
 	    TableParseArrayIndex(row, col, (char *)Tcl_GetHashValue(entryPtr));
 	    *row -= tablePtr->rowOffset;
@@ -476,7 +475,7 @@ char * TableGetCellValue(Table *tablePtr, int r, int c) {
 	 * from the other data source.
 	 */
 	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
-	if (!new) {
+	if (entryPtr && !new) {
 	    result = (char *) Tcl_GetHashValue(entryPtr);
 	    goto VALUE;
 	}
@@ -503,7 +502,7 @@ char * TableGetCellValue(Table *tablePtr, int r, int c) {
     if (tablePtr->dataSource & DATA_ARRAY) {
 	result = (char *) Tcl_GetVar2(interp, tablePtr->arrayVar, buf, TCL_GLOBAL_ONLY);
     }
-    if (tablePtr->caching && entryPtr != NULL) {
+    if (tablePtr->caching && entryPtr) {
 	/*
 	 * If we are caching, make sure we cache the returned value
 	 *
@@ -513,7 +512,9 @@ char * TableGetCellValue(Table *tablePtr, int r, int c) {
 	char *val = NULL;
 	if (result) {
 	    val = (char *)Tcl_Alloc((Tcl_Size)strlen(result)+1);
-	    strcpy(val, result);
+	    if (val) {
+		strcpy(val, result);
+	    }
 	}
 	Tcl_SetHashValue(entryPtr, val);
     }
@@ -527,6 +528,7 @@ VALUE:
 	    Tcl_DString script;
 	    /* provides a rough mutex on preventing proc loops */
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->inProc, buf, &new);
+	    if (!entryPtr) return NULL;
 	    if (!new) {
 		Tcl_SetHashValue(entryPtr, 1);
 		Tcl_AddErrorInfo(interp, "\n\t(loop hit in proc evaled by table)");
@@ -630,13 +632,16 @@ int TableSetCellValue(Table *tablePtr, int r, int c, char *value) {
 	char *val = NULL;
 
 	entryPtr = Tcl_CreateHashEntry(tablePtr->cache, buf, &new);
+	if (!entryPtr) return TCL_ERROR;
 	if (!new) {
 	    val = (char *) Tcl_GetHashValue(entryPtr);
 	    if (val) Tcl_Free(val);
 	}
 	if (value) {
 	    val = (char *)Tcl_Alloc((Tcl_Size)strlen(value)+1);
-	    strcpy(val, value);
+	    if (val) {
+		strcpy(val, value);
+	    }
 	}
 	Tcl_SetHashValue(entryPtr, val);
 	flash = 1;
@@ -706,6 +711,7 @@ int TableMoveCellValue(Table *tablePtr, int fromr, int fromc, char *frombuf, int
 	     * set 'to' to the 'from' value without new mallocing.
 	     */
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->cache, tobuf, &new);
+	    if (!entryPtr) return TCL_ERROR;
 	    /*
 	     * free old value
 	     */
@@ -1091,8 +1097,10 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 
     if (tablePtr->spanTbl == NULL) {
 	tablePtr->spanTbl = (Tcl_HashTable *)Tcl_Alloc(sizeof(Tcl_HashTable));
+	if (!tablePtr->spanTbl) return TCL_ERROR;
 	Tcl_InitHashTable(tablePtr->spanTbl, TCL_STRING_KEYS);
 	tablePtr->spanAffTbl = (Tcl_HashTable *)Tcl_Alloc(sizeof(Tcl_HashTable));
+	if (!tablePtr->spanAffTbl) return TCL_ERROR;
 	Tcl_InitHashTable(tablePtr->spanAffTbl, TCL_STRING_KEYS);
     }
 
@@ -1129,7 +1137,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 	    for (j = ucol; j <= ucol+ocs; j++) {
 		TableMakeArrayIndex(i, j, buf, INDEX_BUFSIZE);
 		entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
-		if (entryPtr != NULL) {
+		if (entryPtr) {
 		    Tcl_DeleteHashEntry(entryPtr);
 		}
 		TableRefresh(tablePtr, i-tablePtr->rowOffset, j-tablePtr->colOffset, CELL);
@@ -1144,7 +1152,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 	for (j = ucol; j <= ucol+cs; j++) {
 	    TableMakeArrayIndex(i, j, buf, INDEX_BUFSIZE);
 	    entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, buf);
-	    if (entryPtr != NULL) {
+	    if (entryPtr) {
 		/* Something already spans here */
 		Tcl_AppendResult(interp, "cannot overlap already spanned cell ", buf,
 		    (char *)NULL);
@@ -1161,12 +1169,12 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
     /* 0,0 span means set to unspanned again */
     if (rs == 0 && cs == 0) {
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanTbl, cell);
-	if (entryPtr != NULL) {
+	if (entryPtr) {
 	    Tcl_Free((char *) Tcl_GetHashValue(entryPtr));
 	    Tcl_DeleteHashEntry(entryPtr);
 	}
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, cell);
-	if (entryPtr != NULL) {
+	if (entryPtr) {
 	    Tcl_DeleteHashEntry(entryPtr);
 	}
 	if (Tcl_FirstHashEntry(tablePtr->spanTbl, &search) == NULL) {
@@ -1187,10 +1195,13 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 
     /* Set affected cell table to a NULL value */
     entryPtr = Tcl_CreateHashEntry(tablePtr->spanAffTbl, cell, &new);
+    if (!entryPtr) return TCL_ERROR;
     Tcl_SetHashValue(entryPtr, (char *) NULL);
     /* set the spanning cells table with span value */
     entryPtr = Tcl_CreateHashEntry(tablePtr->spanTbl, cell, &new);
+    if (!entryPtr) return TCL_ERROR;
     dbuf = (char *)Tcl_Alloc((Tcl_Size)strlen(span)+1);
+    if (!dbuf) return TCL_ERROR;
     strcpy(dbuf, span);
     Tcl_SetHashValue(entryPtr, dbuf);
     dbuf = Tcl_GetHashKey(tablePtr->spanTbl, entryPtr);
@@ -1200,7 +1211,7 @@ static int Table_SpanSet(Table *tablePtr, int urow, int ucol, int rs, int cs) {
 	for (j = ucol; j <= ucol+cs; j++) {
 	    TableMakeArrayIndex(i, j, buf, INDEX_BUFSIZE);
 	    entryPtr = Tcl_CreateHashEntry(tablePtr->spanAffTbl, buf, &new);
-	    if (!(i == urow && j == ucol)) {
+	    if (entryPtr && !(i == urow && j == ucol)) {
 		Tcl_SetHashValue(entryPtr, (char *) dbuf);
 	    }
 	}
@@ -1303,7 +1314,7 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
     if (objc == 2) {
 	/* return all "hidden" cells */
 	Tcl_Obj *listPtr;
-	if (tablePtr->spanTbl != NULL) {
+	if (tablePtr->spanTbl) {
 	    listPtr = TableGetSortedIndicesFiltered(tablePtr->spanAffTbl, 1, NULL);
 	    if (listPtr) {
 		Tcl_SetObjResult(interp, listPtr);
@@ -1323,8 +1334,7 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	}
 	/* Just return the spanning values of the one cell */
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, Tcl_GetString(objv[2]));
-	if (entryPtr != NULL &&
-	    (span = (char *)Tcl_GetHashValue(entryPtr)) != NULL) {
+	if (entryPtr && (span = (char *)Tcl_GetHashValue(entryPtr)) != NULL) {
 	    /* this is a hidden cell */
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(span, -1));
 	}
@@ -1342,8 +1352,7 @@ int Table_HiddenCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    return TCL_ERROR;
 	}
 	entryPtr = Tcl_FindHashEntry(tablePtr->spanAffTbl, Tcl_GetString(objv[i]));
-	if (entryPtr != NULL &&
-	    (char *)Tcl_GetHashValue(entryPtr) != NULL) {
+	if (entryPtr && (char *)Tcl_GetHashValue(entryPtr) != NULL) {
 	    /* this is a hidden cell */
 	    continue;
 	}

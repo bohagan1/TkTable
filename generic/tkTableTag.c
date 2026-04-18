@@ -134,6 +134,7 @@ TableTag * TableNewTag(Table *tablePtr) {
      */
     if (tablePtr == NULL) {
 	tagPtr = (TableTag *) Tcl_Alloc(sizeof(TableTag));
+	if (!tagPtr) return NULL;
 	memset((void *) tagPtr, 0, sizeof(TableTag));
 
 	/*
@@ -148,6 +149,7 @@ TableTag * TableNewTag(Table *tablePtr) {
 	tagPtr->wrap		= -1;
     } else {
 	TableJoinTag *jtagPtr = (TableJoinTag *) Tcl_Alloc(sizeof(TableJoinTag));
+	if (!jtagPtr) return NULL;
 	memset((void *) jtagPtr, 0, sizeof(TableJoinTag));
 	tagPtr = (TableTag *) jtagPtr;
 
@@ -455,8 +457,10 @@ static TableTag * TableTagGetEntry(Table *tablePtr, char *name, Tcl_Size objc, T
     int new;
 
     entryPtr = Tcl_CreateHashEntry(tablePtr->tagTable, name, &new);
+    if (!entryPtr) return NULL;
     if (new) {
 	tagPtr = TableNewTag(NULL);
+	if (!tagPtr) return NULL;
 	Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
 	if (tablePtr->tagPrioSize >= tablePtr->tagPrioMax) {
 	    int i;
@@ -660,7 +664,7 @@ TableTag * FindRowColTag(Table *tablePtr, int cell, int mode) {
 	    Tcl_ResetResult(interp);
 	}
     }
-    if (entryPtr != NULL) {
+    if (entryPtr) {
 	/*
 	 * This can be either the one in row|colStyles,
 	 * or that returned by eval'ing the row|colTagCmd
@@ -869,7 +873,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		     * This is a deletion
 		     */
 		    entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf);
-		    if (entryPtr != NULL) {
+		    if (entryPtr) {
 			Tcl_DeleteHashEntry(entryPtr);
 			refresh = 1;
 		    }
@@ -879,7 +883,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		     * Tag structure if it wasn't the same as an existing one
 		     */
 		    entryPtr = Tcl_CreateHashEntry(tablePtr->cellStyles, buf, &newEntry);
-		    if (newEntry || (tagPtr != (TableTag *) Tcl_GetHashValue(entryPtr))) {
+		    if (entryPtr && (newEntry || (tagPtr != (TableTag *) Tcl_GetHashValue(entryPtr)))) {
 			Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
 			refresh = 1;
 		    }
@@ -942,6 +946,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 
 		    cacheTblPtr = (Tcl_HashTable *)
 			Tcl_Alloc(sizeof(Tcl_HashTable));
+		    if (!cacheTblPtr) return TCL_ERROR;
 		    Tcl_InitHashTable(cacheTblPtr, TCL_ONE_WORD_KEYS);
 		    resultPtr = Tcl_NewListObj(0, NULL);
 		    if (!resultPtr) return TCL_ERROR;
@@ -1020,7 +1025,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 		     * Tag structure if it wasn't the same as an existing one
 		     */
 		    entryPtr = Tcl_CreateHashEntry(hashTblPtr, INT2PTR(value), &newEntry);
-		    if (newEntry || (tagPtr != (TableTag *) Tcl_GetHashValue(entryPtr))) {
+		    if (entryPtr && (newEntry || (tagPtr != (TableTag *) Tcl_GetHashValue(entryPtr)))) {
 			Tcl_SetHashValue(entryPtr, (ClientData) tagPtr);
 			refresh = 1;
 		    }
@@ -1210,7 +1215,7 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    /* create hash key */
 	    TableMakeArrayIndex(row, col, buf, INDEX_BUFSIZE);
 	    resultPtr = Tcl_NewListObj(0, NULL);
-	    if (!resultObj) return TCL_ERROR;
+	    if (!resultPtr) return TCL_ERROR;
 
 	    if (Tcl_FindHashEntry(tablePtr->flashCells, buf) != NULL) {
 		Tcl_ListObjAppendElement(interp, resultPtr, Tcl_NewStringObj("flash",-1));

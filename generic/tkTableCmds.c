@@ -400,7 +400,9 @@ int Table_AdjustCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 		}
 	    } else {
 		entryPtr = Tcl_CreateHashEntry(hashTablePtr, INT2PTR(posn), &dummy);
-		Tcl_SetHashValue(entryPtr, INT2PTR(value));
+		if (entryPtr) {
+		    Tcl_SetHashValue(entryPtr, INT2PTR(value));
+		}
 	    }
 	}
 	TableAdjustParams(tablePtr);
@@ -589,7 +591,9 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    if (value != tablePtr->scanMarkY) {
 		entryPtr = Tcl_CreateHashEntry(tablePtr->rowHeights, INT2PTR(row), &dummy);
 		/* -value means rowHeight will be interp'd as pixels, not lines */
-		Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
+		if (entryPtr) {
+		    Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
+		}
 		tablePtr->scanMarkY = value;
 		key++;
 	    }
@@ -601,7 +605,9 @@ int Table_BorderCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj
 	    if (value != tablePtr->scanMarkX) {
 		entryPtr = Tcl_CreateHashEntry(tablePtr->colWidths, INT2PTR(col), &dummy);
 		/* -value means colWidth will be interp'd as pixels, not chars */
-		Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
+		if (entryPtr) {
+		    Tcl_SetHashValue(entryPtr, INT2PTR(MIN(0,-value)));
+		}
 		tablePtr->scanMarkX = value;
 		key++;
 	    }
@@ -1156,7 +1162,7 @@ int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
 		    }
 		}
 		itemPtr = Tcl_NewStringObj(TableGetCellValue(tablePtr, row, col), -1);
-		if (itemPtr != NULL) {
+		if (itemPtr) {
 		    if (len > 1) {
 			Tcl_ListObjAppendElement(interp, listPtr, itemPtr);
 		    } else {
@@ -1211,15 +1217,15 @@ int Table_Get2Cmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *
     return TCL_OK;
 
 abort:
-    if (itemPtr != NULL) {
+    if (itemPtr) {
 	Tcl_IncrRefCount(itemPtr);
 	Tcl_DecrRefCount(itemPtr);
     }
-    if (listPtr != NULL) {
+    if (listPtr) {
 	Tcl_IncrRefCount(listPtr);
 	Tcl_DecrRefCount(listPtr);
     }
-    if (resultPtr != NULL) {
+    if (resultPtr) {
 	Tcl_IncrRefCount(resultPtr);
 	Tcl_DecrRefCount(resultPtr);
     }
@@ -1611,7 +1617,7 @@ CLEAR_CELLS:
 	for ( col = c1; col <= c2; col++ ) {
 	    TableMakeArrayIndex(row, col, buf1, INDEX_BUFSIZE);
 	    entryPtr = Tcl_FindHashEntry(tablePtr->selCells, buf1);
-	    if (entryPtr != NULL) {
+	    if (entryPtr) {
 		Tcl_DeleteHashEntry(entryPtr);
 		TableRefresh(tablePtr, row-tablePtr->rowOffset, col-tablePtr->colOffset, CELL);
 		selchanged = 1;

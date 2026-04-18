@@ -77,25 +77,29 @@ static void TableModifyRC(
      */
     if (!(flags & HOLD_TAGS)) {
 	entryPtr = Tcl_FindHashEntry(tagTblPtr, INT2PTR(from));
-	if (entryPtr != NULL) {
+	if (entryPtr) {
 	    Tcl_DeleteHashEntry(entryPtr);
 	}
 	entryPtr = Tcl_FindHashEntry(dimTblPtr, INT2PTR(from-offset));
-	if (entryPtr != NULL) {
+	if (entryPtr) {
 	    Tcl_DeleteHashEntry(entryPtr);
 	}
 	if (!outOfBounds) {
 	    entryPtr = Tcl_FindHashEntry(tagTblPtr, INT2PTR(to));
-	    if (entryPtr != NULL) {
+	    if (entryPtr) {
 		newPtr = Tcl_CreateHashEntry(tagTblPtr, INT2PTR(from), &new);
-		Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-		Tcl_DeleteHashEntry(entryPtr);
+		if (newPtr) {
+		    Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+		    Tcl_DeleteHashEntry(entryPtr);
+		}
 	    }
 	    entryPtr = Tcl_FindHashEntry(dimTblPtr, INT2PTR(to-offset));
-	    if (entryPtr != NULL) {
+	    if (entryPtr) {
 		newPtr = Tcl_CreateHashEntry(dimTblPtr, INT2PTR(from-offset), &new);
-		Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-		Tcl_DeleteHashEntry(entryPtr);
+		if (newPtr) {
+		    Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+		    Tcl_DeleteHashEntry(entryPtr);
+		}
 	    }
 	}
     }
@@ -116,13 +120,13 @@ static void TableModifyRC(
 	 */
 	if (!(flags & HOLD_SEL)) {
 	    entryPtr = Tcl_FindHashEntry(tablePtr->selCells, buf);
-	    if (entryPtr != NULL) {
+	    if (entryPtr) {
 		Tcl_DeleteHashEntry(entryPtr);
 		selchanged = 1;
 	    }
 	    if (!outOfBounds) {
 		entryPtr = Tcl_FindHashEntry(tablePtr->selCells, buf1);
-		if (entryPtr != NULL) {
+		if (entryPtr) {
 		    Tcl_CreateHashEntry(tablePtr->selCells, buf, &new);
 		    Tcl_DeleteHashEntry(entryPtr);
 		    selchanged = 1;
@@ -136,15 +140,17 @@ static void TableModifyRC(
 	 */
 	if (!(flags & HOLD_TAGS)) {
 	    entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf);
-	    if (entryPtr != NULL) {
+	    if (entryPtr) {
 		Tcl_DeleteHashEntry(entryPtr);
 	    }
 	    if (!outOfBounds) {
 		entryPtr = Tcl_FindHashEntry(tablePtr->cellStyles, buf1);
-		if (entryPtr != NULL) {
+		if (entryPtr) {
 		    newPtr = Tcl_CreateHashEntry(tablePtr->cellStyles, buf, &new);
-		    Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
-		    Tcl_DeleteHashEntry(entryPtr);
+		    if (newPtr) {
+			Tcl_SetHashValue(newPtr, Tcl_GetHashValue(entryPtr));
+			Tcl_DeleteHashEntry(entryPtr);
+		    }
 		}
 	    }
 	}
@@ -167,7 +173,7 @@ static void TableModifyRC(
 		 * use because we are intermediately fiddling with boundaries
 		 */
 		entryPtr = Tcl_FindHashEntry(tablePtr->winTable, buf1);
-		if (entryPtr != NULL) {
+		if (entryPtr) {
 		    /*
 		     * If there was a window in our source,
 		     * get the window pointer to move it
@@ -182,7 +188,9 @@ static void TableModifyRC(
 		     * Table_WinDelete above should guarantee that no window
 		     * is there.  Just set the new entry's value.
 		     */
-		    Tcl_SetHashValue(entryPtr, (ClientData) ewPtr);
+		    if (entryPtr) {
+			Tcl_SetHashValue(entryPtr, (ClientData) ewPtr);
+		    }
 		    ewPtr->hPtr = entryPtr;
 		}
 	    }
@@ -233,6 +241,7 @@ void TableDeleteChars(
 
     newByteCount = numBytes + 1 - byteCount;
     new = (char *) Tcl_Alloc((Tcl_Size) newByteCount);
+    if (!new) return;
     memcpy(new, string, (size_t) byteIndex);
     strcpy(new + byteIndex, string + byteIndex + byteCount);
 
@@ -331,6 +340,7 @@ void TableInsertChars(
 
     oldlen = (int) strlen(string);
     new = (char *) Tcl_Alloc((Tcl_Size)(oldlen + byteCount + 1));
+    if (!new) return;
     memcpy(new, string, (size_t) byteIndex);
     strcpy(new + byteIndex, value);
     strcpy(new + byteIndex + byteCount, string + byteIndex);

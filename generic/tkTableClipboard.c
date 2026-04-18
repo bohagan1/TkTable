@@ -737,7 +737,7 @@ int Table_ImportCmd(
 
     /* Allocate temp storage for selection conversion data */
     dPtr = (TableGetSelection *) Tcl_Alloc(sizeof(TableGetSelection));
-    if (dPtr == NULL) {
+    if (!dPtr) {
 	return TCL_ERROR;
     }
 
@@ -789,11 +789,11 @@ int Table_ImportCmd(
 
     /* Clean-up */
 cleanup:
-    if (dPtr->listPtr != NULL) {
+    if (dPtr->listPtr) {
 	Tcl_IncrRefCount(dPtr->listPtr);
 	Tcl_DecrRefCount(dPtr->listPtr);
     }
-    if (dPtr->resultPtr != NULL) {
+    if (dPtr->resultPtr) {
 	if (result == TCL_OK) {
 	    Tcl_SetObjResult(interp, dPtr->resultPtr);
 	} else {
@@ -801,7 +801,7 @@ cleanup:
 	    Tcl_DecrRefCount(dPtr->resultPtr);
 	}
     }
-    if (dPtr->buffer != NULL) {
+    if (dPtr->buffer) {
 	Tcl_Free(dPtr->buffer);
     }
     Tcl_Free((char *)dPtr);
@@ -941,7 +941,7 @@ Tcl_Size TableFetchSelection(
 	}
 	length = Tcl_DStringLength(&tablePtr->selection);
 
-	if (tablePtr->selCmd != NULL) {
+	if (tablePtr->selCmd) {
 	    int code;
 	    Tcl_DString script;
 	    Tcl_DStringInit(&script);
@@ -1057,7 +1057,7 @@ void TableDeregisterSelectionHandlers(
     Table *tablePtr = (Table *) clientData;
 
     /* target is ICCCM type, format is used for transmit */
-    if (tablePtr->tkwin != NULL) {
+    if (tablePtr->tkwin) {
 #ifndef _WIN32
 	Atom target = Tk_InternAtom(tablePtr->tkwin, "UTF8_STRING");
 #else
