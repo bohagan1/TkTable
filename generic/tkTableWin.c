@@ -906,11 +906,14 @@ int Table_WindowCmd(ClientData clientData, Tcl_Interp *interp,
 	    }
 	    entryPtr = Tcl_NextHashEntry(&search);
 	}
+
 	Tcl_IncrRefCount(listPtr);
 	resultPtr = TableCellSortObj(interp, listPtr);
-	if (resultPtr) {
-	    Tcl_SetObjResult(interp, resultPtr);
+	if (!resultPtr) {
+	    Tcl_DecrRefCount(listPtr);
+	    return TCL_ERROR;
 	}
+	Tcl_SetObjResult(interp, resultPtr);
 	Tcl_DecrRefCount(listPtr);
 	break;
     }

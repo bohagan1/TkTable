@@ -682,11 +682,14 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp,
 	    value = Tcl_GetHashKey(tablePtr->selCells, entryPtr);
 	    Tcl_ListObjAppendElement(NULL, listPtr, Tcl_NewStringObj(value, -1));
 	}
+
 	Tcl_IncrRefCount(listPtr);
 	resultPtr = TableCellSortObj(interp, listPtr);
-	if (resultPtr) {
-	    Tcl_SetObjResult(interp, resultPtr);
+	if (!resultPtr) {
+	    Tcl_DecrRefCount(listPtr);
+	    return TCL_ERROR;
 	}
+	Tcl_SetObjResult(interp, resultPtr);
 	Tcl_DecrRefCount(listPtr);
     }
     return TCL_OK;

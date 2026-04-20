@@ -374,6 +374,7 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
     elementArray[length-1].nextPtr = NULL;
     elementPtr = MergeSort(elementArray);
     sortedObjPtr = Tcl_NewObj();
+    if (!sortedObjPtr) return NULL;
     for (; elementPtr != NULL; elementPtr = elementPtr->nextPtr) {
 	Tcl_ListObjAppendElement(NULL, sortedObjPtr, elementPtr->objPtr);
     }
