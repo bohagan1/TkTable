@@ -2255,6 +2255,8 @@ static void TableDisplay(ClientData clientdata) {
 		} else {
 		    colPtr = (TableTag *) Tcl_GetHashValue(entryPtr);
 		}
+	    } else {
+		colPtr = NULL;
 	    }
 	    if (colPtr != (TableTag *) NULL) {
 		TableMergeTag(tablePtr, tagPtr, colPtr);
