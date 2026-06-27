@@ -281,26 +281,28 @@ int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int n
  */
 
 char * Cmd_GetName(const Cmd_Struct *cmds, int val) {
-  for(;cmds->name && cmds->name[0];cmds++) {
-    if (cmds->value==val) return cmds->name;
-  }
-  return NULL;
+    for(;cmds->name && cmds->name[0];cmds++) {
+	if (cmds->value==val) return cmds->name;
+    }
+    return NULL;
 }
 
 int Cmd_GetValue(const Cmd_Struct *cmds, const char *arg) {
-  size_t len = strlen(arg);
-  for(;cmds->name && cmds->name[0];cmds++) {
-    if (!strncmp(cmds->name, arg, len)) return cmds->value;
-  }
-  return 0;
+    size_t len = strlen(arg);
+
+    for(;cmds->name && cmds->name[0];cmds++) {
+	if (!strncmp(cmds->name, arg, len)) return cmds->value;
+    }
+    return 0;
 }
 
 void Cmd_GetError(Tcl_Interp *interp, const Cmd_Struct *cmds, const char *arg) {
-  int i;
-  Tcl_AppendResult(interp, "bad option \"", arg, "\" must be ", (char *) 0);
-  for(i=0;cmds->name && cmds->name[0];cmds++,i++) {
-    Tcl_AppendResult(interp, (i?", ":""), cmds->name, (char *) 0);
-  }
+    int i;
+
+    Tcl_AppendResult(interp, "bad option \"", arg, "\" must be ", (char *) 0);
+    for(i=0;cmds->name && cmds->name[0];cmds++,i++) {
+	Tcl_AppendResult(interp, (i?", ":""), cmds->name, (char *) 0);
+    }
 }
 
 /*
@@ -318,16 +320,17 @@ void Cmd_GetError(Tcl_Interp *interp, const Cmd_Struct *cmds, const char *arg) {
  *----------------------------------------------------------------------
  */
 
-int Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp, Tk_Window unused,
+int Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp, TCL_UNUSED(Tk_Window),
 	const char *value, char *widgRec, Tcl_Size offset) {
-  Cmd_Struct *p = (Cmd_Struct *)clientData;
-  int mode = Cmd_GetValue(p,value);
-  if (!mode) {
-    Cmd_GetError(interp,p,value);
-    return TCL_ERROR;
-  }
-  *((int*)(widgRec+(size_t)offset)) = mode;
-  return TCL_OK;
+    Cmd_Struct *p = (Cmd_Struct *)clientData;
+    int mode = Cmd_GetValue(p,value);
+
+    if (!mode) {
+	Cmd_GetError(interp,p,value);
+	return TCL_ERROR;
+    }
+    *((int*)(widgRec+(size_t)offset)) = mode;
+    return TCL_OK;
 }
 
 /*
@@ -345,9 +348,10 @@ int Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp, Tk_Window unused,
  *----------------------------------------------------------------------
  */
 
-CONST86 char * Cmd_OptionGet(ClientData clientData, Tk_Window unused,
+CONST86 char * Cmd_OptionGet(ClientData clientData, TCL_UNUSED(Tk_Window),
 	char *widgRec, Tcl_Size offset, Tcl_FreeProc **freeProcPtr) {
-  Cmd_Struct *p = (Cmd_Struct *)clientData;
-  int mode = *((int*)(widgRec+(size_t)offset));
-  return (CONST86 char *) Cmd_GetName(p,mode);
+    Cmd_Struct *p = (Cmd_Struct *)clientData;
+    int mode = *((int*)(widgRec+(size_t)offset));
+
+    return (CONST86 char *) Cmd_GetName(p,mode);
 }

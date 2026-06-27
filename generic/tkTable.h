@@ -48,7 +48,7 @@
 
 /* Handle TCL 8.6 CONST changes */
 #ifndef CONST86
-#   if TCL_MAJOR_VERSION > 8
+#   if TCL_MAJOR_VERSION > 8 || (TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION > 5)
 #	define CONST86 const
 #   else
 #	define CONST86
@@ -58,7 +58,7 @@
 /*
  * Backwards compatibility for size type change
  */
-#if TCL_MAJOR_VERSION < 9 && TCL_MINOR_VERSION < 7
+#if TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 7
     #include <limits.h>
     #ifndef TCL_SIZE_MAX
 	#define TCL_SIZE_MAX INT_MAX
@@ -74,6 +74,16 @@
     #define Tcl_NewSizeIntFromObj Tcl_NewWideIntObj
     #define TK_ANCHOR_NULL -1
     #define TK_JUSTIFY_NULL -1
+#endif
+
+#ifndef TCL_UNUSED
+# if defined(__cplusplus)
+#   define TCL_UNUSED(T) T
+# elif defined(__GNUC__) && (__GNUC__ > 2)
+#   define TCL_UNUSED(T) T JOIN(dummy, __LINE__) __attribute__((unused))
+# else
+#   define TCL_UNUSED(T) T JOIN(dummy, __LINE__)
+# endif
 #endif
 
 /*
