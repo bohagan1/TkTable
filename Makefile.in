@@ -250,7 +250,7 @@ make-docs: doc/$(DOC_NAME).man
 
 install: all install-binaries install-libraries install-doc-n install-doc-html
 
-install-binaries: binaries install-lib-binaries install-bin-binaries
+install-binaries: binaries install-lib-binaries
 
 #========================================================================
 # This rule installs platform-independent files, such as header files.
