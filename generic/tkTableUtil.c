@@ -318,7 +318,7 @@ void Cmd_GetError(Tcl_Interp *interp, const Cmd_Struct *cmds, const char *arg) {
  *----------------------------------------------------------------------
  */
 
-int Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp, Tk_Window unused,
+int Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp, TCL_UNUSED(Tk_Window),
 	const char *value, char *widgRec, Tcl_Size offset) {
   Cmd_Struct *p = (Cmd_Struct *)clientData;
   int mode = Cmd_GetValue(p,value);
@@ -345,7 +345,7 @@ int Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp, Tk_Window unused,
  *----------------------------------------------------------------------
  */
 
-CONST86 char * Cmd_OptionGet(ClientData clientData, Tk_Window unused,
+CONST86 char * Cmd_OptionGet(ClientData clientData, TCL_UNUSED(Tk_Window),
 	char *widgRec, Tcl_Size offset, Tcl_FreeProc **freeProcPtr) {
   Cmd_Struct *p = (Cmd_Struct *)clientData;
   int mode = *((int*)(widgRec+(size_t)offset));
