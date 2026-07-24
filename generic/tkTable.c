@@ -1574,7 +1574,11 @@ static Tcl_Size TableFetchSelection(
 		    listArgc, &script, CMD_ACTIVATE);
 	    if ((code = Tcl_EvalEx(interp, Tcl_DStringValue(&script), -1, TCL_EVAL_GLOBAL)) == TCL_ERROR) {
 		Tcl_AddErrorInfo(interp, "\n    (error in table selection command)");
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
+		Tcl_BackgroundError(interp);
+#else
 		Tcl_BackgroundException(interp, code);
+#endif
 		Tcl_DStringFree(&script);
 		Tcl_DStringFree(&tablePtr->selection);
 		tablePtr->haveSelection = 0;
@@ -3475,7 +3479,11 @@ void TableAdjustParams(Table *tablePtr) {
 	    sprintf(buf, " %g %g", first, last);
 	    if ((code = Tcl_VarEval(interp, tablePtr->yScrollCmd, buf, (char *)NULL)) != TCL_OK) {
 		Tcl_AddErrorInfo(interp, "\n\t(vertical scrolling command executed by table)");
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
+		Tcl_BackgroundError(interp);
+#else
 		Tcl_BackgroundException(interp, code);
+#endif
 	    }
 	}
 	/* Do we have a X-scrollbar and cols to scroll? */
@@ -3497,7 +3505,11 @@ void TableAdjustParams(Table *tablePtr) {
 	    sprintf(buf, " %g %g", first, last);
 	    if ((code = Tcl_VarEval(interp, tablePtr->xScrollCmd, buf, (char *)NULL)) != TCL_OK) {
 		Tcl_AddErrorInfo(interp, "\n\t(horizontal scrolling command executed by table)");
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
+		Tcl_BackgroundError(interp);
+#else
 		Tcl_BackgroundException(interp, code);
+#endif
 	    }
 	}
 
@@ -3727,11 +3739,19 @@ int TableValidateChange(
 
     if (code != TCL_OK && code != TCL_RETURN) {
 	Tcl_AddErrorInfo(interp, "\n\t(in validation command executed by table)");
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
+	Tcl_BackgroundError(interp);
+#else
 	Tcl_BackgroundException(interp, code);
+#endif
 	code = TCL_ERROR;
     } else if (Tcl_GetBooleanFromObj(interp, Tcl_GetObjResult(interp), &flag) != TCL_OK) {
 	Tcl_AddErrorInfo(interp, "\n\tboolean not returned by validation command");
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
+	Tcl_BackgroundError(interp);
+#else
 	Tcl_BackgroundException(interp, code);
+#endif
 	code = TCL_ERROR;
     } else {
 	code = (flag) ? TCL_OK : TCL_BREAK;
