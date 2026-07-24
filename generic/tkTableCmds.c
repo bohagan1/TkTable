@@ -301,7 +301,7 @@ int Table_ActivateCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 		textLayout = Tk_ComputeTextLayout(tagPtr->tkfont, tablePtr->activeBuf,
 			-1, (tagPtr->wrap) ? w : 0, tagPtr->justify, 0, &w, &h);
 
-		tablePtr->icursor = Tk_PointToChar(textLayout, x, y);
+		tablePtr->icursor = (int)Tk_PointToChar(textLayout, x, y);
 		Tk_FreeTextLayout(textLayout);
 		TableRefresh(tablePtr, row, col, CELL|INV_FORCE);
 	    }

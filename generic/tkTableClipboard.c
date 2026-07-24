@@ -951,7 +951,11 @@ Tcl_Size TableFetchSelection(
 		Tcl_DStringGetResult(interp, &tablePtr->selection);
 	    } else {
 		Tcl_AddErrorInfo(interp, "\n    (error in table selection command)");
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
+		Tcl_BackgroundError(interp);
+#else
 		Tcl_BackgroundException(interp, code);
+#endif
 		Tcl_DStringFree(&script);
 		Tcl_DStringFree(&tablePtr->selection);
 		tablePtr->haveSelection = 0;

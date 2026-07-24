@@ -492,7 +492,11 @@ char * TableGetCellValue(Table *tablePtr, int r, int c) {
 		tablePtr->dataSource |= DATA_ARRAY;
 	    Tcl_AddErrorInfo(interp, "\n\t(in -command evaled by table)");
 	    Tcl_AddErrorInfo(interp, Tcl_DStringValue(&script));
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
+	    Tcl_BackgroundError(interp);
+#else
 	    Tcl_BackgroundException(interp, code);
+#endif
 	    TableInvalidateAll(tablePtr, 0);
 	} else {
 	    result = (char *) Tcl_GetStringResult(interp);
@@ -541,7 +545,12 @@ VALUE:
 		    TCL_EVAL_GLOBAL)) != TCL_OK || Tcl_GetHashValue(entryPtr) == 1) {
 		Tcl_AddErrorInfo(interp, "\n\tin proc evaled by table:\n");
 		Tcl_AddErrorInfo(interp, Tcl_DStringValue(&script));
-		Tcl_BackgroundException(interp, TCL_ERROR);
+		if (code == TCL_OK) code = TCL_ERROR;
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
+		Tcl_BackgroundError(interp);
+#else
+		Tcl_BackgroundException(interp, code);
+#endif
 	    } else {
 		result = Tcl_GetStringResult(interp);
 	    }
@@ -600,7 +609,11 @@ int TableSetCellValue(Table *tablePtr, int r, int c, char *value) {
 	    if (tablePtr->arrayVar)
 		tablePtr->dataSource |= DATA_ARRAY;
 	    Tcl_AddErrorInfo(interp, "\n\t(in command executed by table)");
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
+	    Tcl_BackgroundError(interp);
+#else
 	    Tcl_BackgroundException(interp, code);
+#endif
 	} else {
 	    flash = 1;
 	}
