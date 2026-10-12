@@ -126,7 +126,7 @@ Linux and MacOS
 ---------------
 
 	cd Tktable*
-	make docs
+	make doc
 	nroff -man ./doc/udp.n
 
 Windows
