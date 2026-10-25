@@ -685,11 +685,9 @@ int Table_CurselectionCmd(ClientData clientData, Tcl_Interp *interp,
 
 	Tcl_IncrRefCount(listPtr);
 	resultPtr = TableCellSortObj(interp, listPtr);
-	if (!resultPtr) {
-	    Tcl_DecrRefCount(listPtr);
-	    return TCL_ERROR;
+	if (resultPtr) {
+	    Tcl_SetObjResult(interp, resultPtr);
 	}
-	Tcl_SetObjResult(interp, resultPtr);
 	Tcl_DecrRefCount(listPtr);
     }
     return TCL_OK;

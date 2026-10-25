@@ -938,11 +938,11 @@ int Table_SetCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	if (objc < 4) {
 	    goto CMD_SET_USAGE;
 	} else if (objc == 4) {
-	    Tcl_Obj *resultPtr = Tcl_NewListObj(0, NULL);
-	    if (!resultPtr) {
+	    if (TableGetIndexObj(tablePtr, objv[3], &row, &col) != TCL_OK) {
 		return TCL_ERROR;
 	    }
-	    if (TableGetIndexObj(tablePtr, objv[3], &row, &col) != TCL_OK) {
+	    Tcl_Obj *resultPtr = Tcl_NewListObj(0, NULL);
+	    if (!resultPtr) {
 		return TCL_ERROR;
 	    }
 	    if (*str == 'r') {
