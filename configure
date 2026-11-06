@@ -6194,7 +6194,7 @@ fi
 #--------------------------------------------------------------------
 
 
-    CLEANFILES="$CLEANFILES pkgIndex.tcl tkTable.tcl.h tkTableUuid.h"
+    CLEANFILES="$CLEANFILES pkgIndex.tcl tkTable.tcl.h tkTableUuid.h TktableConfig.sh"
 
 
 if test "${TEA_PLATFORM}" = "windows" ; then
@@ -10659,9 +10659,8 @@ fi
 # substituting the AC variables in. Include these here.
 #--------------------------------------------------------------------
 
-ac_config_files="$ac_config_files Makefile pkgIndex.tcl"
+ac_config_files="$ac_config_files Makefile pkgIndex.tcl TktableConfig.sh"
 
-#AC_CONFIG_FILES([tktableConfig.sh])
 
 #--------------------------------------------------------------------
 # Finally, substitute all of the various values into the files
@@ -11324,6 +11323,7 @@ do
   case $ac_config_target in
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "pkgIndex.tcl") CONFIG_FILES="$CONFIG_FILES pkgIndex.tcl" ;;
+    "TktableConfig.sh") CONFIG_FILES="$CONFIG_FILES TktableConfig.sh" ;;
 
   *) as_fn_error $? "invalid argument: '$ac_config_target'" "$LINENO" 5;;
   esac
