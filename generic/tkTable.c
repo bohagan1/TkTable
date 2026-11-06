@@ -556,7 +556,7 @@ static char * TableVarProc(
  *----------------------------------------------------------------------
  */
 #if TCL_MAJOR_VERSION < 9
-void TkSendVirtualEvent(Tk_Window target, const char *eventName, Tcl_Obj *detail) {
+static void TkSendVirtualEvent(Tk_Window target, const char *eventName, Tcl_Obj *detail) {
     union {XEvent general; XVirtualEvent virt;} event;
 
     memset(&event, 0, sizeof(event));
@@ -590,7 +590,6 @@ void TkSendVirtualEvent(Tk_Window target, const char *eventName, Tcl_Obj *detail
  *----------------------------------------------------------------------
  */
 void TableGenerateSelectEvent(Table *tablePtr) {
-
 #if TCL_MAJOR_VERSION > 8
     Tk_SendVirtualEvent(tablePtr->tkwin, "TableSelect", NULL);
 #else
