@@ -3909,7 +3909,7 @@ void ExpandPercents(
 #  define STRINGIFY1(x) #x
 #endif
 
-int
+static int
 BuildInfoCommand(Tcl_Interp* interp) {
     Tcl_CmdInfo info;
 
