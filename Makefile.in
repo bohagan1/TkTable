@@ -446,6 +446,7 @@ dist: dist-clean manifest.uuid
 	@$(DIST_INSTALL_DATA) $(srcdir)/ChangeLog \
 		$(srcdir)/license.txt $(srcdir)/manifest.uuid \
 		$(srcdir)/README.txt $(srcdir)/pkgIndex.tcl.in \
+		$(srcdir)/$(PACKAGE_NAME)Config.sh.in \
 		$(srcdir)/TODO.txt $(DISTDIR)
 
 	@list='demos doc generic library tclconfig tests win'; \
@@ -518,8 +519,8 @@ install-lib-binaries: binaries
 	done
 	@echo " Install pkgIndex.tcl $(DESTDIR)$(pkglibdir)"
 	$(INSTALL_DATA) pkgIndex.tcl "$(DESTDIR)$(pkglibdir)"
-	@if test -f "$(srcdir)/tktableConfig.sh"; then \
-	    $(INSTALL_DATA) $(srcdir)/tktableConfig.sh $(DESTDIR)$(libdir); \
+	@if test -f "$(srcdir)/$(PACKAGE_NAME)Config.sh"; then \
+	    $(INSTALL_DATA) $(srcdir)/$(PACKAGE_NAME)Config.sh $(DESTDIR)$(libdir); \
 	fi
 
 #========================================================================

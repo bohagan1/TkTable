@@ -93,7 +93,7 @@ TEA_ADD_TCL_SOURCES([library/tkTable.tcl license.txt README.txt])
 # TEA_ADD_* any platform specific compiler/build info here.
 #--------------------------------------------------------------------
 
-TEA_ADD_CLEANFILES([pkgIndex.tcl tkTable.tcl.h tkTableUuid.h])
+TEA_ADD_CLEANFILES([pkgIndex.tcl tkTable.tcl.h tkTableUuid.h TktableConfig.sh])
 
 if test "${TEA_PLATFORM}" = "windows" ; then
     AC_DEFINE(BUILD_Tktable)
@@ -194,8 +194,7 @@ TEA_PROG_DTPLITE
 # substituting the AC variables in. Include these here.
 #--------------------------------------------------------------------
 
-AC_CONFIG_FILES([Makefile pkgIndex.tcl])
-#AC_CONFIG_FILES([tktableConfig.sh])
+AC_CONFIG_FILES([Makefile pkgIndex.tcl TktableConfig.sh])
 
 #--------------------------------------------------------------------
 # Finally, substitute all of the various values into the files
