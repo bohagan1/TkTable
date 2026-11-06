@@ -539,7 +539,7 @@ static char * TableVarProc(
  *----------------------------------------------------------------------
  */
 #if TCL_MAJOR_VERSION < 9
-void TkSendVirtualEvent(Tk_Window target, const char *eventName, Tcl_Obj *detail) {
+static void TkSendVirtualEvent(Tk_Window target, const char *eventName, Tcl_Obj *detail) {
     union {XEvent general; XVirtualEvent virt;} event;
 
     memset(&event, 0, sizeof(event));
@@ -573,9 +573,7 @@ void TkSendVirtualEvent(Tk_Window target, const char *eventName, Tcl_Obj *detail
  *----------------------------------------------------------------------
  */
 static void GenerateTableSelectEvent(
-     ClientData clientData) {	/* Information about table widget. */
-
-    Table *tablePtr = (Table *) clientData;
+     Table *tablePtr) {	/* Information about table widget. */
 #if TCL_MAJOR_VERSION > 8
     Tk_SendVirtualEvent(tablePtr->tkwin, "TableSelect", NULL);
 #else
@@ -616,7 +614,7 @@ void TableLostSelection(
 	    Tcl_DeleteHashEntry(entryPtr);
 	    TableRefresh(tablePtr, row-tablePtr->rowOffset, col-tablePtr->colOffset, CELL);
 	}
-	GenerateTableSelectEvent(clientData);
+	GenerateTableSelectEvent(tablePtr);
     }
 }
 
