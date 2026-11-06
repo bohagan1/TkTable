@@ -81,7 +81,7 @@ TEA_ADD_INCLUDES([])
 TEA_ADD_LIBS([])
 TEA_ADD_CFLAGS([])
 TEA_ADD_STUB_SOURCES([])
-TEA_ADD_TCL_SOURCES([library/tkTable.tcl library/tktable.py license.txt README.txt])
+TEA_ADD_TCL_SOURCES([library/tkTable.tcl license.txt README.txt])
 
 #--------------------------------------------------------------------
 # You can add more files to clean if your extension creates any extra

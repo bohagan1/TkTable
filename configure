@@ -6172,7 +6172,7 @@ fi
 
 
 
-    vars="library/tkTable.tcl library/tktable.py license.txt README.txt"
+    vars="library/tkTable.tcl license.txt README.txt"
     for i in $vars; do
 	# check for existence, be strict because it is installed
 	if test ! -f "${srcdir}/$i" ; then
