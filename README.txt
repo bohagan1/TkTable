@@ -55,6 +55,14 @@ Uncompress and unpack the distribution
    This will create a subdirectory tkTable<version> with all the files in it.
 
 
+PYTHON BUILD
+============
+This package only contains the files needed to build TkTable for TCL/Tk. For
+Python, see the https://github.com/nbro/tktable repo for the wrapper source,
+https://github.com/nbro/pytktable-binaries for the binaries, or PyTkTable
+in PyPI https://pypi.org/project/pytktable/.
+
+
 UNIX BUILD
 ==========
 
