@@ -29,7 +29,7 @@
  *
  *--------------------------------------------------------------
  */
-char *Int2Str(int value, char *str, int len) {
+static char *Int2Str(int value, char *str, int len) {
     char *endptr = str;
     int quotient = (value >= 0 ? value : -value);
     int i, j;
@@ -1407,7 +1407,7 @@ int Table_SeeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
  *
  *--------------------------------------------------------------
  */
-int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
+static int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int start, end, selchanged = 0, refresh = 0, len;
 
@@ -1509,7 +1509,7 @@ int Table_SelActiveCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
  *
  *--------------------------------------------------------------
  */
-int Table_SelAnchorCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
+static int Table_SelAnchorCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int row, col;
 
@@ -1549,7 +1549,7 @@ int Table_SelAnchorCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_
  *
  *--------------------------------------------------------------
  */
-int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+static int Table_SelClearCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int result = TCL_OK;
@@ -1649,7 +1649,7 @@ done:
  *
  *--------------------------------------------------------------
  */
-int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+static int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int row, col;
@@ -1684,7 +1684,7 @@ int Table_SelIncludesCmd(ClientData clientData, Tcl_Interp *interp, int objc,
  *
  *--------------------------------------------------------------
  */
-int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
+static int Table_SelSetCmd(ClientData clientData, Tcl_Interp *interp, int objc,
 	Tcl_Obj *const objv[]) {
     Table *tablePtr = (Table *) clientData;
     int row, col, dummy, key = 0, selchanged = 0;

@@ -240,7 +240,7 @@ static int TableSelectionGetMulti(
  *
  *--------------------------------------------------------------
  */
-int TableSelectionGetList(
+static int TableSelectionGetList(
     Table *tablePtr,		/* Information about the table widget. */
     Tcl_Interp *interp,		/* TCL interpreter. */
     Tcl_DString *dsPtr,		/* Dynamic string to store selection in. */
@@ -338,7 +338,7 @@ done:
  *----------------------------------------------------------------------
  */
 
-int TableSelectionGetDstring(
+static int TableSelectionGetDstring(
     Table *tablePtr,		/* Information about the table widget. */
     Tcl_Interp *interp,		/* TCL interpreter. */
     Tcl_DString *ds,		/* Dynamic string to store selection in. */
@@ -454,7 +454,7 @@ typedef struct {
  *----------------------------------------------------------------------
  */
 
-int TableImportHandler(
+static int TableImportHandler(
     ClientData clientData,	/* Info on imported clipboard data and conversion */
     Tcl_Interp *interp,		/* TCL interpreter. */
     const char *portion) {	/* Portion of selection to process. */
@@ -547,7 +547,7 @@ int TableImportHandler(
  *----------------------------------------------------------------------
  */
 
-int TableImportHandlerMulti(
+static int TableImportHandlerMulti(
     ClientData clientData,	/* Info on imported clipboard data and conversion */
     Tcl_Interp *interp,		/* TCL interpreter. */
     const char *portion) {	/* Portion of selection to process. */
@@ -649,7 +649,7 @@ int TableImportHandlerMulti(
  *----------------------------------------------------------------------
  */
 
-int TableImportHandlerList(
+static int TableImportHandlerList(
     ClientData clientData,	/* Info on imported clipboard data and conversion */
     Tcl_Interp *interp,		/* TCL interpreter. */
     const char *portion) {	/* Portion of selection to process. */
@@ -896,7 +896,7 @@ void TableLostSelection(
  *----------------------------------------------------------------------
  */
 
-Tcl_Size TableFetchSelection(
+static Tcl_Size TableFetchSelection(
      ClientData clientData,	/* Information about table widget. */
      Tcl_Size offset,		/* Offset within selection of first character to be returned. */
      char *buffer,		/* Location in which to place selection. */

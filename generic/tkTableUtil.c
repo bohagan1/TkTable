@@ -280,14 +280,14 @@ int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int n
  * simple Cmd_Struct lookup functions
  */
 
-char * Cmd_GetName(const Cmd_Struct *cmds, int val) {
+static char * Cmd_GetName(const Cmd_Struct *cmds, int val) {
   for(;cmds->name && cmds->name[0];cmds++) {
     if (cmds->value==val) return cmds->name;
   }
   return NULL;
 }
 
-int Cmd_GetValue(const Cmd_Struct *cmds, const char *arg) {
+static int Cmd_GetValue(const Cmd_Struct *cmds, const char *arg) {
   size_t len = strlen(arg);
   for(;cmds->name && cmds->name[0];cmds++) {
     if (!strncmp(cmds->name, arg, len)) return cmds->value;
@@ -295,7 +295,7 @@ int Cmd_GetValue(const Cmd_Struct *cmds, const char *arg) {
   return 0;
 }
 
-void Cmd_GetError(Tcl_Interp *interp, const Cmd_Struct *cmds, const char *arg) {
+static void Cmd_GetError(Tcl_Interp *interp, const Cmd_Struct *cmds, const char *arg) {
   int i;
   Tcl_AppendResult(interp, "bad option \"", arg, "\" must be ", (char *) 0);
   for(i=0;cmds->name && cmds->name[0];cmds++,i++) {

@@ -354,7 +354,7 @@ typedef struct indexTypeStruct {
  *--------------------------------------------------------------
  */
 
-int CellIndexComp(const void *index1, const void *index2) {
+static int CellIndexComp(const void *index1, const void *index2) {
     int res;
     indexType *a, *b;
     a = (indexType*) index1;
