@@ -487,7 +487,8 @@ static TableTag * TableTagGetEntry(Table *tablePtr, char *name, Tcl_Size objc, T
     }
     if (objc) {
 	Tk_ConfigureWidget(tablePtr->interp, tablePtr->tkwin, tagConfig,
-		objc, (void *) objv, (char *)tagPtr, TK_CONFIG_OBJS);
+		objc, (void *) objv, (char *)tagPtr,
+		TK_CONFIG_ARGV_ONLY | TK_CONFIG_OBJS);
     }
     return tagPtr;
 }
@@ -529,7 +530,7 @@ done:
     }
     return res;
 }
- 
+
 int TableInitTags(Tcl_Interp *interp, Table *tablePtr) {
     Tcl_Obj *objv[12];
 
@@ -1009,8 +1010,9 @@ int Table_TagCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *c
 	    } else {
 		/* Get option values using TCL objects. For unspecified options, ignore
 		   option database and only use default values instead. */
-		if (Tk_ConfigureWidget(interp, tablePtr->tkwin, tagConfig, objc-4,
-		    (void *) (objv+4), (char *) tagPtr, TK_CONFIG_OBJS|TK_CONFIG_ARGV_ONLY) == TCL_ERROR) {
+		if (Tk_ConfigureWidget(interp, tablePtr->tkwin, tagConfig,
+		    objc-4, (void *) (objv+4), (char *) tagPtr,
+		    TK_CONFIG_ARGV_ONLY | TK_CONFIG_OBJS) != TCL_OK) {
 		    return TCL_ERROR;
 		}
 

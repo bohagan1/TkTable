@@ -255,8 +255,11 @@ int TableTagConfigureBd(Table *tablePtr, TableTag *tagPtr, char *oldValue, int n
 	     * We have to reparse in case the bad new value had a couple
 	     * of correct args before failing on a bad pixel value.
 	     */
-	    Tcl_SplitList(tablePtr->interp, oldValue, &argc, &argv);
-	    for (i = 0; i < argc; i++) {
+	    result = Tcl_SplitList(tablePtr->interp, oldValue, &argc, &argv);
+	    if (result != TCL_OK) {
+		return result;
+	    }
+	    for (i = 0; i < argc && argv != NULL; i++) {
 		Tk_GetPixels(tablePtr->interp, tablePtr->tkwin, argv[i], &(tagPtr->bd[i]));
 	    }
 	    if (argv) {
