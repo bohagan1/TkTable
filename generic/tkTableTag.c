@@ -506,7 +506,7 @@ static TableTag * TableTagGetEntry(Table *tablePtr, char *name, Tcl_Size objc, T
  *
  *----------------------------------------------------------------------
  */
-int DoTableInitTags(Tcl_Interp *interp, Table *tablePtr, Tcl_Size objc, Tcl_Obj *const objv[], char *name) {
+static int DoTableInitTags(Tcl_Interp *interp, Table *tablePtr, Tcl_Size objc, Tcl_Obj *const objv[], char *name) {
     int i, res = TCL_OK;
 
     for (i = 0; i < objc; i++) {
