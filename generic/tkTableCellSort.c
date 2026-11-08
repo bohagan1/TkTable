@@ -285,10 +285,10 @@ static SortElement * MergeSort(
  *	Sorts a list of table cell elements (of form row,col) in place
  *
  * Results:
- *	Sorts list of elements in place.
+ *	Returns new Tcl_Obj with sort objects or NULL for an error.
  *
  * Side effects:
- *	Behaviour undefined for ill-formed input list of elements.
+ *	Does not alter input list object
  *
  *----------------------------------------------------------------------
  */
@@ -300,6 +300,7 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
     SortElement *elementArray;
     SortElement *elementPtr;
 
+    /* Get elements to sort */
     if (Tcl_ListObjGetElements(interp, listObjPtr, &len, &listObjPtrs) != TCL_OK) {
 	return NULL;
     }
@@ -308,25 +309,36 @@ Tcl_Obj * TableCellSortObj(Tcl_Interp *interp, Tcl_Obj *listObjPtr) {
 	return listObjPtr;
     }
 
+    /* Store elements in array and as a linked list */
     elementArray = (SortElement *) Tcl_Alloc(length * sizeof(SortElement));
-    if (!elementArray) return NULL;
+    if (!elementArray) {
+	return NULL;
+    }
     for (i=0; i < length; i++){
 	elementArray[i].objPtr = listObjPtrs[i];
 	elementArray[i].nextPtr = &elementArray[i+1];
 	Tcl_IncrRefCount(listObjPtrs[i]);
     }
     elementArray[length-1].nextPtr = NULL;
+
+    /* Sort elements */
     elementPtr = MergeSort(elementArray);
+
+    /* Add elements to result list in sorted order */
     sortedObjPtr = Tcl_NewObj();
-    if (!sortedObjPtr) return NULL;
+    if (!sortedObjPtr) {
+	Tcl_Free((char*) elementArray);
+	return NULL;
+    }
     for (; elementPtr != NULL; elementPtr = elementPtr->nextPtr) {
 	Tcl_ListObjAppendElement(NULL, sortedObjPtr, elementPtr->objPtr);
     }
+
+    /* Clean up */
     Tcl_Free((char*) elementArray);
     for (i=0; i < length; i++){
 	Tcl_DecrRefCount(listObjPtrs[i]);
     }
-
     return sortedObjPtr;
 }
 

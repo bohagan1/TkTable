@@ -594,7 +594,8 @@ static int EmbWinConfigure(
     oldWindow = ewPtr->tkwin;
 
     if (Tk_ConfigureWidget(interp, tablePtr->tkwin, winConfigSpecs,
-	objc, (void *) objv, (char *) ewPtr, TK_CONFIG_OBJS) != TCL_OK) {
+	objc, (void *) objv, (char *) ewPtr,
+	TK_CONFIG_ARGV_ONLY | TK_CONFIG_OBJS) != TCL_OK) {
 	return TCL_ERROR;
     }
 
