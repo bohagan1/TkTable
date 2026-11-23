@@ -32,34 +32,37 @@ Tktable_BUILD_LIB_SPEC='@Tktable_BUILD_LIB_SPEC@'
 #
 Tktable_LIB_SPEC='@Tktable_LIB_SPEC@'
 
+# Use the following with TEA_ADD_STUB_SOURCES
+
 #
 # The name of the Tktable stub library (a .a file):
 #
-Tktable_STUB_LIB_FILE=@PKG_STUB_LIB_FILE@
+#Tktable_STUB_LIB_FILE=@PKG_STUB_LIB_FILE@
 
 #
 # String to pass to linker to pick up the Tktable stub library from its
 # build directory.
 #
-Tktable_BUILD_STUB_LIB_SPEC='@Tktable_BUILD_STUB_LIB_SPEC@'
+#Tktable_BUILD_STUB_LIB_SPEC='@Tktable_BUILD_STUB_LIB_SPEC@'
 
 #
 # String to pass to linker to pick up the Tktable stub library from its
 # installed directory.
 #
-Tktable_STUB_LIB_SPEC='@Tktable_STUB_LIB_SPEC@'
+#Tktable_STUB_LIB_SPEC='@Tktable_STUB_LIB_SPEC@'
 
 #
 # String to pass to linker to pick up the Tktable stub library from its
 # build directory.
 #
-Tktable_BUILD_STUB_LIB_PATH='@Tktable_BUILD_STUB_LIB_PATH@'
+#Tktable_BUILD_STUB_LIB_PATH='@Tktable_BUILD_STUB_LIB_PATH@'
 
 #
 # String to pass to linker to pick up the Tktable stub library from its
 # installed directory.
 #
-Tktable_STUB_LIB_PATH='@Tktable_STUB_LIB_PATH@'
+#Tktable_STUB_LIB_PATH='@Tktable_STUB_LIB_PATH@'
+
 
 #
 # Location of the top-level source directories from which Tktable
